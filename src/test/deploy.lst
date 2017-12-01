@@ -1,0 +1,5 @@
+target C:\apache-tomcat-7.0.73\webapps\test
+copy index.html
+copy dummy.js
+copy test.out.js
+copy deploy.lst
