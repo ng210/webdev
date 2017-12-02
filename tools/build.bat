@@ -1,6 +1,6 @@
 @echo off
 :: Preparations
-setlocal
+setlocal EnableDelayedExpansion
 for %%i in (%0) do (
     set tools=%%~dpi
 )
@@ -22,7 +22,6 @@ echo *** Build js
 %tools%\jsbuild.exe base=%1 in=%2 out=%3
 
 :: Deploy to tomcat
-cd
 echo *** Deploy to tomcat
 for /f "tokens=1,2" %%i in (%source%\deploy.lst) do (
     if "%%i"=="target" (
@@ -30,20 +29,16 @@ for /f "tokens=1,2" %%i in (%source%\deploy.lst) do (
             echo create directory %%j
             mkdir %%j
         )
-        set target=%%j
+        set target_=%%j
+        echo Changed target to !target_!
+    ) else (
+        if "%%i"=="copy" (
+            echo deploy %1\%%j
+            copy /y %1\%%j !target_! >> log.txt
+        )
     )
 )
-if "%target%"=="" (
-    echo Missing deploy target!
-    goto end
-)
-for /f "tokens=1,2" %%i in (%source%\deploy.lst) do (
-    if "%%i"=="copy" (
-        echo deploy %source%\%%j
-        copy /y %source%\%%j %target% >log.txt
-    )
-    if exist log.txt del log.txt
-)
+if exist log.txt del log.txt
 
 :end
 
