@@ -1,4 +1,4 @@
-include('frmwrk/module.js');
+include('frmwrk/fw.js');
 
 if (typeof onpageload === 'function') window.onload = onpageload;
 
@@ -24,4 +24,9 @@ function onpageload(e) {
         content.innerHTML += result.map(function(item, ix) { return ix + ': ' + (item.message ? item.message : item) + ';'; }).join('<br/>');
         content.innerHTML += '<hr/>';
     });
+
+    var arr = new fw.Array();
+    arr.push('alma');
+    arr.push('szilva');
+    content.innerHTML += 'arr.class = ' + arr.getClass() + '<br/>';
 }
