@@ -13,10 +13,27 @@ function load(obj, onload, onerror) {
         context.error = false;
         res = [];
         for (var i=0; i<obj.length; i++) {
-            res[i] = load.load_(obj[i], async, load.onload_, load.onerror_, context, i);
+            res[i] = ajax.send({
+                url: obj[i],
+                data: null,
+                method: 'GET',
+                async: async,
+                onload: load.onload_,
+                onerror: load.onerror_,
+                context: context,
+                index: i
+            });
         }
     } else {
-        res = load.load_(obj, async, onload, onerror, context);
+        res = ajax.send({
+            url: obj,
+            data: null,
+            method: 'GET',
+            async: async,
+            onload: onload,
+            onerror: onerror,
+            context: context
+        });
     }
     return res;
 }
@@ -42,29 +59,3 @@ load.onerror_ = function(error, xhr) {
     }
 };
 
-load.load_ = function load_(path, async, onload, onerror, context, ix) {
-    // get extension
-    // var tokens = path.match(/\.([^\.]+)$/);
-    // if (tokens == null) {
-    //     // load data
-    // }
-    // var content = null;
-    // if (tokens != null) {
-    //     content = load.contentTypes_[tokens[1]];
-    // }
-    // var node = document.createElement()
-    // ajax.send({url:path, async:})
-    // script.innerHTML = ajax.send( {url:'dummy.js', async:false} );
-    // document.head.appendChild(script);
-    var res = ajax.send({
-        url: path,
-        data: null,
-        method: 'GET',
-        async: async,
-        onload: onload,
-        onerror: onerror,
-        context: context,
-        index: ix
-    });
-    return res;
-};

@@ -13,7 +13,7 @@ var ajax = {
                 }
             } else {
                 if (typeof xhr.options.onerror === 'function') {
-                    xhr.options.onerror(new Error(xhr.statusText + '(' + xhr.status + ')'), xhr);
+                    xhr.options.onerror(new Error(xhr.options.url + ' - ' + xhr.statusText + ' (' + xhr.status + ')'), xhr);
                 }
             }
         }
