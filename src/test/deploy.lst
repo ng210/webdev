@@ -3,6 +3,10 @@ copy test\index.html
 copy test\dummy.js
 copy test\test.out.js
 copy test\deploy.lst
+copy test\app.cfg
 
 target C:\apache-tomcat-7.0.73\webapps\frmwrk
 copy frmwrk\array.js
+
+target C:\apache-tomcat-7.0.73\webapps\utils
+copy utils\Logger.js
