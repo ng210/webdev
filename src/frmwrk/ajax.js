@@ -59,7 +59,6 @@ var ajax = {
     * - url
     * - data
     * - method
-    * - async
     * - onload
     * - onerror
     * (contentType, responseType)
@@ -68,16 +67,15 @@ var ajax = {
         var res = null;
         var defaultOptions = {
             data: '',
+            method: 'GET',
             contentType: 'json',
-            responseType: 'json',
-            async: true,
-            method: 'get'
+            responseType: 'json'
         };
         for (var k in defaultOptions) {
             if (options[k] === undefined)
                 options[k] = defaultOptions[k];
         }
-
+        options.async = typeof options.onload === 'function';
         var xhr = ajax.createXhr(options);
         ajax.setContentType(xhr, options.contentType);
         try {
