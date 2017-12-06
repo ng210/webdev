@@ -8,62 +8,54 @@ if (typeof onpageload === 'function') window.onload = onpageload;
 var g_logger = null;
 
 function loadTest(content) {
-    g_logger.info('load(\'deploy.lst\')');
     var data = load('deploy.lst');
-    g_logger.info('<pre>' + data + '</pre>');
-    g_logger.info('load(\'deploys.lst\')');
+    g_logger.info('load deploy.lst<pre>' + data + '</pre><hr/>');
 
     var data = load('deploys.lst');
-    g_logger.info('<pre>' + data + '</pre>');
-
+    g_logger.info('load deploys.lst<pre>' + data + '</pre><hr/>');
     
-    g_logger.info('load(\'deploy.lst\', onload, onerror)...');
-    data = load('deploy.lst', function(data) {
-        g_logger.info('<pre>' + data + '</pre>');
-    
-    }, function(error) {
-        g_logger.error('Error: ' + error.message);
-    
+    data = load('deploy.lst', function(data, xhr) {
+        g_logger.info('load async ' + xhr.options.url + '<pre>' + data + '</pre><hr/>');
+    }, function(error, xhr) {
+        g_logger.info(xhr.options.url + ' Error: ' + error.message + '<hr/>');
     });
-    g_logger.info('load(\'deploys.lst\', onload, onerror)...');
+
     data = load('deploys.lst', function(data) {
-        g_logger.info('<pre>' + data + '</pre>');
+        g_logger.info('load async ' + xhr.options.url + '<pre>' + data + '</pre><hr/>');
     
-    }, function(error) {
-        g_logger.error('Error: ' + error.message);
-    
+    }, function(error, xhr) {
+        g_logger.info('load async ' + xhr.options.url + 'Error: ' + error.message + '<hr/>');
     });
 
-    g_logger.info('load([\'deploys.lst\', \'dummy.js\'])');
-    data = load(['deploys.lst', 'dummy.js']);
-    data.forEach( function(item) {
-        g_logger.info('<pre>' + item + '</pre>');
+    var arr = ['deploys.lst', 'dummy.js'];
+    var text = ['load ' + arr];
+    data = load(arr);
+    data.forEach( function(item, ix) {
+        text.push(' - ' + arr[ix] + ': ' + item);
     });
+    text.push('<hr/>');
+    g_logger.info(text.join('<br/>'));
     
-    g_logger.info('load([\'deploy.lst\', \'dummy.js\'], onload, onerror)');
-    data = load(['deploys.lst', 'dummy.js'], function(data) {
-            data.forEach( function(item) {
-                g_logger.info('<pre>' + item + '</pre>');
-            });
-        }, function(error) {
+    load(arr, function(data) {
+            var text = ['load aync ' + arr];
             data.forEach( function(item, ix) {
+                text.push(' async ' + arr[ix] + '<pre>' + item + '</pre>');
+            });
+            text.push('<hr/>');
+            g_logger.info(text.join('<br/>'));
+        }, function(error) {
+            var text = ['load aync ' + arr];
+            error.forEach( function(item, ix) {
                 if (item instanceof Error) {
-                    g_logger.info('<pre>' + ix + ': ' + error.message + '</pre>');
+                    text.push(' - ' + arr[ix] + ' Error: ' + item.message);
                 } else {
-                    g_logger.info('<pre>' + ix + ': ' + error + '</pre>');
+                    text.push(' - ' + arr[ix] + ' Item: ' + item);
                 }
             });
-        
+            text.push('<hr/>');
+            g_logger.info(text.join('<br/>'));
         }
     );
-
-    // var data = load(['deploys.lst', 'dummy.js'], function(result){
-    //     g_logger.info(result.map(function(item, ix) { return ix + ': ' + item + ';'; }).join('<br/>'));
-    // 
-    // }, function(result) {
-    //     g_logger.info(result.map(function(item, ix) { return ix + ': ' + (item.message ? item.message : item) + ';'; }).join('<br/>'));
-    // 
-    // });
 }
 
 function requireTest(content) {
@@ -91,7 +83,7 @@ function loggerTest() {
 }
 
 function parseElementTest() {
-    var cfg = load('app.cfg');
+    var cfg = load({url: 'app.cfg', contentType: 'text/xml' });
     g_logger.info('app.name: ' + cfg.app.name);
     g_logger.info('app.title: ' + cfg.app.title);
     g_logger.info('debug is ' + (cfg.app.debug=='0' ? 'off' : 'on'));
@@ -112,7 +104,7 @@ function onpageload(e) {
         }
     });
 
-    loadTest(content);
+    //loadTest(content);
 
     //requireTest(content);
 
@@ -120,5 +112,5 @@ function onpageload(e) {
 
     //loggerTest(content);
 
-    //parseElementTest(content);
+    parseElementTest(content);
 }

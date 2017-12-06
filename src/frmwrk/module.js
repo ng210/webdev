@@ -3,7 +3,7 @@ include('frmwrk/load.js');
 var module = module || {};
 function require(path) {
     if (module[path] == undefined) {
-        var data = load(path);
+        var data = load({url:path,contentType:'text/plain'});
         if (data) {
             var script = document.createElement('script');
             script.innerHTML = data.replace('module.exports', 'module["' + path + '"]');
