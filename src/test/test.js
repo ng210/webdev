@@ -104,13 +104,13 @@ function onpageload(e) {
         }
     });
 
-    //loadTest(content);
+    // loadTest(content);
 
-    //requireTest(content);
+    // requireTest(content);
 
-    //arrayTest(content);
+    // arrayTest(content);
 
-    //loggerTest(content);
+    // loggerTest(content);
 
-    parseElementTest(content);
+    // parseElementTest(content);
 }

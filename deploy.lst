@@ -1,8 +1,0 @@
-target C:\apache-tomcat-7.0.73\webapps\test
-copy test\index.html
-copy test\dummy.js
-copy test.out.js
-copy test\deploy.lst
-
-target C:\apache-tomcat-7.0.73\webapps\frmwrk
-copy frmwrk\array.js
