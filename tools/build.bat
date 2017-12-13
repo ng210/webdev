@@ -19,7 +19,8 @@ for /f "delims=\ tokens=1*" %%i in ("%tmp%") do (
 if defined tmp goto loop
 
 echo *** Build js
-%tools%\jsbuild.exe base=%1 in=%2 out=%3
+echo %tools%\jsbuild.exe v base=%1 in=%2 out=%3
+%tools%\jsbuild.exe v base=%1 in=%2 out=%3
 
 :: Deploy to tomcat
 echo *** Deploy to tomcat

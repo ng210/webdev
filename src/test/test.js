@@ -1,7 +1,7 @@
 include('frmwrk/fw.js');
-
-var Logger = require('../utils/Logger.js');
-//include('utils/Logger.js');
+include('utils/Logger.js');
+var Logger = require('/utils/Logger.js');
+var fw = require('/frmwrk/fw.js');
 
 if (typeof onpageload === 'function') window.onload = onpageload;
 
@@ -59,7 +59,7 @@ function loadTest(content) {
 }
 
 function requireTest(content) {
-    var dummy = require('dummy.js');
+    var dummy = require('./dummy.js');
     dummy.func1();
 
 }
@@ -89,6 +89,59 @@ function parseElementTest() {
     g_logger.info('debug is ' + (cfg.app.debug=='0' ? 'off' : 'on'));
 }
 
+function hash(i) {
+    var j = 0;
+    if (i > 0) {
+        j = (i+1)>>1;
+    }
+    k = j*j; 
+    return i%2 == 0 ? k : -k;
+}
+
+function hashTest() {
+    var n = 65539; // 4k+3 -> prime
+    var m = [];
+    for (var i=0; i<n; i++) {
+        m.push(0);
+    }
+    var collisions = [];
+    for (var i=0; i<n; i++) {
+        var k = hash(i, n) % n;
+        if (k < 0) k += n;
+        //g_logger.info(k);
+        m[k]++;
+        if (m[k] > 1) {
+            if (collisions.indexOf(k) == -1) {
+                collisions.push(k);
+            }
+        }
+    }
+    if (collisions.length > 0) {
+        collisions.forEach( k => {
+            g_logger.info('Fail at ' + k);
+        });
+    } else {
+        g_logger.info('No collisions!');
+    }
+}
+
+function urlInfoTest() {
+    var url = 'https://max:muster@www.example.com:8080/users/ng210/index.html?k1=v&k2=v2&k3#resource';
+    g_logger.info(JSON.stringify(new load.UrlObject(url)));
+    var url = 'https://www.example.com/users/ng210/index.html?k1=v&k2=v2&k3';
+    g_logger.info(JSON.stringify(new load.UrlObject(url)));
+    var url = 'https://www.example.com/users/ng210/index.html';
+    g_logger.info(JSON.stringify(new load.UrlObject(url)));
+    var url = 'https://www.example.com/users/ng210';
+    g_logger.info(JSON.stringify(new load.UrlObject(url)));
+    var url = 'www.example.com/users/ng210';
+    g_logger.info(JSON.stringify(new load.UrlObject(url)));
+    var url = '/users/ng210/index.html?k1=v&k2=v2&k3#ressource';
+    g_logger.info(JSON.stringify(new load.UrlObject(url)));
+    var url = '../index.html?k1=v&k2=v2&k3#ressource';
+    g_logger.info(JSON.stringify(new load.UrlObject(url)));
+}
+
 function onpageload(e) {
     var content = document.getElementById('content');
     g_logger = new Logger({
@@ -104,13 +157,18 @@ function onpageload(e) {
         }
     });
 
-    // loadTest(content);
+    loadTest(content);
 
-    // requireTest(content);
+    urlInfoTest();
 
-    // arrayTest(content);
+    requireTest(content);
 
-    // loggerTest(content);
+    arrayTest(content);
 
-    // parseElementTest(content);
+    loggerTest(content);
+
+    parseElementTest(content);
+
+    hashTest();
 }
+
