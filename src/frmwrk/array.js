@@ -26,7 +26,7 @@
 		return (this.indexOf(item) != -1);
 	};
 	array.prototype.clone = function() {
-		var clone = new fw.Array();
+		var clone = new this.constructor();
 		for (var i=0; i<this.length; i++) {
 			var item = this[i];
 			clone.push(typeof item.clone === 'function' ? item.clone() : item.valueOf);
