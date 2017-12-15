@@ -8,5 +8,11 @@ copy test\app.cfg
 target C:\apache-tomcat-7.0.73\webapps\frmwrk
 copy frmwrk\array.js
 
+target C:\apache-tomcat-7.0.73\webapps\ge
+copy ge\player.js
+copy ge\synth.js
+copy ge\synthAdapter.js
+copy ge\sound.js
+
 target C:\apache-tomcat-7.0.73\webapps\utils
 copy utils\Logger.js

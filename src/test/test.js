@@ -1,5 +1,12 @@
 include('frmwrk/fw.js');
 include('utils/Logger.js');
+
+include('ge/synth.js');
+include('ge/player.js');
+include('ge/synthAdapter.js');
+include('ge/sound.js');
+
+
 var Logger = require('/utils/Logger.js');
 var fw = require('/frmwrk/fw.js');
 
@@ -128,18 +135,146 @@ function hashTest() {
 function urlInfoTest() {
     var url = 'https://max:muster@www.example.com:8080/users/ng210/index.html?k1=v&k2=v2&k3#resource';
     g_logger.info(JSON.stringify(new load.UrlObject(url)));
-    var url = 'https://www.example.com/users/ng210/index.html?k1=v&k2=v2&k3';
+    url = 'https://www.example.com/users/ng210/index.html?k1=v&k2=v2&k3';
     g_logger.info(JSON.stringify(new load.UrlObject(url)));
-    var url = 'https://www.example.com/users/ng210/index.html';
+    url = 'https://www.example.com/users/ng210/index.html';
     g_logger.info(JSON.stringify(new load.UrlObject(url)));
-    var url = 'https://www.example.com/users/ng210';
+    url = 'https://www.example.com/users/ng210';
     g_logger.info(JSON.stringify(new load.UrlObject(url)));
-    var url = 'www.example.com/users/ng210';
+    url = 'www.example.com/users/ng210';
     g_logger.info(JSON.stringify(new load.UrlObject(url)));
-    var url = '/users/ng210/index.html?k1=v&k2=v2&k3#ressource';
+    url = '/users/ng210/index.html?k1=v&k2=v2&k3#ressource';
     g_logger.info(JSON.stringify(new load.UrlObject(url)));
-    var url = '../index.html?k1=v&k2=v2&k3#ressource';
+    url = '../index.html?k1=v&k2=v2&k3#ressource';
     g_logger.info(JSON.stringify(new load.UrlObject(url)));
+}
+
+function normalizePathTest() {
+    var path = 'dirA/dirB/file.ext';
+    g_logger.info(path + ' => ' + load.normalizePath(path));
+    path = '../dirA/dirB/file.ext';
+    g_logger.info(path + ' => ' + load.normalizePath(path));
+    path = '/dirA/dirB/file.ext';
+    g_logger.info(path + ' => ' + load.normalizePath(path));
+    path = '../dirA/../dirB/file.ext';
+    g_logger.info(path + ' => ' + load.normalizePath(path));
+    path = 'dirA//dirB/file.ext';
+    g_logger.info(path + ' => ' + load.normalizePath(path));
+}
+
+function synthTest() {
+    var ns_synth = require('/ge/synth.js');
+    var ns_player = require('/ge/player.js');
+    var SynthAdapter = require('/ge/synthAdapter.js');
+    var sound = require('/ge/sound.js');
+
+	var player = new ns_player.Player();
+	var mainSeq = [
+		new ns_player.Command(   0, ns_player.Cmd_setTempo, [5, 1]),			// set fps to 5, tpf to 1 (makes 5 tps)
+		new ns_player.Command(   0, ns_player.Cmd_assign, [0, 1, 1 | 2]),		// connect target #0 with sequence #1 with status active
+		new ns_player.Command(1000, ns_player.Cmd_end, null)					// end
+	];
+	var subSeq1 = [
+		new ns_player.Command(   0, SynthAdapter.Cmd_setNote, [12, 0.7]),	//C
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [12, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [16, 0.7]),	//E
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [16, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [12, 0.7]),	//C
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [12, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [16, 0.7]),	//E
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [16, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [19, 0.7]),	//G
+		new ns_player.Command(  16, SynthAdapter.Cmd_setNote, [19, 0.0]),
+		new ns_player.Command(  16, SynthAdapter.Cmd_setNote, [19, 0.7]),	//G
+		new ns_player.Command(  16, SynthAdapter.Cmd_setNote, [19, 0.0]),
+		new ns_player.Command(  16, SynthAdapter.Cmd_setNote, [12, 0.7]),	//C
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [12, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [16, 0.7]),	//E
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [16, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [12, 0.7]),	//C
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [12, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [16, 0.7]),	//E
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [16, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [19, 0.7]),	//G
+		new ns_player.Command(  16, SynthAdapter.Cmd_setNote, [19, 0.0]),
+		new ns_player.Command(  16, SynthAdapter.Cmd_setNote, [19, 0.7]),	//G
+		new ns_player.Command(  16, SynthAdapter.Cmd_setNote, [19, 0.0]),
+		new ns_player.Command(  16, SynthAdapter.Cmd_setNote, [24, 0.7]),	//C
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [24, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [23, 0.7]),	//H
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [23, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [21, 0.7]),	//A
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [21, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [19, 0.7]),	//G
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [19, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [17, 0.7]),	//F
+		new ns_player.Command(  16, SynthAdapter.Cmd_setNote, [17, 0.0]),
+		new ns_player.Command(  16, SynthAdapter.Cmd_setNote, [21, 0.7]),	//A
+		new ns_player.Command(  16, SynthAdapter.Cmd_setNote, [21, 0.0]),
+		new ns_player.Command(  16, SynthAdapter.Cmd_setNote, [19, 0.7]),	//G
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [19, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [17, 0.7]),	//F
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [17, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [16, 0.7]),	//E
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [16, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [14, 0.7]),	//D
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [14, 0.0]),
+		new ns_player.Command(   8, SynthAdapter.Cmd_setNote, [12, 0.7]),	//C
+		new ns_player.Command(  16, SynthAdapter.Cmd_setNote, [12, 0.0]),
+		new ns_player.Command(  16, SynthAdapter.Cmd_setNote, [12, 0.7]),	//C
+		new ns_player.Command(  16, SynthAdapter.Cmd_setNote, [12, 0.0]),
+		new ns_player.Command(  16, ns_player.Cmd_end, null)
+	];
+	// the very first sequence is the master that spawns all the channels
+	player.addSequence(mainSeq);
+	player.addSequence(subSeq1);
+	// add synth
+	var synth = new ns_synth.Synth(48000);
+	synth.setup([
+		ns_synth.Ctrl.amp, 0.6,
+		ns_synth.Ctrl.Lfo1fre, 5.1,     ns_synth.Ctrl.Lfo1amp, 0.2,	ns_synth.Ctrl.Lfo1wav, ns_synth.WF_SIN,
+		ns_synth.Ctrl.Lfo2fre, 7.0,     ns_synth.Ctrl.Lfo2amp, 4.0,	ns_synth.Ctrl.Lfo2wav, ns_synth.WF_SIN,
+
+		ns_synth.Ctrl.Env1atk, 0.05,    ns_synth.Ctrl.Env1dec, 0.04, 
+		ns_synth.Ctrl.Env1sus, 0.2,     ns_synth.Ctrl.Env1rel, 0.1, 
+		ns_synth.Ctrl.Env1off, 0.0,     ns_synth.Ctrl.Env1amp, 1.0, 
+
+		ns_synth.Ctrl.Env2atk, 0.0,	ns_synth.Ctrl.Env2dec, 1.0, 
+		ns_synth.Ctrl.Env2sus, 1.0,	ns_synth.Ctrl.Env2rel, 1.0, 
+		ns_synth.Ctrl.Env2off, 1.0,	ns_synth.Ctrl.Env2amp, 1.0, 
+
+		ns_synth.Ctrl.Osc1wav, ns_synth.WF_SAW,
+		ns_synth.Ctrl.Osc1fre, 0.0,	ns_synth.Ctrl.Osc1amp, 0.6,	ns_synth.Ctrl.Osc1psw, 0.6,
+		ns_synth.Ctrl.Osc1tun, 12.0, 
+		ns_synth.Ctrl.Osc2wav, ns_synth.WF_PLS,
+		ns_synth.Ctrl.Osc2fre, 1.1,	ns_synth.Ctrl.Osc2amp, 0.4,	ns_synth.Ctrl.Osc2psw, 0.3,
+		ns_synth.Ctrl.Osc2tun, 24
+    ]);
+	// add synth adapter
+	player.addTarget(synth, new SynthAdapter());
+
+    var speed = 48000 * 0.25;
+    var counter = 0;
+    var pos = 1*speed/4 - sound.BUFFER_SIZE;
+    var tone = 12;
+    var gate = 0.5;
+	sound.init(48000, function(buffer, count) {
+        if (counter <= speed/2 && counter > pos) {
+            synth.setNote(tone, 0.0);
+        } else {
+            if (counter <= 0) {
+                tone++;
+                if (tone == 24) tone = 12;
+                synth.setNote(tone, 0.5);
+                counter += speed;
+              
+            }
+        }
+        //player.run(count);
+        synth.run(buffer, count);
+        counter -= sound.BUFFER_SIZE;
+    });
+
 }
 
 function onpageload(e) {
@@ -157,18 +292,22 @@ function onpageload(e) {
         }
     });
 
-    loadTest(content);
+    // loadTest(content);
 
-    urlInfoTest();
+    // urlInfoTest();
 
-    requireTest(content);
+    // requireTest(content);
 
-    arrayTest(content);
+    // arrayTest(content);
 
-    loggerTest(content);
+    // loggerTest(content);
 
-    parseElementTest(content);
+    // parseElementTest(content);
 
-    hashTest();
+    // hashTest();
+
+    // normalizePathTest();
+
+    synthTest();
 }
 
