@@ -9,8 +9,6 @@ include('base/load.js');
 			value: function(path) {
 				var urlInfo = new load.UrlObject(path);
 				var p = urlInfo.path;
-				console.log(urlInfo);
-				console.log(path + ' => ' + p);
 				if (module[p] == undefined) {
 					var data = load({url:p,contentType:'text/plain'});
 					if (data) {
