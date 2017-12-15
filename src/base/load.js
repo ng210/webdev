@@ -129,14 +129,16 @@ include('base/ajax.js');
         //console.log('Path='+path);
         var base = base || load.urlInfo.path;
         var pathParts = base.split('/');
-        //if (pathParts[0].length == 0) pathParts.shift();
         if (pathParts[pathParts.length-1].length == 0) pathParts.pop();
         var arr = path.split('/');
         for (var i=0; i<arr.length; i++) {
             var part = arr[i];
-            //console.log(part.length);
             if (part == '') {
-                pathParts = [];
+                if (i == 0) {
+                    pathParts = [];
+                } else {
+                    continue;
+                }
             } else
             if (part == '.') continue;
             if (part == '..') {
@@ -166,15 +168,15 @@ include('base/ajax.js');
         // check schema
         var position = -1;
         if ((position = url.indexOf(':')) != -1) {
-            var schemes = {
+            var schemas = {
                 'http': 2, 'https': 2, 
                 'file': 3, 'ftp': 2, 
                 'mailto': 0
             };
-            var scheme = url.substring(0, position);
-            var skip = schemes[scheme];
+            var schema = url.substring(0, position);
+            var skip = schemas[schema];
             if (skip != undefined) {
-                this.schema = scheme;
+                this.schema = schema;
                 url = url.substring(position + 1 + skip);
             }
         }
@@ -193,11 +195,8 @@ include('base/ajax.js');
                 if (position > 0 && url.charAt(position-1) == '.') {
                     position--;
                 }
-                this.path = load.normalizePath(url.substring(position));
-                //console.log('Path1='+this.path);
-            } else {
-                this.path = url.substring(position);
             }
+            this.path = force ? url.substring(position) : load.normalizePath(url.substring(position));
         } else {
             position = url.length;
         }
