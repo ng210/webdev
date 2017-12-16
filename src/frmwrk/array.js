@@ -1,6 +1,8 @@
 (function() {
 	var array = function() {
-		Array.apply(this.arguments);
+		for (var i=0; i<arguments.length; i++) {
+			this.push(arguments[i]);
+		}
     };
     array.prototype = new Array;
 	array.prototype.getClass = function() {
