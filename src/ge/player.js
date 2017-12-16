@@ -34,6 +34,7 @@
 			this.sequences = new fw.Array();
 			this.framesPerSecond = fps || 25;
 			this.ticksPerFrame = tpf || 1;
+			this.refreshRate = 25;
 			
 			this.addAdapter(new ns_player.PlayerAdapter());
 		},
@@ -44,11 +45,7 @@
 		Command: function(delta, cmd, args) {
 			this.delta = delta || 0;
 			this.cmd = cmd || 0;
-			if (args != null) {
-				this.args = new fw.Array(args);
-			} else {
-				this.args = null;
-			}
+			this.args = args;
 		},
 		
 		/******************************************************************************
@@ -77,30 +74,28 @@
 			case ns_player.Cmd_setTempo:
 				player.framesPerSecond = cmd.args[0];
 				player.ticksPerFrame = cmd.args[1];
+				player.refreshRate = player.framesPerSecond * player.ticksPerFrame;
 				break;
 			case ns_player.Cmd_assign:
 				var target = player.targets[cmd.args[0]];
 				var sequence = player.sequences[cmd.args[1]];
 				var status = cmd.args[2];
-				// set channel
-				var ix = player.channel.findIndex(function(i, args) {
-					var ret = false;
-					if ((this[i].status & ns_player.Flg_active) == 0) {
-						this[i].set(target, sequence);
-						ret = true;
+				// get an inactive channel
+				var ix = -1;
+				for (var i=0; i<player.channels.length; i++) {
+					var chn = player.channels[i];
+					if ((chn.status & ns_player.Flg_active) == 0) {
+						ix = i;
+						break;
 					}
-					return ret;
-				});
-				var ch = null;
-				if (ix != -1) {
-					// assign channel
-					ch = channel[ix];
-					ch.set(player, target, sequence);
-				} else {
-					// create new channel
-					ch = new ns_player.Channel();
-					channels.push(ch);
 				}
+				if (ix == -1) {
+					// create new channel
+					player.channels.push(new ns_player.Channel());
+					ix = player.channels.length - 1;
+				}
+				var ch = player.channels[ix];
+				// assign channel
 				ch.set(player, target, sequence);
 				ch.status = status;
 				break;
@@ -134,21 +129,22 @@
 	};
 	ns_player.Player.prototype.addSequence = function(sequence) {
 		this.sequences.push(sequence);
-		// the very first sequence is assigned to the master channel
 		if (this.sequences.length == 1) {
+			// the very first sequence is assigned to the master channel
 			this.channels.push(new ns_player.Channel(this, [this, this.adapters.Player], this.sequences[0]));
 			this.channels[0].status |= ns_player.Flg_active;
 		}
 	};
-	ns_player.Player.prototype.run = function(delta) {
+	ns_player.Player.prototype.run = function(ticks) {
 		//run every channel
-		this.channels.apply(function(i, args) {
-			if ((this[i].status & ns_player.Flg_active) != 0) {
-				this[i].run(delta);
+		for (var i=0; i<this.channels.length; i++) {
+			var chn = this.channels[i];
+			if ((chn.status & ns_player.Flg_active) != 0) {
+				chn.run(ticks);
 			}
-		}, null);
+		}
 	};
-	ns_player.Channel.prototype.reset = function(player, target, sequence) {
+	ns_player.Channel.prototype.set = function(player, target, sequence) {
 		this.player = player;
 		this.target = target;
 		this.sequence = sequence;

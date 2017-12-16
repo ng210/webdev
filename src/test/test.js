@@ -170,7 +170,7 @@ function synthTest() {
 
 	var player = new ns_player.Player();
 	var mainSeq = [
-		new ns_player.Command(   0, ns_player.Cmd_setTempo, [5, 1]),			// set fps to 5, tpf to 1 (makes 5 tps)
+		new ns_player.Command(   0, ns_player.Cmd_setTempo, [16, 4]),			// set fps to 5, tpf to 1 (makes 5 tps)
 		new ns_player.Command(   0, ns_player.Cmd_assign, [0, 1, 1 | 2]),		// connect target #0 with sequence #1 with status active
 		new ns_player.Command(1000, ns_player.Cmd_end, null)					// end
 	];
@@ -253,26 +253,24 @@ function synthTest() {
 	// add synth adapter
 	player.addTarget(synth, new SynthAdapter());
 
-    var speed = 48000 * 0.25;
-    var counter = 0;
-    var pos = 1*speed/4 - sound.BUFFER_SIZE;
-    var tone = 12;
-    var gate = 0.5;
-	sound.init(48000, function(buffer, count) {
-        if (counter <= speed/2 && counter > pos) {
-            synth.setNote(tone, 0.0);
-        } else {
-            if (counter <= 0) {
-                tone++;
-                if (tone == 24) tone = 12;
-                synth.setNote(tone, 0.5);
-                counter += speed;
-              
+    var frameCounter = 0;
+	sound.init(48000, function(buffer, bufferSize) {
+        var samplesPerFrame = 48000 / player.refreshRate;
+        var start = 0;
+        var end = 0;
+        var remains = bufferSize;
+        while (remains) {
+            if (frameCounter == 0) {
+                player.run(1);
+                frameCounter = samplesPerFrame;
             }
+            var len = frameCounter < remains ? frameCounter : remains;
+            end = start + len;
+            frameCounter -= len;
+            synth.run(buffer, start, end);
+            start = end;
+            remains -= len;
         }
-        //player.run(count);
-        synth.run(buffer, count);
-        counter -= sound.BUFFER_SIZE;
     });
 
 }

@@ -286,8 +286,8 @@
 
 	//var counter = 0;
 	//var tune = 0;
-	ns_synth.Synth.prototype.run = function(buffer, count) {
-		for (var i=0; i<count; i++) {
+	ns_synth.Synth.prototype.run = function(buffer, start, end) {
+		for (var i=start; i<end; i++) {
 	//		if (counter == 0) {
 	//			tune += 3;
 	//			if (tune == 12) tune -= 12;

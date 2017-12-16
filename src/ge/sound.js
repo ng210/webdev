@@ -7,7 +7,7 @@
         context: null,
         audioNode: null,
         smpRate: 0,
-        BUFFER_SIZE: 256,
+        BUFFER_SIZE: 4096,
 
         init: function(smpRate, callback) {
             this.smpRate = smpRate || 48000;

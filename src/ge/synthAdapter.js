@@ -1,4 +1,4 @@
-include('/ge/player.js');
+include('ge/player.js');
 (function() {
 	var ns_player = require('/ge/player.js');
 
