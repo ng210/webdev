@@ -75,11 +75,13 @@ include('base/ajax.js');
         var contentType = options.contentType;
         if (contentType == 'auto') {
             // get content type by extension
-            var m = options.url.match(/[^\\\/\.]+\.(.+)$/);
+            var m = options.url.match(/[^\\\/\.]+\.([^.]+)$/);
             var ext = m ? m[1] : '';
             switch (ext) {
                 case 'css': contentType = 'text/css'; break;
                 case 'js': contentType = 'text/javascript'; break;
+                case 'html': contentType = 'text/html'; break;
+                case 'xml': contentType = 'text/xml'; break;
                 default: contentType = 'text/plain'; break;
             }
         }
@@ -94,6 +96,11 @@ include('base/ajax.js');
                 var el = document.createElement('div');
                 el.innerHTML = data;
                 res = parseElement(el);
+                break;
+            case 'text/html':
+                var el = document.createElement('div');
+                el.innerHTML = data;
+                res = el;
                 break;
             case 'text':
             default: res = data; break;
