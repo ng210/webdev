@@ -1,0 +1,17 @@
+target C:\apache-tomcat-7.0.73\webapps\synth
+copy synth\index.html
+copy synth\synth.out.js
+copy synth\env.png
+copy synth\osc.png
+copy synth\lfo.png
+copy synth\synth.tmpl.html
+copy synth\synth.tmpl.css
+
+target C:\apache-tomcat-7.0.73\webapps\frmwrk
+copy frmwrk\array.js
+
+target C:\apache-tomcat-7.0.73\webapps\ge
+copy ge\player.js
+copy ge\synth.js
+copy ge\synthAdapter.js
+copy ge\sound.js

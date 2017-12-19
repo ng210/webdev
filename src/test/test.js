@@ -235,18 +235,18 @@ function synthTest() {
 		ns_synth.Ctrl.Lfo1fre, 5.1,     ns_synth.Ctrl.Lfo1amp, 0.2,	ns_synth.Ctrl.Lfo1wav, ns_synth.WF_SIN,
 		ns_synth.Ctrl.Lfo2fre, 7.0,     ns_synth.Ctrl.Lfo2amp, 4.0,	ns_synth.Ctrl.Lfo2wav, ns_synth.WF_SIN,
 
-		ns_synth.Ctrl.Env1atk, 0.05,    ns_synth.Ctrl.Env1dec, 0.04, 
-		ns_synth.Ctrl.Env1sus, 0.2,     ns_synth.Ctrl.Env1rel, 0.1, 
-		ns_synth.Ctrl.Env1off, 0.0,     ns_synth.Ctrl.Env1amp, 1.0, 
+		ns_synth.Ctrl.Env1atk, 0.01,    ns_synth.Ctrl.Env1dec, 0.01,
+		ns_synth.Ctrl.Env1sus, 0.2,     ns_synth.Ctrl.Env1rel, 0.5,
+		ns_synth.Ctrl.Env1off, 0.0,     ns_synth.Ctrl.Env1amp, 1.0,
 
-		ns_synth.Ctrl.Env2atk, 0.0,	ns_synth.Ctrl.Env2dec, 1.0, 
-		ns_synth.Ctrl.Env2sus, 1.0,	ns_synth.Ctrl.Env2rel, 1.0, 
-		ns_synth.Ctrl.Env2off, 1.0,	ns_synth.Ctrl.Env2amp, 1.0, 
+		// ns_synth.Ctrl.Env2atk, 0.0,	ns_synth.Ctrl.Env2dec, 0.05, 
+		// ns_synth.Ctrl.Env2sus, 0.5,	ns_synth.Ctrl.Env2rel, 0.5,
+		// ns_synth.Ctrl.Env2off, 1.0,	ns_synth.Ctrl.Env2amp, 1.0, 
 
-		ns_synth.Ctrl.Osc1wav, ns_synth.WF_SAW,
+		ns_synth.Ctrl.Osc1wav, ns_synth.WF_TRI,
 		ns_synth.Ctrl.Osc1fre, 0.0,	ns_synth.Ctrl.Osc1amp, 0.6,	ns_synth.Ctrl.Osc1psw, 0.6,
 		ns_synth.Ctrl.Osc1tun, 12.0, 
-		ns_synth.Ctrl.Osc2wav, ns_synth.WF_PLS,
+		ns_synth.Ctrl.Osc2wav, ns_synth.WF_TRI,
 		ns_synth.Ctrl.Osc2fre, 1.1,	ns_synth.Ctrl.Osc2amp, 0.4,	ns_synth.Ctrl.Osc2psw, 0.3,
 		ns_synth.Ctrl.Osc2tun, 24
     ]);

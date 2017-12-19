@@ -1,0 +1,34 @@
+div.env {
+    position: relative; width: 180px; height: 32px;
+    margin: 2px;
+    background-image: url('env.png')
+}
+div.osc {
+    position: relative; width: 180px; height: 32px;
+    margin: 2px;
+    background-image: url('osc.png')
+}
+div.lfo {
+    position: relative; width: 180px; height: 32px;
+    margin: 2px;
+    background-image: url('lfo.png')
+}
+
+pot {
+    position: absolute;
+    font-size: 10px; font-family: Verdana; font-weight: bold; color: #ff4020;
+    width: 24px; height: 15px; text-align: center; margin: 0px; padding: 0px;
+    background: transparent; border: none;
+}
+
+pot.envAmp { left:  19px; top: 15px }
+pot.envDc  { left:  46px; top: 15px }
+pot.envAtk { left:  73px; top: 15px }
+pot.envDec { left: 100px; top: 15px }
+pot.envSus { left: 127px; top: 15px }
+pot.envRel { left: 154px; top: 15px }
+
+pot.oscAmp { left:  19px; top: 15px }
+pot.oscFre { left:  46px; top: 15px }
+pot.oscTun { left:  73px; top: 15px }
+pot.oscPsw { left: 100px; top: 15px }
