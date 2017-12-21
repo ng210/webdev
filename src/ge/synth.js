@@ -14,43 +14,47 @@
 
 		Ctrl: {
 			// GENERAL
-			amp: 	  1,	// master amplification
+			amp: 	   0,
 
 			// LFO
-			Lfo1fre: 10,
-			Lfo1amp: 11,
-			Lfo1wav: 12,
+			lfo1fre:  10,
+			lfo1amp:  11,
+			lfo1wav:  12,
 
-			Lfo2fre: 20,
-			Lfo2amp: 21,
-			Lfo2wav: 22,
+			lfo2fre:  20,
+			lfo2amp:  21,
+			lfo2wav:  22,
 
-			// ENV
-			Env1atk: 30,	// attack of envelope #1
-			Env1dec: 31,	// decay of envelope #1
-			Env1sus: 32,	// sustain of envelope #1
-			Env1rel: 33,	// release of envelope #1
-			Env1off: 34,	// offset of envelope #1
-			Env1amp: 35,	// amplification of envelope #1
+			// env
+			env1amp:  30,
+			env1dc:   31,
+			env1atk:  32,
+			env1dec:  33,
+			env1sus:  34,
+			env1rel:  35,
 
-			Env2atk: 40,	// attack of envelope #2
-			Env2dec: 41,	// decay of envelope #2
-			Env2sus: 42,	// sustain of envelope #2
-			Env2rel: 43,	// release of envelope #2
-			Env2off: 44,	// offset of envelope #2
-			Env2amp: 45,	// amplification of envelope #2
+			env2amp:  40,
+			env2dc:   41,
+			env2atk:  42,
+			env2dec:  43,
+			env2sus:  44,
+			env2rel:  45,
 
-			Osc1fre: 50,	// frequency of oscillator #1
-			Osc1amp: 51,	// amplitude of oscillator #1
-			Osc1psw: 52,	// pulse width of oscillator #1
-			Osc1wav: 53,	// waveform of oscillator #1
-			Osc1tun: 54,	// tune of oscillator #1
+			osc1amp:  50,
+			osc1dc:   51,
+			osc1fre:  52,
+			osc1note: 53,
+			osc1tune: 54,
+			osc1psw:  55,
+			osc1wav:  56,
 
-			Osc2fre: 60,	// frequency of oscillator #2
-			Osc2amp: 61,	// amplitude of oscillator #2
-			Osc2psw: 62,	// pulse width of oscillator #2
-			Osc2wav: 63,	// waveform of oscillator #2
-			Osc2tun: 64		// tune of oscillator #2
+			osc1amp:  60,
+			osc1dc:   61,
+			osc1fre:  62,
+			osc1note: 63,
+			osc1tune: 64,
+			osc1psw:  65,
+			osc1wav:  66
 		},
 
 		theta: 2 * Math.PI,
@@ -60,53 +64,132 @@
 			var f = ((p == 0) ? 0.0 : (Math.pow(1.05946309436, p) * 20.60172230705));
 			return f;
 		},
+		/******************************************************************************
+		 * Prototype of a Potmeter (input element)
+		 *****************************************************************************/
+		Pot: function(min, max, value) {
+			this.min = min;
+			this.max = max;
+			this.value = value;
+		},
 
 		/******************************************************************************
 		 * Prototype of an envelope generator
 		 *****************************************************************************/
-		Env: function(parent) {
+		Env: function(parent, controls) {
 			this.parent = parent;
 			this.gate = 0;
 			this.phase = 0;
 			this.timer = 0;
+			this.rate = 0;
 
-			this.atk = 0;
-			this.dec = 0;
-			this.sus = 0;
-			this.rel = 0;
-			this.off = 0;
-			this.amp = 1;
+			this.amp = controls.amp;
+			this.dc  = controls.dc;
+			this.atk = controls.atk;
+			this.dec = controls.dec;
+			this.sus = controls.sus;
+			this.rel = controls.rel;
 		},
 
 		/******************************************************************************
 		 * Prototype of an oscillator
 		 *****************************************************************************/
-		Osc: function(parent) {
+		Osc: function(parent, controls) {
 			this.parent = parent;
 			this.timer = 0;
-			this.fre = 0;
-			this.note = 0;
-			this.tune = 0;
-			this.psw = 0;
-			this.wave = ns_synth.WF_NONE;
 			this.smp = 0;
+			
+			this.amp = controls.amp;
+			this.dc  = controls.dc;
+			this.fre  = controls.fre;
+			this.note = controls.note;
+			this.tune = controls.tune;
+			this.psw  = controls.psw;
+			this.wave = controls.wave;
 		},
 
 		/******************************************************************************
+		 * Prototype of a voice for polyphony
+		 *****************************************************************************/
+		Voice: function(parent) {
+			this.gate = null;
+			this.note = null;
+			// create a basic synth with 2 oscillators and 2 envelopes for AM
+			this.envelopes = [ new ns_synth.Env(parent, parent.controls.env1), new ns_synth.Env(parent, parent.controls.env2) ];
+			this.lfos = [ new ns_synth.Osc(parent, parent.controls.lfo1), new ns_synth.Osc(parent, parent.controls.lfo2) ];
+			this.oscillators = [ new ns_synth.Osc(parent, parent.controls.osc1), new ns_synth.Osc(parent, parent.controls.osc2) ];
+		},
+		/******************************************************************************
 		 * Prototype of a simple software synth
 		 *****************************************************************************/
-		Synth: function(smpRate) {
+		Synth: function(smpRate, voices) {
 			this.smpRate = smpRate;
-			this.amp = 1;
-			this.note = 0;
-			this.gate = 0;
-			this.lfos = [];
-			this.envelopes = [];
-			this.oscillators = [];
 			this.omega = ns_synth.theta / smpRate;
+			// create controls
+			this.controls = {
+				amp: new Pot(0, 1, .8),
+				env1: {
+					amp: new Pot(0, 1, .5),
+					dc:  new Pot(0, 1, .5),
+					atk: new Pot(0, 1, .5),
+					dec: new Pot(0, 1, .5),
+					sus: new Pot(0, 1, .5),
+					rel: new Pot(0, 1, .5),
+
+				},
+				env2: {
+					amp: new Pot(0, 1, .5),
+					dc:  new Pot(0, 1, .5),
+					atk: new Pot(0, 1, .5),
+					dec: new Pot(0, 1, .5),
+					sus: new Pot(0, 1, .5),
+					rel: new Pot(0, 1, .5)
+				},
+				lfo1: {
+					amp: new Pot(0, 1, .5),
+					dc:  new Pot(0, 1, .5),
+					fre: new Pot(0, 1, .5),
+					note: new Pot(0, 1, .5),
+					tune: new Pot(0, 1, .5),
+					psw: new Pot(0, 1, .5),
+					wave: new Pot(0, 1, .5),
+				},
+				lfo2: {
+					amp: new Pot(0, 1, .5),
+					dc:  new Pot(0, 1, .5),
+					fre: new Pot(0, 1, .5),
+					note: new Pot(0, 1, .5),
+					tune: new Pot(0, 1, .5),
+					psw: new Pot(0, 1, .5),
+					wave: new Pot(0, 1, .5),
+				},
+				osc1: {
+					amp: new Pot(0, 1, .5),
+					dc:  new Pot(0, 1, .5),
+					fre: new Pot(0, 1, .5),
+					note: new Pot(0, 1, .5),
+					tune: new Pot(0, 1, .5),
+					psw: new Pot(0, 1, .5),
+					wave: new Pot(0, 1, .5),
+				},
+				osc2: {
+					amp: new Pot(0, 1, .5),
+					dc:  new Pot(0, 1, .5),
+					fre: new Pot(0, 1, .5),
+					note: new Pot(0, 1, .5),
+					tune: new Pot(0, 1, .5),
+					psw: new Pot(0, 1, .5),
+					wave: new Pot(0, 1, .5),
+				}
+			};
+			// create voices
+			this.voices = [];
+			for (var i=0; i<voices; i++) {
+				voices.push(new Voice(this));
+			}
 		}
 	};
-
+	/*****************************************************************************/
 	ns_synth.Env.prototype.setGate = function(v) {
 		if (this.gate == 0) {
 			if (v > 0) {
@@ -118,7 +201,7 @@
 		} else {
 			if (v <= 0) {
 				// slope down: start release phase
-				this.phase = 4;
+				this.phase = 5;
 				this.timer = this.sus;
 				this.gate = 0;
 			}
@@ -126,56 +209,55 @@
 	};
 	ns_synth.Env.prototype.run = function(am) {
 		var smp = 0;
-		var rate = 0;
 		
-		if (this.phase > 0) {
-			
-			switch (this.phase) {
-				case 1:	// atk
-						// 0.0 : 0.005s -> 1/(0*3.995 + 0.005)/smpRate = 200/smpRate
-						// 1.0 : 4.0s -> 1/(1*3.995 + 0.005)/smpRate
-						//   X : Xs -> 1/(3.995*X + 0.005)/smpRate
-					rate = 1/(this.parent.smpRate * (3.995 * this.atk + 0.005));
-					this.timer += rate;
-					if (this.timer >= 1.0) {
-						this.phase++;
-						this.timer = 1.0;
-					}
-					smp = this.timer;
-					//smp = smooth(this.timer);
-					break;
-				case 2:	// dec/sustain
-						// 0.0 : 0.005s -> 1/(0*3.995 + 0.005)/smpRate = 200/smpRate
-						// 1.0 : 4.0s -> 1/(1*3.995 + 0.005)/smpRate
-						//   X : Xs -> 1/(3.995*X + 0.005)/smpRate
-					if (this.timer <= this.sus) {
-						this.timer = this.sus;
-					} else {
-						rate = 1/(this.parent.smpRate * (3.995 * this.dec + 0.005));
-						this.timer -= rate;
-						//var susm1 = 1- this.sus;
-						//smp = susm1*smooth((this.timer-this.sus)/susm1) + this.sus;
-					}
-					smp = this.timer;
-					break;
-				case 4:	// rel
-						// 0.0 :  0.005s -> 1/(0*9.995 + 0.005)/smpRate = 200/smpRate
-						// 1.0 : 10.0s -> 1/(1*9.995 + 0.005)/smpRate
-						//   X :  Xs -> 1/(9.995*X + 0.005)/smpRate
-					rate = 1/(this.parent.smpRate * (9.995 * this.rel + 0.005));
+		switch (this.phase) {
+			case 1: // atk precalc
+				// 0.0 : 0.005s -> 1/(0*3.995 + 0.005)/smpRate = 200/smpRate
+				// 1.0 : 4.0s -> 1/(1*3.995 + 0.005)/smpRate
+				//   X : Xs -> 1/(3.995*X + 0.005)/smpRate
+				this.rate = 1/(this.parent.smpRate * (3.995 * this.atk + 0.005));
+				this.phase++;
+			case 2: // atk
+				this.timer += rate;
+				if (this.timer >= 1.0) {
+					this.phase++;
+					this.timer = 1.0;
+				}
+				//smp = smooth(this.timer);
+				break;
+			case 3:	// dec precalc
+				// 0.0 : 0.005s -> 1/(0*3.995 + 0.005)/smpRate = 200/smpRate
+				// 1.0 : 4.0s -> 1/(1*3.995 + 0.005)/smpRate
+				//   X : Xs -> 1/(3.995*X + 0.005)/smpRate
+				rate = 1/(this.parent.smpRate * (3.995 * this.dec + 0.005));
+				this.phase++;
+			case 4: // dec/sustain
+				if (this.timer <= this.sus) {
+					this.timer = this.sus;
+				} else {
 					this.timer -= rate;
-					if (this.timer <= 0.0) {
-						this.phase = 0;	// set to idle
-						this.timer = 0.0;
-					}
-					smp = this.timer;
-					//smp = this.sus*smooth(this.timer/this.sus);
-					break;
-			}
+					//var susm1 = 1- this.sus;
+					//smp = susm1*smooth((this.timer-this.sus)/susm1) + this.sus;
+				}
+				break;
+			case 5:	// rel precalc
+				// 0.0 :  0.005s -> 1/(0*9.995 + 0.005)/smpRate = 200/smpRate
+				// 1.0 : 10.0s -> 1/(1*9.995 + 0.005)/smpRate
+				//   X :  Xs -> 1/(9.995*X + 0.005)/smpRate
+				rate = 1/(this.parent.smpRate * (9.995 * this.rel + 0.005));
+				this.phase++;
+			case 6: // rel
+				this.timer -= rate;
+				if (this.timer <= 0.0) {
+					this.phase = 0;	// set to idle
+					this.timer = 0.0;
+				}
+				//smp = this.sus*smooth(this.timer/this.sus);
+				break;
 		}
-		return am*smp;
+		return am * this.timer;
 	};
-
+	/*****************************************************************************/
 	ns_synth.Osc.prototype.run = function(am, fm, pm) {
 		var pitch = this.note + this.tune;
 		var delta = (this.fre + fm + ns_synth.p2f(pitch))/this.parent.smpRate;
@@ -220,98 +302,67 @@
 		}
 		return this.amp*am*out;
 	};
-
 	ns_synth.Synth.prototype.setup = function(values) {
-		// create a basic synth with 2 oscillators and 2 envelopes for AM
-		this.envelopes.push(new ns_synth.Env(this));
-		this.envelopes.push(new ns_synth.Env(this));
-		this.lfos.push(new ns_synth.Osc(this));
-		this.lfos.push(new ns_synth.Osc(this));
-		this.oscillators.push(new ns_synth.Osc(this));
-		this.oscillators.push(new ns_synth.Osc(this));
 		for (var i=0; i<values.length; i+=2) {
 			this.setControl(values[i], values[i+1]);
 		}
 	};
-
 	ns_synth.Synth.prototype.getControl = function(controlId) {
-		var value = 0;
+		var pot = null;
 		switch (controlId) {
-			case ns_synth.Ctrl.amp: this.amp = value; break;
-		
-			case ns_synth.Ctrl.Lfo1fre: value = this.lfos[0].fre; break;
-			case ns_synth.Ctrl.Lfo1amp: value = this.lfos[0].amp; break;
-			case ns_synth.Ctrl.Lfo1wav: value = this.lfos[0].wave; break;
-			case ns_synth.Ctrl.Lfo2fre: value = this.lfos[1].fre; break;
-			case ns_synth.Ctrl.Lfo2amp: value = this.lfos[1].amp; break;
-			case ns_synth.Ctrl.Lfo2wav: value = this.lfos[1].wave; break;
-		
-			case ns_synth.Ctrl.Env1atk: value = this.envelopes[0].atk; break;
-			case ns_synth.Ctrl.Env1dec: value = this.envelopes[0].dec; break;
-			case ns_synth.Ctrl.Env1sus: value = this.envelopes[0].sus; break;
-			case ns_synth.Ctrl.Env1rel: value = this.envelopes[0].rel; break;
-			case ns_synth.Ctrl.Env1amp: value = this.envelopes[0].amp; break;
-			case ns_synth.Ctrl.Env1off: value = this.envelopes[0].off; break;
+			case ns_synth.Ctrl.amp: pot = this.controls.amp; break;
+			// LFO
+			case ns_synth.Ctrl.lfo1fre: pot = this.controls.lfo1.fre; break;
+			case ns_synth.Ctrl.lfo1amp: pot = this.controls.lfo1.amp; break;
+			case ns_synth.Ctrl.lfo1wav: pot = this.controls.lfo1.wav; break;
 
-			case ns_synth.Ctrl.Env2atk: value = this.envelopes[1].atk; break;
-			case ns_synth.Ctrl.Env2dec: value = this.envelopes[1].dec; break;
-			case ns_synth.Ctrl.Env2sus: value = this.envelopes[1].sus; break;
-			case ns_synth.Ctrl.Env2rel: value = this.envelopes[1].rel; break;
-			case ns_synth.Ctrl.Env2amp: value = this.envelopes[1].amp; break;
-			case ns_synth.Ctrl.Env2off: value = this.envelopes[1].off; break;
+			case ns_synth.Ctrl.lfo2fre: pot = this.controls.lfo2.fre; break;
+			case ns_synth.Ctrl.lfo2amp: pot = this.controls.lfo2.amp; break;
+			case ns_synth.Ctrl.lfo2wav: pot = this.controls.lfo2.wav; break;
 
-			case ns_synth.Ctrl.Osc1fre: value = this.oscillators[0].fre; break;
-			case ns_synth.Ctrl.Osc1amp: value = this.oscillators[0].amp; break;
-			case ns_synth.Ctrl.Osc1psw: value = this.oscillators[0].psw; break;
-			case ns_synth.Ctrl.Osc1wav: value = this.oscillators[0].wave; break;
-			case ns_synth.Ctrl.Osc1tun: value = this.oscillators[0].tune; break;
+			// env
+			case ns_synth.Ctrl.env1amp: pot = this.controls.env1.amp; break;
+			case ns_synth.Ctrl.env1dc: pot = this.controls.env1.dc; break;
+			case ns_synth.Ctrl.env1atk: pot = this.controls.env1.atk; break;
+			case ns_synth.Ctrl.env1dec: pot = this.controls.env1.dec; break;
+			case ns_synth.Ctrl.env1sus: pot = this.controls.env1.sus; break;
+			case ns_synth.Ctrl.env1rel: pot = this.controls.env1.rel; break;
 
-			case ns_synth.Ctrl.Osc2fre: value = this.oscillators[1].fre; break;
-			case ns_synth.Ctrl.Osc2amp: value = this.oscillators[1].amp; break;
-			case ns_synth.Ctrl.Osc2psw: value = this.oscillators[1].psw; break;
-			case ns_synth.Ctrl.Osc2wav: value = this.oscillators[1].wave; break;
-			case ns_synth.Ctrl.Osc2tun: value = this.oscillators[1].tune; break;
+			case ns_synth.Ctrl.env2amp: pot = this.controls.env2.amp; break;
+			case ns_synth.Ctrl.env2dc: pot = this.controls.env2.dc; break;
+			case ns_synth.Ctrl.env2atk: pot = this.controls.env2.atk; break;
+			case ns_synth.Ctrl.env2dec: pot = this.controls.env2.dec; break;
+			case ns_synth.Ctrl.env2sus: pot = this.controls.env2.sus; break;
+			case ns_synth.Ctrl.env2rel: pot = this.controls.env2.rel; break;
+
+			// osc
+			case ns_synth.Ctrl.Osc1amp: pot = this.controls.Osc1.amp; break;
+			case ns_synth.Ctrl.Osc1dc: pot = this.controls.Osc1.dc; break;
+			case ns_synth.Ctrl.Osc1fre: pot = this.controls.Osc1.fre; break;
+			case ns_synth.Ctrl.Osc1note: pot = this.controls.Osc1.note; break;
+			case ns_synth.Ctrl.Osc1tune: pot = this.controls.Osc1.tune; break;
+			case ns_synth.Ctrl.Osc1psw: pot = this.controls.Osc1.psw; break;
+			case ns_synth.Ctrl.Osc1wav: pot = this.controls.Osc1.wav; break;
+
+			case ns_synth.Ctrl.Osc1amp: pot = this.controls.Osc1.amp; break;
+			case ns_synth.Ctrl.Osc1dc: pot = this.controls.Osc1.dc; break;
+			case ns_synth.Ctrl.Osc1fre: pot = this.controls.Osc1.fre; break;
+			case ns_synth.Ctrl.Osc1note: pot = this.controls.Osc1.note; break;
+			case ns_synth.Ctrl.Osc1tune: pot = this.controls.Osc1.tune; break;
+			case ns_synth.Ctrl.Osc1psw: pot = this.controls.Osc1.psw; break;
+			case ns_synth.Ctrl.Osc1wav: pot = this.controls.Osc1.wav; break;
 		}
+		return pot;
+	};
+	ns_synth.Synth.prototype.setControl = function(controlId, value) {
+		var value;
+		var pot = this.getControl(controlId);
+		if (pot != null) value = pot.value;
 		return value;
 	};
-
 	ns_synth.Synth.prototype.setControl = function(controlId, value) {
-		switch (controlId) {
-			case ns_synth.Ctrl.amp: this.amp = value; break;
-		
-			case ns_synth.Ctrl.Lfo1fre: this.lfos[0].fre = value; break;
-			case ns_synth.Ctrl.Lfo1amp: this.lfos[0].amp = value; break;
-			case ns_synth.Ctrl.Lfo1wav: this.lfos[0].wave = value; break;
-			case ns_synth.Ctrl.Lfo2fre: this.lfos[1].fre = value; break;
-			case ns_synth.Ctrl.Lfo2amp: this.lfos[1].amp = value; break;
-			case ns_synth.Ctrl.Lfo2wav: this.lfos[1].wave = value; break;
-		
-			case ns_synth.Ctrl.Env1atk: this.envelopes[0].atk = value; break;
-			case ns_synth.Ctrl.Env1dec: this.envelopes[0].dec = value; break;
-			case ns_synth.Ctrl.Env1sus: this.envelopes[0].sus = value; break;
-			case ns_synth.Ctrl.Env1rel: this.envelopes[0].rel = value; break;
-			case ns_synth.Ctrl.Env1amp: this.envelopes[0].amp = value; break;
-			case ns_synth.Ctrl.Env1off: this.envelopes[0].off = value; break;
-
-			case ns_synth.Ctrl.Env2atk: this.envelopes[1].atk = value; break;
-			case ns_synth.Ctrl.Env2dec: this.envelopes[1].dec = value; break;
-			case ns_synth.Ctrl.Env2sus: this.envelopes[1].sus = value; break;
-			case ns_synth.Ctrl.Env2rel: this.envelopes[1].rel = value; break;
-			case ns_synth.Ctrl.Env2amp: this.envelopes[1].amp = value; break;
-			case ns_synth.Ctrl.Env2off: this.envelopes[1].off = value; break;
-
-			case ns_synth.Ctrl.Osc1fre: this.oscillators[0].fre = value; break;
-			case ns_synth.Ctrl.Osc1amp: this.oscillators[0].amp = value; break;
-			case ns_synth.Ctrl.Osc1psw: this.oscillators[0].psw = value; break;
-			case ns_synth.Ctrl.Osc1wav: this.oscillators[0].wave = value; break;
-			case ns_synth.Ctrl.Osc1tun: this.oscillators[0].tune = value; break;
-
-			case ns_synth.Ctrl.Osc2fre: this.oscillators[1].fre = value; break;
-			case ns_synth.Ctrl.Osc2amp: this.oscillators[1].amp = value; break;
-			case ns_synth.Ctrl.Osc2psw: this.oscillators[1].psw = value; break;
-			case ns_synth.Ctrl.Osc2wav: this.oscillators[1].wave = value; break;
-			case ns_synth.Ctrl.Osc2tun: this.oscillators[1].tune = value; break;
-		}
+		var pot = this.getControl(controlId);
+		if (pot != null) pot.set(value);
 	};
 	ns_synth.Synth.prototype.setNote = function(note, velocity) {
 		for (var i=0; i<this.oscillators.length; i++) {

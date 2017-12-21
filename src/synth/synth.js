@@ -36,9 +36,9 @@ function createPlayer() {
 		new ns_player.Command(   4, SynthAdapter.Cmd_setNote, [12, 0.7]),	// 2
 		new ns_player.Command(   4, SynthAdapter.Cmd_setNote, [12, 0.0]),
 		new ns_player.Command(   4, SynthAdapter.Cmd_setNote, [15, 0.7]),	// 4
-		new ns_player.Command(   4, SynthAdapter.Cmd_setNote, [12, 0.0]),
+		new ns_player.Command(   4, SynthAdapter.Cmd_setNote, [15, 0.0]),
 		new ns_player.Command(   4, SynthAdapter.Cmd_setNote, [17, 0.7]),	// 6
-		new ns_player.Command(   4, SynthAdapter.Cmd_setNote, [12, 0.0]),
+		new ns_player.Command(   4, SynthAdapter.Cmd_setNote, [17, 0.0]),
 		new ns_player.Command(   4, ns_player.Cmd_end, null)				// 0
 	];
 	// the very first sequence is the master that spawns all the channels
