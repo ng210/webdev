@@ -127,59 +127,59 @@
 			this.omega = ns_synth.theta / smpRate;
 			// create controls
 			this.controls = {
-				amp: new Pot(0, 1, .8),
+				amp: new ns_synth.Pot(0, 1, .8),
 				env1: {
-					amp: new Pot(0, 1, .5),
-					dc:  new Pot(0, 1, .5),
-					atk: new Pot(0, 1, .5),
-					dec: new Pot(0, 1, .5),
-					sus: new Pot(0, 1, .5),
-					rel: new Pot(0, 1, .5),
+					amp: new ns_synth.Pot(0, 1, .5),
+					dc:  new ns_synth.Pot(0, 1, .5),
+					atk: new ns_synth.Pot(0, 1, .5),
+					dec: new ns_synth.Pot(0, 1, .5),
+					sus: new ns_synth.Pot(0, 1, .5),
+					rel: new ns_synth.Pot(0, 1, .5),
 
 				},
 				env2: {
-					amp: new Pot(0, 1, .5),
-					dc:  new Pot(0, 1, .5),
-					atk: new Pot(0, 1, .5),
-					dec: new Pot(0, 1, .5),
-					sus: new Pot(0, 1, .5),
-					rel: new Pot(0, 1, .5)
+					amp: new ns_synth.Pot(0, 1, .5),
+					dc:  new ns_synth.Pot(0, 1, .5),
+					atk: new ns_synth.Pot(0, 1, .5),
+					dec: new ns_synth.Pot(0, 1, .5),
+					sus: new ns_synth.Pot(0, 1, .5),
+					rel: new ns_synth.Pot(0, 1, .5)
 				},
 				lfo1: {
-					amp: new Pot(0, 1, .5),
-					dc:  new Pot(0, 1, .5),
-					fre: new Pot(0, 1, .5),
-					note: new Pot(0, 1, .5),
-					tune: new Pot(0, 1, .5),
-					psw: new Pot(0, 1, .5),
-					wave: new Pot(0, 1, .5),
+					amp: new ns_synth.Pot(0, 1, .5),
+					dc:  new ns_synth.Pot(0, 1, .5),
+					fre: new ns_synth.Pot(0, 1, .5),
+					note: new ns_synth.Pot(0, 1, .5),
+					tune: new ns_synth.Pot(0, 1, .5),
+					psw: new ns_synth.Pot(0, 1, .5),
+					wave: new ns_synth.Pot(0, 1, .5),
 				},
 				lfo2: {
-					amp: new Pot(0, 1, .5),
-					dc:  new Pot(0, 1, .5),
-					fre: new Pot(0, 1, .5),
-					note: new Pot(0, 1, .5),
-					tune: new Pot(0, 1, .5),
-					psw: new Pot(0, 1, .5),
-					wave: new Pot(0, 1, .5),
+					amp: new ns_synth.Pot(0, 1, .5),
+					dc:  new ns_synth.Pot(0, 1, .5),
+					fre: new ns_synth.Pot(0, 1, .5),
+					note: new ns_synth.Pot(0, 1, .5),
+					tune: new ns_synth.Pot(0, 1, .5),
+					psw: new ns_synth.Pot(0, 1, .5),
+					wave: new ns_synth.Pot(0, 1, .5),
 				},
 				osc1: {
-					amp: new Pot(0, 1, .5),
-					dc:  new Pot(0, 1, .5),
-					fre: new Pot(0, 1, .5),
-					note: new Pot(0, 1, .5),
-					tune: new Pot(0, 1, .5),
-					psw: new Pot(0, 1, .5),
-					wave: new Pot(0, 1, .5),
+					amp: new ns_synth.Pot(0, 1, .5),
+					dc:  new ns_synth.Pot(0, 1, .5),
+					fre: new ns_synth.Pot(0, 1, .5),
+					note: new ns_synth.Pot(0, 1, .5),
+					tune: new ns_synth.Pot(0, 1, .5),
+					psw: new ns_synth.Pot(0, 1, .5),
+					wave: new ns_synth.Pot(0, 1, .5),
 				},
 				osc2: {
-					amp: new Pot(0, 1, .5),
-					dc:  new Pot(0, 1, .5),
-					fre: new Pot(0, 1, .5),
-					note: new Pot(0, 1, .5),
-					tune: new Pot(0, 1, .5),
-					psw: new Pot(0, 1, .5),
-					wave: new Pot(0, 1, .5),
+					amp: new ns_synth.Pot(0, 1, .5),
+					dc:  new ns_synth.Pot(0, 1, .5),
+					fre: new ns_synth.Pot(0, 1, .5),
+					note: new ns_synth.Pot(0, 1, .5),
+					tune: new ns_synth.Pot(0, 1, .5),
+					psw: new ns_synth.Pot(0, 1, .5),
+					wave: new ns_synth.Pot(0, 1, .5),
 				}
 			};
 			// create voices
@@ -302,9 +302,21 @@
 		}
 		return this.amp*am*out;
 	};
+	/*****************************************************************************/
+	ns_synth.Voice.prototype.run = function() {
+		// run LFOs
+		var lfo1 = 1.0;	//1.0 - this.lfos[0].amp + (this.lfos[0].amp + this.lfos[0].run(1.0, 0.0, 0.0))/2;
+		var lfo2 = this.lfos[1].run(1.0, 0.0, 0.0);
+		// // run main oscillators
+		var amp = this.envelopes[0].run(lfo1);
+		var psw = 0.0;	//this.envelopes[1].run(1.0);
+		var smp1 = this.oscillators[0].run(amp, lfo2, psw);
+		var smp2 = this.oscillators[1].run(amp, lfo2, psw);
+	};
+	/*****************************************************************************/
 	ns_synth.Synth.prototype.setup = function(values) {
 		for (var i=0; i<values.length; i+=2) {
-			this.setControl(values[i], values[i+1]);
+			this.getControl(values[i]).value = values[i+1];
 		}
 	};
 	ns_synth.Synth.prototype.getControl = function(controlId) {
@@ -354,36 +366,20 @@
 		}
 		return pot;
 	};
-	ns_synth.Synth.prototype.setControl = function(controlId, value) {
-		var value;
-		var pot = this.getControl(controlId);
-		if (pot != null) value = pot.value;
-		return value;
-	};
-	ns_synth.Synth.prototype.setControl = function(controlId, value) {
-		var pot = this.getControl(controlId);
-		if (pot != null) pot.set(value);
-	};
 	ns_synth.Synth.prototype.setNote = function(note, velocity) {
-		for (var i=0; i<this.oscillators.length; i++) {
-			this.oscillators[i].note = note;
-		}
+		this.controls.osc1.node = node;
+		this.controls.osc1.node = node;
 		for (var i=0; i<this.envelopes.length; i++) {
 			this.envelopes[i].setGate(velocity);
 		}
 	};
-
 	ns_synth.Synth.prototype.run = function(buffer, start, end) {
 		for (var i=start; i<end; i++) {
-			// run LFOs
-			var lfo1 = 1.0;	//1.0 - this.lfos[0].amp + (this.lfos[0].amp + this.lfos[0].run(1.0, 0.0, 0.0))/2;
-			var lfo2 = this.lfos[1].run(1.0, 0.0, 0.0);
-			// // run main oscillators
-			var amp = this.envelopes[0].run(lfo1);
-			var psw = 0.0;	//this.envelopes[1].run(1.0);
-			var smp1 = this.oscillators[0].run(amp, lfo2, psw);
-			var smp2 = this.oscillators[1].run(amp, lfo2, psw);
-			buffer[i] = smp1 + smp2;
+			var smp = 0;
+			for (var i=0; i<this.voices.length; i++) {
+				smp += this.voices[i].run();
+			}
+			buffer[i] = smp;
 		}
 	};
 

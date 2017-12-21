@@ -4,12 +4,14 @@ include('ge/synth.js');
 include('ge/player.js');
 include('ge/synthAdapter.js');
 include('ge/sound.js');
+include('synth/Pot.js');
 
 //var load = require('/base/load.js');
 var ns_synth = require('/ge/synth.js');
 var ns_player = require('/ge/player.js');
 var sound = require('/ge/sound.js');
 var SynthAdapter = require('/ge/synthAdapter.js');
+var Pot = require('/synth/Pot.js');
 
 var g_frameCounter = 0;
 var g_player = null;
@@ -50,96 +52,28 @@ function createPlayer() {
 
 function createSynth() {
 	var synth = new ns_synth.Synth(48000);
-	synth.setup([
-		ns_synth.Ctrl.amp, 0.6,
-		ns_synth.Ctrl.Lfo1fre, 5.1,     ns_synth.Ctrl.Lfo1amp, 0.2,	ns_synth.Ctrl.Lfo1wav, ns_synth.WF_SIN,
-		ns_synth.Ctrl.Lfo2fre, 1.0,     ns_synth.Ctrl.Lfo2amp, 1.0,	ns_synth.Ctrl.Lfo2wav, ns_synth.WF_SIN,
+	// synth.setup([
+	// 	ns_synth.Ctrl.amp, 0.6,
+	// 	ns_synth.Ctrl.Lfo1fre, 5.1,     ns_synth.Ctrl.Lfo1amp, 0.2,	ns_synth.Ctrl.Lfo1wav, ns_synth.WF_SIN,
+	// 	ns_synth.Ctrl.Lfo2fre, 1.0,     ns_synth.Ctrl.Lfo2amp, 1.0,	ns_synth.Ctrl.Lfo2wav, ns_synth.WF_SIN,
 
-		ns_synth.Ctrl.Env1atk, 0.01,    ns_synth.Ctrl.Env1dec, 0.10,
-		ns_synth.Ctrl.Env1sus, 0.2,     ns_synth.Ctrl.Env1rel, 0.2,
-		ns_synth.Ctrl.Env1off, 0.0,     ns_synth.Ctrl.Env1amp, 0.8,
+	// 	ns_synth.Ctrl.Env1atk, 0.01,    ns_synth.Ctrl.Env1dec, 0.10,
+	// 	ns_synth.Ctrl.Env1sus, 0.2,     ns_synth.Ctrl.Env1rel, 0.2,
+	// 	ns_synth.Ctrl.Env1off, 0.0,     ns_synth.Ctrl.Env1amp, 0.8,
 
-		ns_synth.Ctrl.Env2atk, 0.0,	ns_synth.Ctrl.Env2dec, 0.05,
-		ns_synth.Ctrl.Env2sus, 0.5,	ns_synth.Ctrl.Env2rel, 0.5,
-		ns_synth.Ctrl.Env2off, 1.0,	ns_synth.Ctrl.Env2amp, 1.0,
+	// 	ns_synth.Ctrl.Env2atk, 0.0,	ns_synth.Ctrl.Env2dec, 0.05,
+	// 	ns_synth.Ctrl.Env2sus, 0.5,	ns_synth.Ctrl.Env2rel, 0.5,
+	// 	ns_synth.Ctrl.Env2off, 1.0,	ns_synth.Ctrl.Env2amp, 1.0,
 
-		ns_synth.Ctrl.Osc1wav, ns_synth.WF_TRI,
-		ns_synth.Ctrl.Osc1fre, 6.0,	ns_synth.Ctrl.Osc1amp, 0.6,	ns_synth.Ctrl.Osc1psw, 0.6,
-		ns_synth.Ctrl.Osc1tun, 12.0,
-		ns_synth.Ctrl.Osc2wav, ns_synth.WF_PLS,
-		ns_synth.Ctrl.Osc2fre, 0.8,	ns_synth.Ctrl.Osc2amp, 0.4,	ns_synth.Ctrl.Osc2psw, 0.3,
-		ns_synth.Ctrl.Osc2tun, 12
-	]);
+	// 	ns_synth.Ctrl.Osc1wav, ns_synth.WF_TRI,
+	// 	ns_synth.Ctrl.Osc1fre, 6.0,	ns_synth.Ctrl.Osc1amp, 0.6,	ns_synth.Ctrl.Osc1psw, 0.6,
+	// 	ns_synth.Ctrl.Osc1tun, 12.0,
+	// 	ns_synth.Ctrl.Osc2wav, ns_synth.WF_PLS,
+	// 	ns_synth.Ctrl.Osc2fre, 0.8,	ns_synth.Ctrl.Osc2amp, 0.4,	ns_synth.Ctrl.Osc2psw, 0.3,
+	// 	ns_synth.Ctrl.Osc2tun, 12
+	// ]);
 	return synth;
 }
-
-function Pot(el, synth) {
-	el.pot = this;
-	// el.onmouseover = Pot.onmouseover;
-	// el.onmouseout = Pot.onmouseout;
-	// el.onclick = Pot.onclick;
-	el.onmousedown = Pot.onmousedown;
-	el.onmouseup = Pot.onmouseup;	this.min = parseFloat(el.min) || 0;
-
-	this.el = el;
-	this.min = parseFloat(el.getAttribute('min')) || 0;
-	this.max = parseFloat(el.getAttribute('max')) || 1;
-	this.scale = parseFloat(el.getAttribute('scale')) || 100;
-	this.synth = synth;
-	var id = this.el.id.split('_')[1];
-	this.ctrlId = ns_synth.Ctrl[id];
-	this.set(this.synth.getControl(this.ctrlId));
-}
-
-Pot.prototype.set = function(value) {
-	if (value < this.min) {
-		value = this.min;
-	}
-	if (value > this.max) {
-		value = this.max;
-	}
-	this.el.innerHTML = Math.floor(value * this.scale);
-	this.synth.setControl(this.ctrlId, value);
-}
-Pot.selectedItem = null;
-Pot.oldOnMouseMove = null;
-Pot.oldOnMouseUp = null;
-Pot.dragPoint = [0, 0];
-Pot.dragSpeed = 0.5;
-// Pot.onmouseover = function(e) {
-// 	e.pot.onmouseover(e);
-// };
-// Pot.onmouseout = function(e) {
-// 	e.pot.onmouseover(e);
-// };
-Pot.onmousedown = function(e) {
-	if (Pot.selectedItem != null) {
-		Pot.selectedItem.style.border = 'none';
-	}
-	Pot.selectedItem = e.target;
-	Pot.dragPoint[0] = e.screenX;
-	Pot.dragPoint[1] = e.screenY;
-	Pot.selectedItem.style.border = 'solid 1px #4060a0';
-	Pot.oldOnMouseMove = document.onmousemove;
-	document.onmousemove = Pot.onmousemove;
-	document.onmouseup = Pot.onmouseup;
-	e.preventDefault();
-};
-Pot.onmouseup = function(e) {
-	document.onmousemove = Pot.oldOnMouseMove;
-	document.onmouseup = Pot.oldOnMouseUp;
-	e.preventDefault();
-};
-Pot.onmousemove = function(e) {
-	//var deltaX = e.screenX - Pot.dragPoint[0];
-	var deltaY = e.screenY - Pot.dragPoint[1];
-	var sgn = deltaY < 0 ? 1 : -1;
-	//Pot.dragPoint[0] = e.screenX;
-	var pot = Pot.selectedItem.pot;
-	Pot.dragPoint[1] = e.screenY;
-	var delta = Pot.dragSpeed/pot.scale * sgn * deltaY*deltaY;
-	pot.set(pot.synth.getControl(pot.ctrlId) + delta);
-};
 
 function createSynthUI(lbl, synth) {
 	var tmpl = load('./synth.tmpl.html');
