@@ -1,6 +1,6 @@
 target C:\apache-tomcat-7.0.73\webapps\synth
 copy synth\index.html
-copy synth\synth.out.js
+copy synth\main.out.js
 copy synth\env.png
 copy synth\osc.png
 copy synth\lfo.png

@@ -6,24 +6,22 @@
     </head>
     <body>
         <div class="env">
-            <pot id="{{id}}amp" class="pot envAmp">100</pot>
-            <pot id="{{id}}off" class="pot envDc" >100</pot>
-            <pot id="{{id}}atk" class="pot envAtk">100</pot>
-            <pot id="{{id}}dec" class="pot envDec">100</pot>
-            <pot id="{{id}}sus" class="pot envSus">100</pot>
-            <pot id="{{id}}rel" class="pot envRel">100</pot>
+            <pot bind="{{id}}amp" class="pot envAmp">100</pot>
+            <pot bind="{{id}}dc" class="pot envDc" >100</pot>
+            <pot bind="{{id}}atk" class="pot envAtk">100</pot>
+            <pot bind="{{id}}dec" class="pot envDec">100</pot>
+            <pot bind="{{id}}sus" class="pot envSus">100</pot>
+            <pot bind="{{id}}rel" class="pot envRel">100</pot>
         </div>
         <div class="osc">
-            <pot id="{{id}}amp" class="pot oscAmp">100</pot>
-            <pot id="{{id}}fre" class="pot oscFre" min="0" max= "100" scale="1">100</pot>
-            <pot id="{{id}}tun" class="pot oscTun" min="0" max= "24" scale="1">100</pot>
-            <pot id="{{id}}psw" class="pot oscPsw">100</pot>
+            <pot bind="{{id}}amp" class="pot oscAmp">100</pot>
+            <pot bind="{{id}}fre" class="pot oscFre" min="0" max= "100" scale="1">100</pot>
+            <pot bind="{{id}}tune" class="pot oscTun" min="0" max= "24" scale="1">100</pot>
+            <pot bind="{{id}}psw" class="pot oscPsw">100</pot>
         </div>
         <div class="lfo">
-            <pot id="{{id}}amp" class="pot oscAmp" min="0" max= "100" scale="1">1</pot>
-            <pot id="{{id}}fre" class="pot oscFre" min="0" max= "10" scale="1">1</pot>
-            <pot id="{{id}}tun" class="pot oscTun" min="0" max= "24" scale="1">100</pot>
-            <pot id="{{id}}psw" class="pot oscPsw">100</pot>
+            <pot bind="{{id}}amp" class="pot oscAmp" min="0" max= "100" scale="1">1</pot>
+            <pot bind="{{id}}fre" class="pot oscFre" min="0" max= "10" scale="1">1</pot>
         </div>
     </body>
 </html>
