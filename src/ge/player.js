@@ -31,6 +31,7 @@
 			this.adapters = new fw.Map();
 			this.targets = new fw.Array();
 			this.channels = new fw.Array();
+			this.masterChannel = null;
 			this.sequences = new fw.Array();
 			this.framesPerSecond = fps || 25;
 			this.ticksPerFrame = tpf || 1;
@@ -52,12 +53,14 @@
 		 * Prototype of the Channel structure
 		 *****************************************************************************/
 		Channel: function(player, target, sequence) {
+			this.id = '';
 			this.player = player;
 			this.target = target;
 			this.sequence = sequence;
 			this.cursor = 0;
 			this.status = 0;
-			this.currentFrame = 0;
+			this.currentTick = 0;
+			this.frame = 0;
 		}
 
 	};
@@ -72,11 +75,13 @@
 	ns_player.PlayerAdapter.prototype.processCommand = function(player, cmd) {
 		switch (cmd.cmd) {
 			case ns_player.Cmd_setTempo:
+				//console.log('set tempo');
 				player.framesPerSecond = cmd.args[0];
 				player.ticksPerFrame = cmd.args[1];
 				player.refreshRate = player.framesPerSecond * player.ticksPerFrame;
 				break;
 			case ns_player.Cmd_assign:
+				//console.log('assign');
 				var target = player.targets[cmd.args[0]];
 				var sequence = player.sequences[cmd.args[1]];
 				var status = cmd.args[2];
@@ -91,9 +96,15 @@
 				}
 				if (ix == -1) {
 					// create new channel
-					player.channels.push(new ns_player.Channel());
-					ix = player.channels.length - 1;
+					ix = player.channels.length;
+					var chn = new ns_player.Channel();
+					chn.id = ix;
+					player.channels.push(chn);
+					//console.log('create new channel #' + ix);
 				}
+				// else {
+				// //console.log('assign channel #' + ix);
+				// }
 				var ch = player.channels[ix];
 				// assign channel
 				ch.set(player, target, sequence);
@@ -131,51 +142,77 @@
 		this.sequences.push(sequence);
 		if (this.sequences.length == 1) {
 			// the very first sequence is assigned to the master channel
-			this.channels.push(new ns_player.Channel(this, [this, this.adapters.Player], this.sequences[0]));
-			this.channels[0].status |= ns_player.Flg_active;
+			this.masterChannel = new ns_player.Channel(this, [this, this.adapters.Player], this.sequences[0]);
+			this.masterChannel.id = 'master';
+			this.masterChannel.status |= ns_player.Flg_active | ns_player.Flg_loop;
+			this.channels.push(this.masterChannel);
 		}
 	};
 	ns_player.Player.prototype.run = function(ticks) {
-		//run every channel
-		for (var i=0; i<this.channels.length; i++) {
-			var chn = this.channels[i];
-			if ((chn.status & ns_player.Flg_active) != 0) {
-				chn.run(ticks);
+		// run master channel
+		var chn = this.channels[0];
+		if ((chn.status & ns_player.Flg_active) != 0) {
+			chn.run(ticks);
+		}
+		if ((chn.status & ns_player.Flg_active) != 0) {
+			//run every other hannel
+			for (var i=1; i<this.channels.length; i++) {
+				var chn = this.channels[i];
+				if ((chn.status & ns_player.Flg_active) != 0) {
+					chn.run(ticks);
+				}
 			}
 		}
 	};
 	ns_player.Channel.prototype.set = function(player, target, sequence) {
+		//console.log('set channel #' + this.id);
 		this.player = player;
 		this.target = target;
 		this.sequence = sequence;
 		this.cursor = 0;
 		this.status = 0;
-		this.currentFrame = 0;
+		this.currentTick = 0;
 	};
 	ns_player.Channel.prototype.run = function(ticks) {
-		if (this.currentFrame < this.sequence[this.cursor].delta) {
-			// advance frame
-			this.currentFrame += ticks;
-		} else {
-			this.currentFrame -= this.sequence[this.cursor].delta;
+		do {
+			var restart = false;
+			if (this.currentTick < this.sequence[this.cursor].delta) {
+				// advance tick counter
+				this.currentTick++;	// += ticks;
+				break;
+			}
+			this.currentTick = 0;	//-= this.sequence[this.cursor].delta;
 			// process command
 			do {
 				var cmd = this.sequence[this.cursor];
 				if (cmd.cmd != ns_player.Cmd_end) {
+					//console.log(this.id + ':' + this.cursor);
 					this.target[1].processCommand(this.target[0], cmd);
-					this.cursor++;
+					this.currentTick++
 				} else {
 					if ((this.status & ns_player.Flg_loop) != 0) {
+						if (this == this.player.masterChannel) {
+							this.player.channels = new fw.Array();
+							this.player.channels.push(this);
+						}
 						// restart sequence
 						this.cursor = 0;
-						this.currentFrame = 0;
+						this.currentTick = 0;
+						restart = true;
+					//console.log(this.id + ': restart');
+						break;
 					} else {
-						// reset channel
-						this.status &= ~ns_player.Flg_active;
+						// deactivate channel
+						if (this == this.player.masterChannel) {
+							this.status &= ~ns_player.Flg_active;
+						//console.log(this.id + ': deactivate');
+						} // else remove channel 
+						break;
 					}
 				}
+				this.cursor++;
 			} while (this.sequence[this.cursor].delta == 0);
-		}
+		} while (restart);
 	};
 
 	module.exports = ns_player;
