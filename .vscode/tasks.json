@@ -6,9 +6,9 @@
         {
             "label": "Deploy",
             "type": "shell",
-            "command": "${workspaceFolder}/build.sh ${workspaceFolder}/src ${file}",
+            "command": "${workspaceFolder}/build.sh ${workspaceFolder} ${file}",
             "windows": {
-                "command": "${workspaceFolder}/tools/build.bat ${workspaceFolder}\\src ${file}"
+                "command": "${workspaceFolder}\\tools\\build.bat ${workspaceFolder} ${file}"
             },
             "group": {
                 "kind": "build",

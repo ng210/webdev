@@ -1,3 +1,4 @@
+run {tools}jsbuild.exe base={base} in=synth\main.js
 target C:\apache-tomcat-7.0.73\webapps\synth
 copy synth\index.html
 copy synth\main.out.js
