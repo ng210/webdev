@@ -1,1 +1,1 @@
-This is a project for webdevelopment understanding with java & javascript
+This is a project for understanding webdevelopment with java & javascript
