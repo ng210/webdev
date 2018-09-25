@@ -1,4 +1,4 @@
-@echo off
+echo off
 :: Preparations
 setlocal EnableDelayedExpansion
 
@@ -25,6 +25,11 @@ REM     set tmp=%%j
 REM )
 REM if defined tmp goto loop
 set base=%1
+if "%1"=="" (
+    echo 
+    echo NO BASE DEFINED!
+    goto :end
+)
 set source=%~dp2
 
 REM echo *** Build js
@@ -43,13 +48,13 @@ for /f "tokens=1,2*" %%i in (%deploy%) do (
         echo Changed target to !target_!
     ) else (
     if "%%i"=="copy" (
-        echo deploy %1\%%j
-        copy /y %1\%%j !target_! >> log.txt
+        echo deploy %base%\%%j
+        copy /y %base%\%%j !target_! >> log.txt
     ) else (
     if "%%i"=="run" (
         set _t1=%%j %%k
         set _t2=!_t1:{tools}=%tools%!
-        set _t1=!_t2:{base}=%base%\src!
+        set _t1=!_t2:{base}=%base%!
         echo Exeute !_t1!
         call !_t1!
     )))

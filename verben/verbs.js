@@ -65,7 +65,7 @@ var verbs = {
         ["betreiben","betreibt","betrieb","hat betrieben","Sie haben viel Aufwand betrieben."],
         ["betrügen","betrügt","betrog","hat betrogen","Niemand kann nachprüfen ob man bezahlt oder betrügt."],
         ["beweisen","beweist","bewies","hat bewiesen","Er bewies, dass man vieles schaffen kann."],
-        [" (sich) bewerben","bewirbt (sich)","bewarb (sich)","hat (sich) beworben","Sie hat sich um die Stelle beworben."],
+        ["(sich) bewerben","bewirbt (sich)","bewarb (sich)","hat (sich) beworben","Sie hat sich um die Stelle beworben."],
         ["beziehen","bezieht","bezog","hat bezogen","Worauf beziehen Sie sich?"],
         ["bieten","bietet","bot","hat geboten","Das Hotel hat guten Service geboten."],
         ["binden","bindet","band","hat gebunden","Sie hat einen Schal um den Hals gebunden. "],

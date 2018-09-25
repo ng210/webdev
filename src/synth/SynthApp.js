@@ -21,8 +21,6 @@ var ns_player = require('/ge/player.js');
 
 		init: function() {
 			SynthApp.createSynth('synth1');
-			// createSynthUI('synth1', g_synth);
-			// createSynthUI('synth2', g_synth);
 			SynthApp.createPlayer();
 			SynthApp.player.addTarget(SynthApp.synths[0], new SynthAdapter());
 			sound.init(48000, SynthApp.fillSoundBuffer);

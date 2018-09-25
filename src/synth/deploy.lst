@@ -1,5 +1,6 @@
 run {tools}jsbuild.exe base={base} in=synth\main.js
-target C:\apache-tomcat-7.0.73\webapps\synth
+
+target C:\www\synth
 copy synth\index.html
 copy synth\main.out.js
 copy synth\env.png
@@ -8,10 +9,10 @@ copy synth\lfo.png
 copy synth\synth.tmpl.html
 copy synth\synth.tmpl.css
 
-target C:\apache-tomcat-7.0.73\webapps\frmwrk
+target C:\www\frmwrk
 copy frmwrk\array.js
 
-target C:\apache-tomcat-7.0.73\webapps\ge
+target C:\www\ge
 copy ge\player.js
 copy ge\synth.js
 copy ge\synthAdapter.js

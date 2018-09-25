@@ -82,6 +82,7 @@ include('base/ajax.js');
                 case 'js': contentType = 'text/javascript'; break;
                 case 'html': contentType = 'text/html'; break;
                 case 'xml': contentType = 'text/xml'; break;
+                case 'glsl': contentType = 'x-shader/*'; break;
                 default: contentType = 'text/plain'; break;
             }
         }
@@ -89,6 +90,14 @@ include('base/ajax.js');
         switch (contentType) {
             case 'text/javascript':
                 res = document.createElement('script');
+                res.innerHTML = data;
+                document.head.appendChild(res);
+                break;
+            case 'x-shader/*':
+            case 'x-shader/x-vertex':
+            case 'x-shader/x-fragment':
+                res = document.createElement('script');
+                res.setAttribute('type', contentType);
                 res.innerHTML = data;
                 document.head.appendChild(res);
                 break;
@@ -170,6 +179,7 @@ include('base/ajax.js');
         this.host = '';
         this.port = 80;
         this.path = '';
+        this.file = '';
         this.query = {};
         this.fragment = '';
         // check schema
@@ -237,7 +247,13 @@ include('base/ajax.js');
         enumerable: true,
         configurable: false,
         writable: false,
-        value: new load.UrlObject(location.href, true)
+        value: (function() {
+            var obj = new load.UrlObject(location.href, true);
+            var tokens = obj.path.split('/');
+            obj.file = tokens.pop();
+            obj.path = tokens.join('/');
+            return obj;
+        })()
     });
     module.exports=load;
 })();
