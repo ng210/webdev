@@ -1,0 +1,16 @@
+run {tools}jsbuild.exe base={base} in=webgl\glmain.js
+
+target C:\www\ge
+copy ge\v3.js
+copy ge\m4.js
+
+target C:\www\webgl
+copy webgl\app.cfg
+copy webgl\index.html
+copy webgl\glmain.out.js
+copy webgl\ge.js
+copy webgl\webgl.js
+copy webgl\v1.glsl
+copy webgl\f1.glsl
+copy webgl\t.html
+copy webgl\t.js
