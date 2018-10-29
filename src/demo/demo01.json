@@ -1,0 +1,5 @@
+{
+    "width": { "type":"list", "value": 5, "items": [16, 64, 128, 256, 384, 512]  },
+    "height": { "type":"list", "value": 3, "items": [16, 64, 128, 256, 384, 512]  },
+    "f2": { "type":"value", "min": "16.0", "max": "256.0", "value": "256.0", "step": "0.1" }
+}
