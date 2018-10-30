@@ -98,5 +98,5 @@ V3.prototype.toString = function () {
     return '(' + this.x + ',' + this.y + ',' + this.z + ')';
 };
 
-module.exports = V3;
+public(V3, 'V3');
 })();

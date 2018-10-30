@@ -1,5 +1,5 @@
-include('/ge/noise.js');
-include('/ge/fn.js');
+include('../ge/noise.js');
+include('../ge/fn.js');
 include('demo.js');
 
 (function() {
@@ -14,22 +14,33 @@ include('demo.js');
 
 
     Demo01.prototype.initialize = function() {
-        var width = this.settings.width.getValue();
-        var height = this.settings.height.getValue();
+        var width = this.settings.width.getValue().value;
+        var height = this.settings.height.getValue().value;
         this.ctx.canvas.width = width;
         this.ctx.canvas.height = height;
         this.imgData = this.ctx.getImageData(0, 0, width, height);
     };
 
     Demo01.prototype.update = function(frame) {
-        this.createNoise(this.imgData.data, this.imgData.width, this.imgData.height, 256, 0.2*frame);
+        this.createNoise(this.imgData.data, this.imgData.width, this.imgData.height, 256, this.settings.speed.getValue()*frame);
     };
 
     Demo01.prototype.render = function(frame) {
         this.ctx.putImageData(this.imgData, 0, 0);
     };
+    
+    Demo01.prototype.onsettingchanged = function(setting) {
+    	if (setting.id == 'height' || setting.id == 'width') {
+	    	this.initialize();
+		}
+    };
 
     Demo01.prototype.createNoise = function (imgData, width, height, depth, dt) {
+    	var a0 = this.settings.amp0.getValue();
+    	var f0 = this.settings.fre0.getValue();
+    	var amp = this.settings.amp.getValue();
+    	var fre = this.settings.fre.getValue();
+    	var colorScheme = this.settings.color.getValue().index;
         var z = (dt % depth)/depth;
         for (var j=0; j<height; j+=2) {
             var y = j/height;
@@ -42,12 +53,12 @@ include('demo.js');
                 var r = Math.sqrt(cx*cx + cy*cy);
                 //var v = ns.fbm1d(x, 6, 0.67, 4.3, .52, 3.98);
                 //var v = ns_.fbm2d(x, y, 3, 0.67, 4.3, .52, 2.98);
-                var v = 1.16*this.noise.fbm3d(x, y, z, 7, 0.77, 2.02, .48, 2.92);
-                //var fd = 1.0 - Math.sqrt(cx*cx + cy*cy);
-                var fd = 1.0;	//Math.sqrt(cx*cx + cy*cy);
-                fd = Fn.smoothstep(fd*fd);
-                v = v * fd;
-                var col = lookUpColor(1, Fn.clamp(v, 0.0, 1.0));
+                var v = 1.66*this.noise.fbm3d(x, y, z, 7, a0, f0, amp, fre);
+                // var fd = 1.0 - Math.sqrt(cx*cx + cy*cy);
+                //var fd = 1.0;
+                // fd = Fn.smoothstep(fd*fd);
+                // v = v * fd;
+                var col = lookUpColor(colorScheme, Fn.clamp(v, 0.0, 1.0));
                 imgData[ix+0] = col[0];
                 imgData[ix+1] = col[1];
                 imgData[ix+2] = col[2];

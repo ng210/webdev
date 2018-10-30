@@ -5,27 +5,27 @@
 // (x, y) or
 // (x[0], x[1])
 function V2(x, y) {
+    this.push(0, 0);
     if (Array.isArray(x)) {
         y = x[1];
         x = x[0];
     } else if (x.constructor == V2) {
-            this.x = x.x;
-            this.y = x.y;
-            this.z = x.z;
+            this[0] = x.x;
+            this[1] = x.y;
     } else {
-        this.x = x || 0.0;
-        this.y = y || 0.0;
-        this.z = z || 0.0;
+        this[0] = x || 0.0;
+        this[1] = y || 0.0;
     }
     this.length();
 }
+V2.prototype = new Array(0,0);
 // return length*(cos(arg), sin(arg))
 V2.fromPolar = function (arg, len) {
     return new V2(Math.cos(arg), Math.sin(arg)).scale(len);
 };
 // return u = this + v
 V2.prototype.add = function (v) {
-    return new V2(this.x + v.x, this.y + v.y);
+    return new V2(this[0] + v.x, this.y + v.y);
 };
 // return this -= v
 V2.prototype.dec = function (v) {
@@ -90,5 +90,5 @@ V2.prototype.toString = function () {
     return '(' + this.x + ',' + this.x + ')';
 };
 
-module.exports = V2;
+public(V2, 'V2');
 })();

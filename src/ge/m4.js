@@ -1,4 +1,4 @@
-include('/ge/v3.js');
+include('v3.js');
 
 (function() {
 

@@ -113,6 +113,8 @@
         }
 	}
 
+	addToSearchPath();
+
 	public(GE, 'GE');
 })();
 

@@ -8,15 +8,34 @@ Object.defineProperties(window, {
         enumerable: false,
         value: {}
     },
+    '_searchPath': {
+        writeable: false,
+        enumerable: false,
+        value: []
+    },
     'include': {
         writeable: false,
         enumerable: false,
         value: (path) => {
-            var url = new Url(path).toString();
-            var key = Object.keys(_modules).find( v => v.split('#')[0] == url );
+            var url = new Url(path);
+            var urlText = url.toString();
+            var key = Object.keys(_modules).find( v => v.split('#')[0] == urlText );
             if (key == undefined) {
-                var res = load(url);
-                if (res instanceof Error) throw new Error('Could not load "'+url+'"!');
+                var res = load(urlText);
+                if (res instanceof Error) {
+                    if (!path.startsWith('/')) {
+                        // try to load from search path directories
+                        for (var i=0; i<_searchPath.length; i++) {
+                            var p = _searchPath[i] + '/' + path;
+                            url.path = p;
+                            urlText = url.toString();
+                            res = load(urlText);
+                            if (!(res instanceof Error)) break;
+                        }
+                    }
+                    if (res instanceof Error) throw new Error('Could not load "'+path+'"!');
+                } 
+                
             }
         }
     },
@@ -461,8 +480,30 @@ Object.defineProperties(window, {
             url = url.substring(0, pos);
             return new Url(url);
         })()
+    },
+    'addToSearchPath': {
+        writeable: false,
+        enumerable: false,
+        value: function(url) {
+            if (url === undefined) {
+                url = document.currentScript.src || document.currentScript.url;
+                url = url.substring(0, url.lastIndexOf('/'));
+            }
+            var path = new Url(url).path;
+            _searchPath.push(path);
+        }
     }
 });
+
+addToSearchPath();
+addToSearchPath( (function(){
+    var tokens = new Url(document.currentScript.src).path.split('/');
+    tokens.pop(); tokens.pop();
+    var path = tokens.join('/');
+    return path;
+})()
+    
+);
 
 public(ajax, 'ajax');
 public(load, 'load');

@@ -1,6 +1,6 @@
 include('dbg.js');
+include('ge/ge.js');
 include('demo-ui.js');
-include('ge.js');
 
 var canvas_ = null;
 var settings_ = null;
@@ -23,9 +23,11 @@ window.onload = e => {
     GE.update = demoUpdate;
     GE.render = demoRender;
 
+    var url = new Url(document.URL);
+    var demoId = url.query.id || 'demo01';
 
     // load demo
-    var demo = loadDemo('demo01');
+    var demo = loadDemo(demoId);
     if (demo != null) {
         try {
             DemoUI.initialize(settings_, demo);
@@ -86,5 +88,6 @@ window.onresize = function(e) {
     width = cnt.clientWidth;
     height = cnt.clientHeight;
     con.style.width = width + 'px';
-    webGL.resize(gl, width, height);
+    if (typeof window.webGL !== 'undefined')
+    	webGL.resize(gl, width, height);
 }

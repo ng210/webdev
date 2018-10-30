@@ -2,24 +2,35 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <script type="text/javascript" src="base.js"></script>
+    <script type="text/javascript" src="../base/base.js"></script>
     <script type="text/javascript" src="demo-fw.js"></script>
-    <title>Demo</title>
     <style>
-        table.setting {
-            background-color:#4060a0;
-            font-family:sans-serif
-        }
-        td.setting-label {
-            font-size: 10pt
-        }
-        td.setting-value {
-            font-size: 12pt
-        }
+table.settings {
+	background-color: #8090b0;
+}
+td.settings {
+	border: inset 1px silver
+}
+.settings {
+	font-size: 10pt; font-weight: bold; font-family: Consolas Courier; color: black; background-color: silver;
+}
+.header {
+	text-align:center; background-color:#404870; color:silver
+}
+.label {
+	color: #203060;
+}
+
+body {
+	background-color: gray;
+}
+
+    </style>
+    <title>Demo</title>
     </style>
 </head>
 
-<body style="margin:0">
+<body>
     <center>
         <div id="cvs-container" style="height:100vh;width:100vw"><canvas id="cvs" style="background-color:black"></canvas></div>
         <div id="settings" style="position:absolute;left:10px;top:10px"></div>
