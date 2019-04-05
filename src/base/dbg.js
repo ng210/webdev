@@ -16,7 +16,11 @@
 			this.pr(txt + '<br/>');
 		},
 		pr: function(txt) {
-			this.con.innerHTML += txt || '';
+			if (this.con != null) {
+				this.con.innerHTML += txt || '';
+			} else {
+				console.debug(txt);
+			}
 		},
 		measure: function(fn, lbl) {
 			var ti = new Date().getTime();
