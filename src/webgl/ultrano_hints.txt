@@ -1,0 +1,38 @@
+
+most expensive to least expensive:
+-framebuffer configuration
+-shader change
+-textures change
+-uniforms value change
+-drawcall
+
+But there's also a second "layer" of expense
+most expensive to least expensive:
+- translucent
+- depth-feedback (custom depth per pixel via gl_FragDepth)
+- alphatest (discard)
+- opaque
+
+So, the hierarchy is:
+-framebuffer configuration
+- <PASS TYPE>  (opaque, translucent, alphatest, etc)
+-shader change
+-textures change
+-uniforms value change
+-drawcall
+
+An example outcome from these rules is:
+- as the very first pass, draw opaque, with shader1, and iterate all objects that have the same shader and textures
+The above "instanced material" that I linked to, is about the shader+textures combination.
+in UE4, a "base material" is a shader, with its passtype, and some inherent textures and uniform-values. Several of its textures/uniform-values are "exported" as tweakable.
+An "instanced material" has a "base material", and tweaks some of the "exported" settings.
+An object, let's say a door, can have multiple meshes
+a root location (pivot) of the object, and for each mesh - a location relative to a parent. (like bones, but rigid)
+each mesh uses a certain "instanced material"
+e.g the door is mostly "wood_1", while the door-handle is "brass_3"
+
+Viewport culling saves a ton of performance (sending only 1/4) of the objects,
+LOD-selection saves an even more absurd amount of performance (sending only 0.0001% of the meshes)
+
+So, you have to create a certain iterator that walks the scene, chooses a LOD, does viewport culling, and does binning of meshes
+It's a lot of fun
