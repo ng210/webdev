@@ -1,0 +1,21 @@
+table.settings {
+	background-color: #8090b0;
+}
+td.settings {
+	border: inset 1px silver
+}
+.settings {
+	font-size: 10pt; font-weight: bold; font-family: Consolas Courier; color: black; background-color: silver;
+}
+.header {
+	text-align:center; background-color:#404870; color:silver
+}
+.label {
+	color: #203060;
+}
+
+body {
+	background-color: gray;
+	margin: 0px;
+	overflow: hidden;
+}

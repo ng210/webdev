@@ -1,78 +1,66 @@
-include('dbg.js');
-include('ge/ge.js');
-include('demo-ui.js');
+include('/base/dbg.js');
+include('/ge/ge.js');
+include('demo.js');
 
 var canvas_ = null;
 var settings_ = null;
 var demos_ = [];
 
-window.onload = e => {
+function onpageload(errors) {
+    if (errors && errors.length > 0) {
+        alert('Error during loading!\n' + errors.join('\n'));
+    }
     canvas_ = document.querySelector('#cvs');
     settings_ = document.querySelector('#settings');
     settings_.style.zIndex = 1000;
     var cnt = document.querySelector('#cvs-container');
-    cvs.style.width = cnt.clientWidth + 'px';
-    cvs.style.height = cnt.clientHeight + 'px';
+    canvas_.style.width = cnt.clientWidth + 'px';
+    canvas_.style.height = cnt.clientHeight + 'px';
     Dbg.init('con', canvas_.width);
-    Dbg.con.style.width = cnt.clientWidth - 20; //cnt.style.borderWidth;
-    Dbg.con.style.top = (cnt.clientHeight/2 - 10) + 'px';
+    demoResize();
+    GE.init(canvas_);
 
     Dbg.prln('Demo-fw 0.1');
 
     // run main loop
+    GE.processInputs = demoProcessInputs;
     GE.update = demoUpdate;
     GE.render = demoRender;
 
     var url = new Url(document.URL);
-    var demoId = url.query.id || 'demo01';
+    var demoId = url.query.id || url.fragment;
 
-    // load demo
-    var demo = loadDemo(demoId);
-    if (demo != null) {
-        try {
-            DemoUI.initialize(settings_, demo);
-            demo.initialize();
-
-            demos_.push(demo);
-        } catch (error) {
-            Dbg.prln('Error: ' + error.stack);
-        }
-        GE.start();
-    }
-
+    createDemo(demoId);
 };
 
-function loadDemo(id) {
-    var demo = null;
-    // load config and js
-    var resources = [{ url: id+'.json', contentType: 'text/json' }, { url: id+'.js', contentType: 'text/javascript' }];
-    var res = load(resources);
-    var missing = [];
-    res.forEach((v, k) => { if (v instanceof Error) missing.push(resources[k].url); });
-    if (missing.length > 0) {
-        Dbg.prln('Error loading demo! Missing file(s): ('+missing+')');
-        return;
-    }
+async function createDemo(id) {
+    try {
+        // async load demo
+        var demo = await Demo.load(id);
+        // set up ui
+        demo.createUi();
+        // do async preparations, like loading resources
+        await demo.prepare();
+        // render ui into the #settings_ node
+        demo.renderUi(settings_);
+        demos_.push(demo);
 
-    var config = res[0];
-    var url = new Url(res[1].url);
-    // get published class
-    var key = Object.keys(_modules).find( v => v.startsWith(url) );
-    if (key != null) {
-        var DemoClass = _modules[key];
-        demo = new DemoClass(canvas_);
-        demo.config = config;
-        Dbg.prln('Demo loaded');
-    } else {
-        Dbg.prln('Error during initialization of the demo!');
+        // start main loop
+        GE.start();
+    } catch (error) {
+        Dbg.prln(error.stack);
     }
-
-    return demo;
 }
 
-function demoUpdate(frame) {
+function demoProcessInputs() {
     for (var i=0; i<demos_.length; i++) {
-        demos_[i].update(frame);
+        demos_[i].processInputs();
+    }
+}
+
+function demoUpdate(frame, dt) {
+    for (var i=0; i<demos_.length; i++) {
+        demos_[i].update(frame, dt);
     }
 }
 
@@ -82,12 +70,17 @@ function demoRender(frame) {
     }
 }
 
-window.onresize = function(e) {
-    var cvs = document.querySelector('#cvs');
+function demoResize() {
     var cnt = document.querySelector('#cvs-container');
-    width = cnt.clientWidth;
-    height = cnt.clientHeight;
-    con.style.width = width + 'px';
-    if (typeof window.webGL !== 'undefined')
-    	webGL.resize(gl, width, height);
+    Dbg.con.style.width = cnt.clientWidth - 20;
+    var top = 2*cnt.clientHeight/3 - 10;
+    Dbg.con.style.height = cnt.clientHeight - top;
+    Dbg.con.style.top = top + 'px';
+}
+
+window.onresize = function(e) {
+    for (var i=0; i<demos_.length; i++) {
+        demos_[i].onresize();
+    }
+    demoResize();
 }
