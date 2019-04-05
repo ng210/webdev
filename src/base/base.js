@@ -584,7 +584,12 @@ try {
                                             //     onload(options);
                                             // }
                                                 if (resource.node instanceof Image) {
-                                                    resource.node.decode().then( () => resolve(resource));
+                                                    setTimeout(function(re) {
+                                                        var w = re.node.width;
+console.log('Width: ' + w);
+                                                        resolve(re)
+                                                    }, 50, resource);
+                                                    //resource.node.decode().then( () => resolve(resource));
                                                     return;
                                                 // } else {
                                                 //     resolve(resource);
