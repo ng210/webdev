@@ -4,5 +4,5 @@
             document.getElementById('content').innerHTML += "dummy.func1 say 'Hello world!'";
         }
     };
-    module.exports = dummy;
+    public(dummy, 'dummy');
 })();

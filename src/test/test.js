@@ -1,34 +1,101 @@
-include('frmwrk/fw.js');
-include('utils/Logger.js');
+// include('frmwrk/fw.js');
+include('utils/logger.js');
+include('ui/textbox.js');
 
-include('ge/synth.js');
-include('ge/player.js');
-include('ge/synthAdapter.js');
-include('ge/sound.js');
+// include('ge/synth.js');
+// include('ge/player.js');
+// include('ge/synthAdapter.js');
+// include('ge/sound.js');
 
-
-var Logger = require('/utils/Logger.js');
-var fw = require('/frmwrk/fw.js');
-
-if (typeof onpageload === 'function') window.onload = onpageload;
+//if (typeof onpageload === 'function') window.onload = onpageload;
 
 var g_logger = null;
 
-function loadTest(content) {
-    var data = load('deploy.lst');
-    g_logger.info('load deploy.lst<pre>' + data + '</pre><hr/>');
+function test(rs, onload, onerror) {
+    var data = load(rs, onload, onerror);
+    if (data instanceof Error) {
+        g_logger.error('Loading ' + rs + ' failed!<hr/>');
+    } else {
+        if (typeof onload !== 'function') {
+            g_logger.info('Loading ' + rs + ' passed!<small><pre style="font-size:7pt;background-color:silver">' + data + '</pre></small>');
+        }
+    }
+}
 
-    var data = load('deploys.lst');
-    g_logger.info('load deploys.lst<pre>' + data + '</pre><hr/>');
-    
-    data = load('deploy.lst', function(data, xhr) {
-        g_logger.info('load async ' + xhr.options.url + '<pre>' + data + '</pre><hr/>');
+async function loadTest(content) {
+
+    g_logger.info('Load test'); g_logger.hr();
+
+    //test('deploy.lst');
+    // var img = load('test.gif');
+    // document.body.appendChild(img);
+
+    var data = null;
+    // data = await load('deploy.lst')
+    // g_logger.info(data);
+    // data = await load('deploy.lsst')
+    // g_logger.info(data);
+
+    // load('deploy.lst').then(data => {
+    //     g_logger.info(data);
+    // });
+    // load('deploy.lsst').then(data => {
+    //     g_logger.info(data);
+    // });
+    // load('deploy.lst',
+    //     data => g_logger.info(data),
+    //     err => g_logger.error(err)
+    // );
+    // load('deploy.lsst',
+    //     data => g_logger.info(data),
+    //     err => g_logger.error(err)
+    // );
+
+    var res = await load(['deploy.lst', 'test.gif'])
+    var img = res[1].node;
+    g_logger.info(img); g_logger.hr();
+    g_logger.info(img.width);
+    document.body.appendChild(img);
+
+    // data = await load(['deploy.lsst', 'test.gif'])
+    // g_logger.info(data); g_logger.hr();
+
+    // load(['deploy.lst', 'test.gif']).then(data => {
+    //     g_logger.info(data); g_logger.hr();
+    // });
+    // load(['deploy.lsst', 'test.gif']).then(data => {
+    //     g_logger.info(data); g_logger.hr();
+    // });
+
+    // load(['deploy.lst', 'test.gif'],
+    //     data => { g_logger.info(data); g_logger.hr(); },
+    //     err => { g_logger.error(err); g_logger.hr(); }
+    // );
+    // load(['deploy.lsst', 'test.gisf'],
+    //     data => { g_logger.info(data); g_logger.hr(); },
+    //     err => { g_logger.error(err); g_logger.hr(); }
+    // );
+
+    // g_logger.info('mime-type: ' + options.contentType);
+    // g_logger.info('reponse-type: ' + options.responseType);
+    // if (xhr.error) {
+    //     g_logger.info('error: ' + xhr.error);
+    // }
+    // var data = await load.load_('test.gif', null, -1,
+    //     e => { g_logger.info('loaded'); },
+    //     e => {g_logger.info('load error'); }
+    // );
+
+    // test('deploys.lst');
+/*
+    test('deploy.lst', function(data, xhr) {
+        g_logger.info('load async ' + xhr.options.url + '<pre style="background-color:silver">' + data + '</pre><hr/>');
     }, function(error, xhr) {
         g_logger.info(xhr.options.url + ' Error: ' + error.message + '<hr/>');
     });
 
     data = load('deploys.lst', function(data) {
-        g_logger.info('load async ' + xhr.options.url + '<pre>' + data + '</pre><hr/>');
+        g_logger.info('load async ' + xhr.options.url + '<pre style="background-color:silver">' + data + '</pre><hr/>');
     
     }, function(error, xhr) {
         g_logger.info('load async ' + xhr.options.url + 'Error: ' + error.message + '<hr/>');
@@ -46,7 +113,7 @@ function loadTest(content) {
     load(arr, function(data) {
             var text = ['load aync ' + arr];
             data.forEach( function(item, ix) {
-                text.push(' async ' + arr[ix] + '<pre>' + item + '</pre>');
+                text.push(' async ' + arr[ix] + '<pre style="background-color:silver">' + item + '</pre>');
             });
             text.push('<hr/>');
             g_logger.info(text.join('<br/>'));
@@ -63,6 +130,7 @@ function loadTest(content) {
             g_logger.info(text.join('<br/>'));
         }
     );
+*/
 }
 
 function requireTest(content) {
@@ -79,7 +147,7 @@ function arrayTest(content) {
 }
 
 function loggerTest() {
-    for (var i=0; i<Logger.levels.length; i++) {
+    for (var i=0; i<Log.levels.length; i++) {
         g_logger.setLevel(i);
         g_logger.trace(i + ' log test');
         g_logger.debug(i + ' log test');
@@ -275,10 +343,14 @@ function synthTest() {
 
 }
 
-function onpageload(e) {
+function onpageload(errors) {
+    if (errors.length > 0) {
+        alert('Error during loading: ' + errors.map(err => err.message).join('\n'));
+    }
+
     var content = document.getElementById('content');
-    g_logger = new Logger({
-        format: '<small><b>{{level}}</b> - <i>{{file}}::{{method}}</i>({{line}})</small> - ' +
+    g_logger = new Log({
+        format: '{{color}}<small><b>{{level}}</b> - <i>{{file}}::{{method}}</i>({{line}})</small>{{color}} - ' +
                 '<tt>{{message}}</tt></br>',
                 //'<div style="font-size: large; background-color: silver; margin: 0px; padding: 0px"><tt>{{message}}</tt></div>',
         level: 'info',
@@ -290,7 +362,7 @@ function onpageload(e) {
         }
     });
 
-    // loadTest(content);
+    loadTest(content);
 
     // urlInfoTest();
 
@@ -306,6 +378,6 @@ function onpageload(e) {
 
     // normalizePathTest();
 
-    synthTest();
+    // synthTest();
 }
 
