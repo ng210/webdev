@@ -1,5 +1,5 @@
 (function() {
-	include('../ge/fn.js');
+	include('/ge/fn.js');
 
 	function Noise(seed) {
 		this.seed = seed || (new Date()).getTime();

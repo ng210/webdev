@@ -1,24 +1,21 @@
-// 2d vector operations:
-
 (function() {
 // return
 // (x, y) or
 // (x[0], x[1])
 function V2(x, y) {
-    this.push(0, 0);
-    if (Array.isArray(x)) {
+	if (x === undefined || typeof x === 'number') {
+		this.x = x || .0;
+        this.y = y || .0;
+    } else if (Array.isArray(x)) {
         y = x[1];
         x = x[0];
-    } else if (x.constructor == V2) {
-            this[0] = x.x;
-            this[1] = x.y;
     } else {
         this[0] = x || 0.0;
         this[1] = y || 0.0;
     }
     this.length();
+    this.constructor = V2;
 }
-V2.prototype = new Array(0,0);
 // return length*(cos(arg), sin(arg))
 V2.fromPolar = function (arg, len) {
     return new V2(Math.cos(arg), Math.sin(arg)).scale(len);

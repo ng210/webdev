@@ -1,26 +1,29 @@
-// 3d vector operations:
-
 (function() {
 // return
 // (x, y, x) or
 // (x[0], x[1], x[2])
 function V3(x, y, z) {
-    if (Array.isArray(x)) {
+	if (x === undefined || typeof x === 'number') {
+		this.x = x || .0;
+        this.y = y || .0;
+        this.z = z || .0;
+    } else if (Array.isArray(x)) {
         z = x[2];
         y = x[1];
         x = x[0];
-    } else if (x.constructor == V2) {
-        this.x = x.x;
-        this.y = x.y;
-    } else {
-        this.x = x || 0.0;
-        this.y = y || 0.0;
+	} else {
+        this.x = x.x || .0;
+        this.y = x.y || .0;
+        this.z = x.z || .0;
     }
+        
     this.length();
+    this.constructor = V3;
 }
 // return length*(cos(arg), sin(arg))
-V3.fromPolar = function (arg1, arg2, len) {
-    return new V3(Math.cos(arg1), Math.sin(arg2), Math.sin(arg1)).scale(len);
+V3.fromPolar = function (a, d, len) {
+	var r = Math.cos(d);
+    return new V3(r*Math.cos(a), Math.sin(d), r*Math.sin(a)).scale(len);
 };
 // return u = this + v
 V3.prototype.add = function (v) {
@@ -28,7 +31,7 @@ V3.prototype.add = function (v) {
 };
 // return u = this x v
 V3.prototype.cross = function (v) {
-    return new V2(this.y*v.z - this.z*v.y, this.z*v.x - this.x*v.z, this.x*v.y - this.y*v.x);
+    return new V3(this.y*v.z - this.z*v.y, this.z*v.x - this.x*v.z, this.x*v.y - this.y*v.x);
 };
 // return this -= v
 V3.prototype.dec = function (v) {
@@ -82,7 +85,7 @@ V3.prototype.scale = function (c) {
     this.z *= c;
     return this;
 };
-// return this = (v.x, v.y)
+// return this = (v.x, v.y, v.z)
 V3.prototype.set = function (v) {
     this.x = v.x;
     this.y = v.y;
