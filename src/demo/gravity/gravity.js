@@ -1,4 +1,3 @@
-//include('/demo/demo.js');
 include('/demo/gravity/star.js');
 (function() {
 	
@@ -24,15 +23,10 @@ include('/demo/gravity/star.js');
     }
 	Gravity.prototype = new Demo;
 
-	// Gravity.prototype.createUi = function() {
-	// 	(new Demo()).createUi.call(this);
-	// 	this.data = new Ui.DataLink(this.settings);
-	// 	for (var key in this.ui.controls) {
-	// 		var control = this.ui.controls[key];
-	// 		this.data.add(control);
-	// 	}
-	// };
     Gravity.prototype.prepare = async function() {
+		return true;
+	};
+	Gravity.prototype.initialize = function() {
 		this.count = this.data.count || 50;
 		//this.settings.stars = this.count;
 		this.sun.setRadius(this.data.sun);
@@ -82,11 +76,11 @@ include('/demo/gravity/star.js');
 			for (var j=i+1; j<this.count; j++) {
 				var star2 = this.stars[j];
 				var dx = star2.pos[0] - star1.pos[0], dy = star2.pos[1] - star1.pos[1];
-// F = f*(m1+m2)/d^2
-// a1 = f*m2/d^2*n = f*n/d^2 * m2
-// a2 = f*m1/d^2*n = f*n/d^2 * m1
-// n = (dx/d, dy/d) = (dx, dy)/d
-// f*n/d^2 = f/d^3*(dx, dy)
+				// F = f*(m1+m2)/d^2
+				// a1 = f*m2/d^2*n = f*n/d^2 * m2
+				// a2 = f*m1/d^2*n = f*n/d^2 * m1
+				// n = (dx/d, dy/d) = (dx, dy)/d
+				// f*n/d^2 = f/d^3*(dx, dy)
 				var d2 = dx*dx + dy*dy;
 				var d = Math.sqrt(d2);
 				if (d < star1.radius + star2.radius) {
@@ -100,7 +94,7 @@ include('/demo/gravity/star.js');
 			}
 		}
 		for (var i=0; i<this.count; i++) {
-			if (!this.stars[i].update(frame, (time - this.lastTime)/timeWarp)) {
+			if (!this.stars[i].update(frame, (time - this.lastTime)*timeWarp)) {
 				this.resetStar(this.stars[i]);
 			}
 		}
@@ -136,15 +130,8 @@ include('/demo/gravity/star.js');
 			star.render(frame, this.ctx);
 		}
 	};
-    Gravity.prototype.onresize = function(e) { throw new Error('Not implemented'); };
     Gravity.prototype.onchange = function(setting) {
 		this.initialize();
-		// var count = this.data.count;
-		// if (isNaN(count) || this.count == count) return;
-		// for (var i=this.count; i<count; i++) {
-		// 	this.stars.push(new Star());
-		// }
-		// this.count = count;
 	};
 
     public(Gravity, 'Gravity');

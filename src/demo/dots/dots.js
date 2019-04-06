@@ -1,4 +1,3 @@
-include('demo.js');
 include('/ge/v3.js');
 include('/ge/noise.js');
 
@@ -31,7 +30,10 @@ include('/ge/noise.js');
     }
 	Dots.prototype = new Demo;
 
-    Dots.prototype.prepare = function() {
+    Dots.prototype.prepare = async function() {
+        await load('/demo/dots/dot.js');
+	};
+	Dots.prototype.initialize = function() {
 		this.onresize();
 		this.createSegmentsFromFbm();
 		this.createPlatforms();
@@ -49,7 +51,6 @@ include('/ge/noise.js');
 			this.dots[i].addConstraint(this, this.checkVectors);
 			this.dots[i].addConstraint(this, this.checkBox);
 		}
-
 		//GE.ctx.globalCompositeOperation = ...
 	};
     Dots.prototype.processInputs = function(e) {
@@ -65,7 +66,6 @@ include('/ge/noise.js');
 			this.mode |= 0x02;
 		}
 	};
-
 	Dots.prototype.onchange = function(setting) {
 		switch (setting.dataField) {
 			case 'resolution':
@@ -300,6 +300,4 @@ include('/ge/noise.js');
 	};
 
 	public(Dots, 'Dots');
-
-	include('dot.js');
 })();

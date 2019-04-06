@@ -20,6 +20,7 @@ include('/ui/grid.js');
         this.constructor = Demo;
     }
     Demo.prototype.prepare = function() { throw new Error('Not implemented'); };
+    Demo.prototype.initialize = function() { throw new Error('Not implemented'); };
     Demo.prototype.processInputs = function() { throw new Error('Not implemented'); };
     Demo.prototype.onchange = function() { throw new Error('Not implemented'); };
     Demo.prototype.update = function() { throw new Error('Not implemented'); };
@@ -80,7 +81,7 @@ include('/ui/grid.js');
         var missing = [];
         for (var i=0; i<resources.length; i++) {
             if (resources[i].error instanceof Error) {
-                missing.push(resource[i].url);
+                missing.push(resources[i].url);
             }
         }
         if (missing.length > 0) {

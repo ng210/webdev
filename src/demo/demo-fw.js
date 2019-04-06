@@ -37,16 +37,20 @@ async function createDemo(id) {
     try {
         // async load demo
         var demo = await Demo.load(id);
-        // set up ui
-        demo.createUi();
-        // do async preparations, like loading resources
-        await demo.prepare();
-        // render ui into the #settings_ node
-        demo.renderUi(settings_);
-        demos_.push(demo);
+        if (demo !== null) {
+            // set up ui
+            demo.createUi();
+            // do async preparations, like loading resources
+            await demo.prepare();
+            // initialize demo after
+            demo.initialize();
+            // render ui into the #settings_ node
+            demo.renderUi(settings_);
+            demos_.push(demo);
 
-        // start main loop
-        GE.start();
+            // start main loop
+            GE.start();
+        }
     } catch (error) {
         Dbg.prln(error.stack);
     }
