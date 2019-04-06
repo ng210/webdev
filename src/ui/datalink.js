@@ -5,16 +5,21 @@ include('/ui/control.js');
         Object.defineProperty(this, 'obj', { value: obj });
     }
     Ui.DataLink.prototype.add = function(control, field) {
-        var dataSource = control.dataSource || this.obj;
+        //var dataSource = control.dataSource || this.obj;
         control.dataField = control.dataField || field;
         field = control.dataField;
         if (Object.keys(this.obj).indexOf(field) != -1) {
-            eval('Object.defineProperty(this, field, {enumerable:true, set: function(v) { this.obj[\''+field+'\'] = v; control.setValue(v); }, get: function() { /*Dbg.prln(\'get\');*/ return this.obj[\''+field+'\']; }})');
+            //eval(`Object.defineProperty(this, field, {enumerable:true, set: function(v) { this.obj['${field}'] = v; control.setValue(v); }, get: function() { return this.obj['${field}']; }})`);
+            Object.defineProperty(this, field, {
+                enumerable:true,
+                set: function(v) { this.obj[field] = v; control.setValue(v); },
+                get: function() { return this.obj[field]; }
+            });
             // add handler as the very first one
             if (control.handlers['change'] === undefined) {
                 control.handlers['change'] = [];
             }
-            control.handlers['change'].unshift({obj:this, fn: function(control){ Dbg.prln(`set ${control.dataField} to ${control.getValue()}`); this[control.dataField] = control.getValue(); }});
+            control.handlers['change'].unshift({obj:this, fn: function(control){ this[control.dataField] = control.getValue(); }});
         }
     }
 })();

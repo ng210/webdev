@@ -19,9 +19,9 @@ include('/ui/control.js');
 				break;
 		}
 		if (this.isNumeric) {
-			this.min = this.parse(this.template.min) || 0;
-			this.max = this.parse(this.template.max) || 100;
-			this.step = this.parse(this.template.step) || 1;
+			this.min = this.parse(this.template.min); if (this.min === NaN) this.min = 0;
+			this.max = this.parse(this.template.max); if (this.max === NaN) this.max = 100;
+			this.step = this.parse(this.template.step); if (this.step === NaN) this.step = 1;
 		}
 		this.dataField = this.template['data-field'];
 		this.constructor = Ui.ValueControl;
@@ -30,13 +30,24 @@ include('/ui/control.js');
 	Ui.ValueControl.base = Ui.Control.prototype;
 	Ui.ValueControl.prototype = new Ui.Control('valuecontrol');
 	Ui.Control.prototype.getValue = function() {
-		this.value = this.isNumeric ? (this.parse(this.element.value) || this.template.defaultValue || 0) : (this.element.value || '');
+		if (this.isNumeric) {
+			var v = this.parse(this.element.value);
+			this.value = v !== NaN ? v : (this.template.defaultValue || 0);
+		} else {
+			this.value = this.element.value || '';
+		}
 		return this.value;
 	};
 	Ui.ValueControl.prototype.setValue = function(v) {
-		console.log(`value: ${this.value} => ${v}`);
+		//console.log(`value: ${this.value} => ${v}`);
 		if (this.isNumeric) {
-			this.value = this.parse(v) || this.template.defaultValue || 'n.a.';
+			if (typeof v !== 'number') {
+				v = this.parse(v);
+				if (v === NaN) {
+					v = this.template.defaultValue || 0;
+				}
+			}
+			this.value = v;
 		} else {
 			this.value = v || '';
 		}
