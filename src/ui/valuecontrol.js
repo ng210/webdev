@@ -24,12 +24,13 @@ include('/ui/control.js');
 			this.step = this.parse(this.template.step); if (this.step === NaN) this.step = 1;
 		}
 		this.dataField = this.template['data-field'];
+
 		this.constructor = Ui.ValueControl;
 	}
 	//subtype(Ui.ValueControl, Ui.Control)
 	Ui.ValueControl.base = Ui.Control.prototype;
 	Ui.ValueControl.prototype = new Ui.Control('valuecontrol');
-	Ui.Control.prototype.getValue = function() {
+	Ui.ValueControl.prototype.getValue = function() {
 		if (this.isNumeric) {
 			var v = this.parse(this.element.value);
 			this.value = v !== NaN ? v : (this.template.defaultValue || 0);
@@ -51,7 +52,9 @@ include('/ui/control.js');
 		} else {
 			this.value = v || '';
 		}
-		this.element.value = this.value;
+		if (this.element != null) {
+			this.element.value = this.value;
+		}
 	};
 	Ui.ValueControl.prototype.validate = function() {
 		return this.value >= this.min && this.value <= this.max;

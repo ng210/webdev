@@ -12,6 +12,11 @@ include('/ui/valuecontrol.js');
     	Ui.Checkbox.base.render.call(this, ctx);
 	    this.element.setAttribute('type', 'checkbox');
 		this.element.checked = this.value == true;
+	};
+	Ui.Checkbox.prototype.registerHandler = function(event, handler, context) {
+		if (['change'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
+		Ui.Control.registerHandler.call(this, event, context);
     };
+
 
 })();

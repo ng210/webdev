@@ -3,8 +3,8 @@ include('/ui/control.js');
 // templates for rows or for cells
 try {
 (function() {
-	Ui.Grid = function(id, template) {
-		Ui.Control.call(this, id, template);
+	Ui.Grid = function(id, template, parent) {
+		Ui.Control.call(this, id, template, parent);
 		// set rows/columns array
 		this.rowKeys = null;
 		this.rows = null;
@@ -35,7 +35,7 @@ try {
 			if (tmpl.label === true) {
 				cell.label = row.name + '.' + key;
 			}
-			cell.dataBind(src, dataField);
+			src = cell.dataBind(src, dataField);
 			cell.row = row; cell.column = column;
 			row.cells[ci] = row.cells[key] = cell;
 			column.cells.push(cell);
@@ -56,7 +56,7 @@ try {
 		}
 	};
 	Ui.Grid.prototype.build = function() {
-		var src = this.dataField == null ? this.dataSource : this.dataSource[this.dataField];
+		var src = this.dataSource[this.dataField];
 		// get or create row template
 		var rowTemplate = this.rowTemplate;
 		this.rows = {};
@@ -73,7 +73,7 @@ try {
 			rowTemplate = [];
 			for (var ci=0; ci<this.columnCount; ci++) {
 				// column keys are the ordinals
-				this.columnKeys[ci] = ci;
+				this.columnKeys[ci] = ci+'';
 				rowTemplate[ci] = this.cellTemplate;
 				this.columns[ci] = {id:ci, name:ci, cells:[], parent:this};
 			}
@@ -86,12 +86,6 @@ try {
 				this.columns[key] = this.columns[ci] = {id:ci, name:key, cells:[], parent:this};
 			}
 		}
-	// Dbg.prln('Row keys: ' + this.rowKeys);
-	// Dbg.prln('Column keys: ' + this.columnKeys);
-	// for (var i=0; i<this.columnKeys.length; i++) {
-	// 	Dbg.prln('col'+i+': '+this.columns[this.columnKeys[i]].name);
-	// }
-
 		// create rows and cells
 		for (var ri=0; ri<this.rowKeys.length; ri++) {
 			var rowKey = this.rowKeys[ri];
@@ -100,12 +94,12 @@ try {
 			this.buildRow(row, srcRow, rowTemplate);
 			this.rows[rowKey] = row;
 		}
-	};
-
-	Ui.Grid.prototype.dataBind = function(obj) {
-		Ui.Grid.base.dataBind.call(this, obj);
-		this.build();
 		Ui.Control.registerHandler.call(this);
+	};
+	Ui.Grid.prototype.dataBind = function(obj, field) {
+		var dataLink = Ui.Grid.base.dataBind.call(this, obj, field);
+		this.build();
+		return dataLink;
 	};
 	Ui.Grid.prototype.getCell = function(ri, ci) {
 		if (typeof ri === 'string') {
@@ -132,14 +126,25 @@ try {
 				var cellClass = rowClass + ' ' + (ci % 2 ? 'c0' : 'c1');
 				td.className = 'grid cell ' + cellClass;
 				var cell = row.cells[ci];
-				var tmplLbl = cell.template.label;
-				var label = tmplLbl;
-				if (tmplLbl === '$key') {
-					label = key;
-				} else if (tmplLbl === '$Key') {
-					label = key.charAt(0).toUpperCase() + key.substring(1);
-				}
-				cell.label = label;
+				var tmplLabel = cell.template.label;
+				// tmplLabel=true => cell.label = calculated value
+				// tmplLabel=string => cell.label = tmplLabel
+				// tmplLabel="$key" => cell.label = key
+
+				if (typeof tmplLabel === 'string') {
+					if (tmplLabel == '$key') {
+						cell.label = key;
+					} else if (tmplLabel === '$Key') {
+						cell.label = key.charAt(0).toUpperCase() + key.substring(1);
+					} else {
+						cell.label = tmplLabel;
+					}
+				} else if (tmplLabel === false) {
+					label = '';
+				}/* else if (tmplLabel === true) {
+					label = cell.label;
+				}*/
+
 				cell.render({node: td});
 				td.appendChild(cell.element);
 				tr.appendChild(td);

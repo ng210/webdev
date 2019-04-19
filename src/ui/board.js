@@ -3,7 +3,8 @@ include('/ui/control.js');
 (function() {
 	Ui.Board = function(id, template) {
 		Ui.Control.call(this, id, template);
-		this.items = [];
+		this.items = {};
+
 		this.constructor = Ui.Board;
 	}
 	Ui.Board.base = Ui.Control.prototype;
@@ -12,25 +13,29 @@ include('/ui/control.js');
 
 	Ui.Board.prototype.add = function(ctrl, key) {
 		this.items[key] = ctrl;
+		//ctrl.parent = this;
+		return ctrl;
 	};
 	Ui.Board.prototype.addNew = function(template, key) {
-		key = key || ('i' + Object.keys(this.id).length.toFixed(4));
-		var ctrl = Ui.Control.create(key, template);
+		key = key || ('i' + Object.keys(this.items).length);
+		var ctrl = Ui.Control.create(key, template, this);
 		this.add(ctrl, key);
+		return ctrl;
 	};
 	Ui.Board.prototype.dataBind = function(obj, field) {
-		this.dataSource = obj;
+		Ui.Grid.base.dataBind.call(this, obj, field);
 		for (var key in this.items) {
-			var item = items[key];
+			var item = this.items[key];
 			if (item.dataSource == null) {
-				; // todo
+				item.dataBind(this.dataSource);
 			}
 		}
 	};
-	Ui.Board.prototype.render = function() {
+	Ui.Board.prototype.render = function(ctx) {
+		Ui.Board.base.render.call(this, ctx);
 		while (this.element.childNodes.length > 0) {
-			var child = this.element.childNodes[0];
-			this.element.removeChild(child);
+			var item = this.element.childNodes[0];
+			this.element.removeChild(item);
 		}
 		for (var key in this.items) {
 			var item = items[key];

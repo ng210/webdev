@@ -1,5 +1,7 @@
+include('/ui/datalink.js');
+
 (function() {
-	var Ui = {};
+	var Ui = window.Ui || {};
 	Ui.Control = function(id, template, parent) {
 		this.id = id || 'control';
 		this.template = template || {type:'none'};
@@ -11,6 +13,8 @@
 			this.label = this.template.label;
 			//this.label = Ui.Control.create('label', {});
 			//this.label.setValue(this.template.label);
+		} else if (this.template.label === true) {
+			this.label = this.id;
 		}
 		this.css = [];
 		this.handlers = {};
@@ -21,15 +25,27 @@
 		this.info = Ui.Control.Types[this.template.type];
 		this.element = null;
 		this.labelElem = null;
+
 		this.constructor = Ui.Control;
 	}
 
-	Ui.Control.prototype.dataBind = function(obj, field) { this.dataSource = obj; if (field !== undefined) this.dataField = field; };
+	Ui.Control.prototype.dataBind = function(obj, field) {
+		this.dataSource = obj instanceof Ui.DataLink ? obj : new Ui.DataLink(obj);
+		this.dataField = field !== undefined ? field : this.dataField;
+		this.dataSource.add(this, this.dataField);
+		return this.dataSource;
+	};
 	Ui.Control.prototype.getValue = function() {
 		return this.element.value;
 	};
 	Ui.Control.prototype.setValue = function(v) {
 		this.element.value = v;
+	};
+	Ui.Control.prototype.disable = function(v) {
+		this.element.disabled = v;
+		if (this.labelElem != null) {
+			this.labelElem.disable(v);
+		}
 	};
 	Ui.Control.prototype.addHandler = function(eventName, handler) {
 		if (this.element.addEventListener) {
@@ -120,6 +136,7 @@
 		return ctrl;
 	};
 	Ui.Control.onevent = function(e) {
+console.log(`onevent of ${e.type} for ${e.target.control.id}`);
 		var event = e.type;
 		var control = e.target.control;
 		var handlers = control.handlers[event];
