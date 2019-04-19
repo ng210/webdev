@@ -1,151 +1,124 @@
-//******************************************************************************
-// Settings
-	var _settings = {
-		width: 320,
-		height: 200,
-		fps: 25,
-		zoom: 1,
-		rotation: 2,
-		interpolation: 0
-	};
-//******************************************************************************
-// Globals
-	var _cursorPos = new Vector2(_settings.width/2, _settings.height/2);
-	var _offsetPos = new Vector2(0,0);
-	var _image = GE.image('javascript.gif');
-	var _imgSize = 0;
-	var _zoom;
-	var _angle;
-	var _zoomD = 2*Math.PI/_settings.fps/17;
-	var _angleD = 2*Math.PI/_settings.fps/11;
+include('/ge/fn.js');
 
-//******************************************************************************
-// Constants
-//******************************************************************************
-function init()
-{
-	Demo.init(_settings);
-	$('title').innerHTML = 'Rotozoom';
-	$('RestartBtn').setAttribute('disabled', true);
-	var el = $('interpolation');
-	var parent = el.parentNode;
-	parent.removeChild(el);
-	parent.innerHTML = '<select id="interpolation" onchange="applySetting(this);"><option value="0"/>none</option><option value="1"/>linear</option><option value="2"/>sinusoid</option></select>';
-	var el = $('interpolation');
-	el.selectedIndex = _settings.interpolation;
-	el.disabled = true;
-	initHTML5();
-	applySetting($('zoom'));
-	applySetting($('rotation'));
-	GE.startStop();
-}
-//******************************************************************************
-function initHTML5()
-{
-	GE.front.setAttribute('width', _settings.width);
-	GE.front.setAttribute('height', _settings.height);
-	HTML.applyStyle(GE.front, 'border:none;backgroundColor:black;cursor:none;');
-	GE.back.setAttribute('width', _settings.width);
-	GE.back.setAttribute('height', _settings.height);
-	GE.backContext.drawImage(_image, 0, 0, _settings.width, _settings.height);
-	_imgSize = _settings.width*_settings.height*4;
-	var el = GE.front;
-	_offsetPos.x = 0;
-	_offsetPos.y = 0;
-	while (el.offsetParent)
-	{
-		_offsetPos.x += el.offsetLeft;
-		_offsetPos.y += el.offsetTop;
-		el = el.offsetParent;
-	}
-}
-//******************************************************************************
-function applySetting(obj)
-{
-	switch (obj.id)
-	{
-		case 'width':
-		case 'height':
-			_settings[obj.id] = parseInt(obj.value);
-			initHTML5();
-			break;
-		case 'fps':
-			GE.fps = parseFloat(obj.value);
-			GE.stop();
-			GE.start();
-			break;
-		case 'interpolation':
-			_settings[obj.id] = parseInt(obj.value);
-			break;
-		default:
-			_settings[obj.id] = parseFloat(obj.value);
-			break;
-	}
-}
-//******************************************************************************
-function processInput()
-{
-	if ((GE.inputs.target == GE.front)&&(GE.inputs.delta))
-	{
-		// get mouse delta
-		_cursorPos.x = GE.inputs.pos[0] - _offsetPos.x;
-		_cursorPos.y = GE.inputs.pos[1] - _offsetPos.y;
-		//$('info').innerHTML = _cursorPos.x.toPrecision(4)+','+_cursorPos.y.toPrecision(4);
-	}
-}
-//******************************************************************************
-function restart()
-{
-	;
-}
-function update(f)
-{
-	_zoom = (Math.sin(_zoomD*f)+1)*_settings.zoom;
-	_angle = Math.cos(_angleD*f)*_settings.rotation;
-}
-//******************************************************************************
-function render(f)
-{
-	GE.frontContext.clearRect(0, 0, _settings.width, _settings.height);
-	var src = GE.backContext.getImageData(0, 0, _settings.width, _settings.height);
-	var dst = GE.frontContext.getImageData(0, 0, _settings.width, _settings.height);
-	var stride = _settings.width*4;
-	var ix = 0, ix21, ix22, ix23, ix24;
-	var ox = _cursorPos.x/2;
-	var oy = _cursorPos.y/2;
-	for (var y=0;y<_settings.height;y++)
-	{
-		for (var x=0;x<_settings.width;x++)
-		{
-			var rx2 = (_cursorPos.x + (x - _cursorPos.x) * Math.cos(_angle) - (y - _cursorPos.y) * Math.sin(_angle))*_zoom;
-			var ry2 = (_cursorPos.y + (x - _cursorPos.x) * Math.sin(_angle) + (y - _cursorPos.y) * Math.cos(_angle))*_zoom;
-			var cx1 = Math.floor(rx2);
-			var cy1 = Math.floor(ry2);
-			rx2 -= cx1; ry2 -= cy1;
-			var rx1 = 1.0-rx2, ry1 = 1.0-ry2;
-			cx1 = cx1 % _settings.width;
-			if (cx1 < 0) cx1 += _settings.width;
-			cy1 = cy1 % _settings.height;
-			if (cy1 < 0) cy1 += _settings.height;
-			var cx2 = (cx1 + 1) % _settings.width;
-			var cy2 = (cy1 + 1) % _settings.height;
-			ix21 = (cy1*stride + cx1*4);
-			ix22 = (cy1*stride + cx2*4);
-			ix23 = (cy2*stride + cx1*4);
-			ix24 = (cy2*stride + cx2*4);
-			
-			for (var ci=0;ci<3;ci++)
-			{
-				var c1=src.data[ix21+ci];
-				var c2=src.data[ix22+ci];
-				var c3=src.data[ix23+ci];
-				var c4=src.data[ix24+ci];
-				dst.data[ix+ci] = (ry1*(c1*rx1+c2*rx2) + ry2*(c3*rx1+c4*rx2));
+(function() {
+
+    function Rotozoom(canvas) {
+		Demo.call(this, 'rotozoom', canvas);
+		this.images = [];
+		this.cx = 0;
+		this.cy = 0;
+		this.counter = 0;
+		this.zoom = 0;
+		this.angle = 0;
+
+		this.constructor = Rotozoom;
+    }
+	Rotozoom.prototype = new Demo;
+
+    Rotozoom.prototype.prepare = async function() {
+		// create list of images
+		var urls = [
+			'/demo/lens/lens.gif', '/demo/lens/deepspace.jpg',
+			'/demo/fire/fire.gif', '/demo/rotozoom/javascript.gif',
+			'/test/test.gif'
+		];
+		var res = await load(urls);
+		for (var i=0; i<res.length; i++) {
+			if (!(res[i].error instanceof Error) && res[i].node instanceof Image) {
+				var url = res[i].resolvedUrl;
+				var ix = url.lastIndexOf('/') + 1;
+				res[i].node.alt = url.substring(ix != 0 ? ix : 0);
+				this.images.push(res[i].node);
 			}
-			dst.data[ix+3] = 255;
-			ix += 4;
 		}
-		//ix += 4;
-	}
-	GE.frontContext.putImageData(dst, 0, 0);
-}
+		this.ui.controls.images.setItems(this.images.map(v => v.alt));
+	};
+	Rotozoom.prototype.setImage = function() {
+		var ix = this.ui.controls.images.getSelectedItem().index;
+		var img = this.images[ix];
+		GE.backBuffer.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, GE.backBuffer.width, GE.backBuffer.height);
+		GE.backBuffer.update();
+	};
+	Rotozoom.prototype.initialize = function() {
+		this.cx = GE.frontBuffer.width/2;
+		this.cy = GE.frontBuffer.height/2;
+	};
+	Rotozoom.prototype.renderUi = function(node) {
+		Demo.prototype.renderUi.call(this, node);
+		this.setImage();
+	};	
+    Rotozoom.prototype.processInputs = function(e) {
+	};
+	Rotozoom.prototype.onchange = function(setting) {
+		switch (setting.dataField) {
+			case 'images':
+				this.setImage();
+				break;
+		}
+	};
+    Rotozoom.prototype.update = function(frame, dt) {
+		this.counter += this.data.time * dt;
+		var zoom = 2 * Math.sin(this.counter) * this.data.zoom;
+		var angle = 3 * Math.cos(this.counter) * this.data.rotation;
+		var src = GE.backBuffer;
+		var dst = GE.frontBuffer;
+		var stride = src.width*4;
+		var di = 0;
+		for (var y=0; y<GE.frontBuffer.height; y++) {
+			for (var x=0; x<GE.frontBuffer.width; x++) {
+				// rotation
+				var cos = Math.cos(angle);
+				var sin = Math.sin(angle);
+				var cx = (this.cx + (x - this.cx) * cos - (y - this.cy) * sin) * zoom;
+				cx = cx % src.width;
+				if (cx < 0) cx += src.width;
+				var ix = Math.floor(cx);
+				var fx = cx - ix;
+				var cy = (this.cy + (x - this.cx) * sin + (y - this.cy) * cos) * zoom;
+				cy = cy % src.height;
+				if (cy < 0) cy += src.height;
+				var iy = Math.floor(cy);
+				var fy = cy - iy;
+				var si11 = ix*4 + iy*stride;
+				var si12 = ((ix+1) % src.width)*4 + iy*stride;
+				var si21 = ix*4 + ((iy+1) % src.height)*stride;
+				var si22 = ((ix+1) % src.width)*4 + ((iy+1) % src.height)*stride;
+				var fx1 = fx, fx2 = 1 - fx;
+				var fy1 = fy, fy2 = 1 - fy;
+				for (var ci=0; ci<3; ci++) {
+					var v = 0;
+					switch (this.data.interpolation) {
+						case 'none':
+							v = src.imgData.data[si11+ci];
+							break;
+						case 'h-linear':
+							v = fx2*src.imgData.data[si11+ci] + fx1*src.imgData.data[si12+ci];
+							break;
+						case 'v-linear':
+							v = fy2*src.imgData.data[si11+ci] + fy1*src.imgData.data[si21+ci];
+							break;
+						case 'bilinear':
+							var v1 = fx2*src.imgData.data[si11+ci] + fx1*src.imgData.data[si12+ci];
+							var v2 = fx2*src.imgData.data[si21+ci] + fx1*src.imgData.data[si22+ci];
+							v = fy2*v1 + fy1*v2;
+							break;
+					}
+					dst.imgData.data[di+ci] = v;
+				}
+				dst.imgData.data[di+3] = 255;
+				di += 4;
+			}
+		}
+	};
+    Rotozoom.prototype.render = function(frame) {
+		GE.frontBuffer.blit();
+	};
+    Rotozoom.prototype.onresize = function(e) {
+	};
+	// Rotozoom.prototype.getMouseCoors = function(v) {
+	// 	v.x = GE.inputs.mpos[0] * GE.canvas.width/GE.canvas.clientWidth;
+	// 	v.y = GE.inputs.mpos[1] * GE.canvas.height/GE.canvas.clientHeight;
+	// };
+
+	public(Rotozoom, 'Rotozoom');
+})();

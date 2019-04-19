@@ -2,14 +2,13 @@ include('/demo/gravity/star.js');
 (function() {
 	
     function Gravity(canvas) {
-	    Demo.call(this, 'gravity', canvas);
+		Demo.call(this, 'gravity', canvas);
 		this.stars = [];
 		this.count = 0;
 		this.canvas.width = 600;
 		this.canvas.height = 400;
 		this.lastTime = new Date().getTime();
 		this.ctx = canvas.getContext('2d');
-		this.data = null;
 
 		// this.ctx.scale(300, 200);
 		// this.ctx.translate(1.0, 1.0);

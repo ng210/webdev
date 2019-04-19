@@ -31,11 +31,11 @@
         }
     },
     "settings": {
-        "count": 100,
-        "sun": 0.05,
+        "count": 200,
+        "sun": 0.02,
         "force": 0.00982,
-        "time": 0.04,
-        "maxEnergy": 2.0,
+        "time": 0.06,
+        "maxEnergy": 3.2,
         "orbit": true
     }
 }

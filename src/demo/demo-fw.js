@@ -1,6 +1,6 @@
 include('/base/dbg.js');
 include('/ge/ge.js');
-include('demo.js');
+include('/demo/demo.js');
 
 var canvas_ = null;
 var settings_ = null;
@@ -13,14 +13,26 @@ function onpageload(errors) {
     canvas_ = document.querySelector('#cvs');
     settings_ = document.querySelector('#settings');
     settings_.style.zIndex = 1000;
-    var cnt = document.querySelector('#cvs-container');
-    canvas_.style.width = cnt.clientWidth + 'px';
-    canvas_.style.height = cnt.clientHeight + 'px';
-    Dbg.init('con', canvas_.width);
-    demoResize();
-    GE.init(canvas_);
+    settings_.onmouseover = e => settings_.style.opacity = this.clicked ? 0.5 : 0.2;
+    settings_.onmouseout = e => {
+        if (e.target == settings_) {
+            this.clicked = false;
+            settings_.style.opacity = 0.1;
+        }
+    };
+    settings_.onclick = e => { this.clicked = true; settings_.style.opacity = 0.5; };
+    settings_.style.opacity = 0.1;
 
+    var cnt = document.querySelector('#cvs-container');
+
+    // canvas_.style.width = cnt.clientWidth + 'px';
+    // canvas_.style.height = cnt.clientHeight + 'px';
+    GE.init(canvas_);
+    Dbg.init('con', canvas_.width);
     Dbg.prln('Demo-fw 0.1');
+    Dbg.con.style.visibility = 'visible';
+
+    demoResize();
 
     // run main loop
     GE.processInputs = demoProcessInputs;
@@ -76,15 +88,19 @@ function demoRender(frame) {
 
 function demoResize() {
     var cnt = document.querySelector('#cvs-container');
-    Dbg.con.style.width = cnt.clientWidth - 20;
-    var top = 2*cnt.clientHeight/3 - 10;
+    // rescale canvas
+    GE.canvas.style.width = cnt.clientWidth;
+    GE.canvas.style.height = cnt.clientHeight;
+    // resize and position debug console
+    Dbg.con.style.width = cnt.clientWidth;
+    var top = 3*cnt.clientHeight/4;
     Dbg.con.style.height = cnt.clientHeight - top;
-    Dbg.con.style.top = top + 'px';
+    Dbg.con.style.top = top;
 }
 
 window.onresize = function(e) {
+    demoResize(e);
     for (var i=0; i<demos_.length; i++) {
-        demos_[i].onresize();
+        demos_[i].onresize(e);
     }
-    demoResize();
 }

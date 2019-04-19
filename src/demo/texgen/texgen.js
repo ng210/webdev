@@ -1,91 +1,135 @@
+include('/ge/fn.js');
 include('/ge/noise.js');
 
 (function() {
     function TexGen(canvas) {
-        this.id = 'TexGen';
-        this.width = 128;
-        this.height = 128;
-        this.imgData = null;
-        this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
+        Demo.call(this, 'texgen', canvas);
+        this.isChanged = true;
+        this.noises = [];
+        this.filters = [];
+        this.srcBuffer = null;
+        this.dstBuffer = null;
+
         this.constructor = TexGen;
     }
-    TexGen.prototype.prepare = function() {
-        this.ctx.canvas.width = this.width;
-        this.ctx.canvas.height = this.height;
-        this.buffer = [this.ctx.getImageData(0, 0, this.width, this.height), this.ctx.getImageData(0, 0, this.width, this.height)];
-        this.noise = new Noise(0);
-    };
-    TexGen.prototype.update = function(frame) {
-        for (var i=0; i<this.buffer[0].data.length;) {
-            this.buffer[0].data[i++] = 0; this.buffer[0].data[i++] = 0;
-            this.buffer[0].data[i++] = 0; this.buffer[0].data[i++] = 255;
-        }
-        // noise
-        if (this.settings.stack.items[0].rows[0].cells.on.getValue()) this.createNoise(this.buffer[0].data, this.settings.stack.items[0].rows[0].cells, 0);
-        // filter
-        this.filter(this.buffer[0], this.buffer[1], this.settings.stack.items[1]);
-        // noise
-        if (this.settings.stack.items[2].rows[0].cells.on.getValue()) this.createNoise(this.buffer[1].data, this.settings.stack.items[2].rows[0].cells, 0);
-        // filter
-        this.filter(this.buffer[1], this.buffer[0], this.settings.stack.items[3]);
-    };
-    TexGen.prototype.render = function(frame) {
-        this.ctx.putImageData(this.buffer[0], 0, 0);
-    };
+    TexGen.prototype = new Demo();
 
-    TexGen.prototype.filter = function(input, output, settings) {
-        var ix = 0;
-        var w = new Array(10);
-        w[9] = 0;
-        var wi = 0;
-        for (var ri=0; ri<3; ri++) {
-            for (var ci=0; ci<3; ci++) {
-                w[9] += w[wi++] = parseFloat(settings.rows[ri].cells[ci].getValue()) || 0;
+    TexGen.prototype.prepare = async function() {
+    };
+    TexGen.prototype.initialize = function() {
+        this.onresize();
+        for (var i=0; i<this.data.noises.length; i++) {
+            this.noises.push(new Noise(new Date().getTime()));
+            this.noises.push(new Noise(new Date().getTime()));
+            this.noises.push(new Noise(new Date().getTime()));
+        }
+        for (var i=0; i<this.data.filters.length; i++) {
+            this.filters.push(new Fn.Filter(this.data.filters[i].matrix));
+        }
+    };
+    TexGen.prototype.createUi = function(node) {
+        Demo.prototype.createUi.call(this, node);
+        // create noise and filter panels
+    };
+    TexGen.prototype.processInputs = function() {
+    };
+    TexGen.prototype.swapBuffers = function() {
+        var tmp = this.srcBuffer;
+        this.srcBuffer= this.dstBuffer;
+        this.dstBuffer = tmp;
+    };
+    TexGen.prototype.update = function(frame, dt) {
+        if (this.isChanged) {
+            // clear destination buffer
+            this.dstBuffer.clear();
+            this.mix(this.srcBuffer, this.dstBuffer, 1.0);
+            var ni = 0, fi = 0;
+            var mix = 1.0;
+            while (this.isChanged) {
+                var noise = this.data.noises[ni];
+                if (noise && noise.on === true) {
+                    noise = this.noises[3*ni];
+                    // create noise into dst
+                    this.createNoise(ni, this.dstBuffer, mix, dt);
+                    this.swapBuffers();
+                }
+                var filter = this.data.filters[fi];
+                if (filter && filter.on === true) {
+                    filter = this.filters[fi];
+                    // filter src into dst
+                    this.filter(filter, this.srcBuffer, this.dstBuffer);
+                    this.swapBuffers();
+                }
+                if (!noise && !filter) {
+                    this.isChanged = false;
+                }
+                ni++;
+                fi++;
             }
         }
-        for (var v=0; v<this.height; v++) {
-            for (var u=0; u<this.width; u++) {
-                var d = [0, 0, 0, 255];
-                for (var ri=0; ri<3; ri++) {
-                    var y = v + ri - 1;
-                    if (y < 0 || y >= this.height) continue;
-                    for (var ci=0; ci<3; ci++) {
-                        var x = u + ci - 1;
-                        if (x < 0 || x >= this.width) continue;
-                        var ix2 = 4*(x + y*this.width);
-                        var wij = w[ci+ri*3];
-                        d[0] += wij * input.data[ix2 + 0];
-                        d[1] += wij * input.data[ix2 + 1];
-                        d[2] += wij * input.data[ix2 + 2];
-                        //d[3] += settings.rows[i].cells[j].getValue() * input.data[ix + 4*(i + j*this.width) + 3];
-                    }
-                }
-                output.data[ix + 0] = d[0]/w[9];
-                output.data[ix + 1] = d[1]/w[9];
-                output.data[ix + 2] = d[2]/w[9];
-                output.data[ix + 3] = d[3];
+    };
+    TexGen.prototype.mix = function(bIn, bOut) {
+        var ix = 0;
+        var f = 0.2;
+        for (var j=0; j<bIn.width; j++) {
+            for (var i=0; i<bIn.width; i++) {
+                bOut.imgData.data[ix] = bIn.imgData.data[ix] * f;
+                bOut.imgData.data[ix+1] = bIn.imgData.data[ix+1] * f;
+                bOut.imgData.data[ix+2] = bIn.imgData.data[ix+2] * f;
+                bOut.imgData.data[ix+3] = 255;
                 ix += 4;
             }
         }
     };
-
-    TexGen.prototype.createNoise = function (imgData, settings, dt) {
-    	var amp = settings.amp.getValue();
-    	var fre = settings.fre.getValue();
-        for (var j=0; j<this.height; j++) {
-            var y = j/this.height;
-            for (var i=0; i<this.width; i++) {
-                var ix = 4*(i + j*this.width);
-                var x = i/this.width;
-                var v = this.noise.fbm2d(x, y, 4, amp, fre, amp, fre);
-                v = Math.floor(255*Fn.clamp(v, 0.0, 1.0));
-                imgData[ix+0] += v;
-                imgData[ix+1] += v;
-                imgData[ix+2] += v;
+    TexGen.prototype.render = function(frame, dt) {
+        this.srcBuffer.blit();
+    };
+    TexGen.prototype.onchange = function(setting) {
+        this.isChanged = true;
+        this.onresize();
+    };
+    TexGen.prototype.createNoise = function(ni, buffer, mix, dt) {
+        var ix = 0;
+        var noiseR = this.noises[3*ni];
+        var noiseG = this.noises[3*ni+1];
+        var noiseB = this.noises[3*ni+2];
+        var data = this.data.noises[ni];
+        if (data.on === true) {
+            for (var j=0; j<buffer.height; j++) {
+                var y = j/buffer.height;
+                for (var i=0; i<buffer.width; i++) {
+                    //var ix = 4*(i + j*buffer.width);
+                    var x = i/buffer.width;
+                    var r = noiseR.fbm2d(x, y, 3, data.amp, data.fre, data.amp, data.fre);
+                    var g = noiseG.fbm2d(x, y, 3, data.amp, data.fre, data.amp, data.fre);
+                    var b = noiseB.fbm2d(x, y, 3, data.amp, data.fre, data.amp, data.fre);
+                    r = Fn.lerp(buffer.imgData.data[ix+0], Math.floor(255*Fn.clamp(r, 0.0, 1.0)), mix);
+                    g = Fn.lerp(buffer.imgData.data[ix+1], Math.floor(255*Fn.clamp(g, 0.0, 1.0)), mix);
+                    b = Fn.lerp(buffer.imgData.data[ix+2], Math.floor(255*Fn.clamp(b, 0.0, 1.0)), mix);
+                    buffer.imgData.data[ix++] = r;
+                    buffer.imgData.data[ix++] = g;
+                    buffer.imgData.data[ix++] = b;
+                    buffer.imgData.data[ix++] = 255;
+                }
             }
         }
-    }
+    };
+    TexGen.prototype.filter = function(filter, bufferIn, bufferOut) {
+        var ix = 0;
+        for (var j=0; j<bufferIn.height; j++) {
+            for (var i=0; i<bufferIn.width; i++) {
+                for (var ci=0; ci<4; ci++) {
+                    var v = filter.apply(bufferIn.imgData.data, bufferIn.width, bufferIn.height, 4, i, j, ci);
+                    bufferOut.imgData.data[ix++] = Math.floor(v);
+                }
+            }   
+        }
+    };
+    TexGen.prototype.onresize = function() {
+        GE.resizeCanvas(this.data.width, this.data.height);
+        this.srcBuffer = GE.frontBuffer;
+        this.dstBuffer = GE.backBuffer;
+    };
 
     public(TexGen, 'TexGen');
 

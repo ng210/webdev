@@ -29,7 +29,7 @@
     },
     "settings": {
         "count": 1000,
-        "resolution": 2,
+        "resolution": "2",
         "gravity": 1.5,
         "force": 0.0,
         "elasticity": 1.0,

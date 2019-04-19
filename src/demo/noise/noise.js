@@ -6,36 +6,42 @@ include('demo.js');
     function NoiseDemo(canvas) {
         Demo.call(this, 'noise', canvas);
         this.noise = new Noise(0);
-        this.imgData = null;
         this.ctx = canvas.getContext('2d');
         this.constructor = NoiseDemo;
     }
     NoiseDemo.prototype = new Demo;
 
     NoiseDemo.prototype.prepare = function() {
+        ;
+    };
+
+    NoiseDemo.prototype.initialize = function() {
         var width = this.data.width;
         var height = this.data.height;
-        this.ctx.canvas.width = width;
-        this.ctx.canvas.height = height;
-        this.imgData = this.ctx.getImageData(0, 0, width, height);
+        GE.resizeCanvas(width, height);
+        // this.ctx.canvas.width = width;
+        // this.ctx.canvas.height = height;
+        // GE.frontBuffer = GE.frontBuffer.imgData; //this.ctx.getImageData(0, 0, width, height);
     };
+
     NoiseDemo.prototype.update = function(frame) {
-        this.createNoise(this.imgData.data, this.imgData.width, this.imgData.height, 256, this.data.speed*frame);
+        this.createNoise(GE.frontBuffer, 256, this.data.speed*frame);
     };
     NoiseDemo.prototype.processInputs = function(e) {
 	};
     NoiseDemo.prototype.render = function(frame) {
-        this.ctx.putImageData(this.imgData, 0, 0);
+        GE.frontBuffer.blit();
     };
     NoiseDemo.prototype.onchange = function(setting) {
-        Dbg.prln(setting.name + ' changed');
         this.initialize();
     };
-    NoiseDemo.prototype.createNoise = function (imgData, width, height, depth, dt) {
+    NoiseDemo.prototype.createNoise = function (buffer, depth, dt) {
     	var a0 = this.data.amp0;
     	var f0 = this.data.fre0;
     	var amp = this.data.amp;
         var fre = this.data.fre;
+        var width = buffer.width;
+        var height = buffer.height;
         var colorScheme = this.ui.controls.color.getSelectedItem().index;
         var z = (dt % (2*depth))/depth;
         if (z > 1) z = 2 - z;
@@ -56,10 +62,10 @@ include('demo.js');
                 // fd = Fn.smoothstep(fd*fd);
                 // v = v * fd;
                 var col = lookUpColor(colorScheme, Fn.clamp(v, 0.0, 1.0));
-                imgData[ix+0] = col[0];
-                imgData[ix+1] = col[1];
-                imgData[ix+2] = col[2];
-                imgData[ix+3] = col[3]/2;
+                buffer.imgData.data[ix+0] = col[0];
+                buffer.imgData.data[ix+1] = col[1];
+                buffer.imgData.data[ix+2] = col[2];
+                buffer.imgData.data[ix+3] = col[3]/2;
             }
         }
     }
@@ -83,7 +89,6 @@ include('demo.js');
                 [0.0,   0,   0,   0,   0]
             ]
         ];
-    
         
         var col = [0, 0, 0, 0];
         var tab = tbl[tix];

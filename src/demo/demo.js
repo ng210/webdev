@@ -4,7 +4,7 @@ include('/ui/slider.js');
 include('/ui/ddlist.js');
 include('/ui/checkbox.js');
 include('/ui/button.js');
-//include('/ui/board.js');
+include('/ui/board.js');
 include('/ui/grid.js');
 
 (function() {
@@ -12,7 +12,9 @@ include('/ui/grid.js');
         this.id = id;
         this.selectedControl = null;
         this.canvas = canvas;
-        this.ui = { parent: null, id:id+'_ui', controls:{} };
+        this.ui = new Ui.Board(id+'_ui', { type:'board' }); //   { parent: null, id:id+'_ui', controls:{} };
+        // create alias for items in the ui
+        this.ui.controls = this.ui.items;
         this.config = null;
         this.template = null;
         this.settings = null;
@@ -37,20 +39,20 @@ include('/ui/grid.js');
     };
     Demo.prototype.createUi = function() {
         this.ui.parent = this;
-        Dbg.prln('Create datalink for ' + this.id);
-        this.data = new Ui.DataLink(this.settings);
+        Dbg.prln('Create UI for ' + this.id);
+        // add controls from template
         for (var key in this.template) {
             var template = this.template[key];
-            var control = Ui.Control.create(this.id+'#'+key, template, this.ui);
-            this.ui.controls[key] = control;
+            var control = this.ui.addNew(template, key);
             if (typeof template.label !== 'string') {
                 control.label = key;
             }
-            control.parent = this.ui;
-            var field = template['data-field'] || key;
-            control.dataBind(this.settings, field);
-            this.data.add(control);
+            // var field = template['data-field'] || key;
+            // control.dataBind(this.settings, field);
+            // this.data.add(control);
         }
+        this.ui.dataBind(this.settings);
+        this.data = this.ui.dataSource;
     };
     Demo.prototype.renderUi = function(node) {
         while (node.children.length > 0) {
@@ -58,7 +60,11 @@ include('/ui/grid.js');
         }
         for (var key in this.ui.controls) {
             var control = this.ui.controls[key];
-            control.render( { "node": node} );
+            var wrapper = document.createElement('div');
+            wrapper.id = key + '#wrapper';
+            wrapper.className = 'wrapper';
+            control.render( { "node": wrapper} );
+            node.appendChild(wrapper);
         }
     };
     Demo.load = async function(name, url) {
@@ -76,7 +82,8 @@ include('/ui/grid.js');
         // load and check files
         var resources = await load(files);
         if (resources[2].error instanceof Error) {
-            resources[2] = await load('demo.css');
+            // .css is not mandatory
+            resources.pop();
         }
         var missing = [];
         for (var i=0; i<resources.length; i++) {

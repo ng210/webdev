@@ -1,6 +1,13 @@
 // include('frmwrk/fw.js');
 include('utils/logger.js');
-include('ui/textbox.js');
+include('ui/datalink.js')
+include('/ui/textbox.js');
+include('/ui/slider.js');
+include('/ui/ddlist.js');
+include('/ui/checkbox.js');
+include('/ui/button.js');
+include('/ui/board.js');
+include('/ui/grid.js');
 
 // include('ge/synth.js');
 // include('ge/player.js');
@@ -31,106 +38,27 @@ async function loadTest(content) {
     // document.body.appendChild(img);
 
     var data = null;
-    // data = await load('deploy.lst')
-    // g_logger.info(data);
-    // data = await load('deploy.lsst')
-    // g_logger.info(data);
+    data = await load('deploy.lst')
+    g_logger.info(data);
+    data = await load('deploy.lsst')
+    g_logger.info(data);
 
-    // load('deploy.lst').then(data => {
-    //     g_logger.info(data);
-    // });
-    // load('deploy.lsst').then(data => {
-    //     g_logger.info(data);
-    // });
-    // load('deploy.lst',
-    //     data => g_logger.info(data),
-    //     err => g_logger.error(err)
-    // );
-    // load('deploy.lsst',
-    //     data => g_logger.info(data),
-    //     err => g_logger.error(err)
-    // );
-
-    var res = await load(['deploy.lst', 'test.gif'])
-    var img = res[1].node;
-    g_logger.info(img); g_logger.hr();
-    g_logger.info(img.width);
-    document.body.appendChild(img);
-
-    // data = await load(['deploy.lsst', 'test.gif'])
-    // g_logger.info(data); g_logger.hr();
-
-    // load(['deploy.lst', 'test.gif']).then(data => {
-    //     g_logger.info(data); g_logger.hr();
-    // });
-    // load(['deploy.lsst', 'test.gif']).then(data => {
-    //     g_logger.info(data); g_logger.hr();
-    // });
-
-    // load(['deploy.lst', 'test.gif'],
-    //     data => { g_logger.info(data); g_logger.hr(); },
-    //     err => { g_logger.error(err); g_logger.hr(); }
-    // );
-    // load(['deploy.lsst', 'test.gisf'],
-    //     data => { g_logger.info(data); g_logger.hr(); },
-    //     err => { g_logger.error(err); g_logger.hr(); }
-    // );
-
-    // g_logger.info('mime-type: ' + options.contentType);
-    // g_logger.info('reponse-type: ' + options.responseType);
-    // if (xhr.error) {
-    //     g_logger.info('error: ' + xhr.error);
-    // }
-    // var data = await load.load_('test.gif', null, -1,
-    //     e => { g_logger.info('loaded'); },
-    //     e => {g_logger.info('load error'); }
-    // );
-
-    // test('deploys.lst');
-/*
-    test('deploy.lst', function(data, xhr) {
-        g_logger.info('load async ' + xhr.options.url + '<pre style="background-color:silver">' + data + '</pre><hr/>');
-    }, function(error, xhr) {
-        g_logger.info(xhr.options.url + ' Error: ' + error.message + '<hr/>');
+    load('deploy.lst').then(data => {
+        g_logger.info(data);
+    });
+    load('deploy.lsst').then(data => {
+        g_logger.info(data);
     });
 
-    data = load('deploys.lst', function(data) {
-        g_logger.info('load async ' + xhr.options.url + '<pre style="background-color:silver">' + data + '</pre><hr/>');
-    
-    }, function(error, xhr) {
-        g_logger.info('load async ' + xhr.options.url + 'Error: ' + error.message + '<hr/>');
-    });
+    data = await load(['deploy.lsst', 'test.gif'])
+    g_logger.info(data); g_logger.hr();
 
-    var arr = ['deploys.lst', 'dummy.js'];
-    var text = ['load ' + arr];
-    data = load(arr);
-    data.forEach( function(item, ix) {
-        text.push(' - ' + arr[ix] + ': ' + item);
+    load(['deploy.lst', 'test.gif']).then(data => {
+        g_logger.info(data); g_logger.hr();
     });
-    text.push('<hr/>');
-    g_logger.info(text.join('<br/>'));
-    
-    load(arr, function(data) {
-            var text = ['load aync ' + arr];
-            data.forEach( function(item, ix) {
-                text.push(' async ' + arr[ix] + '<pre style="background-color:silver">' + item + '</pre>');
-            });
-            text.push('<hr/>');
-            g_logger.info(text.join('<br/>'));
-        }, function(error) {
-            var text = ['load aync ' + arr];
-            error.forEach( function(item, ix) {
-                if (item instanceof Error) {
-                    text.push(' - ' + arr[ix] + ' Error: ' + item.message);
-                } else {
-                    text.push(' - ' + arr[ix] + ' Item: ' + item);
-                }
-            });
-            text.push('<hr/>');
-            g_logger.info(text.join('<br/>'));
-        }
-    );
-*/
+    load(['deploy.lsst', 'test.gif']).then(data => {
+        g_logger.info(data); g_logger.hr();
+    });
 }
 
 function requireTest(content) {
@@ -343,6 +271,54 @@ function synthTest() {
 
 }
 
+function uiTest() {
+
+    var obj = {
+        "family": {
+            "father": { "age": 40, "name": "Gabor", "color": "blue", "health": 0.7, "married": true, "confirm": "Ok" },
+            "mother": { "name": "Tilda", "color": "red", "health": 0.8, "married": true, "confirm": "Go" },
+            "child": { "age": 10, "name": "Gergely", "color": "green", "health": 0.9, "married": false, "confirm": "Da me!" }
+        }
+    };
+
+    var template = {
+        "type": "grid",
+        "data-field": "family",
+        "row-template": {
+            "name": {
+                "type":"textbox", "data-field":"name", "data-type":"string", "label": "$Key",
+                "events": ["change"]
+            },
+            "age": {
+                "type":"textbox", "data-field":"age", "data-type":"int", "label": true,
+                "min": "1", "max": "100", "step": "1",
+                "events": ["change"]
+            },
+            "color": {
+                "type":"ddlist", "data-field":"color", "data-type":"string", "label": "$Key",
+                "items":["red", "green", "blue"], "events": ["change"]
+            },
+            "health": {
+                "type":"slider", "data-field":"health", "data-type":"float", "label": "$key",
+                "min": 0.0, "max": 1.0, "step": 0.1,
+                "events": ["change"]
+            },
+            "married": {
+                "type":"checkbox", "data-field":"married", "label": "Trapped",
+                "events": ["change"]
+            },
+            "accept": {
+                "type":"button", "data-field":"confirm", "label": "Accept values",
+                "events": ["click"]
+            }
+        }
+    };
+
+    var grid = Ui.Control.create('family', template);
+    grid.dataBind(obj, 'family');
+    grid.render({node:document.body});
+}
+
 function onpageload(errors) {
     if (errors.length > 0) {
         alert('Error during loading: ' + errors.map(err => err.message).join('\n'));
@@ -362,7 +338,9 @@ function onpageload(errors) {
         }
     });
 
-    loadTest(content);
+    //loadTest(content);
+
+    uiTest();
 
     // urlInfoTest();
 

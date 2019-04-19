@@ -5,23 +5,55 @@ include('/ge/v2.js');
 	
     function Bump(canvas) {
 		Demo.call(this, 'bump', canvas);
+		this.images = [];
 		this.lightPos = new V2(.5, .5);
-		this.offsetPos = new V2();
 		this.heightMap = null;
 		this.constructor = Bump;
     }
 	Bump.prototype = new Demo;
 
     Bump.prototype.prepare = async function() {
-		//var res = await load('bump/bump.gif');
-		//var res = await load('/demo/fire/fire.gif');
-		//var res = await load('/demo/rotozoom/javascript.gif');
-		var res = await load('/test/test.gif');
-		this.lightPos.x *= res.node.width;
-		this.lightPos.y *= res.node.height;
-		this.heightMap = new GE.Buffer(res.node, true);
-		this.backBuffer = new GE.Buffer();
-		//this.onresize();
+		// create list of images
+		var urls = [
+			'/demo/bump/bump.gif', '/demo/bump/bump2.gif',
+			'/demo/lens/lens.gif', '/demo/lens/deepspace.jpg',
+			'/demo/fire/fire.gif', '/demo/rotozoom/javascript.gif',
+			'/test/test.gif'
+		];
+		var res = await load(urls);
+		for (var i=0; i<res.length; i++) {
+			if (!(res[i].error instanceof Error) && res[i].node instanceof Image) {
+				var url = res[i].resolvedUrl;
+				var ix = url.lastIndexOf('/') + 1;
+				res[i].node.alt = url.substring(ix != 0 ? ix : 0);
+				this.images.push(res[i].node);
+			}
+		}
+		this.ui.controls.images.setItems(this.images.map(v => v.alt));
+	};
+	Bump.prototype.createHeightMap = function() {
+		var ix = this.ui.controls.images.getSelectedItem().index;
+		var img = this.images[ix];
+		var buffer = new GE.Buffer(img, true);
+		this.heightMap = {
+			buffer: buffer,
+			map: new Uint8Array(buffer.width * buffer.height)
+		}
+		var ix = 0;
+		for (var j=0; j<this.heightMap.buffer.height; j++) {
+			for (var i=0; i<this.heightMap.buffer.width; i++) {
+				this.heightMap.map[ix] = 0.2989 * buffer.imgData.data[ix*4];
+				this.heightMap.map[ix] += 0.5870 * buffer.imgData.data[ix*4+1];
+				this.heightMap.map[ix] += 0.1140 * buffer.imgData.data[ix*4+2];
+				ix++;
+			}
+		}
+	};
+	Bump.prototype.initialize = function() {
+	};
+	Bump.prototype.renderUi = function(node) {
+		Demo.prototype.renderUi.call(this, node);
+		this.createHeightMap();
 	};
     Bump.prototype.processInputs = function(e) {
 		this.getMouseCoors(this.lightPos);
@@ -31,42 +63,27 @@ include('/ge/v2.js');
 			case 'resolution':
 				this.onresize();
 				break;
+			case 'images':
+				this.createHeightMap();
+				break;
 		}
 	};
     Bump.prototype.update = function(frame, dt) {
-	};
-    Bump.prototype.render = function(frame) {
-		var wi = this.heightMap.width;
-		var he = this.heightMap.height;
+		var wi = this.heightMap.buffer.width;
+		var he = this.heightMap.buffer.height;
 		var radius = 0.5 * (this.settings.radius + 0.01) * wi;
-		GE.ctx.clearRect(0, 0, wi, he);
-		var stride = wi*4;
-		var dir = new V2();
-		var nv = new V2();
-		var ix = 0, ix2 = stride + 4;
+		var ix = wi + 1;
+		//GE.ctx.clearRect(0, 0, wi, he);
 		for (var y=1; y<he-1; y++) {
-			//dlight.y = y - this.lightPos.y;
-			ix = ix2;
 			for (var x=1; x<wi-1; x++) {
-				// dir.x = x - this.lightPos.x;
-				// dir.y = y - this.lightPos.y;
-				// dir.norm();
-				// var h = this.heightMap.imgData.data[ix] * this.settings.ambient;
-				// if (dir.length() < radius) {
-				// 	nv.x = this.heightMap.imgData.data[ix-4] - this.heightMap.imgData.data[ix];
-				// 	nv.y = this.heightMap.imgData.data[ix-stride] - this.heightMap.imgData.data[ix];
-				// 	nv.norm();
-				// 	h *= nv.dot(dir) * this.settings.intensity;
-				// }
 				var lx = x - this.lightPos.x;
 				var ly = y - this.lightPos.y;
-				var h = this.heightMap.imgData.data[ix] * this.settings.ambient;
-				//var l = lightDir.length();
+				var h = this.heightMap.map[ix] * this.settings.ambient;
 				var l = Math.sqrt(lx*lx + ly*ly);
 				if (l < radius)
 				{
-					var nx = this.heightMap.imgData.data[ix-4] - this.heightMap.imgData.data[ix+4];
-					var ny = this.heightMap.imgData.data[ix-stride] - this.heightMap.imgData.data[ix+stride];
+					var nx = this.heightMap.map[ix-1] - this.heightMap.map[ix+1];
+					var ny = this.heightMap.map[ix-wi] - this.heightMap.map[ix+wi];
 
 					lx -= nx;
 					if (lx < 0) lx = -lx;
@@ -84,21 +101,23 @@ include('/ge/v2.js');
 				}
 				if (h > 255) h = 255;
 				if (h < 0) h = 0;
-				this.backBuffer.imgData.data[ix+0] = h;
-				this.backBuffer.imgData.data[ix+1] = h;
-				this.backBuffer.imgData.data[ix+2] = h;
-				this.backBuffer.imgData.data[ix+3] = 255;
-				ix += 4;
+				h /= 255;
+				GE.backBuffer.imgData.data[4*ix+0] = h*this.heightMap.buffer.imgData.data[4*ix];
+				GE.backBuffer.imgData.data[4*ix+1] = h*this.heightMap.buffer.imgData.data[4*ix+1];
+				GE.backBuffer.imgData.data[4*ix+2] = h*this.heightMap.buffer.imgData.data[4*ix+2];
+				GE.backBuffer.imgData.data[4*ix+3] = 255;
+				ix++;
 			}
-			ix2 += stride;
-			//ix += stride;
+			// skip last pixel and first pixel on next row
+			ix+=2;
 		}
-		//GE.ctx.putImageData(this.backBuffer.imgData, 0, 0);
-		GE.blitBuffer(this.backBuffer);
+	};
+    Bump.prototype.render = function(frame) {
+		GE.backBuffer.blit();
 	};
     Bump.prototype.onresize = function(e) {
-    	// handler of window resize
-		GE.resizeCanvas(GE.canvas, 1);	//this.data.resolution);
+		// handler of window resize
+//		GE.resizeCanvas(GE.canvas, 1);	//this.data.resolution);
 //		var he = GE.canvas.height;
 //		this.aspect = GE.canvas.width/he;
 //		GE.ctx.setTransform(he/2, 0, 0, he/2, GE.canvas.width/2, he/2);

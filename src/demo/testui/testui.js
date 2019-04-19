@@ -1,4 +1,3 @@
-include('demo.js');
 (function() {
     function TestUi(canvas) {
         Demo.call(this, 'Test-UI', canvas);
@@ -6,6 +5,9 @@ include('demo.js');
         this.constructor = TestUi;
     }
     TestUi.prototype = new Demo();
+    TestUi.prototype.prepare = async function() {
+
+    };
     TestUi.prototype.initialize = function() {
 		Dbg.prln('TestUi initialize');
         var grid = this.ui.controls.persons;
@@ -13,7 +15,8 @@ include('demo.js');
         var col = grid.columns['color'];
         col.cells.forEach(ddl => ddl.setItems(this.config.colors));
 	};
-    TestUi.prototype.processInputs = function() { throw new Error('Not implemented'); };
+    TestUi.prototype.processInputs = function() {
+    };
     TestUi.prototype.update = function(frame) {
     };
     TestUi.prototype.render = function(frame) {

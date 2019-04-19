@@ -144,8 +144,8 @@ include('/ge/noise.js');
 		GE.ctx.globalAlpha = 1.0;
 	};
     Dots.prototype.onresize = function(e) {
-    	// handler of window resize
-		GE.resizeCanvas(GE.canvas, this.data.resolution);
+		// handler of window resize
+		GE.resizeCanvas(1/this.data.resolution);
 		var he = GE.canvas.height;
 		this.aspect = GE.canvas.width/he;
 		GE.ctx.setTransform(he/2, 0, 0, he/2, GE.canvas.width/2, he/2);

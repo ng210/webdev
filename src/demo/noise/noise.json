@@ -37,8 +37,8 @@
         }
     },
     "settings": {
-        "width": 384,
-        "height": 256,
+        "width": "256",
+        "height": "128",
         "amp0": 0.5,
         "fre0": 2.0,
         "amp": 0.5,
