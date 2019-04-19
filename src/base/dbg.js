@@ -3,14 +3,14 @@
 	var Dbg = {
 		con: null,
 		clicked: false,
-		init: function(lbl, width) {
+		init: function(lbl) {
 			this.con = document.getElementById(lbl);
 			this.con.onmouseover = e => this.con.style.opacity = this.clicked ? 0.5 : 0.2;
 			this.con.onmouseout = e => { this.clicked = false; this.con.style.opacity = 0.01; }
 			this.con.onclick = e => { this.clicked = true; this.con.style.opacity = 0.5; };
 			this.con.style.opacity = 0.02;
 			this.con.style.zIndex = 100;
-			this.con.style.width = width + 'px';
+			this.con.style.width = window.innerWidth;
 		},
 		prln: function(txt) {
 			this.pr(txt + '<br/>');

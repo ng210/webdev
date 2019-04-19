@@ -45,6 +45,7 @@ try {
                     Resource.LOADING = 2;
                     Resource.COMPLETE = 3;
                     Resource.ERROR = 4;
+                    Resource.Status = [ 'invalid', 'new', 'loading', 'complete', 'error' ];
 
                     Resource.cache = {};
 
@@ -52,7 +53,7 @@ try {
                     Resource.searchPath = [];
 
                     Resource.prototype.toString = function() {
-                        return `RES@(${this.url}) - st:${this.status}`;
+                        return `RES@(${this.url}) - st:${Resource.Status[this.status]}(${this.status})`;
                     };
 
                     return Resource;
@@ -586,7 +587,6 @@ try {
                                                 if (resource.node instanceof Image) {
                                                     setTimeout(function(re) {
                                                         var w = re.node.width;
-console.log('Width: ' + w);
                                                         resolve(re)
                                                     }, 50, resource);
                                                     //resource.node.decode().then( () => resolve(resource));
