@@ -94,10 +94,18 @@ try {
                                 enumerable: false,
                                 get: function() { return this.resource.url; }
                             },
+                            // private member
+                            'error_': {
+                                writeable: false,
+                                enumerable: false,
+                                value: null
+                            },
+                            // public member
                             'error': {
                                 writeable: false,
                                 enumerable: false,
-                                get: function() { return this.resource.error; }
+                                set: function(v) { this.error_ = v; },
+                                get: function() { return this.error_ != null ? this.error_ : this.resource.error; }
                             },
                         });
                         this.constructor = Module;
@@ -120,7 +128,7 @@ try {
                         mdl.resource = await load({url: url, process:false});
                         try {
                             if (mdl.error != null) {
-                                throw (mdl.error instanceof Error ? mdl.error : new Error(err));
+                                throw mdl.error;
                             }
                             // search and load referenced modules
                             await mdl.resolveIncludes();
@@ -138,10 +146,8 @@ try {
                             }
                             // set module to resolved to make it available
                             mdl.status = Module.RESOLVED;
-//console.log(`RESolved ${mdl}`);
                         } catch (err) {
                             mdl.error = err;
-                            //Resource.status = Resource.ERROR;
                         }
                         return mdl;
                     },
@@ -265,7 +271,6 @@ try {
                     //     Boot.addDependencies(order);
                     // },
                     waitForLoadingResources: function() {
-//console.log('check');
                         clearTimeout(Boot.loadTimer);
                         // check modules
                         var resolved = 0;
@@ -336,16 +341,17 @@ try {
                             }                            
                             break;
                         }
-//console.log(`search ${url}`);
                         mdl = await Module.load(url);
                         if (!mdl.error) {
                             // module was loaded successfully
-                            // the module might be being loaded under a different path
-                            for (var i=0; i<searchPath.length; i++) {
-                                var url = searchPath[i] + '/' + path;
-                                var dm = Module.cache[url];
-                                if (dm !== undefined && mdl != dm) {
-                                    dm.status = Module.ALIAS;
+                            // the same module might be missed under a different path
+                            for (var url in Module.cache) {
+                                if (url.endsWith(path) ) {
+                                    var dm = Module.cache[url];
+                                    if (dm.status === Resource.ERROR ||
+                                            dm.status === Module.MISSING || dm.status === Module.ERROR) {
+                                        dm.status = Module.ALIAS;
+                                    }
                                 }
                             }
                             break;
@@ -464,21 +470,18 @@ try {
                             try {
                                 xhr.onreadystatechange = function() {
                                     if (this.readyState == 4) {
-                                        if (this.status == 200 || this.status != 404 && this.response) {
-                                            this.options.response = this.response;
-                                        } else {
+                                        this.options.response = this.response;
+                                        if (this.status >= 400) {
                                             // create error object
-                                            this.options.response = new Error(this.options.url + ' - ' + this.statusText + ' (' + this.status + ')');
+                                            this.options.error = new Error(this.options.url + ' - ' + this.statusText + ' (' + this.status + ')');
                                         }
                                         resolve(this.options);
                                     }
                                 };
                                 xhr.send(options.data);
                             } catch (err) {
-                                options.response = err;
-                                if (typeof options.onerror === 'function') {
-                                    options.onerror(err, xhr);
-                                }
+                                options.error = err;
+                                options.response = null;
                                 resolve(options);
                             }
                         });
@@ -489,9 +492,17 @@ try {
                 writeable: false,
                 enumerable: false,
                 value: (function() {
-                    var load = function(obj, onload, onerror) {
+                // Examples
+                //     load('config.xml');
+                //     load(['user.xml', 'config.xml', 'web.xml']);
+                //     load({ url: 'config.xml', contentType: 'xml' });
+                //     load([  { url: 'user.html', contentType: 'html', method: 'get' },
+                //             { url: 'app.cfg', contentType: 'xml', method: 'post' } ]);
+                    var load = function(obj) {
                         if (!Array.isArray(obj)) {
-                            var options = {};
+                            var options = {
+                                error: null
+                            };
                             if (typeof obj === 'string') {
                                 options.url = obj;
                             } else {
@@ -502,52 +513,23 @@ try {
                             if (options.process === undefined) {
                                 options.process = true;
                             }
-                            return load.load_(options, onload, onerror);
+                            return load.load_(options);
                         } else {
                             var loads = [];
                             for (var i=0; i<obj.length; i++) {
                                 var item = obj[i];
                                 var options = typeof item === 'string' ? { url: item } : item;
+                                // process response by default
                                 if (options.process === undefined) {
                                     options.process = true;
                                 }
-                                loads.push(load.load_(options, options.onload, options.onerror));
+                                loads.push(load.load_(options));
                             }
                             return Promise.all(loads);
-                            //     new Promise(resolve => {
-                            //         Promise.all(loads).then(res => {
-                            //         var hasError = false;
-                            //         for (var i=0; i<res.length; i++) {
-                            //             var item = res[i];
-                            //             if (item.error instanceof Error) {
-                            //                 hasError = true;
-                            //                 break;
-                            //             }
-                            //         }
-                            //         if (hasError) {
-                            //             if (typeof onerror === 'function') {
-                            //                 onerror(res);
-                            //             }
-                            //         } else {
-                            //             if (typeof onload === 'function') {
-                            //                 onload(res);
-                            //             }
-                            //         }
-                            //         resolve(res);
-                            //     });
-                            // });
                         }
                     };
-                    //  load('config.xml');
-                    //  load(['user.xml', 'config.xml', 'web.xml']);
-                    //  load('config.xml', onload, onerror);
-                    //  load(['user.xml', 'config.xml', 'web.xml'], onload, onerror);
-                    //  load({ url: 'config.xml', contentType: 'xml' });
-                    //  load([{ url: 'user.html', contentType: 'html', method: 'get' }, { url: 'app.cfg', contentType: 'xml', method: 'post' });
-                    //  load({ url: 'config.xml', contentType: 'xml' }, onload, onerror);
-                    //  load([{ url: 'user.html', contentType: 'html', method: 'get' }, { url: 'app.cfg', contentType: 'xml', method: 'post' }, onload, onerror);
-                    load.load_ = function(options, onload, onerror) {
-                        return new Promise((resolve, reject) => {
+                    load.load_ = function(options) {
+                        return new Promise( resolve => {
                             // check resource cache
                             var resource = Resource.cache[options.url];
                             if (resource !== undefined) {
@@ -556,50 +538,35 @@ try {
                             } else {
                                 // resource not found in cache
                                 resource = new Resource(options.url);
-                                // resource will be loaded
+                                // it will be loaded
                                 resource.status = Resource.LOADING;
                                 Resource.cache[options.url] = resource;
                                 // load
                                 ajax.send(options).then( async function() {
-                                    if (options.response instanceof Error) {
-                                        // if (typeof onerror === 'function') {
-                                        //     onerror(options);
-                                        // }
+                                    resource.data = options.response;
+                                    resource.error = options.error;
+                                    if (options.error != null) {
                                         // fill resource for error
-                                        resource.data = null;
-                                        resource.error = options.response;
                                         resource.status = Resource.ERROR;
                                         resolve(resource);
                                     } else {
                                         // fill resource
                                         resource.resolvedUrl = options.resolvedUrl;
-                                        resource.data = options.response;
-                                        resource.error = null;
                                         resource.status = Resource.COMPLETE;
                                         if (options.process) {
                                             resource.node = await load.processContent(options, resource);
                                             if (Module.cache[resource.url] !== undefined) {
                                                 resource = Module.cache[resource.url];
                                             } else {
-                                            // if (typeof onload === 'function') {
-                                            //     onload(options);
-                                            // }
                                                 if (resource.node instanceof Image) {
+                                                    // todo: check this!
                                                     setTimeout(function(re) {
                                                         var w = re.node.width;
                                                         resolve(re)
                                                     }, 50, resource);
-                                                    //resource.node.decode().then( () => resolve(resource));
                                                     return;
-                                                // } else {
-                                                //     resolve(resource);
                                                 }
                                             }
-                                        // } else {
-                                        //     if (typeof onload === 'function') {
-                                        //         onload(options);
-                                        //     }
-                                        //      resolve(resource);
                                         }
                                         resolve(resource);
                                     }
@@ -619,7 +586,7 @@ try {
 
                                 try {
                                     if (mdl.error != null) {
-                                        throw (mdl.error instanceof Error ? mdl.error : new Error(err));
+                                        throw mdl.error;
                                     }
                                     await mdl.resolveIncludes();
                                     var order = mdl.buildDependencyOrder();
@@ -632,17 +599,10 @@ try {
                                         document.head.appendChild(dm.node);
                                     }
                                     mdl.status = Module.RESOLVED;
-//console.log(`RESolved ${mdl}`);
                                 } catch (err) {
                                     mdl.error = err;
                                     //Resource.status = Resource.ERROR;
                                 }
-
-                                // Boot.addModule(options);
-                                // node = document.createElement('script');
-                                // node.innerHTML = data;
-                                // node.url = options.resolvedUrl;
-                                // document.head.appendChild(node);
                                 break;
                             case 'x-shader/*':
                             case 'x-shader/x-vertex':
