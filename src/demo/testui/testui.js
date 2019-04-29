@@ -6,7 +6,6 @@
     }
     TestUi.prototype = new Demo();
     TestUi.prototype.prepare = async function() {
-
     };
     TestUi.prototype.initialize = function() {
 		Dbg.prln('TestUi initialize');
@@ -14,6 +13,8 @@
 		// custom init of color ddlist
         var col = grid.columns['color'];
         col.cells.forEach(ddl => ddl.setItems(this.config.colors));
+        settings_.style.left = 600;
+        settings_.style.width = '80em';
 	};
     TestUi.prototype.processInputs = function() {
     };

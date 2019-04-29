@@ -1,4 +1,5 @@
 include('ui/datalink.js')
+include('/ui/label.js');
 include('/ui/textbox.js');
 include('/ui/slider.js');
 include('/ui/ddlist.js');
@@ -12,7 +13,7 @@ include('/ui/grid.js');
         this.id = id;
         this.selectedControl = null;
         this.canvas = canvas;
-        this.ui = new Ui.Board(id+'_ui', { type:'board' }); //   { parent: null, id:id+'_ui', controls:{} };
+        this.ui = new Ui.Board(id+'_ui', { titlebar:id+' settings', type:'board' }); //   { parent: null, id:id+'_ui', controls:{} };
         // create alias for items in the ui
         this.ui.controls = this.ui.items;
         this.config = null;
@@ -58,14 +59,7 @@ include('/ui/grid.js');
         while (node.children.length > 0) {
             node.removeChild(node.children[0]);
         }
-        for (var key in this.ui.controls) {
-            var control = this.ui.controls[key];
-            var wrapper = document.createElement('div');
-            wrapper.id = key + '#wrapper';
-            wrapper.className = 'wrapper';
-            control.render( { "node": wrapper} );
-            node.appendChild(wrapper);
-        }
+        this.ui.render({node:node});
     };
     Demo.load = async function(name, url) {
         var demo = null;

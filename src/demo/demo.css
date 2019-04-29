@@ -4,6 +4,39 @@ body {
 	border: 0 none;
 	overflow: hidden;
 }
+#list {
+	position: absolute;
+	left: 10px;	top: 10px;
+	padding: 2px 4px;
+	/*background-color:silver;*/
+	border: outset 1px silver;
+	font-family: Consolas;
+	font-size:small;
+	display: none
+}
+
+.titlebar {
+	font-size: 14pt;
+	background-color: silver;
+}
+
+.row {
+	font-weight: bolder
+}
+
+.grid.row.r0 {
+	background-color: silver
+}
+
+.grid.row.r1 {
+	background-color: white
+}
+
+.grid.cell {
+	padding: 2px;
+	border: groove 2px;
+}
+
 #cvs-container {
 	width: 100vw; height: 100vh;
 	margin: 0; padding: 0;
@@ -15,12 +48,14 @@ body {
 
 #settings {
 	position: absolute;
-	left: 10px;	top: 10px;
+	left: 80vw;	top: 10px;
 	padding: 2px 4px;
 	background-color:silver;
-	border: outset 1px silver;
+	border: outset 1px lightgray;
 	font-family: Consolas;
 	font-size:small;
+	width: 16em;
+	overflow: auto;
 }
 
 div.wrapper {
