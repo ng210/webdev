@@ -1,0 +1,25 @@
+{
+  "name": "ng210",
+  "description": "nodejs test app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ng210/heroku.git"
+  },
+  "keywords": [],
+  "author": "Gabor",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ng210/heroku/issues"
+  },
+  "homepage": "https://github.com/ng210/heroku",
+  "dependencies": {
+    "express": "^4.16.4",
+    "extjs": "^0.1.0"
+  }
+}

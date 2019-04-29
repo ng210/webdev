@@ -1,0 +1,31 @@
+{
+    "name": "NG210 nodeJS test",
+    "description": "This is a sandboxed nodeJS server.",
+    "keywords": [
+      "nodeJS",
+      "HTML5",
+      "sandbox"
+    ],
+    "website": "https://small-sharp-tool.com/",
+    "repository": "https://github.com/ng210/webdev",
+    "logo": "https://avatars2.githubusercontent.com/u/31445817?s=460&v=4",
+    "success_url": "/welcome",
+    "scripts": {
+    },
+    "env": {
+    },
+    "formation": {
+    },
+    "image": "heroku/nodejs",
+    "addons": [],
+    "buildpacks": [
+      {
+        "url": "https://elements.heroku.com/buildpacks/heroku/heroku-buildpack-nodejs"
+      }
+    ],
+    "environments": {
+      "test": {
+      }
+    }
+  }
+  
