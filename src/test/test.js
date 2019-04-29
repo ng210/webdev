@@ -271,52 +271,122 @@ function synthTest() {
 
 }
 
+function isChild(container, ctrl) {
+    var node = ctrl;
+    var result = false;
+    while (node) {
+        if (node == container) {
+            result = true;
+            break;
+        }
+        node = node.parent;
+    }
+    return result;
+}
+
+function onEvent(e) {
+    var el = e.target;
+    if (e.type === 'mouseover' || e.type === 'mouseout') {
+
+    }
+}
+
+var focusTarget = null;
 function uiTest() {
+    document.body.addEventListener('mouseover', function(e) {
+        focusTarget = e.target;
+        e.target.style.border = 'solid 1px blue';
+        console.log(`FOCUS on ${focusTarget.id} (${focusTarget.tagName}) - ${this.id} (${this.tagName})`);
+    });
+    document.body.addEventListener('mouseout', function(e) {
+        //focusTarget = e.target;
+        e.target.style.border = 'none 1px blue';
+        console.log(`BLUR on ${focusTarget.id} (${focusTarget.tagName}) - ${this.id} (${this.tagName})`);
+        // if (!isChild(focusTarget, e.target)) {
+        //     console.log(`BLUR on ${focusTarget.id} (${focusTarget.tagName})`);
+        // }
+    });
 
-    var obj = {
-        "family": {
-            "father": { "age": 40, "name": "Gabor", "color": "blue", "health": 0.7, "married": true, "confirm": "Ok" },
-            "mother": { "name": "Tilda", "color": "red", "health": 0.8, "married": true, "confirm": "Go" },
-            "child": { "age": 10, "name": "Gergely", "color": "green", "health": 0.9, "married": false, "confirm": "Da me!" }
-        }
-    };
+    document.querySelector('#content').addEventListener('mouseover', function(e) {
+        focusTarget = e.target;
+        e.target.style.border = 'solid 1px blue';
+        console.log(`FOCUS on ${focusTarget.id} (${focusTarget.tagName}) - ${this.id} (${this.tagName})`);
+    });
+    document.querySelector('#content').addEventListener('mouseout', function(e) {
+        //focusTarget = e.target;
+        e.target.style.border = 'none 1px blue';
+        console.log(`BLUR on ${focusTarget.id} (${focusTarget.tagName}) - ${this.id} (${this.tagName})`);
+    });
 
-    var template = {
-        "type": "grid",
-        "data-field": "family",
-        "row-template": {
-            "name": {
-                "type":"textbox", "data-field":"name", "data-type":"string", "label": "$Key",
-                "events": ["change"]
-            },
-            "age": {
-                "type":"textbox", "data-field":"age", "data-type":"int", "label": true,
-                "min": "1", "max": "100", "step": "1",
-                "events": ["change"]
-            },
-            "color": {
-                "type":"ddlist", "data-field":"color", "data-type":"string", "label": "$Key",
-                "items":["red", "green", "blue"], "events": ["change"]
-            },
-            "health": {
-                "type":"slider", "data-field":"health", "data-type":"float", "label": "$key",
-                "min": 0.0, "max": 1.0, "step": 0.1,
-                "events": ["change"]
-            },
-            "married": {
-                "type":"checkbox", "data-field":"married", "label": "Trapped",
-                "events": ["change"]
-            },
-            "accept": {
-                "type":"button", "data-field":"confirm", "label": "Accept values",
-                "events": ["click"]
-            }
-        }
-    };
 
-    var grid = Ui.Control.create('family', template);
-    grid.dataBind(obj, 'family');
-    grid.render({node:document.body});
+    // document.querySelector('#content').addEventListener('mouseover', function(e) {
+    //     this.style.border = 'solid 2px blue';
+    //     console.log(`${e.type} (${e.bubbles}) ${e.target.id} - ${this.id}`);
+    // });
+    // document.querySelector('#embed').addEventListener('mouseover', function(e) {
+    //     //if (this == e.target) {
+    //         this.style.border = 'solid 2px blue';
+    //         console.log(`${e.type} (${e.bubbles}) ${e.target.id} - ${this.id}`);
+    //     //}
+    // }, true);
+    // document.querySelector('#content').addEventListener('mouseout', function(e) {
+    //     //if (this == e.target) {
+    //         this.style.border = 'none 2px blue';
+    //         console.log(`${e.type} (${e.bubbles}) ${e.target.id} - ${this.id}`);
+    //     //}
+    // });
+    // document.querySelector('#embed').addEventListener('mouseout', function(e) {
+    //     //if (this == e.target) {
+    //         this.style.border = 'none';
+    //         console.log(`${e.type} (${e.bubbles}) ${e.target.id} - ${this.id}`);
+    //     //}
+    // }, true);
+
+
+    // var obj = {
+    //     "family": {
+    //         "father": { "age": 40, "name": "Gabor", "color": "blue", "health": 0.7, "married": true, "confirm": "Ok" },
+    //         "mother": { "name": "Tilda", "color": "red", "health": 0.8, "married": true, "confirm": "Go" },
+    //         "child": { "age": 10, "name": "Gergely", "color": "green", "health": 0.9, "married": false, "confirm": "Da me!" }
+    //     }
+    // };
+
+    // var template = {
+    //     "type": "grid",
+    //     "data-field": "family",
+    //     "row-template": {
+    //         "name": {
+    //             "type":"textbox", "data-field":"name", "data-type":"string", "label": "$Key",
+    //             "events": ["change"]
+    //         },
+    //         "age": {
+    //             "type":"textbox", "data-field":"age", "data-type":"int", "label": true,
+    //             "min": "1", "max": "100", "step": "1",
+    //             "events": ["change"]
+    //         },
+    //         "color": {
+    //             "type":"ddlist", "data-field":"color", "data-type":"string", "label": "$Key",
+    //             "items":["red", "green", "blue"], "events": ["change"]
+    //         },
+    //         "health": {
+    //             "type":"slider", "data-field":"health", "data-type":"float", "label": "$key",
+    //             "min": 0.0, "max": 1.0, "step": 0.1,
+    //             "events": ["change"]
+    //         },
+    //         "married": {
+    //             "type":"checkbox", "data-field":"married", "label": "Trapped",
+    //             "events": ["change"]
+    //         },
+    //         "accept": {
+    //             "type":"button", "data-field":"confirm", "label": "Accept values",
+    //             "events": ["click"]
+    //         }
+    //     }
+    // };
+
+    // var grid = Ui.Control.create('family', template);
+    // grid.dataBind(obj, 'family');
+    // grid.render({node:document.body});
 }
 
 function onpageload(errors) {
