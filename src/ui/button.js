@@ -8,9 +8,9 @@ include('/ui/valuecontrol.js');
 	Ui.Button.prototype = new Ui.ValueControl('button');
 	Ui.Control.Types['button'] = { ctor: Ui.Button, tag: 'INPUT' };
 
-	Ui.Button.prototype.registerHandler = function(event, handler, context) {
+	Ui.Button.prototype.registerHandler = function(event) {
 		if (['click'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
-		Ui.Control.registerHandler.call(this, event, context);
+		Ui.Control.registerHandler.call(this, event);
     };
 	Ui.Button.prototype.render = function(ctx) {
     	Ui.Button.base.render.call(this, ctx);

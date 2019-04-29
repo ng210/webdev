@@ -10,9 +10,9 @@ include('/ui/valuecontrol.js');
 	Ui.Textbox.prototype = new Ui.ValueControl('textbox');
 
 	Ui.Control.Types['textbox'] = { ctor: Ui.Textbox, tag: 'INPUT' };
-	Ui.Textbox.prototype.registerHandler = function(event, context) {
+	Ui.Textbox.prototype.registerHandler = function(event) {
 		if (['change', 'key'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
-		Ui.Control.registerHandler.call(this, event, context);
+		Ui.Control.registerHandler.call(this, event);
     };
     Ui.Textbox.prototype.render = function(ctx) {
     	Ui.Textbox.base.render.call(this, ctx);

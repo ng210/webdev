@@ -17,6 +17,7 @@ include('/ui/datalink.js');
 			this.label = this.id;
 		}
 		this.css = [];
+		this.cssText = '';
 		this.handlers = {};
 		// add onfocus and onblur events
 		Ui.Control.registerHandler.call(this, 'focus', this);
@@ -64,17 +65,18 @@ include('/ui/datalink.js');
 			this.element.id = this.id;
 			this.element.control = this;
 		}
-		var css = this.css.join(' ');
 		if (this.css.length > 0) {
-			this.element.className = css;
-			css += ' ';
+			this.cssText = this.css.join(' ');
+			this.element.className = this.cssText;
+			this.cssText += ' ';
 		}
 		if (this.label !== undefined && this.label !== false) {
 			if (this.labelElem == null) {
 				this.labelElem = document.createElement('SPAN');
 				this.labelElem.id = this.id + '#label';
-				this.labelElem.className = css + 'label';
+				this.labelElem.className = this.cssText + 'label';
 				this.labelElem.innerHTML = this.label;
+				this.labelElem.control = this;
 			}
 			ctx.node.appendChild(this.labelElem);
 		} else {
@@ -94,17 +96,20 @@ include('/ui/datalink.js');
 			ctx.node.appendChild(this.element);
 		}
 	};
-	Ui.Control.registerHandler = function(eventName, context) {
+	Ui.Control.prototype.registerHandler = function(event) {
+		throw new Error('Not implemented!');
+    };
+
+	Ui.Control.registerHandler = function(eventName) {
 		if (eventName === undefined) {
 			if (Array.isArray(this.template.events)) {
 				for (var i=0; i<this.template.events.length; i++) {
 					//Dbg.prln('Register handler ' + this.template.events[i] + ' for ' + this.id);
-					this.registerHandler(this.template.events[i], this);
+					this.registerHandler(this.template.events[i]);
 				}
 			}
 			return;
 		}
-		context = context || window;
 		var handler;
 		var node = this;
 		while (node) {
@@ -119,7 +124,7 @@ include('/ui/datalink.js');
 				this.handlers[eventName] = [];
 			}
 			this.handlers[eventName].push({fn: handler, obj: node});
-			//Dbg.prln('register ' + eventName + ' for ' + context.id);
+			//console.log('register ' + eventName + ' for ' + node.id);
 		}
 	};
 	// Statics
@@ -136,17 +141,21 @@ include('/ui/datalink.js');
 		return ctrl;
 	};
 	Ui.Control.onevent = function(e) {
-console.log(`onevent of ${e.type} for ${e.target.control.id}`);
 		var event = e.type;
-		var control = e.target.control;
-		var handlers = control.handlers[event];
-		if (handlers != undefined) {
-			for (var i=0; i<handlers.length; i++) {
-				var handler = handlers[i];
-				if (typeof control.getValue === 'function') {
-					handler.fn.call(handler.obj, control, control.getValue());
-				} else {
-					handler.fn.call(handler.obj, control);
+		var control = this.control;
+		var target = e.target.control;
+		//console.log(`${event} for ${e.target.id} - ${control.id}, ${target.id}`);
+		if (control) {
+			var handlers = control.handlers[event];
+			if (handlers != undefined) {
+				for (var i=0; i<handlers.length; i++) {
+					var handler = handlers[i];
+					handler.fn.call(handler.obj, control, target);
+					// if (typeof this.getValue === 'function') {
+					// 	handler.fn.call(handler.obj, this, this.getValue());
+					// } else {
+					// 	handler.fn.call(handler.obj, control);
+					// }
 				}
 			}
 		}

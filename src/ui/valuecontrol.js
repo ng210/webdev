@@ -53,15 +53,19 @@ include('/ui/control.js');
 			this.value = v || '';
 		}
 		if (this.element != null) {
-			this.element.value = this.value;
+			if (this.element.value !== undefined) {
+				this.element.value = this.value;
+			} else {
+				this.element.innerHTML = this.value;
+			}			
 		}
 	};
 	Ui.ValueControl.prototype.validate = function() {
 		return this.value >= this.min && this.value <= this.max;
 	};
-	Ui.ValueControl.prototype.registerHandler = function(event, context) {
+	Ui.ValueControl.prototype.registerHandler = function(event) {
 		if (['change'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
-		Ui.Control.registerHandler.call(this, event, context);
+		Ui.Control.registerHandler.call(this, event);
 	};
 	Ui.ValueControl.prototype.render = function(ctx) {
 		Ui.ValueControl.base.render.call(this, ctx);

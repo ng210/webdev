@@ -1,10 +1,10 @@
-include('/ui/control.js');
+include('/ui/container.js');
 // strict structure of controls based on rows and columns
 // templates for rows or for cells
 try {
 (function() {
 	Ui.Grid = function(id, template, parent) {
-		Ui.Control.call(this, id, template, parent);
+		Ui.Container.call(this, id, template, parent);
 		// set rows/columns array
 		this.rowKeys = null;
 		this.rows = null;
@@ -18,8 +18,8 @@ try {
 
 		this.constructor = Ui.Grid;
 	};
-	Ui.Grid.base = Ui.Control.prototype;
-	Ui.Grid.prototype = new Ui.Control('grid');
+	Ui.Grid.base = Ui.Container.prototype;
+	Ui.Grid.prototype = new Ui.Container('grid');
 	Ui.Control.Types['grid'] = { ctor: Ui.Grid, tag: 'DIV' };
 
 	Ui.Grid.prototype.buildRow = function(row, src, rowTmpl) {
@@ -56,7 +56,7 @@ try {
 		}
 	};
 	Ui.Grid.prototype.build = function() {
-		var src = this.dataSource[this.dataField];
+		var src = this.dataField ? this.dataSource.obj[this.dataField] : this.dataSource.obj;
 		// get or create row template
 		var rowTemplate = this.rowTemplate;
 		this.rows = {};
@@ -85,6 +85,7 @@ try {
 				var key = this.columnKeys[ci]
 				this.columns[key] = this.columns[ci] = {id:ci, name:key, cells:[], parent:this};
 			}
+			this.columnCount = this.columnKeys.length;
 		}
 		// create rows and cells
 		for (var ri=0; ri<this.rowKeys.length; ri++) {
@@ -94,10 +95,11 @@ try {
 			this.buildRow(row, srcRow, rowTemplate);
 			this.rows[rowKey] = row;
 		}
-		Ui.Control.registerHandler.call(this);
+		//Ui.Control.registerHandler.call(this);
 	};
 	Ui.Grid.prototype.dataBind = function(obj, field) {
 		var dataLink = Ui.Grid.base.dataBind.call(this, obj, field);
+		//this.dataSource = field ? obj[field] : obj;
 		this.build();
 		return dataLink;
 	};
@@ -114,18 +116,22 @@ try {
 		Ui.Grid.base.render.call(this, ctx);
 		var table = document.createElement('TABLE');
 		table.className = 'grid table';
+		table.setAttribute('cellpadding', 0);
+		table.setAttribute('cellspacing', 0);
 		this.element.appendChild(table);
 		for (var ri=0; ri<this.rowKeys.length; ri++) {
 			var row = this.rows[this.rowKeys[ri]];
 			var tr = document.createElement('TR');
 			var rowClass = ri % 2 ? 'r0' : 'r1';
 			tr.className = 'grid row ' + rowClass;
+			row.element = tr;
 			for (var ci=0; ci<this.columnKeys.length; ci++) {
 				var key = this.columnKeys[ci];
 				var td = document.createElement('TD');
 				var cellClass = rowClass + ' ' + (ci % 2 ? 'c0' : 'c1');
 				td.className = 'grid cell ' + cellClass;
 				var cell = row.cells[ci];
+				td.control = cell;
 				var tmplLabel = cell.template.label;
 				// tmplLabel=true => cell.label = calculated value
 				// tmplLabel=string => cell.label = tmplLabel
@@ -144,7 +150,7 @@ try {
 				}/* else if (tmplLabel === true) {
 					label = cell.label;
 				}*/
-
+				cell.css.push('grid', 'cell');
 				cell.render({node: td});
 				td.appendChild(cell.element);
 				tr.appendChild(td);
@@ -152,6 +158,11 @@ try {
 			table.appendChild(tr);
 		}
 	};
+	// Ui.Grid.prototype.registerHandler = function(event) {
+	// 	if (['click', 'mouseover', 'mouseout'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
+	// 	Ui.Control.registerHandler.call(this, event);
+    // };
+
 })();
 } catch (err) {
 	Dbg.prln(err);
