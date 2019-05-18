@@ -3,4 +3,4 @@ src/frmwrk/tmp/*
 src/sidjs/*
 temp
 *gitignore
-*/node_modules/*
+extjs/my-app/node_modules/**
