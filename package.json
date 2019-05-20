@@ -1,0 +1,27 @@
+{
+  "name": "siddb",
+  "version": "1.0.0",
+  "description": "Small app for manipulating a database of C64 SID file infos.",
+  "main": "nodejs/index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ng210/webdev.git"
+  },
+  "keywords": [
+    "nodejs",
+    "frontend",
+    "c64",
+    "sid"
+  ],
+  "dependencies": {
+    "express": "^4.9.8"
+  },
+  "author": "Gabor",
+  "license": "ISC",
+  "engines": {
+    "node": "10.x"
+  }
+}
