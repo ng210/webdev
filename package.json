@@ -2,9 +2,10 @@
   "name": "siddb",
   "version": "1.0.0",
   "description": "Small app for manipulating a database of C64 SID file infos.",
-  "main": "nodejs/index.js",
+  "main": "siddb/nodejs/index.js",
   "scripts": {
-    "test": "test"
+    "test": "test",
+    "start": "node siddb/nodejs/index.js"
   },
   "repository": {
     "type": "git",
