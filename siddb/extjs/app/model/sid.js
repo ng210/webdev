@@ -1,4 +1,4 @@
-Ext.define('SidDB.model.Sid', {
+Ext.define('SidDB.model.sid', {
     extend: 'Ext.data.Model',
     //idProperty:'Id',
     schema: {

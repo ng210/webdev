@@ -1,10 +1,10 @@
 Ext.application({
-    requires: ['SidDB.view.SearchView'],
+    requires: ['SidDB.view.searchview'],
     name: 'SidDB',
     //views: ['search'],
     // controllers: ['search'],
     // models: ['sid'],
-    mainView: 'SidDB.view.SearchView',
+    mainView: 'SidDB.view.searchview',
 
     launch: function() {
     }

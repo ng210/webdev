@@ -1,5 +1,5 @@
-Ext.define('SidDB.view.SearchView', {
-    requires: ['SidDB.view.SearchViewModel', 'SidDB.view.SearchController'],
+Ext.define('SidDB.view.searchview', {
+    requires: ['SidDB.view.searchviewmodel', 'SidDB.view.searchcontroller'],
     extend: 'Ext.container.Viewport',
     xtype: 'searchview',
     title: 'Sid search',

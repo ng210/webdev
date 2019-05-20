@@ -1,4 +1,4 @@
-Ext.define('SidDB.view.SearchController', {
+Ext.define('SidDB.view.searchcontroller', {
     extend: 'Ext.app.ViewController',
     alias: 'controller.search',
 

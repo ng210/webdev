@@ -42,26 +42,31 @@ app.use(express.json());
 
 // Create
 app.post('/sids', function(req, resp) {
+    resp.setHeader('content-type', 'application/json');
 	resp.end(Sid.create(req.body));
 });
 
 // Retrieve
 app.get('/sids', function(req, resp) {
+    resp.header('Access-Control-Allow-Origin', req.headers['origin']);
+    resp.setHeader('Content-Type', 'application/json;charset=utf-8');
     resp.end(Sid.retrieve(req.query));
 });
 
 // Update
 app.put('/sids/:search', function(req, resp) {
+    resp.setHeader('content-type', 'application/json;charset=utf-8');
     resp.end(Sid.update(req.params.search, req.body));
 });
 
 // Delete
 app.delete('/sids/:search', function(req, resp) {
+    resp.setHeader('content-type', 'application/json;charset=utf-8');
     resp.end(Sid.delete(req.params.search));
 });
 
 // Options for CORS requests
-app.options("/sids*", function(req, resp, next) {
+app.options("/sids", function(req, resp, next) {
     resp.header('Access-Control-Allow-Origin', '*');
     resp.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
     resp.header('Access-Control-Allow-Headers', 'Content-Type,Content-Length,X-Requested-With');
