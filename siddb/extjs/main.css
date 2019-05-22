@@ -1,0 +1,33 @@
+body {
+    border: none;
+    background-color: #8078FF;
+}
+
+.x-panel-body-default {
+    border: none;
+    background-color: #342ee0
+}
+.main-panel {
+    align-content: center;
+}
+.main-header {
+    font-size: 48pt;
+    padding: 0.0em 1em;
+    color: #8078FF;
+    font-weight: bold;
+    align-content: center;
+    font-family: Consolas;
+}
+.main-header-sub {
+    font-size: 14pt;
+    padding: 0em 0em 2em 0em;
+    color: #8078FF;
+    font-weight: bold;
+    align-content: center;
+    font-family: Consolas;
+}
+.description {
+    padding: 0.4em 2em;
+    font-size:12pt;
+    color: #8078FF;
+}

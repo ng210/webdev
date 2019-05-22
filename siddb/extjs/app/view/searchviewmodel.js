@@ -7,7 +7,7 @@ Ext.define('SidDB.view.searchviewmodel', {
     stores: {
         SidStore: {
             model: 'SidDB.model.sid',
-            autoLoad: true,
+            autoLoad: false,
             autoSync: false,
             proxy: {
                 type: 'rest',
@@ -15,13 +15,26 @@ Ext.define('SidDB.view.searchviewmodel', {
                     rootProperty: 'data',
                     type: 'json'
                 },
-                url: _url,
+                url: _url
                 // writer: {
                 //     type: 'json',
                 //     dateFormat: 'd/m/Y',
                 //     writeAllFields: true
                 // }
+            },
+            listeners: {
+                load: function(store, records, success, operation) {
+                    var reader = store.getProxy().getReader();
+                    var response = operation.getResponse();
+                    var data = reader.getResponseData(response);
+                    if (data) {
+                        if (data.error) {
+                            alert(data.error);
+                        }
+                    }
+                }
             }
+
         }
     }
 });

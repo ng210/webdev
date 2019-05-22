@@ -4,7 +4,7 @@
   "description": "Small app for manipulating a database of C64 SID file infos.",
   "main": "siddb/nodejs/index.js",
   "scripts": {
-    "test": "test",
+    "debug": "node --inspect siddb/nodejs/index.js",
     "start": "node siddb/nodejs/index.js"
   },
   "repository": {

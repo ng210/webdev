@@ -32,7 +32,7 @@
 
 const express = require('express');
 const fs = require('fs');
-const Sid = require('./sid.js');
+const SidApi = require('./sidapi.js');
 
 const port = process.env.PORT || 3000;
 
@@ -43,26 +43,26 @@ app.use(express.json());
 // Create
 app.post('/sids', function(req, resp) {
     resp.setHeader('content-type', 'application/json');
-	resp.end(Sid.create(req.body));
+	resp.end(SidApi.create(req.body));
 });
 
 // Retrieve
 app.get('/sids', function(req, resp) {
     resp.header('Access-Control-Allow-Origin', req.headers['origin']);
     resp.setHeader('Content-Type', 'application/json;charset=utf-8');
-    resp.end(Sid.retrieve(req.query));
+    resp.end(SidApi.retrieve(req.query));
 });
 
 // Update
 app.put('/sids/:search', function(req, resp) {
     resp.setHeader('content-type', 'application/json;charset=utf-8');
-    resp.end(Sid.update(req.params.search, req.body));
+    resp.end(SidApi.update(req.params.search, req.body));
 });
 
 // Delete
 app.delete('/sids/:search', function(req, resp) {
     resp.setHeader('content-type', 'application/json;charset=utf-8');
-    resp.end(Sid.delete(req.params.search));
+    resp.end(SidApi.delete(req.params.search));
 });
 
 // Options for CORS requests
