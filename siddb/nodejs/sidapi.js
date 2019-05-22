@@ -22,7 +22,7 @@
             var data = require(__dirname + '/database.json');
             if (search.text) {
                 var key = search.text.toUpperCase();
-                data = _search(database, entry => {
+                data = _search(data, entry => {
                     for (var k in entry) {
                         var str = entry[k].toString().toUpperCase();
                         if (str.indexOf(key) != -1) {
