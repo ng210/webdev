@@ -1,0 +1,45 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<link href="main.css" rel="stylesheet" />
+</head>
+
+<body>
+<div id="head">
+<h1>Sid DB</h1>
+<div class="centered"><i>Tiny web app and a RESTful service</i></div>
+</div>
+<div id="content">
+<div id="left">
+<nav id="main-nav">
+<ul id="main-nav-root">
+<li><a href='#idea' data-parent="#main-nav">Idea, specification</a></li>
+<li><a href="#Infrastructure" data-parent="#main-nav">Infrastructure</a></li>
+</ul>
+</nav>
+</div>
+<div id="center">
+<h3>Idea, specification</h3>
+<p>Create a small webapp with a simple and clear UI to manage sid files. The backend of the webapp is a RESTful API with either a DB connection or file based storage solution.</p>
+<p>The webapp has 2 views: search and edit.</p>
+<p>The search view is the main view of the app. It has a button for creating a new sid info object, a single input field for search expressions, a button to launch the search and a table/grid for the search results. Full text and attribute based search types are supported. The hit list is a table showing the main attributes of sid files: title, author, copyright and year. Each entry in the list has a edit and delete button. The edit button opens the selected sid info in the edit view. Delete has to display a confirmation box first.</p>
+<p>The edit view allows to change the attributes of the selected sid info and also display some non-editable attributes: file name, init and play address. Closing the edit view with the OK button triggers a REST update (HTTP PATCH) and returns to the search view.</p>
+<p>Clicking the Create new button brings up the edit view with a file upload control as the file name displaying element. This is a static label in the normal edit mode. Uploading a sid file triggers the info extraction and the fields of the view get populated. The user can make adjustments and pressing the OK button sends a create operation (HTTP PUT) to the server.</p>
+<p>As a great improvement a SID player could be integrated into the page that plays the tune picked from the search result list.</p>
+
+<h3>Infrastructure</h3>
+
+<p>There were 2 important criteria at selecting the host and environment. I wanted to create a nodeJS backend using javascript and 3 of the most successful  frontend libraries: extJS, reactJS and Angular. Secondly, I was looking for a cheap or even free solution with a typical setup used by AWS and Azure as well.</p>
+
+<h4>Heroku</h4>
+<p>Heroku offers nodeJS computing nodes in a cloud environment a free package </p>
+
+<p>AWS</p>
+
+<h4>Design</h4>
+
+                <h4>Implementation</h4>
+            </div>
+        </div>
+    </body>
+</html>
