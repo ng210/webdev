@@ -17,6 +17,8 @@ const app = express();
 app.use(express.json());
 const port = process.env.PORT || 3000;
 
+const allowedFiles = [ 'index.html', 'main.css', 'main.js', 'readme.md' ];
+
 // Retrieve
 app.get('/search/:search', function(req, resp) {
     resp.header('Access-Control-Allow-Origin', req.headers['origin']);
@@ -37,10 +39,18 @@ app.get('/:resource/:id', function(req, resp) {
         resp.sendStatus(404);
     }
 });
+app.get('', function(req, resp) {
+    resp.sendFile('./index.html');
+});
+
 app.get('/*', function(req, resp) {
-    console.log('404');
-    resp.header('Access-Control-Allow-Origin', req.headers['origin']);
-    resp.sendStatus(404);
+    var path = req.path.substring(1);
+    if (allowedFiles.indexOf(path) != -1) {
+        resp.sendFile(__dirname + '/' + path);
+    } else {
+        //resp.header('Access-Control-Allow-Origin', req.headers['origin']);
+        resp.sendStatus(404);
+    }
 });
 
 // Options for CORS requests
