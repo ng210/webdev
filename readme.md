@@ -1,4 +1,4 @@
-#SimonsVoss Coding Case
+# SimonsVoss Coding Case
 
 ## Solution design
 There is a data source and a type description as JSON files. In my solution the backend creates a model on start-up. This model resolves the references (UUID) in the JSON files and builds an index, that is a map between UUID and object. This preparation is to accelerate and simplify the search operations.
