@@ -40,7 +40,7 @@ app.get('/:resource/:id', function(req, resp) {
     }
 });
 app.get('', function(req, resp) {
-    resp.sendFile('./index.html');
+    resp.sendFile(__dirname + '/index.html');
 });
 
 app.get('/*', function(req, resp) {
