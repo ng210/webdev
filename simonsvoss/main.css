@@ -1,0 +1,44 @@
+body {
+    background-color: silver;
+}
+
+th {
+    border: outset 1px lightgray;
+}
+
+td {
+    border: inset 1px lightgray;
+}
+
+#content {
+    padding: 2em 1em 3em 1em;
+    width: 50em; height: 44em;
+    border: groove 3px lightgray;
+}
+
+#result {
+    padding: 1em; margin: 1em 0em;
+    overflow: auto;
+    width: 48em; height: 40em;
+    border: groove 3px lightgray;
+}
+
+.searchtext {
+    font-size: large;
+}
+
+#searchbutton {
+    font-size: large;
+}
+
+#resultlist {
+    font-size: medium;
+    font-family: Consolas, Courier
+}
+
+td.warning {
+    text-align: center;
+    color: darkred;
+    font-size: large;
+    font-weight: bold;
+}

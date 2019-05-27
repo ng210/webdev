@@ -1,0 +1,34 @@
+{
+    "Building": {
+        "id": { "type":"UUID" },
+        "shortCut": { "type":"String", "weights": { "_default": 7 } },
+        "name": { "type":"String", "weights": { "_default": 9 } },
+        "description": { "type":"String", "weights": { "_default": 5 } }
+    },
+
+    "Lock": {
+        "id": { "type":"UUID" },
+        "buildingId": { "type":"UUID", "weights": { "name":8, "shortCut":5, "description":0 } },
+        "type": { "type":"LockType", "weights": { "_default":3 } },
+        "name": { "type":"String", "weights": { "_default":10 } },
+        "serialNumber": { "type":"String", "weights": { "_default":8 } },
+        "floor": { "type":"String", "weights": { "_default":6 } },
+        "roomNumber": { "type":"String", "weights": { "_default":6 } },
+        "description": { "type":"String", "weights": { "_default":6 } }
+    },
+
+    "Group": {
+        "id": { "type":"UUID" },
+        "name": { "type":"String", "weights": { "_default":9 } },
+        "description": { "type":"String", "weights": { "_default":5 } }
+    },
+    
+    "Medium": {
+        "id": { "type":"UUID" },
+        "groupId": { "type":"UUID", "weights": { "name":8, "description":0 } },
+        "type": { "type":"MediumType", "weights": { "_default":3 } },
+        "owner": { "type":"String", "weights": { "_default":10 } },
+        "serialNumber": { "type":"String", "weights": { "_default":8 } },
+        "description": { "type":"String", "weights": { "_default":6 } }
+    }
+}
