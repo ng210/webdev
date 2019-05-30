@@ -22,7 +22,7 @@ const allowedFiles = [ 'index.html', 'main.css', 'main.js', 'readme.md' ];
 // Retrieve
 app.get('/search/:search', function(req, resp) {
     resp.header('Access-Control-Allow-Origin', req.headers['origin']);
-    resp.end(model.search(req.params.search));
+    resp.end(model.search(req.params.search, req.query.exact));
 });
 app.get('/:resource/:id', function(req, resp) {
     resp.header('Access-Control-Allow-Origin', req.headers['origin']);

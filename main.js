@@ -64,6 +64,9 @@ function addRow(list, data) {
 async function search(expression) {
     try {
         if (typeof expression === 'string' && expression.length > 2) {
+            if (_exactmatch.checked) {
+                expression += '?exact';
+            }
             var response = await send('search', expression);
             // process results
             if (response.error) {
@@ -106,11 +109,12 @@ function search_onclick(e) {
     search(_input.value);
 }
 
-var _input = null, _button = null, _resultlist = null;
+var _input = null, _button = null, _resultlist = null, _exactmatch = null;
 window.onload = function() {
     _input = document.getElementById('searchtext');
     _button = document.getElementById('searchbutton');
     _resultlist = document.getElementById('resultlist');
+    _exactmatch = document.getElementById('exactmatch');
     _input.onkeypress = search_onkeypress;
     _button.onclick = search_onclick;
 

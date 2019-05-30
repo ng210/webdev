@@ -82,12 +82,13 @@
             this._resolve('media', 'Group', 'groupId');
             console.log('Data preparation done.');
         },
-        search: function(expression) {
+        search: function(expression, exact) {
+            console.log(`Exact match: ${exact != undefined}`);
             // create the response object
             var results = { error:null, data: [] };
             // the search expression can consist of more words
             // seperated by white space
-            var tokens = expression.split(' ');
+            var tokens = exact != undefined ? [expression] : expression.split(' ');
             var hits = {};
 
             // search in data
@@ -104,9 +105,9 @@
                         // only check the string attributes of the item
                         if (typeof attribute === 'string') {
                             for (var ti in tokens) {
-                                var token = tokens[ti];
+                                var token = tokens[ti].toString().toUpperCase();
                                 if (token) {
-                                    var hit = attribute.indexOf(token);
+                                    var hit = attribute.toUpperCase().indexOf(token);
                                     if (hit != -1) {
                                         // we found a match, get own weight
                                         var ownWeight = this.types[type][key].weights._default || 0;
