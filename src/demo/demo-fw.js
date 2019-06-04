@@ -204,9 +204,9 @@ function demoUpdate(frame, dt) {
     }
 }
 
-function demoRender(frame) {
+function demoRender(frame, dt) {
     for (var i=0; i<demos_.length; i++) {
-        demos_[i].render(frame);
+        demos_[i].render(frame, dt);
     }
 }
 

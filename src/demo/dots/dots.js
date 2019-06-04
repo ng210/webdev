@@ -3,8 +3,8 @@ include('/ge/noise.js');
 
 (function() {
 	
-    function Dots(canvas) {
-	    Demo.call(this, 'dots', canvas);
+	function Dots(canvas) {
+		Demo.call(this, 'dots', canvas);
 		this.aspect = 0;
 		this.fbmSize = 50;
 		this.PlatformCount = 4;
@@ -27,11 +27,11 @@ include('/ge/noise.js');
 		this.lastMousePosition = new V3();
 		this.mode = 0;
 		this.constructor = Dots;
-    }
+	}
 	Dots.prototype = new Demo;
 
-    Dots.prototype.prepare = async function() {
-        await load('/demo/dots/dot.js');
+	Dots.prototype.prepare = async function() {
+			await load('/demo/dots/dot.js');
 	};
 	Dots.prototype.initialize = function() {
 		this.onresize();
@@ -53,7 +53,7 @@ include('/ge/noise.js');
 		}
 		//GE.ctx.globalCompositeOperation = ...
 	};
-    Dots.prototype.processInputs = function(e) {
+	Dots.prototype.processInputs = function(e) {
 		if ((GE.inputs.mbuttons & 2) != 0) {
 			this.getMouseCoors(this.lastMousePosition);
 			var mode = this.mode & 0x01;
@@ -90,7 +90,7 @@ include('/ge/noise.js');
 
 	var rotation_ = 2.0*Math.PI/40;
 	var delta_ = 0;
-    Dots.prototype.update = function(frame, dt) {
+	Dots.prototype.update = function(frame, dt) {
 		// update wheel rotation
 		delta_ += rotation_*dt;
 		var dr = 0.01*this.data.time*Math.sin(delta_);
@@ -113,7 +113,7 @@ include('/ge/noise.js');
 			this.dots[i].update(this.data.time*dt);
 		}
 	};
-    Dots.prototype.render = function(frame) {
+	Dots.prototype.render = function(frame) {
 		// erase background
 		GE.ctx.fillStyle = '#0e1028';
 		GE.ctx.fillRect(-this.aspect, -1.0, 2*this.aspect, 2);
@@ -143,7 +143,7 @@ include('/ge/noise.js');
 		//GE.ctx.fillText("mpos:" + GE.inputs.mpos + ' buttons: ' + GE.inputs.mbuttons.toString(2), -this.aspect, ty.toPrecision(2));
 		GE.ctx.globalAlpha = 1.0;
 	};
-    Dots.prototype.onresize = function(e) {
+	Dots.prototype.onresize = function(e) {
 		// handler of window resize
 		GE.resizeCanvas(1/this.data.resolution);
 		var he = GE.canvas.height;

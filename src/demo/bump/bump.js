@@ -12,7 +12,7 @@ include('/ge/v2.js');
     }
 	Bump.prototype = new Demo;
 
-    Bump.prototype.prepare = async function() {
+  Bump.prototype.prepare = async function() {
 		// create list of images
 		var urls = [
 			'/demo/bump/bump.gif', '/demo/bump/bump2.gif',
@@ -55,7 +55,7 @@ include('/ge/v2.js');
 		Demo.prototype.renderUi.call(this, node);
 		this.createHeightMap();
 	};
-    Bump.prototype.processInputs = function(e) {
+  Bump.prototype.processInputs = function(e) {
 		this.getMouseCoors(this.lightPos);
 	};
 	Bump.prototype.onchange = function(setting) {
@@ -68,7 +68,7 @@ include('/ge/v2.js');
 				break;
 		}
 	};
-    Bump.prototype.update = function(frame, dt) {
+  Bump.prototype.update = function(frame, dt) {
 		var wi = this.heightMap.buffer.width;
 		var he = this.heightMap.buffer.height;
 		var radius = 0.5 * (this.settings.radius + 0.01) * wi;
@@ -112,10 +112,10 @@ include('/ge/v2.js');
 			ix+=2;
 		}
 	};
-    Bump.prototype.render = function(frame) {
+  Bump.prototype.render = function(frame) {
 		GE.backBuffer.blit();
 	};
-    Bump.prototype.onresize = function(e) {
+  Bump.prototype.onresize = function(e) {
 		// handler of window resize
 //		GE.resizeCanvas(GE.canvas, 1);	//this.data.resolution);
 //		var he = GE.canvas.height;

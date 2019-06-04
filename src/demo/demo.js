@@ -25,9 +25,9 @@ include('/ui/grid.js');
     Demo.prototype.prepare = function() { throw new Error('Not implemented'); };
     Demo.prototype.initialize = function() { throw new Error('Not implemented'); };
     Demo.prototype.processInputs = function() { throw new Error('Not implemented'); };
-    Demo.prototype.onchange = function() { throw new Error('Not implemented'); };
-    Demo.prototype.update = function() { throw new Error('Not implemented'); };
-    Demo.prototype.render = function() { throw new Error('Not implemented'); };
+    Demo.prototype.onchange = function(setting) { throw new Error('Not implemented'); };
+    Demo.prototype.update = function(frame, dt) { throw new Error('Not implemented'); };
+    Demo.prototype.render = function(frame, dt) { throw new Error('Not implemented'); };
     Demo.prototype.onresize = function(e) { ; };
     Demo.prototype.onfocus = function(ctrl) {
         // save border settings

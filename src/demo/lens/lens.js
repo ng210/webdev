@@ -10,10 +10,10 @@ include('/ge/v2.js');
 		this.buffer = null;
 
 		this.constructor = Lens;
-    }
+	}
 	Lens.prototype = new Demo;
 
-    Lens.prototype.prepare = async function() {
+	Lens.prototype.prepare = async function() {
 		//var res = await load('/demo/lens/lens.gif');
 		var res = await load('/demo/lens/deepspace.jpg');
 		//var res = await load('/demo/fire/fire.gif');
@@ -31,7 +31,7 @@ include('/ge/v2.js');
 		this.getMouseCoors(this.cursorPos);
 		this.onresize();
 	};
-    Lens.prototype.processInputs = function(e) {
+	Lens.prototype.processInputs = function(e) {
 		this.getMouseCoors(this.cursorPos);
 	};
 	Lens.prototype.onchange = function(setting) {
@@ -48,7 +48,7 @@ include('/ge/v2.js');
 				break;
 		}
 	};
-    Lens.prototype.update = function(frame, dt) {
+	Lens.prototype.update = function(frame, dt) {
 		var src = this.buffer.imgData;
 		var dst = GE.frontBuffer.imgData;
 		var stride = dst.width * 4;
@@ -104,10 +104,10 @@ include('/ge/v2.js');
 			ix += 4;
 		}
 	};
-    Lens.prototype.render = function(frame) {
+	Lens.prototype.render = function(frame) {
 		GE.frontBuffer.blit();
 	};
-    Lens.prototype.onresize = function(e) {
+	Lens.prototype.onresize = function(e) {
 		this.radius = 0.2 * this.data.radius * this.buffer.width;
 		this.rsize = this.radius * this.data.size;
 	};
@@ -115,6 +115,5 @@ include('/ge/v2.js');
 		v.x = GE.inputs.mpos[0] * GE.canvas.width/GE.canvas.clientWidth;
 		v.y = GE.inputs.mpos[1] * GE.canvas.height/GE.canvas.clientHeight;
 	};
-
 	public(Lens, 'Lens');
 })();
