@@ -79,7 +79,9 @@ include('/ui/control.js');
 			var v = this.dataSource[this.dataField];
 			this.setValue(v);
 		}
-		this.element.value = this.value;
+		if (this.element.value !== undefined) {
+			this.element.value = this.value;
+		}
 	};
 
 })();
