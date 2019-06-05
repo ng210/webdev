@@ -1,13 +1,13 @@
+/*******************************************************************************
+ * Array extensions
+******************************************************************************/
 (function() {
+	var fw = fw || {};
 	var array = function() {
-		for (var i=0; i<arguments.length; i++) {
-			this.push(arguments[i]);
-		}
+		Array.apply(this, arguments);
+		this.constructor = fw.Array;
     };
     array.prototype = new Array;
-	array.prototype.getClass = function() {
-		return 'array';
-	};
 	array.prototype.compareTo = function(arr) {
 		var res = this.length - arr.length;
 	};
@@ -34,6 +34,6 @@
 			clone.push(typeof item.clone === 'function' ? item.clone() : item.valueOf);
 		}
 		return clone;
-	};
-	module.exports = array;
+	}
+	fw.Array = array;
 })();
