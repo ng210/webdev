@@ -1,0 +1,59 @@
+body {
+	background-color:black;
+	font-family:Arial;
+	font-size:10pt;
+}
+
+/***** Debug console *****/
+#dbgConsole {
+	position:relative;z-index:1000;
+	background-color:black;
+	border:outset 1px silver;
+}
+#dbgConsoleHeader {
+	padding:2px 4px;
+	background-color:lightblue;
+	border-bottom:groove 2px silver;
+	font-family:Arial;
+	font-weight:bold;
+	color:black;
+}
+#dbgConsoleBody {
+	/*width:640px;*/height:240px;overflow:auto;
+	padding:2px 2px;
+	font-family:Verdana; font-size:10pt; color:green;
+}
+
+/***** GE *****/
+#mainSurface {
+	background-color:black;
+	/*cursor:none;*/
+	width:640;
+	height:400;
+}
+#info {
+  position: relative;
+  top: 0px;
+  left: 0px;
+  background-color: rgba(0,0,0,0.3);
+  padding: 1em;
+  color: white;
+}
+
+
+/***** UI *****/
+#config {
+	width: 10em;
+	background-color:silver;
+}
+
+/***** Controls *****/
+.label {
+	display: inline;
+	color: blue;
+	font-family: Verdana;
+}
+
+.textbox .cfg {
+	width:4em;
+}
