@@ -130,27 +130,12 @@ try {
                             if (mdl.error != null) {
                                 throw mdl.error;
                             }
-                            // search and load referenced modules
-                            await mdl.resolveIncludes();
-                            // build dependency order from the includes
-                            var order = mdl.buildDependencyOrder();
-                            // add included modules to DOM
-                            for (var i=0; i<order.length; i++) {
-                                var dm = order[i];
-                                //var script = dm.data.replace(/#include\('([^']+)'\)/g, '');
-                                dm.node = document.createElement('script');
-                                dm.node.url = dm.url;
-                                dm.node.innerHTML = dm.data;
-                                // dm.data = undefined;
-                                document.head.appendChild(dm.node);
-                            }
-                            // set module to resolved to make it available
-                            mdl.status = Module.RESOLVED;
+                            await mdl.processContent();
                         } catch (err) {
                             mdl.error = err;
                         }
                         return mdl;
-                    },
+                    };
     
                     Module.prototype.resolveIncludes = async function() {
                         // replace #include '...' and trigger loading of the resource
@@ -173,14 +158,6 @@ try {
                                 return err;
                             }
                         );
-                        // var includes = await Promise.all(loads);
-                        // for (var i=0; i<modules.length; i++) {
-                        //     this.includes.push(includes[i]);
-                        //     includes[i].resource.requester = this;
-                        // }
-                        // return new Promise(resolve => {
-                        //     resolve(true);
-                        // });
                     };
                     Module.prototype.buildDependencyOrder = function() {
                         function dfs(mdl, order) {
@@ -199,7 +176,29 @@ try {
                         dfs(this, order);
                         //order.push(this);
                         return order;
-                    };    
+                    };
+                    Module.prototype.processContent = async function() {
+                        // search and load referenced modules
+                        await this.resolveIncludes();
+                        // build dependency order from the includes
+                        var order = this.buildDependencyOrder();
+                        // add included modules to DOM
+                        for (var i=0; i<order.length; i++) {
+                            var dm = order[i];
+                            if (dm.node == null) {
+                                //var script = dm.data.replace(/#include\('([^']+)'\)/g, '');
+                                dm.node = document.createElement('script');
+                                dm.node.url = dm.url;
+                                dm.node.innerHTML = dm.data;
+                                // dm.data = undefined;
+                                document.head.appendChild(dm.node);
+                            } else {
+                                console.log(`${mdl} added already`);
+                            }
+                        }
+                        // set module to resolved to make it available
+                        this.status = Module.RESOLVED;
+                    };
                     Module.prototype.toString = function() {
                         return `MDL@(${this.url} #${this.status})`;
                     };
@@ -221,55 +220,6 @@ try {
                         }
                         Resource.searchPath.push(url);
                     },
-                    // getSearchPath: function(path) {
-                    //     var url = new Url(path);
-                    //     var urlText = url.toString();
-                    //     // loading order:
-                    //     //  - url
-                    //     //  - current path
-                    //     //  - search paths
-                    //     var script = document.currentScript;
-                    //     var currentPath = script ? (script.src || script.url) : '';
-                    //     currentPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
-                    //     var requestedPath = urlText.substring(0, urlText.lastIndexOf('/'));
-                    //     var searchPath = null;
-                    //     if (!path.startsWith('/')) {
-                    //         searchPath = new Array(requestedPath, currentPath, ...Boot.searchPath);
-                    //     } else {
-                    //         searchPath = [rootUrl.toString()];
-                    //         path = path.substr(1);
-                    //     }
-                    //     return searchPath;
-                    // },
-                    // buildDependencyOrder: function(mdl, order) {
-                    //     if (!mdl.visited) {
-                    //         mdl.visited = true;
-                    //         for (var i=0; i<mdl.includes.length; i++) {
-                    //             Boot.buildDependencyOrder(mdl.includes[i], order);
-                    //         }
-                    //         order.push(mdl);
-                    //     }
-                    // },
-                    // addDependencies: function(order) {
-                    //     for (var i=0; i<order.length; i++) {
-                    //         var mdl = order[i];
-                    //         if (!mdl.isActive) {
-                    //             var node = document.createElement('script');
-                    //             node.innerHTML = mdl.options.response;
-                    //             node.url = mdl.url;
-                    //             document.head.appendChild(node);
-                    //         }
-                    //     }
-                    // },
-                    // addModule: function(options) {
-                    //     var mdl = new Module(options.resolvedUrl, options);
-                    //     Boot.processIncludes(mdl);
-                    //     Boot.modules[mdl.url] = mdl;
-                    //     var order = [];
-                    //     mdl.isActive = true;
-                    //     Boot.buildDependencyOrder(mdl, order);
-                    //     Boot.addDependencies(order);
-                    // },
                     waitForLoadingResources: function() {
                         clearTimeout(Boot.loadTimer);
                         // check modules
@@ -358,13 +308,14 @@ try {
                         }
                     }
                     if (mdl.status !== Module.RESOLVED && mdl.status !== Module.ALIAS) {
-                        // the module might be resolved under a different path
+                        // the module might have been resolved under a different path
                         for (var i=0; i<searchPath.length; i++) {
                             var url = searchPath[i] + '/' + path;
                             var dm = Module.cache[url];
                             if (dm !== undefined && mdl != dm) {
                                 if (dm.status === Module.RESOLVED) {
                                     mdl.status = Module.RESOLVED;   // ALIAS
+                                    debugging;
                                     break;
                                 }
                             }
@@ -372,21 +323,6 @@ try {
                         mdl.status = Module.MISSING;
                     }
                     return mdl;
-
-                    // var searchPath = Resource.getSearchPath(path);
-                    // for (var i=0; i<searchPath.length; i++) {
-                    //     url = searchPath[i] + '/' + path;
-                    //     var res = undefined;
-                    //     var mdl = Boot.modules[url];
-                    //     if (mdl !== undefined) {
-                    //         res = mdl;
-                    //         break;
-                    //     }
-                    //     Boot.loadCount++;
-                    //     res = Boot.loadModule(url);
-                    // }
-                    // if (res instanceof Error) throw new Error('Could not load "'+path+'"!');
-                    // return res;
                 }
             },
             'public': {
@@ -396,7 +332,10 @@ try {
                     var script = document.currentScript;
                     var url = script.src || script.url;
                     var mdl = Module.cache[url];
-                    if (mdl === undefined) throw new Error('Module \'' + url + '\' not found!');
+                    if (mdl === undefined) {
+                        debugger;
+                        throw new Error('Module \'' + url + '\' not found!');
+                    }
                     window[name] = mdl.symbols[name] = obj;            
                 }
             },
@@ -583,22 +522,13 @@ try {
                                 // and resolve includes
                                 var mdl = new Module(resource.url);
                                 mdl.resource = resource;
-
                                 try {
                                     if (mdl.error != null) {
                                         throw mdl.error;
                                     }
-                                    await mdl.resolveIncludes();
-                                    var order = mdl.buildDependencyOrder();
                                     Module.cache[mdl.url] = mdl;
-                                    for (var i=0; i<order.length; i++) {
-                                        var dm = order[i];
-                                        dm.node = document.createElement('script');
-                                        dm.node.url = dm.url;
-                                        dm.node.innerHTML = dm.data;
-                                        document.head.appendChild(dm.node);
-                                    }
-                                    mdl.status = Module.RESOLVED;
+
+                                    await mdl.processContent();
                                 } catch (err) {
                                     mdl.error = err;
                                     //Resource.status = Resource.ERROR;
