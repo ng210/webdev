@@ -4,3 +4,4 @@ src/sidjs/*
 temp
 *gitignore
 extjs/my-app/node_modules/**
+.vscode/**
