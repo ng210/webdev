@@ -1,4 +1,4 @@
-include('ge/player/player.js');
+include('/ge/player/player.js');
 (function(){
 
     function TestAdapter() {
@@ -198,7 +198,7 @@ include('ge/player/player.js');
     }
 
     var tests = async function() {
-        //Dbg.prln(await test_channel_run());
+        Dbg.prln(await test_channel_run());
         Dbg.prln(test_channel_toFrames());
         Dbg.prln(await test_channel_insertFrame());
         //Dbg.prln(test_channel_deleteFrames());
