@@ -6,17 +6,20 @@
         // - the prototypes define
         //   - a symbol used in the grammatic rules
         //   - an optional binding
-        //   - an action to execute
+        //   - an optional action to execute
         // - words not identified are literals
 
         // 2. Rules
-        // A sequence of symbols (nodes) are replaced by a single symbol.
+        // Rules replace sequences of the input symbols with a single symbol. They also may have an associated action.
+        // A rule defines
+        // - a sequence of symbols as the input (left side). If this sequence matches the start of the input (left match) it will be replaced by a single symbol (right side).
+        // - an action that is applied on the input symbols in case of a match.
 
         // 3. Analyzer
-        // - creates instances of the node prototypes by processing the input
-        //   - identify the next term as the keyword of a node prototype
-        //   - create a new instance of the prototype and store the term
-        //   - store the instance
+        // Creates instances of the node prototypes by processing the input.
+        // - identify the next term as the keyword of a node prototype
+        // - create a new instance of the prototype and store the term
+        // - store the instance
         //
 
     var grammar = {
@@ -47,19 +50,16 @@
                 'action': (x,y) => x > y ? x : y
             },
             // operators
-            // works as the method attribute(name)
-            '#': {
+            '#': { // works as the method getAttribute(name)
                 'symbol': 'A',
                 'binds': 'obj',
                 'action': (obj, x) => obj[x]
             },
-            '(': {
+            '(': { // brackets are syntax elements only
                 'symbol': 'B1',
-                'action': (obj, x) => obj[x]
             },
             ')': {
                 'symbol': 'B2',
-                'action': (obj, x) => obj[x]
             },
             '*': {
                 'symbol': 'O1',
