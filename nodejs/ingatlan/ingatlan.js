@@ -1,8 +1,10 @@
 const fs = require('fs');
 const Formula = require('./formula.js');
+const grammar = require('./grammar.js');
 main();
 
 function main() {
+
     console.log('\n*** Ingatlan adatbázis');
     var cmd = process.argv[2];
     switch (cmd) {
@@ -80,11 +82,12 @@ function queryData(args) {
     const database = require('./ingatlan_database.json');
     var expr = args.join(' ');
     console.log(`Keresés: ${expr}`);
-    var formula = new Formula(expr);
+    var formula = new Formula(grammar);
+    formula.parse(expr);
 
     var hits = [];
     for (var i=0; i<database.length; i++) {
-        if (formula.match(database[i])) {
+        if (formula.apply(database[i])) {
             hits.push(database[i]);
         }
     }

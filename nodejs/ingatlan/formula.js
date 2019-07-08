@@ -1,71 +1,200 @@
 (function() {
-    function Formula(expr) {
-        var terms = this.analyzeSyntax(expr);
-        this.tree = this.buildTree(terms);
-    }
-    Formula.termTypes = {
-        "L": "literal",
-        "B1": "(",
-        "B2": ")",
-        "C": ",",
-        "F": "function",
-        "O1": "operator1",
-        "O2": "operator2"
-    };
-    Formula.operators = {
-        '=':    { type: 'O2', value: (x, y) => x == y },
-        '!=':   { type: 'O2', value: (x, y) => x != y },
-        '<':    { type: 'O2', value: (x, y) => x < y },
-        '>':    { type: 'O2', value: (x, y) => x > y },
-        '~':    { type: 'O2', value: (x, y) => x.indexOf(y) != -1 },
-        'AND':  { type: 'O1', value: (x, y) => x && y },
-        'OR':   { type: 'O1', value: (x, y) => x || y }    
-    };
-    Formula.functions = {
-        'dist': (x, y, obj) => {
-            var dLat = x - obj.latitude;
-            var dLon = x - obj.longitude;
-            var d = 0;
-            return d;
+        // A grammar consists of a list of node prototypes and rules.
+
+        // 1. Node prototypes used by the grammar
+        // - the keys are the keywords of the language
+        // - the prototypes define
+        //   - a symbol used in the grammatic rules
+        //   - an optional binding
+        //   - an action to execute
+        // - words not identified are literals
+
+        // 2. Rules
+        // A sequence of symbols (nodes) are replaced by a single symbol.
+
+        // 3. Analyzer
+        // - creates instances of the node prototypes by processing the input
+        //   - identify the next term as the keyword of a node prototype
+        //   - create a new instance of the prototype and store the term
+        //   - store the instance
+        //
+
+    var grammar = {
+        'prototypes': {
+            // functions
+            // object bound functions (method)
+            'getAttribute': {
+                'symbol': 'M',
+                'binds': 'obj',
+                'action': (x) => obj[x]
+            },
+            'getType': {
+                'symbol': 'M',
+                'binds': 'obj',
+                'action': () => obj.type
+            },
+            // general purpose functions
+            'distance': {
+                'symbol': 'F',
+                'action': (x1,y1, x2,y2) => { var dx = x1-x2, dy = y1-y2; return Math.sqrt(dx*dx+dy*dy); }
+            },
+            'min': {
+                'symbol': 'F',
+                'action': (x,y) => x < y ? x : y
+            },
+            'max': {
+                'symbol': 'F',
+                'action': (x,y) => x > y ? x : y
+            },
+            // operators
+            // works as the method attribute(name)
+            '#': {
+                'symbol': 'A',
+                'binds': 'obj',
+                'action': (obj, x) => obj[x]
+            },
+            '(': {
+                'symbol': 'B1',
+                'action': (obj, x) => obj[x]
+            },
+            ')': {
+                'symbol': 'B2',
+                'action': (obj, x) => obj[x]
+            },
+            '*': {
+                'symbol': 'O1',
+                'action': (x, y) => x*y
+            },
+            '+': {
+                'symbol': 'O2',
+                'action': (x, y) => x+y
+            },
+            '=': {
+                'symbol': 'O3',
+                'action': (x, y) => x==y
+            }
         },
-        'attr': (x, obj) => obj[x]
+        'rules': {
+
+        }
     };
-    Formula.prototype.analyzeSyntax = function(expr) {
-        var terms = [];
-        var charToType = {
-            '(': 'B1',
-            ')': 'B2',
-            ',': 'C'
-        };
-        function _addTerm(value, type) {
-            if (value) {
-                terms.push({value:value, type:(type || 'L')});
+
+    var Syntax = function(grammar) {
+        this.grammar = grammar;
+        this.nodes = [];
+    };
+
+    Syntax.prototype.createNode = function(type, term) {
+        var node = null;
+        if (term !== '' && term !== undefined) {
+            node = { value:term, 'non-terminal': type };
+            if (type == this.functionNonTerminal) {
+                node.arguments = [];
             }
         }
-        var i = 0, start = 0, c = '';
-        // tokenize expression
-        // separators are white spaces, brackets, operators and function names
-        while (c = expr.charAt(i)) {
-            // white space
-            if (c == ' ' || c == '\t') {
-                _addTerm(expr.substring(start, i));
-                i++;
-                start = i;
-                continue;
+        return node;
+    };
+
+        'Node': function(type, term) {
+            this.type = type;
+        }
+    };
+    
+
+    function Formula(grammar) {
+        this.grammar = grammar;
+        this.nodes = [];
+        this.literalNonTerminal = -1;
+        this.functionNonTerminal = -1;
+        var ntList = Object.keys(this.grammar['non-terminals']);
+        // replace non-terminal symbols in operator table
+        for (var op in this.grammar.operators) {
+            var nt = this.grammar.operators[op]['non-terminal'];
+            var k = ntList.indexOf(nt);
+            if (k != -1) {
+                this.grammar.operators[op]['non-terminal-code'] = k;
+            } else {
+                throw new Error(` * Non-terminal associated to operator '${op}' missing!`);
             }
-            // brackets
-            if (c =='(' || c == ')' || c == ',') {
-                _addTerm(expr.substring(start, i));
-                _addTerm(c, charToType[c]);
+        }
+        // replace non-terminal symbols to codes in the grammar rules
+        for (var ri in this.grammar.rules) {
+            var rule = this.grammar.rules[ri];
+            //console.log(`rule: '${ri}'=>'${rule.right}'`);
+            rule.leftCoded = Formula.transform(ri, ntList);
+            rule.rightCoded = Formula.transform(rule.right, ntList);
+            //console.log(`      '${rule.leftCoded}'=>'${rule.rightCoded}'`);
+        }
+    }
+    Formula.transform = function(expr, nonTerminals) {
+        var i = 0, result = [];
+        while (i < expr.length) {
+            var hasMatch = false;
+            for (var nt=0; nt<nonTerminals.length; nt++) {
+                if (expr.substring(i).startsWith(nonTerminals[nt])) {
+                    hasMatch = true;
+                    result.push(nt);
+                    i += nonTerminals[nt].length;
+                    //console.log(` - match: ${nonTerminals[nt]}(${nt})`);
+                    break;
+                }
+            }
+            if (!hasMatch) {
+                throw new Error(` * Could not process rule at : ${expr.substring(i)}`);
+            }
+        }
+        return result;
+    };
+    Formula.prototype.createNode = function(term, type) {
+        var node = null;
+        if (term !== '' && term !== undefined) {
+            node = { value:term, 'non-terminal': type };
+            if (type == this.functionNonTerminal) {
+                node.arguments = [];
+            }
+        }
+        return node;
+    };
+    Formula.prototype.parse = function(expr) {
+        this.analyzeSyntax(expr);
+        var tree = this.buildTree(this.nodes);
+    };
+    Formula.prototype.analyzeSyntax = function(expr) {
+        this.nodes = [];
+        // determine non-terminal symbol for literal and function
+        var k = 0, count = 0;
+        for (var nt in this.grammar['non-terminals']) {
+            if (this.grammar['non-terminals'][nt] == 'literal') {
+                this.literalNonTerminal = k;
+                count++;
+            }
+            if (this.grammar['non-terminals'][nt] == 'function') {
+                this.functionNonTerminal = k;
+                count++;
+            }
+            if (count == 2) break;
+            k++;
+        }
+        // tokenize expression
+        var i = 0, start = 0, c = '';
+        while (c = expr.charAt(i)) {
+            // white spaces
+            if (this.grammar.separators.indexOf(c) != -1) {
+                //this.addTerm(expr.substring(start, i));
+                var node = this.createNode(expr.substring(start, i), this.literalNonTerminal);
+                if (node) this.nodes.push(node);
                 i++;
                 start = i;
                 continue;
             }
             // operators and functions
             var hasMatch = false;
-            for (var op in Formula.operators) {
+            for (var op in this.grammar.operators) {
                 if (expr.substring(i).indexOf(op) == 0) {
-                    _addTerm(op, Formula.operators[op].type);
+                    var node = this.createNode(expr.substring(start, i), this.literalNonTerminal);
+                    if (node) this.nodes.push(node);
+                    node = this.createNode(op, this.grammar.operators[op]['non-terminal-code']);
+                    if (node) this.nodes.push(node);
                     i += op.length;
                     start = i;
                     hasMatch = true;
@@ -75,9 +204,10 @@
             if (hasMatch) {
                 continue;
             }
-            for (var fn in Formula.functions) {
+            for (var fn in this.grammar.functions) {
                 if (expr.substring(i).indexOf(fn) == 0) {
-                    _addTerm(fn, 'F');
+                    var node = this.createNode(fn, this.functionNonTerminal);
+                    if (node) this.nodes.push(node);
                     i += fn.length;
                     start = i;
                     hasMatch = true;
@@ -89,27 +219,66 @@
             }
             i++;
         }
-        _addTerm(expr.substring(start, i));
-        console.log('\n'+terms.map(x => `${x.value} : ${x.type}`).join('\n'));
-        return terms;
+        var node = this.createNode(expr.substring(start, i), this.literalNonTerminal);
+        if (node) this.nodes.push(node);
     };
     Formula.prototype.buildTree = function(terms) {
-        // terms: function F; operator O1,O2; separator B1,C,B2; literal L,M,N; Sx stack
-        // Rule                             Action                                          Examples
-        //  L -> 0                          create node                                     'blue', 100.12
-        //  LO1MO1N -> RO1N / R = O1(L, M)  create node from result of operator O1          12+23+34
-        //  LO2MO2N -> RO2N / R = O2(L, M)  create node from result of operator O2          12*23*34
-        //  LO1MO2N -> RO2N / R = O1(L, M)  create node from result of operator O2          12+23*34
-        //  LO2MO1N -> LO1R / R = O2(M, N)  create node from result of operator O2          12*23+34
-        //  FB1     -> Sf                   create function node                            dist(
-        //  SfL     -> Sl                   add function parameter                          dist(12.48
-        //  SlB2    -> 0                    finalize function node                          dist(12.48)
-        //  SlC     -> Sf                   -                                               dist(12.48,
         var root = {};
+        var remaining = terms.length;
+        while (remaining > 0) {
+// console.log(` in: ${this.nodes.map(x => Object.keys(this.grammar['non-terminals'])[x['non-terminal']]).join('.')}`);
+// console.log(`step ${i}`);
+            // get a rule with a matching left side
+            var hasMatchingRule = false;
+            for (var r in this.grammar.rules) {
+                var rule = this.grammar.rules[r];
+//console.log(`      '${terms.map(x => x['non-terminal']).join('.')}' - ${rule.leftCoded}'=>'${rule.rightCoded}'`);
+                if (rule.leftCoded.length <= remaining) {
+                    for (var i=0; i<=terms.length-rule.leftCoded.length; i++) {
+                        if (rule.leftCoded[0] == terms[i]['non-terminal']) {
+                            var isMatching = true;
+                            for (var j=1; j<rule.leftCoded.length; j++) {
+                                if (rule.leftCoded[j] != terms[i+j]['non-terminal']) {
+                                    isMatching = false;
+                                    break;
+                                }
+                            }
+                            if (isMatching) {
+                                console.log(`Matching rule: ${r}=>${rule.right}`);
+                                // action
+                                var args = this.nodes.slice(i, i+rule.leftCoded.length);
+                                var node = rule.action.apply(this, args);
+                                // replace left with right side
+                                if (rule.rightCoded.length != 0) {
+                                    node['non-terminal'] = rule.rightCoded[0];
+                                    terms.splice(i, rule.leftCoded.length, node);
+                                } else {
+                                    throw new Error('Right side of rule must not be empty!');
+                                }
+                                var diff = rule.leftCoded.length - rule.leftCoded.length;   //node['non-terminal'].length;
+                                //i += diff;
+                                remaining -= diff;
+                                hasMatchingRule = true;
+                                // console.log(`out: ${terms.map(x => JSON.stringify(x)).join('\n')}`);
+                                // console.log(`step ${i}`);
+                            }
+                        }
+                    }
+                }
+            }
+            if (!hasMatchingRule) {
+                if (terms.length == 1 && terms[0]['non-terminal'] == this.literalNonTerminal) {
+                    console.log('Done');
+                } else {
+                    console.log('Illegal input: no matching rule found!');
+                }
+                break;
+            }
+        }
         return root;
     };
-    Formula.prototype.match = function(obj) {
-    
+    Formula.prototype.apply = function(obj) {
+        this.grammar.context = obj;
     }
     module.exports = Formula;
 })();
