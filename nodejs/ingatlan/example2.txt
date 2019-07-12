@@ -1,0 +1,40 @@
+Formula of numbers and 3 operators.
+Symbols
+    A: operator+
+    A1: operator+ with left operand
+    M: operator*
+    M1: operator* with left operand
+    AM: operator+ with left operand and right operator*
+    P: operator^
+    P1: operator^ with left operand
+    AP: operator+ with left operand and right operator^
+    MP: operator* with left operand and right operator^
+    L: literal
+Rules
+    r1: (L, A)      => { A.left = L; A.type = A1; return A; }  // 1+
+    r2: (A1, L)     => { A1.right = L; A1.do(); A1.type = L; return A1; } // 1+2
+    r3: (L, M)      => { M.left = L; M.type = M1; return M; }  // 1*
+    r4: (M1, L)     => { M.right = L; M1.do(); M1.type = R; return M1; }  // 1*2
+    r5: (L, P)      => { P.left = L; P.type = P1; return P; }  // 1^
+    r6: (P1, L)     => { P1.right = L; P1.do(); P1.type = R; return P1; } // 1^2
+    
+    r7: (A1, L, M)  => { M.left = L; A1.right = M; A1.type = AM; return A1; }  // 1+2*
+    r8: (A1, L, P)  => { P.left = L; A1.right = P; A1.type = AP; return A1; }  // 1+2^
+    r9: (AM, L)     => { AM.right.right = L; AM.do(); AM.type = L; return AM; }  // 1+2*3
+    r10:(AP, L)     => { AP.right.right = L; AP.do(); AP.type = L; return AP; }  // 1+2^3
+
+    r11:(AM, L, P)  => { P.left = L; AM.right.right = P; AM.type = P1; return AM; }  // 1+2*3^
+    r12:(AP, L, P)  => { AP.right.left = L; AP.right.right = P; AM.type = P1; return AM; }  // 1+2^3^
+    
+    r10:(O1, L, P)  => { O1.children[1].children[1] = P; P.children[]; O1.do(); O1.type = L; return O1; } // 1+2*3 | 1+2^3
+    r10:(O2, L, P)  => { O1.children[1].children[1] = P; P.children[]; O1.do(); O1.type = L; return O1; } // 1+2*3 | 1+2^3
+    r10:(M1, L, P)  => { P.children[0] = L; M1.children[1] = P; M1.type = O2; return A1; }  // 1*2^
+    r11:(O2, L)     => { O2.children[1].children[1] = L; O2.do(); O2.type = L; return O2; } // 1*2^3
+
+Example a,
+    F1, 1+2*3^4
+    - formalization => [ L(1), A, L(2), M, L(3), P, L(4) ]
+    - resolution
+        - r1 => [ A1, L(2), M, L(3), P, L(4) ]   { [ A1(1, ?) ] }
+        - r7 => [ O1, L(3), P, L(4) ]            { [ M(2, ?), A1(1, M) ] }
+        - r4 => [ R ]                   { [ M(2, 3), A1(1, M) ] }
