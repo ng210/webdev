@@ -25,6 +25,15 @@ Rules
 
     r8: (L, P)      => { P.left = L; P.type = P1; return P; }                   // 1^
     r9: (P1, L)     => { P1.right = L; P1.do(); P1.type = L; return P1; }       // 1^2
+    
+    r10:(F, B1)     => { stack.push(F); return null; }                          // sin
+    r11:(A1, F, B1) => { A1.right = F; stack.push(F); return null; }            // 1+sin(
+    r12:(M1, F, B1) => { M1.right = F; stack.push(F); return null; }            // 1*sin(
+    r13:(P1, F, B1) => { P1.right = F; stack.push(F); return null; }            // 1^sin(
+    r14:(L, B2)     => { F = stack.pop(); F.arguments.push(L); F.do();          // 3)
+                         F.type = L; return F; }
+    r15:(L, C)      => { F = stack.top(); F.arguments.push(L); return null; }   // 2,
+
 
 Example a,
     Input: 1+2
@@ -90,3 +99,15 @@ Example p,
     Input: 1*2^3+4   
     - formalization => [ L(1), M, L(2), P, L(3), A, L(4) ]
     - resolution: r5, r6, r9, r1, r4
+Example q,
+    Input: sin(1)
+    - formalization => [ F(sin), B1, L(1), B2 ]
+    - resolution: r10, r14
+Example r,
+    Input: 1+sin(2)*3
+    - formalization => [ L(1), A, F(sin), B1, L(2), B2, M, (3) ]
+    - resolution: r1, r11, r14, r5, r7
+Example s,
+    Input: 1+pow(2,3)*pow(4,5+6*cos(7))
+    - formalization => [ L(1), A, F(pow), B1, L(2), C, L(3), B2, M, F(pow), B1, L(4), C, L(5), A, F(cos), B1, L(7), B2, B2 ]
+    - resolution: r1, r11, r15, r14, r5, r12, r15, r1, r11, r14, r14
