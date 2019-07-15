@@ -1,40 +1,92 @@
 Formula of numbers and 3 operators.
 Symbols
     A: operator+
-    A1: operator+ with left operand
     M: operator*
-    M1: operator* with left operand
-    AM: operator+ with left operand and right operator*
     P: operator^
+    L: literal
+
+    A1: operator+ with left operand
+    M1: operator* with left operand
     P1: operator^ with left operand
+
+    AM: operator+ with left operand and right operator*
     AP: operator+ with left operand and right operator^
     MP: operator* with left operand and right operator^
-    L: literal
+    
 Rules
-    r1: (L, A)      => { A.left = L; A.type = A1; return A; }  // 1+
-    r2: (A1, L)     => { A1.right = L; A1.do(); A1.type = L; return A1; } // 1+2
-    r3: (L, M)      => { M.left = L; M.type = M1; return M; }  // 1*
-    r4: (M1, L)     => { M.right = L; M1.do(); M1.type = R; return M1; }  // 1*2
-    r5: (L, P)      => { P.left = L; P.type = P1; return P; }  // 1^
-    r6: (P1, L)     => { P1.right = L; P1.do(); P1.type = R; return P1; } // 1^2
-    
-    r7: (A1, L, M)  => { M.left = L; A1.right = M; A1.type = AM; return A1; }  // 1+2*
-    r8: (A1, L, P)  => { P.left = L; A1.right = P; A1.type = AP; return A1; }  // 1+2^
-    r9: (AM, L)     => { AM.right.right = L; AM.do(); AM.type = L; return AM; }  // 1+2*3
-    r10:(AP, L)     => { AP.right.right = L; AP.do(); AP.type = L; return AP; }  // 1+2^3
+    r1: (L, A)      => { A.left = L; A.type = A1; return A; }                   // 1+
+    r2: (A1, L, P)  => { P.left = L; A1.right = P; P.type = P1; return P; }     // 1+2^
+    r3: (A1, L, M)  => { M.left = L; A1.right = M; M.type = M1; return M; }     // 1+2*
+    r4: (A1, L)     => { A1.right = L; A1.do(); A1.type = L; return A1; }       // 1+2
 
-    r11:(AM, L, P)  => { P.left = L; AM.right.right = P; AM.type = P1; return AM; }  // 1+2*3^
-    r12:(AP, L, P)  => { AP.right.left = L; AP.right.right = P; AM.type = P1; return AM; }  // 1+2^3^
-    
-    r10:(O1, L, P)  => { O1.children[1].children[1] = P; P.children[]; O1.do(); O1.type = L; return O1; } // 1+2*3 | 1+2^3
-    r10:(O2, L, P)  => { O1.children[1].children[1] = P; P.children[]; O1.do(); O1.type = L; return O1; } // 1+2*3 | 1+2^3
-    r10:(M1, L, P)  => { P.children[0] = L; M1.children[1] = P; M1.type = O2; return A1; }  // 1*2^
-    r11:(O2, L)     => { O2.children[1].children[1] = L; O2.do(); O2.type = L; return O2; } // 1*2^3
+    r5: (L, M)      => { M.left = L; M.type = M1; return M; }                   // 1*
+    r6: (M1, L, P)  => { P.left = L; M1.right = P; P.type = P1; return P; }     // 1*2^
+    r7: (M1, L)     => { M.right = L; M1.do(); M1.type = L; return M1; }        // 1*2
+
+    r8: (L, P)      => { P.left = L; P.type = P1; return P; }                   // 1^
+    r9: (P1, L)     => { P1.right = L; P1.do(); P1.type = L; return P1; }       // 1^2
 
 Example a,
-    F1, 1+2*3^4
+    Input: 1+2
+    - formalization => [ L(1), A, L(2) ]
+    - resolution: r1, r4
+Example b,
+    Input: 1*2
+    - formalization => [ L(1), M, L(2) ]
+    - resolution: r5, r7
+Example c,
+    Input: 1+2+3
+    - formalization => [ L(1), A, L(2), A, L(3) ]
+    - resolution: r1, r4, r1, r4
+Example d,
+    Input: 1*2*3
+    - formalization => [ L(1), M, L(2), M, L(3) ]
+    - resolution: r5, r7, r5, r7
+Example e,
+    Input: 1+2*3
+    - formalization => [ L(1), A, L(2), M, L(3) ]
+    - resolution: r1, r3, r7
+Example f,
+    Input: 1*2+3
+    - formalization => [ L(1), M, L(2), A, L(3) ]
+    - resolution: r5, r7, r1, r4
+Example g,
+    Input: 1^2
+    - formalization => [ L(1), P, L(2) ]
+    - resolution: r8, r9
+Example h,
+    Input: 1^2^3
+    - formalization => [ L(1), P, L(2), P, L(3) ]
+    - resolution: r8, r9, r8, r9
+Example i,
+    Input: 1+2^3
+    - formalization => [ L(1), A, L(2), P, L(3) ]
+    - resolution: r1, r2, r9
+Example j,
+    Input: 1^2+3
+    - formalization => [ L(1), P, L(2), A, L(3) ]
+    - resolution: r8, r9, r1, r4
+Example k,
+    Input: 1*2^3
+    - formalization => [ L(1), M, L(2), P, L(3) ]
+    - resolution: r5, r6, r9
+Example l,
+    Input: 1^2*3
+    - formalization => [ L(1), P, L(2), M, L(3) ]
+    - resolution: r8, r9, r5, r7
+Example m,
+    Input: 1+2*3^4
     - formalization => [ L(1), A, L(2), M, L(3), P, L(4) ]
-    - resolution
-        - r1 => [ A1, L(2), M, L(3), P, L(4) ]   { [ A1(1, ?) ] }
-        - r7 => [ O1, L(3), P, L(4) ]            { [ M(2, ?), A1(1, M) ] }
-        - r4 => [ R ]                   { [ M(2, 3), A1(1, M) ] }
+    - resolution: r1, r3, r6, r9
+Example n,
+    Input: 1+2^3*4
+    - formalization => [ L(1), A, L(2), P, L(3), M, L(4) ]
+    - resolution: r1, r2, r9, r5, r7
+Example o,
+    Input: 1*2+3^4
+    - formalization => [ L(1), M, L(2), A, L(3), P, L(4) ]
+    - resolution: r5, r7, r1, r2, r9
+Example p,
+    Input: 1*2^3+4   
+    - formalization => [ L(1), M, L(2), P, L(3), A, L(4) ]
+    - resolution: r5, r6, r9, r1, r4
