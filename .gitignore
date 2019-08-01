@@ -2,6 +2,5 @@
 src/frmwrk/tmp/*
 src/sidjs/*
 temp
-*gitignore
-extjs/my-app/node_modules/**
 .vscode/**
+node_modules
