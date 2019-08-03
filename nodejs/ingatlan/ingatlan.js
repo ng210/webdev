@@ -1,5 +1,5 @@
 const fs = require('fs');
-const Formula = require('./formula.js');
+const Syntax = require('./syntax.js');
 const grammar = require('./grammar.js');
 main();
 
@@ -82,25 +82,26 @@ function queryData(args) {
     const database = require('./ingatlan_database.json');
     var expr = args.join(' ');
     console.log(`Keresés: ${expr}`);
-    var formula = new Formula(grammar);
-    formula.parse(expr);
+    var syntax = new Syntax(grammar);
+    var nodes = syntax.parse(expr);
+    var result = syntax.resolve(nodes);
 
-    var hits = [];
-    for (var i=0; i<database.length; i++) {
-        if (formula.apply(database[i])) {
-            hits.push(database[i]);
-        }
-    }
+    // var hits = [];
+    // for (var i=0; i<database.length; i++) {
+    //     if (formula.apply(database[i])) {
+    //         hits.push(database[i]);
+    //     }
+    // }
 
-    if (hits.length == 0) {
-        console.log(' * Nincs találat!\n\n');
-    } else {
-        console.log(` * ${hits.length} találat\n`);
-        for (var i=0; i<hits.length; i++) {
-            var item = hits[i];
-            console.log(`${item.location}/${item.houseSize}/${item.lotSize}/${item.price}`);
-        }
-    }
+    // if (hits.length == 0) {
+    //     console.log(' * Nincs találat!\n\n');
+    // } else {
+    //     console.log(` * ${hits.length} találat\n`);
+    //     for (var i=0; i<hits.length; i++) {
+    //         var item = hits[i];
+    //         console.log(`${item.location}/${item.houseSize}/${item.lotSize}/${item.price}`);
+    //     }
+    // }
 }
 
 // var output = {items:[]};
