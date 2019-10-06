@@ -1,7 +1,6 @@
 (function() {
     include('/ge/tree.js');
 
-    // rule.toString()
     var rs = r => `${r.priority} ${r.input}(${r.in.join('.')})=>${r.output}(${r.out})`
 
     // A grammar consists of a list of node prototypes and rules.
@@ -11,31 +10,46 @@
     // - the keys are the keywords of the language
     // - the prototypes define
     //   - a symbol used in the grammatic rules
-    //   - an optional binding
     //   - an optional action to execute
     // - words not identified are literals
 
     // 2. Rules
     // Rules replace sequences of the input nodes with a single node either returned by the rule's action or defined by the rule.
-    // The input is scanned from left to right to find a matching rule.
-    // Rules can be expressed as r(I*, O*, P), where
-    //  I*: sequence of input symbol, □ means ignore input
-    //  O*: sequence of output symbol, □ means no output
+    // The whole input is scanned from left to right to find a matching rule.
+    // Rules can be expressed as r(I*, O, P, A) where
+    //  I*: sequence of input symbols
+    //  O: an output symbol, null means no output
     //  P: priority
-    // Rules are sorted by priority and input sequence, thus
+    //  A: action
+    // Rules are sorted by priority and input sequence (longest first), thus
     // - rules with higher priority are matched and executed first
     // - rules with longer matching input sequence are executed first
-    // To improve performance, the symbols defined by the prototypes and used by the rules are replaced by integers, the ordinal number of their defining prototype.
+    // To improve performance, a list of symbols defined by the prototypes and used by the rules is created.
+    // The indices into the list is used in the rules instead of the symbols. This also allows to use strings as symbols.
 
     // 3. Parser
-    // Creates instances of the node prototypes by processing the input.
+    // The parser creates instances of the node prototypes by processing the input.
     // - identify the next term as the keyword of a node prototype
+    // - inidentified sequences are interpreted as literal nodes
     // - create a new instance of the prototype and store the term
     // - store the instance
+    // The nodes are added to a tree, however without any links. Links are defined later during the resolution.
 
-    // 4. Analyzer
-    // Applies the rules on the input if possible. The process is successful if and only if the whole input was processed.
-    // As a "side-effect" the rule actions can be used to transform, compile the input.
+    // 4. Resolve
+    // The output of the parser is an Expression instance, which stores the nodes in its tree created by the parser.
+    // The resolve method of the Expression accepts a 'context' argument and follows the steps below:
+    // - tries to apply the rules to the input starting with the rule of the highest priority with the longest input sequence
+    // - applying a rule means executing the rule's action if defined and merging the input nodes if possible
+    //    - the merge works on 2 and only 2 nodes
+    //    - a literal node is always merged into the other node
+    //    - a node without action is never merged into the other node, as such nodes should represent syntax elements only
+    // - the merge adds a node to another node as a child node defining dependencies, the tree becoming a dependency tree
+
+    // 5. Evaluate
+    // Last step is to evaluate the nodes of the tree in the proper order using a context passed by the user.
+    // The nodes are visited by traversing the dependency tree using DFS and the operator/function actions are executed in post order.
+    // The starting node of the DFS is the node processed as last during the rule application and merge phase.
+    // This 
 
     function Node(code, type, term) {
         // // unique id of the node
@@ -62,9 +76,10 @@
         this.tree = new Tree();
         this.syntax = syntax;
         this.expression = '';
+        this.lastNode = null;
     }
     Expression.prototype.resolve = function(context) {
-        var lastNode = null;
+        this.lastNode = null;
         var nodes = this.tree.nodes;
         while (nodes.length > 0) {
             for (var r=0; r<this.syntax.ruleMap.length;) {
@@ -107,7 +122,7 @@
                             throw new Error('Error!');
                         }
                         if (output) {
-                            lastNode = output;
+                            this.lastNode = output;
                         }
                         //console.log(` - match at ${n}: (${args.map(x => this.nodeToString(x, true)).join(' ')}) : (${nodes.map(x => this.nodeToString(x, true)).join(' ')})`);
                         hasMatch = true;
@@ -118,15 +133,17 @@
             }
             break;
         }
-        this.tree.DFS(lastNode, null, n => {
-            //console.log(n.data.type.symbol);
+        return this;
+    };
+    Expression.prototype.evaluate = function(context) {
+        this.tree.DFS(this.lastNode, null, n => {
             if (typeof n.data.type.action === 'function') {
                 var args = n.edges.map(x => x.to.data.value);
                 n.data.value = n.data.type.action.apply(context, args);
                 //console.log(`${n.data.term}(${args.join(',')}) = ${n.data.value}`);
             }
         });
-        return lastNode.data.value;
+        return this.lastNode.data.value;
     };
     Expression.prototype.mergeNodes = function(nodes) {
         console.log('merge in' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
@@ -222,6 +239,7 @@
 
     Syntax.prototype.parse = function(expr) {
         var expression = new Expression(this);
+        expression.expression = expr;
         if (!expr || typeof expr !== 'string') {
             throw new Error(`Invalid expression!(${expr})`);
         }
