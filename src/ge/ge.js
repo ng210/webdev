@@ -217,5 +217,4 @@
 	Boot.addToSearchPath();
 
 	public(GE, 'GE');
-	
 })();

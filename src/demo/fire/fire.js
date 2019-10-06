@@ -151,6 +151,9 @@ include('/ge/fn.js');
 				var v = this.filter.apply(source.data, source.width, source.height, 1, i, j, 0);
 				var motion = Fn.lerp(1.0, Math.random(), this.data.motion);
 				var heat = this.data.feedback * motion * this.heatMaps[2].data[ix];
+				if (this.mode) {
+					heat = 1 - heat;
+				}
 				target.data[ix] = cooling*v + heat*heat;
 				var rgba = this.heatToColor(v);
 				GE.backBuffer.imgData.data[4*ix] = rgba[0];

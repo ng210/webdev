@@ -1,9 +1,14 @@
 const fs = require('fs');
 const Syntax = require('./syntax.js');
 const grammar = require('./grammar.js');
+
 main();
 
 function main() {
+    //console.log(new Syntax(grammar).parse("1+2+3+4").resolve());
+    var result = new Syntax(grammar).parse(process.argv[2]).resolve();
+    console.log(`${process.argv[2]} = ${result}`);
+    return;
 
     console.log('\n*** Ingatlan adatbázis');
     var cmd = process.argv[2];
