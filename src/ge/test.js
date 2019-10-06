@@ -1,4 +1,4 @@
-include('noise.js');
+include('/ge/noise.js');
 
 var a_ = [];
 var canvas_ = null;
