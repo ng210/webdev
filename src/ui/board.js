@@ -2,11 +2,21 @@ include('/ui/container.js');
 
 // unstructured container of controls
 (function() {
-	Ui.Board = function(id, template) {
-		Ui.Control.call(this, id, template);
+	Ui.Board = function(id, template, parent) {
+		template.type = 'board';
+		Ui.Container.call(this, id, template, parent);
 		this.items = {};
+        if (template.items) {
+			var i = 0;
+            for (var key in template.items) {
+				var itemId = template.items[key].id || ('00'+i).slice(-3);
+				this.items[key] = Ui.Control.create(`${id}_${itemId}`, template.items[key], this);
+				i++;
+            }
+        }
+
 		this.constructor = Ui.Board;
-	}
+	};
 	Ui.Board.base = Ui.Container.prototype;
 	Ui.Board.prototype = new Ui.Container('board');
 	Ui.Control.Types['board'] = { ctor: Ui.Board, tag: 'DIV' };
@@ -39,7 +49,7 @@ include('/ui/container.js');
 		for (var key in this.items) {
 			var item = this.items[key];
 			if (item.element == null) {
-				item.render( { node: this.element } );
+				item.render( { 'element': this.element } );
 			}
 		}
 	};

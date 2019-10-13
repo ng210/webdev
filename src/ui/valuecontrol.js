@@ -7,7 +7,7 @@ include('/ui/control.js');
 		this.isNumeric = false;
 		this.parse = null;
 		// cache for the value
-		this.value = 0;
+		this.value = this.template.value || 0;
 		switch (this.template['data-type']) {
 			case Ui.Control.DataTypes.int:
 				this.isNumeric = true;
@@ -74,14 +74,18 @@ include('/ui/control.js');
 			this.element.setAttribute('max', this.max);
 			this.element.setAttribute('step', this.step);
 		}
+		//var value = (this.dataSource !== undefined && this.dataField !== undefined) ? this.dataSource[this.dataField] : this.value;
 		if (this.dataSource !== undefined && this.dataField !== undefined) {
 			// validate?
 			var v = this.dataSource[this.dataField];
 			this.setValue(v);
 		}
-		if (this.element.value !== undefined) {
-			this.element.value = this.value;
-		}
+		// if (this.element.value !== undefined) {
+		// 	this.element.value = this.value;
+		// }
+		 var attribute = this.element.tagName == 'INPUT' ? 'value' : 'innerHTML';
+		 this.element[attribute] = this.value;
+
 	};
 
 })();

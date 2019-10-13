@@ -2,9 +2,8 @@ include('/ui/control.js');
 
 // Abstract base type for container controls
 (function() {
-    Ui.Container = function(id, template) {
-        Ui.Control.call(this, id, template);
-        this.items = {};
+    Ui.Container = function(id, template, parent) {
+        Ui.Control.call(this, id, template, parent);
         // template
         // - titlebar (bool|text): titlebar
         // - fixed (bool): moveable and resizeabe

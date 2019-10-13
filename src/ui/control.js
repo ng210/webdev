@@ -19,10 +19,10 @@ include('/ui/datalink.js');
 		this.css = [];
 		this.cssText = '';
 		this.handlers = {};
-		// add onfocus and onblur events
-		Ui.Control.registerHandler.call(this, 'focus', this);
-		Ui.Control.registerHandler.call(this, 'blur', this);
-		Ui.Control.registerHandler.call(this);
+		// // add onfocus and onblur events
+		// Ui.Control.registerHandler.call(this, 'focus', this);
+		// Ui.Control.registerHandler.call(this, 'blur', this);
+		// Ui.Control.registerHandler.call(this);
 		this.info = Ui.Control.Types[this.template.type];
 		this.element = null;
 		this.labelElem = null;
@@ -78,22 +78,26 @@ include('/ui/datalink.js');
 				this.labelElem.innerHTML = this.label;
 				this.labelElem.control = this;
 			}
-			ctx.node.appendChild(this.labelElem);
+			ctx.element.appendChild(this.labelElem);
 		} else {
 			if (this.labelElem && this.labelElem.parentNode) {
 				this.labelElem.parentNode.removeChild(this.labelElem);
 			}
 		}
 
+		// add onfocus and onblur events
+		Ui.Control.registerHandler.call(this, 'focus', this);
+		Ui.Control.registerHandler.call(this, 'blur', this);
+		Ui.Control.registerHandler.call(this);
 		for (eventName in this.handlers) {
 			this.addHandler(eventName, Ui.Control.onevent);
 		}
 
-		if (this.element.parentNode != ctx.node) {
+		if (this.element.parentNode != ctx.element) {
 			if (this.element.parentNode != null) {
 				this.element.parentNode.removeChild(this.element);
 			}
-			ctx.node.appendChild(this.element);
+			ctx.element.appendChild(this.element);
 		}
 	};
 	Ui.Control.prototype.registerHandler = function(event) {
@@ -150,6 +154,9 @@ include('/ui/datalink.js');
 			if (handlers != undefined) {
 				for (var i=0; i<handlers.length; i++) {
 					var handler = handlers[i];
+if (control != handler.obj) {
+	console.log(' *** not the same objects!!!');
+}
 					handler.fn.call(handler.obj, control, target);
 					// if (typeof this.getValue === 'function') {
 					// 	handler.fn.call(handler.obj, this, this.getValue());

@@ -11,7 +11,7 @@
                 enumerable:true,
                 set: function(v) {
                     if (this.obj[field] !== v) {
-                        console.log(`set ${this.obj[field]} to ${v}`);
+                        //console.log(`set ${this.obj[field]} to ${v}`);
                         this.obj[field] = v;
                         control.setValue(v);
                     }
@@ -27,7 +27,7 @@
                 fn: function(control) {
                         var v = control.getValue();
                         if (this[control.dataField] !== v) {
-console.log(`change ${this[control.dataField]} to ${v}`);
+                            //console.log(`change ${this[control.dataField]} to ${v}`);
                             this[control.dataField] = v;
                         }
                     }
