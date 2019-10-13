@@ -1,17 +1,77 @@
-const fs = require('fs');
-const Syntax = require('./syntax.js');
-const grammar = require('./grammar.js');
+include('/utils/syntax.js');
+include('grammar.js');
+include('/base/dbg.js');
+include('/ui/board.js');
+include('/ui/textbox.js');
+include('/ui/button.js');
+include('/ui/label.js');
+include('/ui/grid.js');
 
-main();
+var database = null;
+var ui = null;
+var data = null;
 
-function main() {
+async function onpageload(e) {
+    Dbg.init('con');
+    Dbg.con.style.visibility = 'visible';
+
+    await prepareData();
+    await renderUi();
+}
+
+async function renderUi() {
+
+    var template = await load('ingatlan.json');
+    ui = new Ui.Board('main', template.data, this);
+    ui.dataBind(data);
+    data = ui.dataSource;
+    ui.items.search.onclick = e => search(data.input);
+    ui.render({ 'element': document.getElementById('container') });
+}
+
+async function prepareData() {
+    data = new Ui.DataLink({
+        "input": "prop(location) ~ Zala",
+        "results": []
+    });
+    var resource = await load('ingatlan_database.json');
+    if (resource instanceof Error) {
+        Dbg.prln(resource);
+        return;
+    }
+    database = resource.data;
+    Dbg.prln(database.length + ' entries read');
+}
+function search(expr) {
+    try {
+        var syntax = new Syntax(grammar);
+        var expression = syntax.parse(expr).resolve();
+
+        var hits = [];
+        for (var i = 0; i < database.length; i++) {
+            if (expression.evaluate(database[i]) == true) {
+                hits.push(database[i]);
+                //Dbg.prln(database[i].location);
+            }
+        }
+        data.results = hits;
+        ui.items.results.build();
+        ui.items.results.render(ui);
+        //ui.items.results.refresh();
+        Dbg.prln('Match count: ' + hits.length);
+    } catch (err) {
+        Dbg.prln(err.message);
+    }
+}
+
+function main(expr) {
     //console.log(new Syntax(grammar).parse("1+2+3+4").resolve());
-    var result = new Syntax(grammar).parse(process.argv[2]).resolve();
-    console.log(`${process.argv[2]} = ${result}`);
+    var result = new Syntax(grammar).parse(expr).resolve().evaluate();
+    Dbg.prln(`${expr} = ${result}`);
     return;
 
     console.log('\n*** Ingatlan adatbázis');
-    var cmd = process.argv[2];
+    var cmd = argv[2];
     switch (cmd) {
         case 'a':
         case 'add':
@@ -48,8 +108,8 @@ function addDataFile(path) {
     var cache = [];
     var updated = 0;
     var duplicated = 0;
-    for (var i=0; i<data.length; i++) {
-        var item = database.find( x => x.link == data[i].link );
+    for (var i = 0; i < data.length; i++) {
+        var item = database.find(x => x.link == data[i].link);
         if (item == null) {
             database.push(data[i]);
             cache.push(data[i]);
@@ -86,17 +146,16 @@ function addDataFile(path) {
 function queryData(args) {
     const database = require('./ingatlan_database.json');
     var expr = args.join(' ');
-    console.log(`Keresés: ${expr}`);
+    Dbg.prln(`Keresés: ${expr}`);
     var syntax = new Syntax(grammar);
-    var nodes = syntax.parse(expr);
-    var result = syntax.resolve(nodes);
+    var expression = syntax.parse(expr).resolve();
 
-    // var hits = [];
-    // for (var i=0; i<database.length; i++) {
-    //     if (formula.apply(database[i])) {
-    //         hits.push(database[i]);
-    //     }
-    // }
+    var hits = [];
+    for (var i = 0; i < database.length; i++) {
+        if (expression.evaluate(database[i]) == true) {
+            hits.push(database[i]);
+        }
+    }
 
     // if (hits.length == 0) {
     //     console.log(' * Nincs találat!\n\n');
