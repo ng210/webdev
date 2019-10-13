@@ -352,7 +352,8 @@ try {
                         'gif':   { mimeType: 'image/gif', responseType: 'blob', charSet: 'binary' },
                         'bmp':   { mimeType: 'image/bmp', responseType: 'blob', charSet: 'binary' },
                         'jpg':   { mimeType: 'image/jpg', responseType: 'blob', charSet: 'binary' },
-                        'png':   { mimeType: 'image/png', responseType: 'blob', charSet: 'binary' }
+                        'png':   { mimeType: 'image/png', responseType: 'blob', charSet: 'binary' },
+                        'json':  { mimeType: 'text/json', responseType: 'json', charSet: 'utf-8' },
                     },
                     getTypeByExtension: function(url) {
                         var m = url.match(/[^\\\/\.]+\.([^.]+)$/);
@@ -549,7 +550,7 @@ try {
                                 node = parseElement(el);
                                 break;
                             case 'text/json':
-                                node = JSON.parse(data);
+                                node = null;
                                 break;
                             case 'text/html':
                                 node = document.createElement('div');
