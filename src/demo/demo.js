@@ -59,7 +59,7 @@ include('/ui/grid.js');
         while (node.children.length > 0) {
             node.removeChild(node.children[0]);
         }
-        this.ui.render({node:node});
+        this.ui.render({'element':node});
     };
     Demo.load = async function(name, url) {
         var demo = null;
@@ -100,7 +100,7 @@ include('/ui/grid.js');
         var DemoClass = Object.values(mdl.symbols)[0];
         demo = new DemoClass(canvas_);
         // a valid demo JSON contains a template and a settings
-        demo.config = resources[0].node;
+        demo.config = resources[0].data;
         demo.template = demo.config.template;
         demo.settings = demo.config.settings;
         if (!demo.settings || !demo.template) {

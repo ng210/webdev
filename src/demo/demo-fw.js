@@ -165,7 +165,7 @@ function rgbAdd(rgb1, rgb2) {
     list.registerHandler('click');
     list.registerHandler('mouseover');
     // list.registerHandler('mouseout');
-    list.render( { node:list_ });
+    list.render( { 'element':list_ });
 }
 
 async function createDemo(id) {
