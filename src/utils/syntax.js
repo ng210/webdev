@@ -80,7 +80,7 @@
     }
     Expression.prototype.resolve = function(context) {
         this.lastNode = null;
-        var nodes = this.tree.nodes;
+        var nodes = Array.from(this.tree.nodes);
         while (nodes.length > 0) {
             for (var r=0; r<this.syntax.ruleMap.length;) {
                 //console.log('Input: (', nodes.map(x => this.symbols[x.data.code]).join(' '), ')');
@@ -99,7 +99,7 @@
                     }
                     if (i == rule.in.length) {
                         // match found, replace input by output
-                        console.log('Matched: ' + rs(rule));
+                        //console.log('Matched: ' + rs(rule));
                         var args = nodes.slice(n, n+i);
                         //console.log(args.length);
                         var output = null;
@@ -143,10 +143,13 @@
                 //console.log(`${n.data.term}(${args.join(',')}) = ${n.data.value}`);
             }
         });
+        for (var i=0; i<this.tree.nodes.length; i++) {
+            this.tree.nodes[i].flag = 0;
+        }
         return this.lastNode.data.value;
     };
     Expression.prototype.mergeNodes = function(nodes) {
-        console.log('merge in' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
+       //console.log('merge in' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
         // merge b into a if
         // - a has an action
         // - b is a literal
@@ -164,7 +167,7 @@
             }
             aix = 1 - bix;
             if (merge) {
-                console.log(`${this.nodeToString(nodes[aix])} => ${this.nodeToString(nodes[bix])}`);
+               //console.log(`${this.nodeToString(nodes[aix])} => ${this.nodeToString(nodes[bix])}`);
                 this.tree.addEdge(nodes[aix], nodes[bix]);
             }
         } else {
@@ -205,7 +208,7 @@
         }
         this.literalCode = this.symbols.length - 1;
 
-        //for (var i=0; i<this.symbols.length; i++) console.log(`${i} => '${this.symbols[i]}'`);
+        //for (var i=0; i<this.symbols.length; i++)//console.log(`${i} => '${this.symbols[i]}'`);
 
         // sort rules by priority and input
         this.ruleMap = this.grammar.rules.sort( (a,b) => 100*(b.priority - a.priority) + b.input.localeCompare(a.input) );
@@ -241,7 +244,11 @@
         var expression = new Expression(this);
         expression.expression = expr;
         if (!expr || typeof expr !== 'string') {
-            throw new Error(`Invalid expression!(${expr})`);
+            if (expr == '') {
+                throw new Error('Empty expression!');
+            } else {
+                throw new Error(`Invalid expression!(${expr})`);
+            }
         }
         var start = 0, i = 0;
         while (i<expr.length) {
@@ -272,7 +279,7 @@
             expression.createNode(code, this.literal, term);
             //nodes.push(this.createNode(code, this.literal, term));
         }
-        console.log('Nodes: ' + expression.tree.nodes.map(x => `${expression.nodeToString(x, true)}`).join('  '));
+        //console.log('Nodes: ' + expression.tree.nodes.map(x => `${expression.nodeToString(x, true)}`).join('  '));
         return expression;
     };
 
