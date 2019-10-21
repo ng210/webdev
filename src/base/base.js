@@ -333,7 +333,6 @@ try {
                     var url = script.src || script.url;
                     var mdl = Module.cache[url];
                     if (mdl === undefined) {
-                        debugger;
                         throw new Error('Module \'' + url + '\' not found!');
                     }
                     window[name] = mdl.symbols[name] = obj;            

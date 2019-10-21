@@ -3,31 +3,32 @@
 		"persons": {
 			"type": "grid",
 			"data-field": "family",
+			"header": true,
 			"row-template": {
 				"name": {
-					"type":"textbox", "data-field":"name", "data-type":"string", "label": "$Key",
+					"type":"textbox", "data-field":"name", "data-type":"string", "column": "$Key",
 					"events": ["change"]
 				},
 				"age": {
-					"type":"textbox", "data-field":"age", "data-type":"int", "label": "$Key",
+					"type":"textbox", "data-field":"age", "data-type":"int", "column": "$Key",
 					"min": "1", "max": "100", "step": "1",
 					"events": ["change"]
 				},
 				"color": {
-					"type":"ddlist", "data-field":"color", "data-type":"string", "label": "$key",
+					"type":"ddlist", "data-field":"color", "data-type":"string", "column": "$Key",
 					"items":false, "events": ["change"]
 				},
 				"health": {
-					"type":"slider", "data-field":"health", "data-type":"float", "label": "$key",
+					"type":"slider", "data-field":"health", "data-type":"float", "column": "$Key",
 					"min": 0.0, "max": 1.0, "step": 0.1,
 					"events": ["change"]
 				},
 				"married": {
-					"type":"checkbox", "data-field":"married", "label": "$key",
+					"type":"checkbox", "data-field":"married", "label": "$key", "column": "$Key",
 					"events": ["change"]
 				},
 				"accept": {
-					"type":"button", "data-field":"confirm", "label": "Accept values",
+					"type":"button", "data-field":"confirm", "label": "Accept values", "column": "$Key",
 					"events": ["click"]
 				}
 			}

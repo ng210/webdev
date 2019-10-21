@@ -16,9 +16,9 @@ async function onpageload(errors) {
         if (typeof test === 'function') {
             Dbg.prln(`Running '${testName}'...`);
             var ret = await test();
-            Dbg.prln(`Test returned ${ret}`);
+            Dbg.prln(`Test returned ${ret}`, 1);
         }
     } else {
-        Dbg.prln(`Error loading ${tests.error}`);
+        Dbg.prln(`Error loading ${module.error}`);
     }
 }
