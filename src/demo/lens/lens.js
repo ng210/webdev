@@ -1,5 +1,5 @@
 include('demo.js');
-include('/ge/v2.js');
+include('/ge/math/v2.js');
 
 (function() {
 

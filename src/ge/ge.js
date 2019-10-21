@@ -33,11 +33,13 @@
 			GE.canvas = (typeof ref === 'string') ? document.querySelector(ref) : ref;
 			if (GE.canvas != null) {
 				if (mode == GE.MODE_WEBGL) {
-					GE.gl = GE.canvas.getContext('webGL');
+					GE.gl = GE.canvas.getContext('webgl');
+					window.gl = GE.gl;
 				} else {
 					GE.ctx = GE.canvas.getContext('2d');
+					GE.createBuffers();
 				}
-				GE.createBuffers();
+
 			} else {
 				throw new Error('Invalid canvas reference!');
 			}

@@ -1,5 +1,5 @@
 include('/ge/fn.js');
-include('/ge/v3.js');
+include('/ge/math/v3.js');
 include('/ge/noise.js');
 
 (function() {
