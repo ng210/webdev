@@ -1,59 +1,37 @@
 body {
+	margin: 0px;
 	background-color:black;
 	font-family:Arial;
 	font-size:10pt;
 }
-
-/***** Debug console *****/
-#dbgConsole {
-	position:relative;z-index:1000;
-	background-color:black;
-	border:outset 1px silver;
-}
-#dbgConsoleHeader {
-	padding:2px 4px;
-	background-color:lightblue;
-	border-bottom:groove 2px silver;
-	font-family:Arial;
-	font-weight:bold;
-	color:black;
-}
-#dbgConsoleBody {
-	/*width:640px;*/height:240px;overflow:auto;
-	padding:2px 2px;
-	font-family:Verdana; font-size:10pt; color:green;
+#cvs-container {
+	position:absolute;
 }
 
-/***** GE *****/
-#mainSurface {
-	background-color:black;
-	/*cursor:none;*/
-	width:640;
-	height:400;
-}
-#info {
-  position: relative;
-  top: 0px;
-  left: 0px;
-  background-color: rgba(0,0,0,0.3);
-  padding: 1em;
-  color: white;
+#cvs {
+	width:320;
+	height:200;
+	background-color:black
 }
 
+#con {
+	position:absolute;
+	font-size:10pt;
+	font-family:Consolas;
+	text-align:left;
+	padding:2 4;
 
-/***** UI *****/
-#config {
-	width: 10em;
+	box-sizing: border-box;
+	margin:0;
+	background-color:#102030;
+	color:#208040;
+	opacity:0.5;
+	height:25vh; width:100vw;
+	overflow:hidden auto
+}
+
+#menu {
 	background-color:silver;
-}
-
-/***** Controls *****/
-.label {
-	display: inline;
-	color: blue;
-	font-family: Verdana;
-}
-
-.textbox .cfg {
-	width:4em;
+	position:absolute;
+	overflow:hidden auto
 }
