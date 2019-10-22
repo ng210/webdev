@@ -22,6 +22,7 @@ include('/ge/player/sequence.js');
 
         this.constructor = Player.Channel;
     };
+
     channel.prototype.assign = function(target, sequence) {
         this.sequence = sequence;
         this.cursor = sequence.headerSizeInBytes;
@@ -31,6 +32,7 @@ include('/ge/player/sequence.js');
             throw new Error(`Unsupported adapter type ${sequence.adapterType}`);
         }
     };
+
     channel.prototype.reset = function() {
         this.cursor = this.sequence.headerSizeInBytes;
         if (this.loopCount > 0) {
@@ -39,7 +41,8 @@ include('/ge/player/sequence.js');
         } else {
             this.isActive = false;
         }
-    }
+    };
+
     channel.prototype.run = function(ticks) {
         var isRestarted = false;
         do {
@@ -84,10 +87,10 @@ include('/ge/player/sequence.js');
                 if (cmd > 1) {
                     var oldCursor = cursor;
                     cursor += this.adapter.getCommandSize(cmd-2, this.sequence, cursor+1);
-                    frame.commands.push(new DataView(this.sequence.stream.buffer.slice(oldCursor, cursor)));
+                    frame.commands.push(new DataView(this.sequence.stream.slice(oldCursor, cursor)));
                 } else {
                     if (frame.commands.length == 0) {
-                        frame.commands.push(new DataView(this.sequence.stream.buffer.slice(cursor, cursor+1)));
+                        frame.commands.push(new DataView(this.sequence.stream.slice(cursor, cursor+1)));
                     }
                     cursor++;
                     break;
@@ -99,6 +102,7 @@ include('/ge/player/sequence.js');
             }
         }
     };
+
     channel.prototype.toStream = function() {
         var stream = new DataView(new ArrayBuffer(65536));
         var hasEOS = false;
@@ -130,7 +134,7 @@ include('/ge/player/sequence.js');
         if (!hasEOS) {
             stream.setUint8(cursor++, 1);
         }
-        this.sequence.stream = new DataView(stream.buffer.slice(0, cursor));
+        this.sequence = new Player.Sequence(0, stream.slice(0, cursor));
     };
 
     Player.Channel = channel;

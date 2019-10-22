@@ -24,15 +24,15 @@ include('/ge/player/player.js');
     };
     TestAdapter.prototype.processCommand = function(target, command, sequence, cursor) {
         var colors = [
-            'gray', 'lightgray', 'purple', 'yellow', 'brown', 'blue', 'red', 'white'
+            'black', 'white', 'green', 'blue', 'red'
         ];
         switch (command) {
-            case 0: // SETTEXT
+            case TestAdapter.SETTEXT:
                 var text = '', c = null;
                 while ((c = String.fromCharCode(sequence.getUint8(cursor++))) != '\0') text += c;
                 target.innerHTML = text;
                 break;
-            case 1: // SETINK
+            case TestAdapter.SETINK:
                 var c = sequence.getUint8(cursor++);
                 target.style.color = colors[c % colors.length];
                 break;
@@ -43,15 +43,18 @@ include('/ge/player/player.js');
     TestAdapter.prototype.getCommandSize = function(command, sequence, cursor) {
         var commandSize = 1;
         switch (command) {
-            case 0: // SETTEXT
+            case TestAdapter.SETTEXT:
                 do { commandSize++ } while (String.fromCharCode(sequence.getUint8(cursor++)) != '\0');
                 break;
-            case 1: // SETINK
+            case TestAdapter.SETINK:
                 commandSize++;
                 break;
         }
         return commandSize;
     };
+    TestAdapter.ID = 0;
+    TestAdapter.SETTEXT = 0;
+    TestAdapter.SETINK = 1;
 
     function createPlayer() {
         var testAdapter = new TestAdapter();
@@ -61,53 +64,39 @@ include('/ge/player/player.js');
         return player;
     }
 
-    function writeString(str, view, offs) {
-        for (var i=0; i<str.length; i++) {
-            view.setInt8(offs++, str.charCodeAt(i))
-        }
-        return offs;
-    }
-
     function createTestSequence() {
-        var stream = new ArrayBuffer(128);
-        var view = new DataView(stream);
-        var offs = 0;
-        view.setInt8(offs++, 1+1);              // header size
-        view.setInt8(offs++, 0);                // adapter type 0
-        // Sequence #1
+        var sequence = new Player.Sequence(TestAdapter.ID);
+        sequence.writeHeader();
         // Frame #1
-        view.setInt16(offs, 16); offs += 2;      // delta 16
-        view.setInt8(offs, 2); offs++;          // SETTEXT
-        offs = writeString('Hello World!', view, offs);
-        view.setInt8(offs++, 0);
-        view.setInt8(offs++, 0);                // EOF - end of frame
-
+        sequence.writeDelta(16);
+        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('#1');
+        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(0);
+        sequence.writeEOF();
         // Frame #2
-        view.setInt16(offs, 16); offs += 2;     // delta 16
-        view.setInt8(offs++, 3);                // SETINK
-        view.setInt8(offs++, 3);                // color #3
-        view.setInt8(offs++, 0);                // EOF
-
+        sequence.writeDelta(16);
+        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('#2');
+        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(1);
+        sequence.writeEOF();
         // Frame #3
-        view.setInt16(offs, 16); offs += 2;     // delta 16
-        view.setInt8(offs++, 2);                // SETTEXT
-        offs = writeString('Player test', view, offs);
-        view.setInt8(offs++, 0);
-        view.setInt8(offs++, 3);                // SETINK
-        view.setInt8(offs++, 6);                // color #6
-        view.setInt8(offs++, 0);                // EOF
-
+        sequence.writeDelta(16);
+        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('#3');
+        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(2);
+        sequence.writeEOF();
         // Frame #4
-        view.setInt16(offs, 16); offs += 2;     // delta 16
-        view.setInt8(offs++, 2);                // SETTEXT
-        view.setInt16(offs++, 0);
-        view.setInt8(offs++, 0);                // EOF
-
+        sequence.writeDelta(16);
+        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('#4');
+        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(3);
+        sequence.writeEOF();
         // Frame #5
-        view.setInt16(offs, 8); offs += 2;      // delta 8
-        view.setInt8(offs++, 1);                // EOS marks end of sequence
-
-        return Player.Sequence.fromStream(stream);
+        sequence.writeDelta(16);
+        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('End');
+        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(4);
+        sequence.writeEOF();
+        // Frame #6
+        sequence.writeDelta(16);
+        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(0);
+        sequence.writeEOS();
+        return sequence;
     }
 
     async function startPlayBack(channel) {
@@ -116,7 +105,7 @@ include('/ge/player/player.js');
             if (channel.run(1)) {
                 timer = setTimeout(loop, 40, resolve);
             } else {
-                var text = channel.player.targets[0].innerHTML == '' ? 'Test successful' : 'Test failed';
+                var text = channel.player.targets[0].innerHTML == 'End' ? 'Test successful' : 'Test failed';
                 resolve(text);
             }
         }
@@ -134,7 +123,6 @@ include('/ge/player/player.js');
         channel.assign(player.targets[0], sequence);
         channel.loopCount = 1;
         channel.isActive = true;
-
         return startPlayBack(channel);
     }
 
@@ -147,34 +135,17 @@ include('/ge/player/player.js');
         channel.assign(player.targets[0], sequence);
         channel.toFrames();
         // check frames
-        if (channel.frames.length != 5) errors.push('Frame count is not 5!');
-        // check frame #1
-        var frame = channel.frames[0];
-        if (frame.delta != 16) errors.push('Frame #1 delta is not 16!');
-        if (frame.commands.length != 1) errors.push('Frame #1 does not have exactly 1 command!');
-        if (frame.commands[0].getUint8(0) != 2) errors.push('Frame #1 command is not SETTEXT!');
-        // check frame #2
-        frame = channel.frames[1];
-        if (frame.delta != 16) errors.push('Frame #2 delta is not 16!');
-        if (frame.commands.length != 1) errors.push('Frame #2 does not have exactly 1 command!');
-        if (frame.commands[0].getUint8(0) != 3) errors.push('Frame #2 command is not SETINK!');
-        // check frame #3
-        frame = channel.frames[2];
-        if (frame.delta != 16) errors.push('Frame #3 delta is not 16!');
-        if (frame.commands.length != 2) errors.push('Frame #3 does not have exactly 2 command!');
-        if (frame.commands[0].getUint8(0) != 2) errors.push('Frame #3 command #1 is not SETTEXT!');
-        if (frame.commands[1].getUint8(0) != 3) errors.push('Frame #3 command #2 is not SETINK!');
-        // check frame #4
-        frame = channel.frames[3];
-        if (frame.delta != 16) errors.push('Frame #4 delta is not 16!');
-        if (frame.commands.length != 1) errors.push('Frame #4 does not have exactly 1 command!');
-        if (frame.commands[0].getUint8(0) != 2) errors.push('Frame #4 command is not SETTEXT!');
-        // check frame #5
-        frame = channel.frames[4];
-        if (frame.delta != 8) errors.push('Frame #5 delta is not 8!');
-        if (frame.commands.length != 1) errors.push('Frame #5 does not have exactly 1 command!');
-        if (frame.commands[0].getUint8(0) != 1) errors.push('Frame #5 command is not EOS!');
-
+        if (channel.frames.length != 6) errors.push('Frame count is not 5!');
+        for (var i=0; i<5; i++) {
+            var frame = channel.frames[i];
+            if (frame.delta != 16) errors.push(`Frame #${i+1} delta is not 16!`);
+            if (frame.commands.length != 2) errors.push(`Frame #${i+1} does not have exactly 2 commands!`);
+            if (frame.commands[0].getUint8(0) != 2+TestAdapter.SETTEXT) errors.push(`Frame #${i+1} command is not SETTEXT!`);
+        }
+        var frame = channel.frames[5];
+        if (frame.delta != 16) errors.push(`Frame #5 delta is not 16!`);
+        if (frame.commands.length != 1) errors.push('Frame #5 does not have exactly 1 commands!');
+        if (frame.commands[0].getUint8(0) != 2+TestAdapter.SETINK) errors.push('Frame #5 command is not SETINK!');
         return errors.length > 0 ? errors.join('\n') : 'Tests successful!';
     }
 
@@ -198,9 +169,9 @@ include('/ge/player/player.js');
     }
 
     var tests = async function() {
-        Dbg.prln(await test_channel_run());
+        //Dbg.prln(await test_channel_run());
         Dbg.prln(test_channel_toFrames());
-        Dbg.prln(await test_channel_insertFrame());
+        // Dbg.prln(await test_channel_insertFrame());
         //Dbg.prln(test_channel_deleteFrames());
         return 0;
     };

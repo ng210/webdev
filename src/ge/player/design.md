@@ -12,14 +12,14 @@
 2. Add adapter A2
 3. Add sequence S1 for A1
 4. Add sequence S2 for A2
-3. Add commands A1C1, A1C2, ..., A1Cn via A1
-4. Add commands A2C1, A2C2, ... A2Cm via A2
+5. Add commands A1C1, A1C2, ..., A1Cn via A1
+6. Add commands A2C1, A2C2, ... A2Cm via A2
 
 #Playback#
 1. Add adapter A1
 2. Add adapter A2
 3. Create channel CH1 as the bundle of sequence S1 and adapter A1
-4. Create channel CH2 as the bundle of sequence S1 and adapter A1
+4. Create channel CH2 as the bundle of sequence S2 and adapter A2
 5. CH1 reads commands A1C1, A1C2, ..., A1Cn from S1 and sends them to A1
 6. CH2 reads commands A2C1, A2C2, ..., A2Cn from S2 and sends them to A2
 
@@ -55,7 +55,7 @@ Generic sequences allow mixed commands:
 4. CH1 reads command A1C1, sends it to its registered adapter A1
 5. CH1 reads command A2C1, sends it to its registered adapter A2
 
-#The behaviour of a entity (target) is shaped by the adapter type and the commands coming from a sequence.#
+#The behaviour of an entity (target) is shaped by the adapter type and the commands coming from a sequence.#
 #A channel is the association of a target, an adapter and sequence.#
 #Adapters can process commands created for their type only. There is not a universal adapter type, that processes commands of different adapter types.#
 #Sequences store commands specific to one particular adapter type. A target can be controlled by commands of multiple sequences of different adapter types.#
@@ -64,7 +64,7 @@ Generic sequences allow mixed commands:
 
 ### Conclusion:Modified dedicated sequences ###
 * sequences store a reference to their associated adapter types
-* channels are not bound to adapter types, is is the association of a target and a sequence only
+* channels are not bound to adapter types, it is the association of a target and a sequence only
 
 
 ## 2. Entities, targets and adapters ##
