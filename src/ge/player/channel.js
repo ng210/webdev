@@ -54,7 +54,7 @@ include('/ge/player/sequence.js');
                     // read command code, 1 byte
                     var cmd = this.sequence.getUint8(this.cursor++);
                     if (cmd > 1) {
-                        this.cursor = this.adapter.processCommand(this.target, cmd-2, this.sequence, this.cursor);
+                        this.cursor = this.adapter.processCommand(this.target, cmd, this.sequence, this.cursor);
                     } else {
                         if (cmd === 1) {
                             // end of sequence
@@ -83,16 +83,22 @@ include('/ge/player/sequence.js');
             var cmd = 0;
             while (true) {
                 // read command code, 1 byte
-                cmd = this.sequence.getUint8(cursor);
+                cmd = this.sequence.getUint8(cursor++);
                 if (cmd > 1) {
-                    var oldCursor = cursor;
-                    cursor += this.adapter.getCommandSize(cmd-2, this.sequence, cursor+1);
-                    frame.commands.push(new DataView(this.sequence.stream.slice(oldCursor, cursor)));
-                } else {
+                    // var oldCursor = cursor;
+                    // cursor += this.adapter.getCommandSize(cmd-2, this.sequence, cursor+1);
+                    // frame.commands.push(new DataView(this.sequence.stream.slice(oldCursor, cursor)));
+                    var command = this.adapter.makeCommand(cmd, this.sequence, cursor);
+                    frame.commands.push(command);
+                    cursor += command.cursor - 1;
+                } else if (cmd == 0) {
                     if (frame.commands.length == 0) {
-                        frame.commands.push(new DataView(this.sequence.stream.slice(cursor, cursor+1)));
+                        cmd = new Stream(1);
+                        cmd.writeUint8(0);
+                        frame.commands.push(cmd);
                     }
-                    cursor++;
+                    break;
+                } else if (cmd == 1) {
                     break;
                 }
             }
@@ -104,20 +110,17 @@ include('/ge/player/sequence.js');
     };
 
     channel.prototype.toStream = function() {
-        var stream = new DataView(new ArrayBuffer(65536));
+        var sequence = new Player.Sequence(this.sequence.adapterType);
         var hasEOS = false;
-        var cursor = 0;
-        stream.setUint8(cursor++, this.headerSizeInBytes);
-        stream.setUint8(cursor++, this.adapterType);
+        sequence.writeHeader();
         for (var fi=0; fi<this.frames.length; fi++) {
             var frame = this.frames[fi];
             var hasEOF = false;
-            stream.setUint16(cursor, frame.delta); cursor += 2;
+            sequence.writeDelta(frame.delta);
             for (var ci=0; ci<frame.commands.length; ci++) {
-                for (var bi=0; bi<frame.commands[ci].byteLength; bi++) {
-                    stream.setUint8(cursor++, frame.commands[ci].getUint8(bi));
-                }
-                var cmd = frame.commands[ci].getUint8(0);
+                var command = frame.commands[ci];
+                sequence.stream.writeStream(command, 0);
+                var cmd = command.readUint8(0);                
                 if (cmd == 0) {
                     hasEOF = true;
                     break;
@@ -127,14 +130,17 @@ include('/ge/player/sequence.js');
                     break;
                 }
             }
-            if (!hasEOF && !hasEOS) {
-                stream.setUint8(cursor++, 0);
+            //if (hasEOS) break;
+            if (!hasEOF) {
+                sequence.writeUint8(0);
             }
         }
+        sequence.cursor--;
         if (!hasEOS) {
-            stream.setUint8(cursor++, 1);
+            sequence.writeUint8(1);
         }
-        this.sequence = new Player.Sequence(0, stream.slice(0, cursor));
+        this.sequence = sequence;
+        return sequence;
     };
 
     Player.Channel = channel;

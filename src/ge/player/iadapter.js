@@ -16,7 +16,8 @@ include('/ge/player/player.js');
     iadapter.prototype.updateRefreshRate = function(target, command) { throw new Error('Not implemented!'); };
 
     // EDITOR
-    iadapter.prototype.getCommandSize = function(command, sequence, cursor) { throw new Error('Not implemented!'); };
+    iadapter.prototype.getCommandSize = function(command, args) { throw new Error('Not implemented!'); };
+    iadapter.prototype.makeCommand = function(command, args) { throw new Error('Not implemented!'); };
 
     // var Player = Player || {};
     Player.IAdapter = iadapter;

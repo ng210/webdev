@@ -1,4 +1,5 @@
 include('/ge/player/player.js');
+include('/ge/stream.js');
 (function(){
 
     function TestAdapter() {
@@ -24,7 +25,7 @@ include('/ge/player/player.js');
     };
     TestAdapter.prototype.processCommand = function(target, command, sequence, cursor) {
         var colors = [
-            'black', 'white', 'green', 'blue', 'red'
+            '#0000ff', '#4080ff', '#80ffff', '#c080ff', '#ff00ff'
         ];
         switch (command) {
             case TestAdapter.SETTEXT:
@@ -40,21 +41,34 @@ include('/ge/player/player.js');
         return cursor;
     };
     TestAdapter.prototype.updateRefreshRate = function(target, command) { throw new Error('Not implemented!'); };
-    TestAdapter.prototype.getCommandSize = function(command, sequence, cursor) {
-        var commandSize = 1;
+    TestAdapter.prototype.getCommandSize = function(command, args) {
+
+    };
+    TestAdapter.prototype.makeCommand = function(command)  {
+        var stream = new Stream(128);
+        stream.writeUint8(command);
         switch (command) {
             case TestAdapter.SETTEXT:
-                do { commandSize++ } while (String.fromCharCode(sequence.getUint8(cursor++)) != '\0');
+                if (arguments[1] instanceof Player.Sequence) {
+                    stream.writeString(arguments[1].stream.readString(arguments[2]));
+                } else {
+                    stream.writeString(arguments[1]);
+                }
                 break;
             case TestAdapter.SETINK:
-                commandSize++;
+                if (arguments[1] instanceof Player.Sequence) {
+                    stream.writeUint8(arguments[1].stream.readUint8(arguments[2]));
+                } else {
+                    stream.writeUint8(arguments[1]);
+                }
                 break;
         }
-        return commandSize;
+        return new Stream(stream);
     };
+
     TestAdapter.ID = 0;
-    TestAdapter.SETTEXT = 0;
-    TestAdapter.SETINK = 1;
+    TestAdapter.SETTEXT = 2;
+    TestAdapter.SETINK = 3;
 
     function createPlayer() {
         var testAdapter = new TestAdapter();
@@ -64,27 +78,28 @@ include('/ge/player/player.js');
         return player;
     }
 
-    function createTestSequence() {
+    function createTestSequences() {
+        var sequences = [];
         var sequence = new Player.Sequence(TestAdapter.ID);
         sequence.writeHeader();
         // Frame #1
         sequence.writeDelta(16);
-        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('#1');
+        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq1.1');
         sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(0);
         sequence.writeEOF();
         // Frame #2
         sequence.writeDelta(16);
-        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('#2');
+        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq1.2');
         sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(1);
         sequence.writeEOF();
         // Frame #3
         sequence.writeDelta(16);
-        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('#3');
+        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq1.3');
         sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(2);
         sequence.writeEOF();
         // Frame #4
         sequence.writeDelta(16);
-        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('#4');
+        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq1.4');
         sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(3);
         sequence.writeEOF();
         // Frame #5
@@ -96,7 +111,34 @@ include('/ge/player/player.js');
         sequence.writeDelta(16);
         sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(0);
         sequence.writeEOS();
-        return sequence;
+        sequences.push(sequence);
+
+        sequence = new Player.Sequence(TestAdapter.ID);
+        // Frame #1
+        sequence.writeDelta(16);
+        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq2.1');
+        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(4);
+        sequence.writeEOF();
+        // Frame #2
+        sequence.writeDelta(16);
+        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq2.2 - End');
+        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(2);
+        sequence.writeEOS();
+        sequences.push(sequence);
+
+        sequence = new Player.Sequence(TestAdapter.ID);
+        // Frame #1
+        sequence.writeDelta(16);
+        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq3.1');
+        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(1);
+        sequence.writeEOF();
+        // Frame #2
+        sequence.writeDelta(16);
+        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq3.2 - End');
+        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(3);
+        sequence.writeEOS();
+        sequences.push(sequence);
+        return sequences;
     }
 
     async function startPlayBack(channel) {
@@ -115,12 +157,17 @@ include('/ge/player/player.js');
         });
     }
 
-    async function test_channel_run() {
-        Dbg.prln('Test Channel.run');
+    function setup() {
         var player = createPlayer();
-        var sequence = createTestSequence();
+        var sequence = createTestSequences()[0];
         var channel = new Player.Channel('test01', player);
         channel.assign(player.targets[0], sequence);
+        return channel;
+    }
+
+    async function test_channel_run() {
+        Dbg.prln('Test Channel.run');
+        var channel = setup();
         channel.loopCount = 1;
         channel.isActive = true;
         return startPlayBack(channel);
@@ -129,49 +176,87 @@ include('/ge/player/player.js');
     function test_channel_toFrames() {
         var errors = [];
         Dbg.prln('Test Channel.toFrames');
-        var player = createPlayer();
-        var sequence = createTestSequence();
-        var channel = new Player.Channel('test01', player);
-        channel.assign(player.targets[0], sequence);
+        var channel = setup();
         channel.toFrames();
         // check frames
         if (channel.frames.length != 6) errors.push('Frame count is not 5!');
-        for (var i=0; i<5; i++) {
-            var frame = channel.frames[i];
-            if (frame.delta != 16) errors.push(`Frame #${i+1} delta is not 16!`);
-            if (frame.commands.length != 2) errors.push(`Frame #${i+1} does not have exactly 2 commands!`);
-            if (frame.commands[0].getUint8(0) != 2+TestAdapter.SETTEXT) errors.push(`Frame #${i+1} command is not SETTEXT!`);
+        var fi = 0;
+        for (; fi<5; fi++) {
+            var frame = channel.frames[fi];
+            if (frame.delta != 16) errors.push(`Frame #${fi+1} delta is not 16!`);
+            if (frame.commands.length != 2) errors.push(`Frame #${fi+1} does not have exactly 2 commands!`);
+            if (frame.commands[0].readUint8(0) != TestAdapter.SETTEXT) errors.push(`Frame #${fi+1} command is not SETTEXT!`);
         }
-        var frame = channel.frames[5];
-        if (frame.delta != 16) errors.push(`Frame #5 delta is not 16!`);
-        if (frame.commands.length != 1) errors.push('Frame #5 does not have exactly 1 commands!');
-        if (frame.commands[0].getUint8(0) != 2+TestAdapter.SETINK) errors.push('Frame #5 command is not SETINK!');
+        var frame = channel.frames[fi];
+        if (frame.delta != 16) errors.push(`Frame #${fi+1} delta is not 16!`);
+        if (frame.commands.length != 1) errors.push(`Frame #${fi+1} does not have exactly 1 commands!`);
+        if (frame.commands[0].readUint8(0) != TestAdapter.SETINK) errors.push(`Frame #${fi+1} command is not SETINK!`);
         return errors.length > 0 ? errors.join('\n') : 'Tests successful!';
     }
 
-    function test_channel_insertFrame() {
-        Dbg.prln('Test insert frame');
-        var player = createPlayer();
-        var sequence = createTestSequence();
-        var channel = new Player.Channel('test01', player);
-        channel.assign(player.targets[0], sequence);
-        channel.isActive = true;
+    function test_channel_toStream() {
+        Dbg.prln('Test Channel.toFrames');
+        var channel = setup();
         channel.toFrames();
-        var frame = new Player.Frame();
-        frame.delta = 4;
-        var view = new DataView(new ArrayBuffer(7));
-        view.setUint8(0, 2);
-        writeString('Start', view, 1);
-        frame.commands.push(view);
-        channel.frames.splice(0, 0, frame);
+        var sequence = channel.sequence;
         channel.toStream();
+        var pos = 0;
+        var hasError = false;
+        for (var i=0; i<channel.sequence.cursor; i++) {
+            if (sequence.cursor <= i || sequence.getUint8(i) != channel.sequence.getUint8(i)) {
+                hasError = true;
+                break;
+            }
+        }
+        return hasError ? 'Stream does not match at ' + pos : 'Tests successful!';
+    }
+
+    async function test_channel_insertFrame() {
+        var errors = [];
+        Dbg.prln('Test insert frame');
+        var channel = setup();
+        channel.toFrames();
+        var testAdapter = channel.player.adapters[0];
+        // create new frame
+        var frame = new Player.Frame();
+        frame.delta = 8;
+        frame.commands.push(testAdapter.makeCommand(TestAdapter.SETTEXT, 'New'));
+        frame.commands.push(testAdapter.makeCommand(TestAdapter.SETINK, 4));
+        channel.frames.splice(1, 0, frame);
+        channel.toStream();
+        //channel.reset();
+        channel.loopCount = 1;
+        channel.isActive = true;
         return startPlayBack(channel);
+    }
+
+    function test_stream() {
+        var stream = new Stream(4);
+        stream.writeUint8(72);
+        stream.writeString('ello');
+        stream.cursor--;
+        stream.writeUint8(32);
+        stream.writeString('World!');
+        stream.cursor--;
+
+        var str = [];
+        var chars = new Uint8Array(stream.buffer.slice(0, stream.cursor));
+        chars.forEach(x => str.push(String.fromCharCode(x)));
+        Dbg.prln(str.join(''));
+
+//         var arr = ['H','e','l','l','o',' ','W','o','r','l','d','!'];
+//         stream = new Stream(arr);
+//         str = [];
+//         chars = new Uint8Array(stream.buffer.slice(0, stream.cursor));
+//         chars.forEach(x => str.push(String.fromCharCode(x)));
+//         Dbg.prln(str.join(''));
     }
 
     var tests = async function() {
         //Dbg.prln(await test_channel_run());
         Dbg.prln(test_channel_toFrames());
-        // Dbg.prln(await test_channel_insertFrame());
+        Dbg.prln(test_channel_toStream());
+        Dbg.prln(await test_channel_insertFrame());
         //Dbg.prln(test_channel_deleteFrames());
         return 0;
     };
