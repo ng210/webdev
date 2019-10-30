@@ -13,7 +13,7 @@
 			this.con.style.width = window.innerWidth;
 		},
 		prln: function(txt) {
-			this.pr(txt.replace(/\n/g, "<br/>") + '<br/>');
+			this.pr(txt.toString().replace(/\n/g, "<br/>") + '<br/>');
 		},
 		pr: function(txt) {
 			if (this.con != null) {

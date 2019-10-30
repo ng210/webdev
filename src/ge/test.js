@@ -368,6 +368,19 @@ function intersectOrig(v, u, out) {
     return 0; // No collision
 }
 
+function test_stream() {
+	var stream = new Stream(4);
+	stream.writeUint8(72);
+	stream.writeString('ello');
+	stream.writeUint8(32);
+	stream.writeString('World!');
+
+	var str = [];
+	var chars = new Uint8Array(stream.buffer.slice(0, stream.cursor));
+	chars.forEach(x => str.push(String.fromCharCode(x)));
+	if (str.join('') != 'Hello World!') throw new Error('Stream test failed!');
+}
+
 window.onload = e => {
 	try {
 

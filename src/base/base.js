@@ -544,16 +544,13 @@ try {
                                 document.head.appendChild(node);
                                 break;
                             case 'text/xml':
-                                var el = document.createElement('div');
-                                el.innerHTML = data;
-                                node = parseElement(el);
+                                node = data;
                                 break;
                             case 'text/json':
                                 node = null;
                                 break;
                             case 'text/html':
-                                node = document.createElement('div');
-                                node.innerHTML = data;
+                                node = data
                                 node.url = options.url;
                                 break;
                             case 'text':

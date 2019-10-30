@@ -14,17 +14,16 @@
     function Stream(arg) {
         if (typeof arg === 'number') {
             this.buffer = new ArrayBuffer(arg);
-            this.cursor = 0;
+            this.length = 0;
         } else if (arg instanceof Stream) {
-            this.buffer = new Uint8Array(arg.buffer).slice(0, arg.cursor).buffer;
-            this.cursor = arg.cursor;
+            this.buffer = new Uint8Array(arg.buffer).slice(0, arg.length).buffer;
+            this.length = arg.length;
+        } else if (arg instanceof ArrayBuffer) {
+            this.buffer = new ArrayBuffer(arg.byteLength);
+            this.length = arg.byteLength
         } else {
             throw new Error('Invalid argument!');
-        // if (arg.buffer != null && arg.buffer instanceof ArrayBuffer) {
-        //     this.buffer = new ArrayBuffer(arg.byteLength);
-        //     var dst = new Uint8Array(this.buffer);
-        //     dst.set(arg);
-        // } else if (Array.isArray(arg))  {
+        //     if (Array.isArray(arg))  {
         //     this.buffer = new ArrayBuffer(arg.length);
         //     var dst = new Uint8Array(this.buffer);
         //     dst.set(arg);
@@ -34,7 +33,7 @@
         //     //     dst[i] = src[i];
         //     // }
         }
-        //this.length = 0;
+        this.cursor = 0;
         this.view = new DataView(this.buffer);
 
         Object.defineProperties(this, {
@@ -52,37 +51,55 @@
             this.view.setUint8(this.cursor++, str.charCodeAt(i));
         }
         this.view.setUint8(this.cursor++, 0);
+        if (this.cursor > this.length) {
+            this.length = this.cursor;
+        }
     };
 
     Stream.prototype.writeStream = function(stream, offset, length) {
-        var byteCount = length || stream.cursor - offset;
+        var byteCount = length || stream.length - offset;
         ensureSize(this, byteCount);
-        for (var i=offset; i<stream.cursor; i++) {
+        for (var i=offset; i<stream.length; i++) {
             this.view.setUint8(this.cursor++, stream.readUint8(i));
+        }
+        if (this.cursor > this.length) {
+            this.length = this.cursor;
         }
     };
 
     Stream.prototype.writeUint8 = function(value) {
         ensureSize(this, 4);
         this.view.setUint8(this.cursor++, value);
+        if (this.cursor > this.length) {
+            this.length = this.cursor;
+        }
     };
 
     Stream.prototype.writeUint16 = function(value) {
         ensureSize(this, 8);
         this.view.setUint16(this.cursor, value);
         this.cursor += 2;
+        if (this.cursor > this.length) {
+            this.length = this.cursor;
+        }
     };
 
     Stream.prototype.writeUint32 = function(value) {
         ensureSize(this, 16);
         this.view.setUint32(this.cursor, value);
         this.cursor += 4;
+        if (this.cursor > this.length) {
+            this.length = this.cursor;
+        }
     };
 
     Stream.prototype.writeFloat32 = function(value) {
         ensureSize(this, 16);
         this.view.setFloat32(this.cursor, value);
         this.cursor += 4;
+        if (this.cursor > this.length) {
+            this.length = this.cursor;
+        }
     };
 
     Stream.prototype.readString = function(pos) {
