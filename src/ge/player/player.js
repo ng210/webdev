@@ -3,7 +3,7 @@ include('/ge/player/channel.js');
 
 (function() {
     var player = function() {
-        this.adapters = [];
+        this.adapters = {};
         this.sequences = [];
         this.userDataBlocks = [];
         this.targets = [];

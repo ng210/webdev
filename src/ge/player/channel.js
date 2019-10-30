@@ -27,9 +27,9 @@ include('/ge/player/sequence.js');
         this.sequence = sequence;
         this.cursor = sequence.headerSizeInBytes;
         this.target = target;
-        this.adapter = this.player.adapters[sequence.adapterType];
+        this.adapter = this.player.adapters[sequence.adapterId];
         if (this.adapter === undefined) {
-            throw new Error(`Unsupported adapter type ${sequence.adapterType}`);
+            throw new Error(`Unsupported adapter type ${sequence.adapterId}`);
         }
     };
 
@@ -38,6 +38,7 @@ include('/ge/player/sequence.js');
         if (this.loopCount > 0) {
             this.currentTick = 0;
             this.loopCount--;
+            this.isActive = true;
         } else {
             this.isActive = false;
         }
@@ -45,7 +46,7 @@ include('/ge/player/sequence.js');
 
     channel.prototype.run = function(ticks) {
         var isRestarted = false;
-        do {
+        while (true) {
             isRestarted = false;
             var delta = 0;
             while ((delta = this.sequence.getUint16(this.cursor)) <= this.currentTick) {
@@ -66,11 +67,17 @@ include('/ge/player/sequence.js');
                     }
                 }
                 if (cmd === 1) {
+                    // end of sequence
                     break;
                 }
-            }            
+            }
+            if (isRestarted) {
+                // end of sequence
+                continue;
+            }
             this.currentTick += ticks;
-        } while (isRestarted);
+            break;
+        }
         return this.isActive;
     };
 
@@ -90,7 +97,7 @@ include('/ge/player/sequence.js');
                     // frame.commands.push(new DataView(this.sequence.stream.slice(oldCursor, cursor)));
                     var command = this.adapter.makeCommand(cmd, this.sequence, cursor);
                     frame.commands.push(command);
-                    cursor += command.cursor - 1;
+                    cursor += command.length - 1;
                 } else if (cmd == 0) {
                     if (frame.commands.length == 0) {
                         cmd = new Stream(1);
@@ -110,7 +117,7 @@ include('/ge/player/sequence.js');
     };
 
     channel.prototype.toStream = function() {
-        var sequence = new Player.Sequence(this.sequence.adapterType);
+        var sequence = new Player.Sequence(this.sequence.adapterId);
         var hasEOS = false;
         sequence.writeHeader();
         for (var fi=0; fi<this.frames.length; fi++) {

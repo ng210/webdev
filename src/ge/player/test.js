@@ -2,15 +2,15 @@ include('/ge/player/player.js');
 include('/ge/stream.js');
 (function(){
 
-    function TestAdapter() {
+    const TestAdapter = {
 
-    }
-    TestAdapter.prototype = new Player.IAdapter;
-    TestAdapter.prototype.info = {name: 'TestAdapter'};
-    TestAdapter.prototype.getInfo = function() { return TestAdapter.info; };
-    //TestAdapter.prototype.registerCommands = function(registry) { throw new Error('Not implemented!'); };
-    TestAdapter.prototype.prepareContext = function(data) { Dbg.prln('Prepare context'); };
-    TestAdapter.prototype.createTargets = function(targets, data) {
+    };
+    TestAdapter.__proto__ = Player.IAdapter;
+    TestAdapter.info = {name: '_TestAdapter', id: 0};
+    TestAdapter.getInfo = function() { return TestAdapter.info; };
+    //TestAdapter.registerCommands = function(registry) { throw new Error('Not implemented!'); };
+    TestAdapter.prepareContext = function(data) { Dbg.prln('Prepare context'); };
+    TestAdapter.createTargets = function(targets, data) {
         var el = document.createElement('div');
         el.id = 'testTarget';
         el.style.position = 'absolute';
@@ -23,7 +23,7 @@ include('/ge/stream.js');
         document.body.appendChild(el);
         targets.push(el);
     };
-    TestAdapter.prototype.processCommand = function(target, command, sequence, cursor) {
+    TestAdapter.processCommand = function(target, command, sequence, cursor) {
         var colors = [
             '#0000ff', '#4080ff', '#80ffff', '#c080ff', '#ff00ff'
         ];
@@ -40,11 +40,10 @@ include('/ge/stream.js');
         }
         return cursor;
     };
-    TestAdapter.prototype.updateRefreshRate = function(target, command) { throw new Error('Not implemented!'); };
-    TestAdapter.prototype.getCommandSize = function(command, args) {
-
+    TestAdapter.updateRefreshRate = function(target, command) { throw new Error('Not implemented!'); };
+    TestAdapter.getCommandSize = function(command, args) {
     };
-    TestAdapter.prototype.makeCommand = function(command)  {
+    TestAdapter.makeCommand = function(command)  {
         var stream = new Stream(128);
         stream.writeUint8(command);
         switch (command) {
@@ -65,22 +64,20 @@ include('/ge/stream.js');
         }
         return new Stream(stream);
     };
-
-    TestAdapter.ID = 0;
     TestAdapter.SETTEXT = 2;
     TestAdapter.SETINK = 3;
 
     function createPlayer() {
-        var testAdapter = new TestAdapter();
+        //var testAdapter = new TestAdapter();
         var player = new Player();
-        player.adapters.push(testAdapter);
-        testAdapter.createTargets(player.targets, null);
+        player.adapters[TestAdapter.getInfo().id] = TestAdapter;
+        TestAdapter.createTargets(player.targets, null);
         return player;
     }
 
     function createTestSequences() {
         var sequences = [];
-        var sequence = new Player.Sequence(TestAdapter.ID);
+        var sequence = new Player.Sequence(TestAdapter.getInfo().id);
         sequence.writeHeader();
         // Frame #1
         sequence.writeDelta(16);
@@ -113,7 +110,7 @@ include('/ge/stream.js');
         sequence.writeEOS();
         sequences.push(sequence);
 
-        sequence = new Player.Sequence(TestAdapter.ID);
+        sequence = new Player.Sequence(TestAdapter.getInfo().id);
         // Frame #1
         sequence.writeDelta(16);
         sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq2.1');
@@ -126,7 +123,7 @@ include('/ge/stream.js');
         sequence.writeEOS();
         sequences.push(sequence);
 
-        sequence = new Player.Sequence(TestAdapter.ID);
+        sequence = new Player.Sequence(TestAdapter.getInfo().id);
         // Frame #1
         sequence.writeDelta(16);
         sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq3.1');
@@ -216,7 +213,7 @@ include('/ge/stream.js');
         Dbg.prln('Test insert frame');
         var channel = setup();
         channel.toFrames();
-        var testAdapter = channel.player.adapters[0];
+        var testAdapter = channel.player.adapters[TestAdapter.getInfo().id];
         // create new frame
         var frame = new Player.Frame();
         frame.delta = 8;
@@ -232,17 +229,21 @@ include('/ge/stream.js');
 
     function test_stream() {
         var stream = new Stream(4);
+        Dbg.prln(stream.cursor);
         stream.writeUint8(72);
+        Dbg.prln(stream.cursor);
         stream.writeString('ello');
-        stream.cursor--;
+        Dbg.prln(stream.cursor);
         stream.writeUint8(32);
+        Dbg.prln(stream.cursor);
         stream.writeString('World!');
-        stream.cursor--;
+        Dbg.prln(stream.cursor);
 
         var str = [];
         var chars = new Uint8Array(stream.buffer.slice(0, stream.cursor));
         chars.forEach(x => str.push(String.fromCharCode(x)));
         Dbg.prln(str.join(''));
+        //if (str.join('') != 'Hello World!') throw new Error('Stream test failed!');
 
 //         var arr = ['H','e','l','l','o',' ','W','o','r','l','d','!'];
 //         stream = new Stream(arr);
@@ -256,6 +257,7 @@ include('/ge/stream.js');
         //Dbg.prln(await test_channel_run());
         Dbg.prln(test_channel_toFrames());
         Dbg.prln(test_channel_toStream());
+debugger;
         Dbg.prln(await test_channel_insertFrame());
         //Dbg.prln(test_channel_deleteFrames());
         return 0;

@@ -10,7 +10,7 @@ include('/ge/stream.js');
     var Sequence = function(adapterId) {
         this.stream = new Stream(256);
         this.headerSizeInBytes = 2;
-        this.adapterType = adapterId;
+        this.adapterId = adapterId;
         Object.defineProperties(this, {
             'cursor': {
                 'enumerable': true,
@@ -25,7 +25,7 @@ include('/ge/stream.js');
     Sequence.prototype.writeHeader = function() {
         this.cursor = 0;
         this.stream.writeUint8(this.headerSizeInBytes);
-        this.stream.writeUint8(this.adapterType);
+        this.stream.writeUint8(this.adapterId);
     };
 
     Sequence.prototype.writeDelta = function(delta) {
