@@ -1,8 +1,13 @@
+include('/base/dbg.js');
+
 include('/ge/sound.js');
 include('./synth.js');
 include('./synth-adapter.js');
 include('./pot.js');
 include('/ge/player/player.js');
+
+include('/utils/syntax.js');
+include('grammar.js');
 
 var _synth = null;
 var _isRunning = false;
@@ -50,7 +55,7 @@ async function loadTemplate() {
     // lfo
     _template.lfo = res.node.querySelector('div.lfo');
     // filter
-    _template.filter = res.node.querySelector('div.filter');
+    _template.flt = res.node.querySelector('div.flt');
     // synth1 (solo)
     _template.synth1 = buildSynthTemplate(res.node.querySelector('div.synth1'));
     // synth2 (bass)
@@ -68,8 +73,6 @@ function buildSynthTemplate(synth) {
             node.innerHTML = template.innerHTML.replace(/{{id}}/g, lbl);
         }
     }
-    // lfo: (26,10) 99,0,  99,11, 99, 22, 126,0, 126,11
-    // osc: (26,10) 126,0,  126,11, 126, 22, 153,0, 153,11
     synth.querySelector('div.osc').onclick = alert;
     return synth;
 }
@@ -77,7 +80,6 @@ function buildSynthTemplate(synth) {
 async function createSynth(lbl, synth) {
     //var synth = new psynth.Synth(48000, voiceCount);
     voiceCount = synth.voices.length;
-
     _synths.push(synth);
     var synthElem = document.getElementById(lbl);
     synthElem.innerHTML = _template.synth1.innerHTML.replace(/{{id}}/g, lbl);
@@ -177,179 +179,51 @@ async function createPlayer() {
                 3,  // 2 devices
                 psynth.SynthAdapter.DEVICE_SYNTH, 2,    // synth with 2 voices
                 psynth.SynthAdapter.DEVICE_SYNTH, 6,    // synth with 6 voices
-                psynth.SynthAdapter.DEVICE_SYNTH, 4     // synth with 4 voices
+                psynth.SynthAdapter.DEVICE_SYNTH, 2     // synth with 4 voices
         ]));
     psynth.SynthAdapter.devices[0].label = 'synth1';
     psynth.SynthAdapter.devices[1].label = 'synth2';
-    psynth.SynthAdapter.devices[2].label = 'synth3';
+    //psynth.SynthAdapter.devices[2].label = 'synth3';
     await createSynth('synth1', psynth.SynthAdapter.devices[0]);
     await createSynth('synth2', psynth.SynthAdapter.devices[1]);
     //await createSynth('synth3', psynth.SynthAdapter.devices[2]);
     return player;
 }
 
-function createSequences() {
+async function createSequences(path) {
+    var res = await load(path);
+    if (res.error instanceof Error) {
+        throw res.error;
+    }
     var sequences = [];
-    var sequence = new Player.Sequence(psynth.SynthAdapter.getInfo().id);
-    // var delta = 0;
-    // sequence.writeHeader();
-    // for (var i=0; i<48; i++) {
-    //     sequence.writeDelta(delta);
-    //     sequence.writeCommand(psynth.SynthAdapter.SETNOTE);
-    //     sequence.writeUint8(i); sequence.writeUint8(255);
-    //     sequence.writeEOF()
-    //     delta = 2;
-    //     sequence.writeDelta(delta);
-    //     sequence.writeCommand(psynth.SynthAdapter.SETNOTE);
-    //     sequence.writeUint8(i); sequence.writeUint8(0);
-    //     sequence.writeEOF();
-    // }
-    // sequence.writeDelta(delta);
-    // sequence.writeEOS();
-    // sequences.push(sequence);
-
-    var sequence = new Player.Sequence(psynth.SynthAdapter.getInfo().id);
-    sequence.writeHeader();
-    // Frame #1
-    sequence.writeDelta(0);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['a#']); sequence.writeUint8(255);
-    sequence.writeEOF();
-    // Frame #2
-    sequence.writeDelta(2);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['a#']); sequence.writeUint8(0);
-    sequence.writeEOF();
-    // Frame #3
-    sequence.writeDelta(2);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C']); sequence.writeUint8(240);
-    sequence.writeEOF();
-    // Frame #4
-    sequence.writeDelta(2);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C']); sequence.writeUint8(0);
-    sequence.writeEOF();
-    // Frame #5
-    sequence.writeDelta(2);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['D#']); sequence.writeUint8(255);
-    sequence.writeEOF();
-    // Frame #6
-    sequence.writeDelta(2);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['D#']); sequence.writeUint8(0);
-    sequence.writeEOF();
-    // Frame #7
-    sequence.writeDelta(2);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['F']); sequence.writeUint8(240);
-    sequence.writeEOF();
-    // Frame #8
-    sequence.writeDelta(2);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['F']); sequence.writeUint8(0);
-    sequence.writeEOF();
-    // Frame #9
-    sequence.writeDelta(2);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C']); sequence.writeUint8(255);
-    sequence.writeEOF();
-    // Frame #10
-    sequence.writeDelta(4);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C']); sequence.writeUint8(0);
-    sequence.writeEOF();
-    // Frame #11
-    sequence.writeDelta(2);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['c']); sequence.writeUint8(255);
-    sequence.writeEOF();
-    // Frame #12
-    sequence.writeDelta(4);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['c']); sequence.writeUint8(0);
-    sequence.writeEOF();
-    // Frame #11
-    sequence.writeDelta(4);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C']); sequence.writeUint8(255);
-    sequence.writeEOF();
-    // Frame #12
-    sequence.writeDelta(1);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C']); sequence.writeUint8(0);
-    sequence.writeEOF();
-    // Frame #9
-    sequence.writeDelta(1);
-    sequence.writeEOS();
-    sequences.push(sequence);
-
-    sequence = new Player.Sequence(psynth.SynthAdapter.getInfo().id);
-    sequence.writeHeader();
-    // Frame #1
-    sequence.writeDelta(0);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C']); sequence.writeUint8(240);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['D#']); sequence.writeUint8(240);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['G']); sequence.writeUint8(240);
-    sequence.writeEOF();
-    // Frame #2
-    sequence.writeDelta(16);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C']); sequence.writeUint8(0);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['D#']); sequence.writeUint8(0);
-    sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['G']); sequence.writeUint8(0);
-    sequence.writeEOF();
-    // Frame #3
-    sequence.writeDelta(16);
-    sequence.writeEOS();
-
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C#']); sequence.writeUint8(240);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['E']); sequence.writeUint8(240);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['G#']); sequence.writeUint8(240);
-    // sequence.writeEOF();
-    // // Frame #4
-    // sequence.writeDelta(8);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C#']); sequence.writeUint8(0);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['E']); sequence.writeUint8(0);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['G#']); sequence.writeUint8(0);
-    // sequence.writeEOF();
-    // // Frame #5
-    // sequence.writeDelta(4);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['a']); sequence.writeUint8(240);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C#']); sequence.writeUint8(240);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['E']); sequence.writeUint8(240);
-    // sequence.writeEOF();
-    // // Frame #6
-    // sequence.writeDelta(4);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['a']); sequence.writeUint8(0);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C#']); sequence.writeUint8(0);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['E']); sequence.writeUint8(0);
-    // sequence.writeEOF();
-    // // Frame #7
-    // sequence.writeDelta(8);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['F#']); sequence.writeUint8(240);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C#']); sequence.writeUint8(240);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['G#']); sequence.writeUint8(240);
-    // sequence.writeEOF();
-    // // Frame #8
-    // sequence.writeDelta(4);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['F#']); sequence.writeUint8(0);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C#']); sequence.writeUint8(0);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['G#']); sequence.writeUint8(0);
-    // sequence.writeEOF();
-    // // Frame #9
-    // sequence.writeDelta(4);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C#']); sequence.writeUint8(240);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['E']); sequence.writeUint8(240);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['G#']); sequence.writeUint8(240);
-    // sequence.writeEOF();
-    // // Frame #10
-    // sequence.writeDelta(4);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['C#']); sequence.writeUint8(0);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['E']); sequence.writeUint8(0);
-    // sequence.writeCommand(psynth.SynthAdapter.SETNOTE); sequence.writeUint8(_masterTune + tones['G#']); sequence.writeUint8(0);
-    // sequence.writeEOF();
-    // // Frame #11
-    // sequence.writeDelta(8);
-    // sequence.writeEOS();
-    sequences.push(sequence);
+    var syntax = new Syntax(_grammar);
+    var lines = res.data.split('\n');
+    var i=0;
+    while (i<lines.length) {
+        var sequence = new Player.Sequence(psynth.SynthAdapter.getInfo().id);
+        while (i<lines.length) {
+            var line = lines[i++];
+            if (line.search(/^\s*\/\/|^\s*$/) == -1) {
+                var expr = syntax.parse(line);
+                if (expr.resolve().evaluate(sequence)) {
+                    sequences.push(sequence);
+                    break;
+                }
+            }
+        }
+    }
+    Dbg.prln(`${sequences.length} sequences loaded.`);
     return sequences;
 }
 
 async function createChannels() {
     _player = await createPlayer();
-    var sequences = createSequences();
+    var sequences = await createSequences('demo01.seq');
 
     // channel #1
     var channel = new Player.Channel('bass', _player);
     channel.loopCount = 1000;
-    channel.assign(_player.targets[0], sequences[0]);
+    channel.assign(_player.targets[0], sequences[2]);
     _player.channels.push(channel);
 
     // channel #2
@@ -510,6 +384,8 @@ function enableWaveform(toggle, enable) {
 }
 
 async function onpageload(e) {
+    Dbg.init('con');
+
     //var content = document.getElementById('content');
     _startButton = document.getElementById('start');
     _startButton.onclick = function() {

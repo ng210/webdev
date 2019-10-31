@@ -1,20 +1,3 @@
-body {
-    background-color: gray;
-    font-size: 12px; font-family: Verdana;
-}
-
-#controls {
-    margin:2px; padding: 2px;
-    width:20em; height: 1.8em;
-    border: inset 1px silver;
-}
-
-#bpm {
-    padding:0px; margin: 0px;
-    height: 8px;
-    cursor: pointer;
-}
-
 .controls {
     position: relative;
     padding: 2px; margin:0px;
@@ -36,7 +19,7 @@ body {
 
 .osc {
     position:absolute; left: 186px; 
-    width:180px; height:32px;
+    width:160px; height:32px;
     border: outset 1px #c0c0e0;
     margin: 1px;
     background-image: url('osc.png');
@@ -48,6 +31,15 @@ body {
     border: outset 1px #c0c0e0;
     margin: 1px;
     background-image: url('lfo.png');
+    background-repeat: no-repeat;
+}
+
+.flt {
+    position:absolute; left: 186px;
+    width:160px; height:32px;
+    border: outset 1px #c0c0e0;
+    margin: 1px;
+    background-image: url('flt.png');
     background-repeat: no-repeat;
 }
 
@@ -94,19 +86,21 @@ select.preset {
 
 .env.env1 { top:2px; }
 .env.env2 { top:36px; }
+.env.env3 { top:70px; }
 .osc.osc1 { top:2px; }
 .osc.osc2 { top:36px; }
 .lfo.lfo1 { top:2px; }
 .lfo.lfo2 { top:36px; }
+.flt.flt1 { top:70px; }
 
 #synth1 {
-    width: 492px; height: 100px;
+    width: 492px; height: 134px;
     background-color: #606070;
     border: outset 2px #c0c0e0;
 }
 
 #synth2 {
-    width: 492px; height: 100px;
+    width: 492px; height: 134px;
     background-color: #606460;
     border: outset 2px #c0c0e0;
 }
@@ -135,6 +129,11 @@ pot.lfoAmp { left:  19px; top: 15px }
 pot.lfoDc  { left:  46px; top: 15px }
 pot.lfoFre { left:  73px; top: 15px }
 
+pot.fltAmp { left: 19px; top: 15px }
+pot.fltCut  { left: 46px; top: 15px }
+pot.fltRes { left: 73px; top: 15px }
+pot.fltMod { left: 100px; top: 15px }
+
 .toggle {
     position: absolute; width:18px; height:10px;
     display:inline-block;
@@ -159,6 +158,10 @@ pot.lfoFre { left:  73px; top: 15px }
 .toggle.lfoWave.saw { left: 99px; top:22px; }
 .toggle.lfoWave.pls { left: 118px; top:0px; }
 .toggle.lfoWave.rnd { left: 118px; top:11px; }
+
+.toggle.fltMode.lp { left: 125px; top:0px; }
+.toggle.fltMode.bp { left: 125px; top:11px; }
+.toggle.fltMode.hp { left: 125px; top:23px; }
 
 ctrl.bpm {
     background-color: black;

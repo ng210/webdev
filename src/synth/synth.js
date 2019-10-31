@@ -12,6 +12,10 @@
 		WF_PLS:  8,
 		WF_RND: 16,
 
+		FM_LP: 1,
+		FM_BP: 2,
+		FM_HP: 4,
+
 		Ctrl: {
 			// GENERAL
 			amp: 	   0,
@@ -42,6 +46,14 @@
 			env2sus:  44,
 			env2rel:  45,
 
+			env3amp:  70,
+			env3dc:   71,
+			env3atk:  72,
+			env3dec:  73,
+			env3sus:  74,
+			env3rel:  75,
+
+			// osc
 			osc1amp:  50,
 			osc1dc:   51,
 			osc1fre:  52,
@@ -56,13 +68,20 @@
 			osc2note: 63,
 			osc2tune: 64,
 			osc2psw:  65,
-			osc2wave: 66
+			osc2wave: 66,
+
+			// flt
+			fltamp: 80,
+			fltcut: 81,
+			fltres: 82,
+			fltmod: 84,
+			fltmode: 83
 		},
 
 		theta: 2 * Math.PI,
 
 		p2f: function(p) {
-			// c = pow(2, 1/12); f = pow(c, pitch)*ref_freq
+			// c = pow(2, 1/12); f = pow(c, pitch)*ref_freq (=C0)
 			var f = ((p == 0) ? 0.0 : (Math.pow(1.05946309436, p) * 20.60172230705));
 			return f;
 		},
@@ -112,6 +131,24 @@
 			this.wave = controls.wave;
 		},
 
+		Filter: function(parent, controls) {
+			this.parent = parent;
+			this.ai = [.0, .0, .0];
+			this.bi = [.0, .0, .0];
+			this.ci = [.0, .0, .0];
+			this.ui = [.0, .0, .0];
+			this.vi = [.0, .0, .0];
+
+			this.lp = [.0, .0];
+			this.hp = [.0, .0];
+
+			this.gain = controls.gain;
+			this.cut = controls.cut;
+			this.res = controls.res;
+			this.mod = controls.mod;
+			this.mode = controls.mode;
+		},
+
 		/******************************************************************************
 		 * Prototype of a voice for polyphony
 		 *****************************************************************************/
@@ -119,10 +156,11 @@
 			this.velocity = new psynth.Pot(0, 1, 0);
 			this.note = new psynth.Pot(0, 96, 0);
 			// create a basic synth with 2 oscillators and 2 envelopes for AM
-			this.envelopes = [ new psynth.Env(parent, parent.controls.env1), new psynth.Env(parent, parent.controls.env2) ];
+			this.envelopes = [ new psynth.Env(parent, parent.controls.env1), new psynth.Env(parent, parent.controls.env2), new psynth.Env(parent, parent.controls.env3) ];
 			this.lfos = [ new psynth.Osc(parent, parent.controls.lfo1), new psynth.Osc(parent, parent.controls.lfo2) ];
 			parent.controls.osc1.note = this.note; parent.controls.osc2.note = this.note;
 			this.oscillators = [ new psynth.Osc(parent, parent.controls.osc1), new psynth.Osc(parent, parent.controls.osc2) ];
+			this.filter = new psynth.Filter(parent, parent.controls.flt);
 		},
 
 		/******************************************************************************
@@ -145,6 +183,14 @@
 					rel: new psynth.Pot(0, 1, .5),
 				},
 				env2: {
+					amp: new psynth.Pot(0, 1, .5),
+					dc:  new psynth.Pot(0, 1, .5),
+					atk: new psynth.Pot(0, 1, .5),
+					dec: new psynth.Pot(0, 1, .5),
+					sus: new psynth.Pot(0, 1, .5),
+					rel: new psynth.Pot(0, 1, .5)
+				},
+				env3: {
 					amp: new psynth.Pot(0, 1, .5),
 					dc:  new psynth.Pot(0, 1, .5),
 					atk: new psynth.Pot(0, 1, .5),
@@ -187,6 +233,13 @@
 					tune: new psynth.Pot(0, 1, .0),
 					psw: new psynth.Pot(0, 1, .5),
 					wave: new psynth.Pot(0, 127, 2),
+				},
+				flt: {
+					amp: new psynth.Pot(0, 1, .5),
+					cut:  new psynth.Pot(0, 1, .4),
+					res: new psynth.Pot(0, 1, .2),
+					mod: new psynth.Pot(0, 1, .1),
+					mode: new psynth.Pot(0, 7, 1),
 				}
 			};
 			// create voices
@@ -325,6 +378,41 @@
 		return this.amp.value*am*out + this.dc.value;
 	};
 	/*****************************************************************************/
+	psynth.Filter.prototype.run = function(input) {
+		// Apply filter
+		var gain = 1.0/this.ai[0];
+		var lp = (this.bi[0]*input + this.bi[1]*this.ui[0] + this.bi[2]*this.ui[1] - this.ai[1]*this.lp[0] - this.ai[2]*this.lp[1])*gain;
+		var hp = (this.ci[0]*input + this.ci[1]*this.vi[0] + this.ci[2]*this.vi[1] - this.ai[1]*this.hp[0] - this.ai[2]*this.hp[1])*gain;
+		// lp inputs
+		this.ui[1] = this.ui[0]; this.ui[0] = input;
+		// hp inputs
+		this.vi[1] = this.vi[0]; this.vi[0] = input;
+		// lp outputs
+		this.lp[1] = this.lp[0]; this.lp[0] = lp;
+		// hp outputs
+		this.hp[1] = this.hp[0]; this.hp[0] = hp;
+
+		var output = 0.0;
+		if ((this.mode.value & psynth.FM_LP) != 0) // lowpass
+			output += lp;
+		if ((this.mode.value & psynth.FM_HP) != 0) // hipass
+			output += hp;
+		return gain * output;
+	};
+	psynth.Filter.prototype.onchange = function(cut) {
+		// Update filter coefficients
+		var res = (this.res.value < 0.000001) ? 1.0: 1.0 - this.res.value;
+		var e = this.cut.value + this.mod.value * cut;
+		var g = -res * e;
+		var b0 = e*e;
+		this.bi[0] = this.bi[1] = b0; this.bi[2] = 2*b0;
+		this.ci[0] = this.ci[2] = 1; this.ci[1] = -2;
+		this.ai[0] = b0 + 1.0 - g;
+		this.ai[2] = b0 + 1.0 + g;
+		this.ai[1] = 2*(b0 - 1);
+
+	};
+	/*****************************************************************************/
 	psynth.Voice.prototype.setNote = function(note, velocity) {
 		this.note.value = note;
 		for (var i=0; i<this.lfos.length; i++) {
@@ -341,9 +429,12 @@
 		// // run main oscillators
 		var amp = this.envelopes[0].run(lfo1);
 		var psw = this.envelopes[1].run(1.0);
+		var cut = this.envelopes[2].run(1.0);
 		var smp1 = this.oscillators[0].run(amp, lfo2, psw);
 		var smp2 = this.oscillators[1].run(amp, lfo2, psw);
-		return smp1 + smp2;
+		this.filter.onchange(cut * 1.0);
+		var out = this.filter.run(smp1 + smp2);
+		return out;
 	};
 	psynth.Voice.prototype.isActive = function() {
 		return this.envelopes[0].phase < 7;
@@ -396,6 +487,13 @@
 			case psynth.Ctrl.env2sus: pot = this.controls.env2.sus; break;
 			case psynth.Ctrl.env2rel: pot = this.controls.env2.rel; break;
 
+			case psynth.Ctrl.env3amp: pot = this.controls.env3.amp; break;
+			case psynth.Ctrl.env3dc:  pot = this.controls.env3.dc; break;
+			case psynth.Ctrl.env3atk: pot = this.controls.env3.atk; break;
+			case psynth.Ctrl.env3dec: pot = this.controls.env3.dec; break;
+			case psynth.Ctrl.env3sus: pot = this.controls.env3.sus; break;
+			case psynth.Ctrl.env3rel: pot = this.controls.env3.rel; break;
+
 			// osc
 			case psynth.Ctrl.osc1amp: pot = this.controls.osc1.amp; break;
 			case psynth.Ctrl.osc1dc:  pot = this.controls.osc1.dc; break;
@@ -412,6 +510,14 @@
 			case psynth.Ctrl.osc2tune: pot = this.controls.osc2.tune; break;
 			case psynth.Ctrl.osc2psw: pot = this.controls.osc2.psw; break;
 			case psynth.Ctrl.osc2wave: pot = this.controls.osc2.wave; break;
+
+			// filter
+			case psynth.Ctrl.fltamp: pot = this.controls.flt.amp; break;
+			case psynth.Ctrl.fltcut:  pot = this.controls.flt.cut; break;
+			case psynth.Ctrl.fltres: pot = this.controls.flt.res; break;
+			case psynth.Ctrl.fltmod: pot = this.controls.flt.mod; break;
+			case psynth.Ctrl.fltmode: pot = this.controls.flt.mode; break;
+
 			default: console.log('The control id ' + controlId + ' is invalid!'); break
 		}
 		return pot;
