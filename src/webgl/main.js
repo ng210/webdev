@@ -17,14 +17,14 @@ function onpageload() {
 		_con = document.querySelector('#con');
 		_menu = document.querySelector('#menu');
 
-		resize();
-		// gl = webGL.init(cvs);
-		// if (gl == null) throw new Error('webGL not supported!');
-		// prepareScene();
+		if (gl == null) throw new Error('webGL not supported!');
+		prepareScene();
 		GE.processInputs = processInputs;
 		GE.update = update;
 		GE.render = render;
 		processInputs();
+		resize();
+
 		Dbg.prln('Initialized.');
 		GE.start();
 
@@ -59,4 +59,8 @@ function resize() {
 	_cvs.style.height = height + 'px';
 	_con.style.top = '75vh';
 	_con.style.width = '100vw';
+}
+
+function prepareScene() {
+
 }

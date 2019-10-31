@@ -61,12 +61,6 @@
 	};
 
 	var webGL = {
-		init: function(v) {
-			if (typeof v === 'string') {
-				v = document.getElementById(v);
-			}
-			return v.getContext('webgl');
-		},
 		createShader: function(gl, sh) {
 	        var node = typeof sh === 'string' ? document.getElementById(id) : sh;
 	        if (node != null) {
