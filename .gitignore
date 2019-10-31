@@ -5,3 +5,4 @@ temp
 .vscode/**
 node_modules
 nodejs/recover/deleted_files.txt
+nodejs/package-lock.json
