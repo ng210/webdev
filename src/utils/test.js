@@ -32,6 +32,7 @@ include('/utils/syntax.js');
             { input:'F1L',  output:'F2', priority: 26,  action: null },
             { input:'F2C',  output:'F1', priority: 24,  action: null },
             { input:'F2B2', output:'L',  priority: 22,  action: null },
+            { input:'B1LB2',output:'L',  priority: 10,  action: (b1,l,b2) => l },
             { input:'L',    output:null, priority: 1,   action: null }
         ],
     };
@@ -40,17 +41,19 @@ include('/utils/syntax.js');
         Dbg.prln('Test syntax');
         var errors = [];
         var tests = {
-            '6': '1+2+3',
-            '7': '1+2*3',
-            '5': '1*2+3',
-            '6': '1*2*3',
-           '11': '1+2*3+4',
-           '14': '1*2+3*4',
-           '10': '1*2*3+4',
-           '25': '1+2*3*4',
-           '18': 'pow(2,4)+sqrt(4)',
-           '60': '2*pow(4,2)+sqrt(pow(5,4))+3',
-           '30': '2*get(id)+get(key)+1'
+        //     '6': '1+2+3',
+        //     '7': '1+2*3',
+        //     '5': '1*2+3',
+        //     '6': '1*2*3',
+        //    '11': '1+2*3+4',
+        //    '14': '1*2+3*4',
+        //    '10': '1*2*3+4',
+        //    '25': '1+2*3*4',
+        //    '9': '(1+2)*3',
+           '65': '((1+2)*3+4)*5'
+        //    '20': 'pow(2,4)+sqrt((4+4)*2)',
+        //    '60': '2*pow(4,2)+sqrt(pow(5,4))+3',
+        //    '30': '2*get(id)+get(key)+1'
         };
         var syntax = new Syntax(grammar);
         var obj = {

@@ -81,6 +81,7 @@
     Expression.prototype.resolve = function(context) {
         this.lastNode = null;
         var nodes = Array.from(this.tree.nodes);
+      //  console.log(`Input: (${nodes.map(x => this.nodeToString(x, true)).join(' ')}`);
         while (nodes.length > 0) {
             for (var r=0; r<this.syntax.ruleMap.length;) {
                 //console.log('Input: (', nodes.map(x => this.symbols[x.data.code]).join(' '), ')');
@@ -124,7 +125,7 @@
                         if (output) {
                             this.lastNode = output;
                         }
-                        //console.log(` - match at ${n}: (${args.map(x => this.nodeToString(x, true)).join(' ')}) : (${nodes.map(x => this.nodeToString(x, true)).join(' ')})`);
+                      //  console.log(` - match at ${n}: (${args.map(x => this.nodeToString(x, true)).join(' ')}) : (${nodes.map(x => this.nodeToString(x, true)).join(' ')})`);
                         hasMatch = true;
                         break;
                     } else n++;
@@ -138,7 +139,7 @@
     Expression.prototype.evaluate = function(context) {
         this.tree.DFS(this.lastNode, null, n => {
             if (typeof n.data.type.action === 'function') {
-                var args = n.edges.map(x => x.to.data.value);
+                var args = n.edges.map(x => x.to);
                 n.data.value = n.data.type.action.apply(context, args);
                 //console.log(`${n.data.term}(${args.join(',')}) = ${n.data.value}`);
             }
@@ -151,25 +152,39 @@
     Expression.prototype.mergeNodes = function(nodes) {
        //console.log('merge in' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
         // merge b into a if
-        // - a has an action
-        // - b is a literal
-        // - b has an action but has less children than a
-        var aix = 0;
+        // - a has an action attribute
+        // - b is a literal or has an action attribute
         var merge = true;
+        var aix = 0;
         if (nodes.length == 2) {
+            // b is a literal
             var bix = nodes.findIndex(x => x.data.code == this.syntax.literalCode);
             if (bix == -1) {
-                bix = nodes.findIndex(x => typeof x.data.type.action !== 'function');
-                if (bix != -1) {
-                    aix = 1-bix;
+                // look for a node without action attribute
+                if (nodes.findIndex(x => typeof x.data.type.action == 'undefined') != -1) {
                     merge = false;
+                    bix = -1;
+                } else {
+                    // both nodes have action attributes
+                    bix = 1 - aix;
                 }
+            } else {
+                aix = 1 - bix;
             }
-            aix = 1 - bix;
-            if (merge) {
-               //console.log(`${this.nodeToString(nodes[aix])} => ${this.nodeToString(nodes[bix])}`);
+            if (aix != -1 && bix != -1) {
                 this.tree.addEdge(nodes[aix], nodes[bix]);
             }
+            // // find a node
+            // aix = nodes.findIndex(x => typeof x.data.type.action !== 'undefined');
+            // if (aix != -1 && bix == -1) {
+            //     aix = 0;
+            //     //merge = false;
+            // } else {
+            //     //if (merge) {
+            //     //console.log(`${this.nodeToString(nodes[aix])} => ${this.nodeToString(nodes[bix])}`);
+            //         this.tree.addEdge(nodes[aix], nodes[bix]);
+            //     //}
+            //}
         } else {
             if (nodes.length > 2) {
                 throw new Error('More than 2 nodes passed.');
