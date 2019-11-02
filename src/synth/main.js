@@ -47,6 +47,32 @@ async function loadTemplate() {
     //_template.synth2 = buildSynthTemplate(res.node.querySelector('div.synth2'));
 }
 
+async function loadPresets() {
+debugger;
+    _presets = JSON.parse(localStorage.getItem('psynth'));
+    if (!_presets) {
+        var res = await load('./presets.json');
+        if (res.error instanceof Error) {
+            _presets = {
+                'default': [
+                    psynth.Ctrl.amp, 1.0,
+            
+                    psynth.Ctrl.lfo1amp, 0.2, psynth.Ctrl.lfo1dc, 0.5, psynth.Ctrl.lfo1fre, 3.3, psynth.Ctrl.lfo1wave, psynth.WF_SIN,
+                    psynth.Ctrl.lfo2amp, 2.0, psynth.Ctrl.lfo2dc, 0.0, psynth.Ctrl.lfo2fre, 6.1, psynth.Ctrl.lfo2wave, psynth.WF_SIN,
+            
+                    psynth.Ctrl.env1amp, 0.7, psynth.Ctrl.env1dc, 0, psynth.Ctrl.env1atk, 0.0, psynth.Ctrl.env1dec, 0.1, psynth.Ctrl.env1sus, 0.4, psynth.Ctrl.env1rel, 0.2,
+                    psynth.Ctrl.env2amp, 0.28, psynth.Ctrl.env2dc, 0.7,psynth.Ctrl.env2atk, 0.04, psynth.Ctrl.env2dec, 0.1, psynth.Ctrl.env2sus, 0.9, psynth.Ctrl.env2rel, 0.12,
+            
+                    psynth.Ctrl.osc1amp, 0.4, psynth.Ctrl.osc1fre, 1.0, psynth.Ctrl.osc1psw, 0.0, psynth.Ctrl.osc1wave, psynth.WF_TRI, psynth.Ctrl.osc1tune, 0,
+                    psynth.Ctrl.osc2amp, 0.5, psynth.Ctrl.osc2fre, 0.0, psynth.Ctrl.osc2psw, 0.0, psynth.Ctrl.osc2wave, psynth.WF_PLS, psynth.Ctrl.osc2tune, 12
+                ]
+            };
+        } else {
+            _presets = res.data;
+        }
+    }
+}
+
 function buildSynthTemplate(synth) {
     var modules = synth.querySelector('.modules').children;
     for (var i=0; i<modules.length; i++) {
@@ -261,20 +287,6 @@ function updateBpm() {
 }
 
 async function getPresets(select) {
-    _presets = JSON.parse(localStorage.getItem('psynth')) || {
-        'default': [
-            psynth.Ctrl.amp, 1.0,
-    
-            psynth.Ctrl.lfo1amp, 0.2, psynth.Ctrl.lfo1dc, 0.5, psynth.Ctrl.lfo1fre, 3.3, psynth.Ctrl.lfo1wave, psynth.WF_SIN,
-            psynth.Ctrl.lfo2amp, 2.0, psynth.Ctrl.lfo2dc, 0.0, psynth.Ctrl.lfo2fre, 6.1, psynth.Ctrl.lfo2wave, psynth.WF_SIN,
-    
-            psynth.Ctrl.env1amp, 0.7, psynth.Ctrl.env1dc, 0, psynth.Ctrl.env1atk, 0.0, psynth.Ctrl.env1dec, 0.1, psynth.Ctrl.env1sus, 0.4, psynth.Ctrl.env1rel, 0.2,
-            psynth.Ctrl.env2amp, 0.28, psynth.Ctrl.env2dc, 0.7,psynth.Ctrl.env2atk, 0.04, psynth.Ctrl.env2dec, 0.1, psynth.Ctrl.env2sus, 0.9, psynth.Ctrl.env2rel, 0.12,
-    
-            psynth.Ctrl.osc1amp, 0.4, psynth.Ctrl.osc1fre, 1.0, psynth.Ctrl.osc1psw, 0.0, psynth.Ctrl.osc1wave, psynth.WF_TRI, psynth.Ctrl.osc1tune, 0,
-            psynth.Ctrl.osc2amp, 0.5, psynth.Ctrl.osc2fre, 0.0, psynth.Ctrl.osc2psw, 0.0, psynth.Ctrl.osc2wave, psynth.WF_PLS, psynth.Ctrl.osc2tune, 12
-        ]
-    };
     localStorage.setItem('psynth', JSON.stringify(_presets));
     for (var key in _presets) {
         var hasPreset = false;
@@ -449,6 +461,8 @@ async function onpageload(e) {
     document.getElementById('export').onclick = exportPresets;
 
     await loadTemplate();
+
+    await loadPresets();
 
     await createChannels();
 
