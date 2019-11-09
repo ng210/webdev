@@ -4,10 +4,10 @@
 		this.attributes = {};
 		this.uniforms = {};
 
-	    shaders.forEach(x => {
-            var shader = webGL.createShader(gl, x);
+	    for (var type in shaders) {
+            var shader = webGL.createShader(gl, type, shaders[type]);
             gl.attachShader(this.prg, shader);
-        });
+        }
         gl.linkProgram(this.prg);
 
         if (!gl.getProgramParameter(this.prg, gl.LINK_STATUS)) {
@@ -39,12 +39,12 @@
         }
         this.constructor = GlProgram;
     }
-    GlProgram.prototype.setUniforms = function(uniforms) {
+    GlProgram.prototype.setUniforms = function(gl, uniforms) {
 		if (!uniforms) return;
 		//Dbg.prln('setUniforms');
 		for (var ui in uniforms) {
 			var uniform = this.uniforms[ui];
-			if (uniform !== undefined) {
+			if (uniform !== undefined && uniform.ref) {
 				var v = uniforms[ui];
 			//Dbg.prln(ui+':'+v);
 				switch (uniform.type) {
@@ -61,23 +61,29 @@
 	};
 
 	var webGL = {
-		createShader: function(gl, sh) {
-	        var node = typeof sh === 'string' ? document.getElementById(id) : sh;
-	        if (node != null) {
-	            var code = node.childNodes[0].nodeValue;
-	            var type = {
-	                'x-shader/x-vertex': gl.VERTEX_SHADER,
-	                'x-shader/x-fragment': gl.FRAGMENT_SHADER
-	            }[node.getAttribute('type')];
-	            var shader = gl.createShader(type);
-	            gl.shaderSource(shader, code);
-	            gl.compileShader(shader);
-	            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-	                throw new Error('Error compiling shader:' + gl.getShaderInfoLog(shader));
-	            }
-	        } else {
-	            throw new Error('Shader id not found!');
-	        }
+		createShader: function(gl, type, code) {
+			var shader = gl.createShader(type);
+			gl.shaderSource(shader, code);
+			gl.compileShader(shader);
+			if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+				throw new Error('Error compiling shader:' + gl.getShaderInfoLog(shader));
+			}
+	        // var node = typeof sh === 'string' ? document.getElementById(sh) : sh;
+	        // if (node != null) {
+	        //     var code = node.childNodes[0].nodeValue;
+	        //     var type = {
+	        //         'x-shader/x-vertex': gl.VERTEX_SHADER,
+	        //         'x-shader/x-fragment': gl.FRAGMENT_SHADER
+	        //     }[node.getAttribute('type')];
+	        //     var shader = gl.createShader(type);
+	        //     gl.shaderSource(shader, code);
+	        //     gl.compileShader(shader);
+	        //     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+	        //         throw new Error('Error compiling shader:' + gl.getShaderInfoLog(shader));
+	        //     }
+	        // } else {
+	        //     throw new Error('Shader id not found!');
+	        // }
 	        return shader;
 	    },
 		createProgram: function(gl, shaders, attributes, uniforms) {

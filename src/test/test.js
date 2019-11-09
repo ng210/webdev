@@ -10,6 +10,7 @@ async function onpageload(errors) {
 
     Dbg.prln(`Load '${testUrl}'`);
     var module = await load(testUrl.toString());
+    await load(new Url(`${url.fragment}/test.css`).toString());
     if (module && module.error == null && module.symbols != null) {
         var testName = Object.keys(module.symbols)[0];
         var test = module.symbols[testName];

@@ -114,21 +114,32 @@ include('/ui/datalink.js');
 			}
 			return;
 		}
-		var handler;
-		var node = this;
+
+		// check: node, node.prototype, node.parent...
+		var nodes = [];
+		nodes.push(this, this, this.__proto__, this);
+		var node = this.parent;
 		while (node) {
-			handler = node['on'+eventName];
-			if (handler !== undefined) {
-				break;
-			}
+			nodes.push(node, node);
 			node = node.parent;
 		}
-		if (typeof handler === 'function') {
-			if (this.handlers[eventName] === undefined) {
-				this.handlers[eventName] = [];
+		var handler;
+		var node = this;
+		for (var i=0; i<nodes.length; i+=2) {
+			node = nodes[i];
+			var context = nodes[i+1];
+			handler = node['on'+eventName];
+			if (handler !== undefined) {
+				if (typeof handler === 'function') {
+					if (this.handlers[eventName] === undefined) {
+						this.handlers[eventName] = [];
+					}
+					if (this.handlers[eventName].findIndex(x => x.fn == handler && x.obj == context) == -1) {
+						this.handlers[eventName].push({fn: handler, obj: context});
+						//console.log('register ' + eventName + ' for ' + node.id);
+					}
+				}
 			}
-			this.handlers[eventName].push({fn: handler, obj: node});
-			//console.log('register ' + eventName + ' for ' + node.id);
 		}
 	};
 	// Statics
@@ -147,7 +158,7 @@ include('/ui/datalink.js');
 	Ui.Control.onevent = function(e) {
 		var event = e.type;
 		var control = this.control;
-		var target = e.target.control;
+		//var target = e.target.control;
 		//console.log(`${event} for ${e.target.id} - ${control.id}, ${target.id}`);
 		if (control) {
 			var handlers = control.handlers[event];
@@ -157,7 +168,7 @@ include('/ui/datalink.js');
 if (control != handler.obj) {
 	console.log(' *** not the same objects!!!');
 }
-					handler.fn.call(handler.obj, control, target);
+					handler.fn.call(handler.obj, control, e);
 					// if (typeof this.getValue === 'function') {
 					// 	handler.fn.call(handler.obj, this, this.getValue());
 					// } else {
