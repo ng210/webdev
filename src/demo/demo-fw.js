@@ -111,42 +111,42 @@ function createDemoList() {
     list.dataBind(demoList_);
     //list.dataBind(new Url('/demo/'));
 
-function toggle(ctrl, propName, initValue) {
-    if (ctrl.toggle == undefined) {
-        ctrl.toggle = {};
+    function toggle(ctrl, propName, initValue) {
+        if (ctrl.toggle == undefined) {
+            ctrl.toggle = {};
+        }
+        if (ctrl.toggle[propName] == undefined) {
+            ctrl.toggle[propName] = initValue;
+        }
+        var tmp = ctrl.element.style[propName];
+        ctrl.element.style[propName] = ctrl.toggle[propName];
+        ctrl.toggle[propName] = tmp;
     }
-    if (ctrl.toggle[propName] == undefined) {
-        ctrl.toggle[propName] = initValue;
+
+    function colToRgb(col) {
+        var n = parseInt(col.substring(1), 16);
+        return [n>>16, (n>>8) & 0xff, n & 0xff];
     }
-    var tmp = ctrl.element.style[propName];
-    ctrl.element.style[propName] = ctrl.toggle[propName];
-    ctrl.toggle[propName] = tmp;
-}
 
-function colToRgb(col) {
-    var n = parseInt(col.substring(1), 16);
-    return [n>>16, (n>>8) & 0xff, n & 0xff];
-}
+    function rgbToCol(rgb) {
+        var r = ('00' + rgb[0].toString(16)).slice(-2);
+        var g = ('00' + rgb[1].toString(16)).slice(-2);
+        var b = ('00' + rgb[2].toString(16)).slice(-2);
+        return `#${r}${g}${b}`;
+    }
 
-function rgbToCol(rgb) {
-    var r = ('00' + rgb[0].toString(16)).slice(-2);
-    var g = ('00' + rgb[1].toString(16)).slice(-2);
-    var b = ('00' + rgb[2].toString(16)).slice(-2);
-    return `#${r}${g}${b}`;
-}
-
-function rgbAdd(rgb1, rgb2) {
-    var rgb = [0, 0, 0];
-    rgb[0] = rgb1[0] + rgb2[0]; if (rgb[0] > 255) rgb[0] = 255;
-    rgb[1] = rgb1[1] + rgb2[1]; if (rgb[1] > 255) rgb[1] = 255;
-    rgb[2] = rgb1[2] + rgb2[2]; if (rgb[2] > 255) rgb[2] = 255;
-    // for (var i=0; i<3; i++) {
-    //     var c = rgb1[i] + rgb2[i];
-    //     if (c > 255) c = 255;
-    //     rgb[i] = c;
-    // }
-    return rgb;
-}
+    function rgbAdd(rgb1, rgb2) {
+        var rgb = [0, 0, 0];
+        rgb[0] = rgb1[0] + rgb2[0]; if (rgb[0] > 255) rgb[0] = 255;
+        rgb[1] = rgb1[1] + rgb2[1]; if (rgb[1] > 255) rgb[1] = 255;
+        rgb[2] = rgb1[2] + rgb2[2]; if (rgb[2] > 255) rgb[2] = 255;
+        // for (var i=0; i<3; i++) {
+        //     var c = rgb1[i] + rgb2[i];
+        //     if (c > 255) c = 255;
+        //     rgb[i] = c;
+        // }
+        return rgb;
+    }
 
     list.onclick = function(control, target) {
         toggle(target.row, 'backgroundColor', 'blue');

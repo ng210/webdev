@@ -48,7 +48,6 @@ async function loadTemplate() {
 }
 
 async function loadPresets() {
-debugger;
     _presets = JSON.parse(localStorage.getItem('psynth'));
     if (!_presets) {
         var res = await load('./presets.json');
@@ -191,23 +190,52 @@ var tones = {
     'C': 12, 'C#': 13, 'D': 14, 'D#': 15, 'E': 16, 'F':17, 'F#':18, 'G':19, 'G#':20, 'A':21, 'A#':22, 'H':23
 };
 
-async function createPlayer() {
-    var player = new Player();
-    player.adapters[psynth.SynthAdapter.getInfo().id] = psynth.SynthAdapter;
-    psynth.SynthAdapter.createTargets(player.targets, new Uint8Array(
+async function initializePlayer() {
+    _player = new Player();
+    // ADAPTERS
+    // add adapter singletons
+    _player.adapters[psynth.SynthAdapter.getInfo().id] = psynth.SynthAdapter;
+    // initialize adapters: create targets and create context
+    psynth.SynthAdapter.createTargets(_player.targets, new Uint8Array(
         [
-                3,  // 2 devices
+                3, 
                 psynth.SynthAdapter.DEVICE_SYNTH, 2,    // synth with 2 voices
                 psynth.SynthAdapter.DEVICE_SYNTH, 6,    // synth with 6 voices
-                psynth.SynthAdapter.DEVICE_SYNTH, 2     // synth with 4 voices
+                psynth.SynthAdapter.DEVICE_SYNTH, 2     // synth with 2 voices
         ]));
+
+    //psynth.SynthAdapter.createContext();
+    sound.init(48000, fillSoundBuffer);
+
+    // SEQUENCES
+    var sequences = await createSequences('demo02.seq');
+
+    // create channels - should be a player-sequence
+    // channel #1
+    var channel = new Player.Channel('bass', _player);
+    channel.loopCount = 1000;
+    channel.assign(_player.targets[0], sequences[0]);
+    _player.channels.push(channel);
+
+    // channel #2
+    channel = new Player.Channel('chords', _player);
+    channel.loopCount = 1000;
+    channel.assign(_player.targets[1], sequences[1]);
+    _player.channels.push(channel);
+
+    // channel #3
+    channel = new Player.Channel('mono', _player);
+    channel.loopCount = 1000;
+    channel.assign(_player.targets[2], sequences[2]);
+    _player.channels.push(channel);
+
+    // UI
     psynth.SynthAdapter.devices[0].label = 'synth1';
     psynth.SynthAdapter.devices[1].label = 'synth2';
     psynth.SynthAdapter.devices[2].label = 'synth3';
     await createSynth('synth1', psynth.SynthAdapter.devices[0]);
     await createSynth('synth2', psynth.SynthAdapter.devices[1]);
     await createSynth('synth3', psynth.SynthAdapter.devices[2]);
-    return player;
 }
 
 async function createSequences(path) {
@@ -234,29 +262,6 @@ async function createSequences(path) {
     }
     Dbg.prln(`${sequences.length} sequences loaded.`);
     return sequences;
-}
-
-async function createChannels() {
-    _player = await createPlayer();
-    var sequences = await createSequences('demo01.seq');
-
-    // channel #1
-    var channel = new Player.Channel('bass', _player);
-    channel.loopCount = 1000;
-    channel.assign(_player.targets[0], sequences[0]);
-    _player.channels.push(channel);
-
-    // channel #2
-    channel = new Player.Channel('chords', _player);
-    channel.loopCount = 1000;
-    channel.assign(_player.targets[1], sequences[1]);
-    _player.channels.push(channel);
-
-    // channel #3
-    channel = new Player.Channel('mono', _player);
-    channel.loopCount = 1000;
-    channel.assign(_player.targets[2], sequences[2]);
-    _player.channels.push(channel);
 }
 
 function update() {
@@ -464,8 +469,7 @@ async function onpageload(e) {
 
     await loadPresets();
 
-    await createChannels();
-
-    sound.init(48000, fillSoundBuffer);
+    await initializePlayer();
+    
     main();
 }

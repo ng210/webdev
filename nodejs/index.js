@@ -5,7 +5,8 @@ const app = express();
 app.use(express.json());
 const port = process.env.PORT || 3000;
 
-const documentPath = 'd:/code/git/webdev';
+const documentPath = process.argv[2] || 'd:/code/git/webdev';
+console.log(`documentPath=${documentPath}`);
 
 app.get('/*', function(req, resp) {
     var resPath = path.normalize(path.join(documentPath, req.path));
