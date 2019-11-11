@@ -89,6 +89,7 @@ async function loadPresets() {
             };
         } else {
             _presets = res.data;
+            Dbg.prln(`${Object.keys(_presets).length} presets loaded.`);
         }
     }
 }
