@@ -42,7 +42,7 @@ include('/ui/idataseries.js');
         var series = this.data[seriesId];
         if (series) {
             for (var i in series) {
-                if (callback(i)) {
+                if (callback(series[i], i, series)) {
                     indices.push(i);
                 }
             }
@@ -53,28 +53,29 @@ include('/ui/idataseries.js');
 	ComplexSeries.prototype.get = function(seriesId, ix) {
         // multiple values at the same ix possible!
         var data = [];
-        var indices = this.findIndex(seriesId, i => i == ix);
+        var indices = this.findIndex(seriesId, item => item.x == ix);
+        var series = this.data[seriesId];
         for (var i=0; i<indices.length; i++) {
-            data.push(ix, this.data[seriesId][indices[i]]);
+            var item = series[indices[i]];
+            data.push(item.x, item.y);
         }
         return data;
     };
 
 	ComplexSeries.prototype.set = function(seriesId, ix, value) {
-        var indices = this.findIndex(seriesId, i => i == ix);
+        var indices = this.findIndex(seriesId, item => item.x == ix);
         if (indices.length > 0) {
-            // remove and insert
-            if (this.data[seriesId][indices[0]] == value) {
-                value = undefined;
+            var series = this.data[seriesId];
+            for (var i=0; i<indices.length; i++) {
+                var item = series[indices[i]];
+                if (item.y == value) {
+                    var oldValue = series.splice(indices[i], 1)[0];
+                    return oldValue;
+                }
             }
-            this.data[seriesId].splice(indices[0], 1, value);
-        } else {
-            // new
-            if (this.data[seriesId] == undefined) {
-                this.data[seriesId] = [];
-            }
-            this.data[seriesId].splice(ix, 0, value);
+            series.splice(ix, 0, new TestData(ix, value));
         }
+        return null;
     };
 
     ComplexSeries.prototype.remove = function(seriesId, ix, value) {

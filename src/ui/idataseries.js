@@ -68,51 +68,54 @@
         }
         var series = this.data[seriesId];
         if (series[ix] != undefined) {
-            this.remove(seriesId, ix);
-        } else {
-            series[ix] = value;
+            if (this.remove(seriesId, ix) == value) return;
         }
+        series[ix] = value;
     };
 
     IDataSeries.prototype.getRange = function(seriesId, range) {
-        var info = { count:0, min:null, max:null };
-        var series = this.data[seriesId];
+        var count = 0, min = null, max = null;
+        var data = [];
         if (seriesId != undefined) {
+            min = [0, Infinity];
+            max = [0, -Infinity];
             for (var x=range.start; x<range.end; x+=range.step) {
                 var points = this.get(seriesId, x);
                 // get returns data points in the form of an Array
                 // [x1, y1, x2, y2, ..., xN, yN]
                 if (points != null) {
-                    info.min = [points[0], points[1]];
-                    info.max = [points[points.length-1], points[1]];
                     for (var i=0; i<points.length; i += 2) {
                         var x = points[i];
                         var y = points[i+1];
-                        if (info.min[1] > y) {
-                            //info.min[0] = x;
-                            info.min[1] = y;
+                        if (min[1] > y) {
+                            min[0] = x;
+                            min[1] = y;
                         }
-                        if (info.max[1] < y) {
-                            //info.max[0] = x;
-                            info.max[1] = y;
+                        if (max[1] < y) {
+                            max[0] = x;
+                            max[1] = y;
                         }
-                            
-                            
-                            data.push(points[i], y);
-                            info.count++;
-
+                        data.push(x, y);
+                        count++;
+                    }
                 }
             }
         }
-        return info;
+        range.count = count;
+        range.min = min;
+        range.max = max;
+        return data;
     };
 
     // IDataSeries.prototype.add = function(index, chnId) { throw new Error('Not implemented!'); };
     IDataSeries.prototype.remove = function(seriesId, ix, value) {
         var series = this.data[seriesId];
+        var oldValue = null;
         if (series != undefined) {
-            series.splice(ix, 1);
+            oldValue = series[ix];
+            series[ix] = undefined;
         }
+        return oldValue;
     };
 
     public(IDataSeries, 'IDataSeries');
