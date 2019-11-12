@@ -244,10 +244,13 @@ async function initializePlayer() {
     // initialize adapters: create targets and create context
     psynth.SynthAdapter.createTargets(_player.targets, new Uint8Array(
         [
-                3, 
+                6, 
                 psynth.SynthAdapter.DEVICE_SYNTH, 2,    // synth with 2 voices
                 psynth.SynthAdapter.DEVICE_SYNTH, 6,    // synth with 6 voices
-                psynth.SynthAdapter.DEVICE_SYNTH, 2     // synth with 2 voices
+                psynth.SynthAdapter.DEVICE_SYNTH, 6,    // synth with 2 voices
+                psynth.SynthAdapter.DEVICE_SYNTH, 6,    // synth with 2 voices
+                psynth.SynthAdapter.DEVICE_SYNTH, 2,    // synth with 2 voices
+                psynth.SynthAdapter.DEVICE_SYNTH, 2,    // synth with 2 voices
         ]));
 
     //psynth.SynthAdapter.createContext();
@@ -282,7 +285,7 @@ async function initializePlayer() {
         // sequence.writeDelta(delta);
         // sequence.writeEOS();
 
-        var sequence = sequences[i];
+        var sequence = sequences[i % sequences.length];
 
         _patterns[i] = new FrameDataSeries(sequence.toFrames(_player), psynth.SynthAdapter);
         _patterns[i].sequence = sequence;

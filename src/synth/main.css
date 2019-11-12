@@ -29,19 +29,31 @@ div.group {
 #synth1 {
     width: 492px; height: 134px;
     background-color: #606080;
-    border: outset 2px #c0c0e0;
+    border: outset 2px #606080;
 }
 
 #synth2 {
     width: 492px; height: 134px;
     background-color: #608060;
-    border: outset 2px #c0c0e0;
+    border: outset 2px #608060;
 }
 
 #synth3 {
     width: 492px; height: 134px;
-    background-color: #c09040;
-    border: outset 2px #c0c0e0;
+    background-color: #c0a050;
+    border: outset 2px #c0a050;
+}
+
+#synth4 {
+    width: 492px; height: 134px;
+    background-color: #a07060;
+    border: outset 2px #a07060;
+}
+
+#synth5 {
+    width: 492px; height: 134px;
+    background-color: #9090a0;
+    border: outset 2px #9090a0;
 }
 
 div.titlebar {
