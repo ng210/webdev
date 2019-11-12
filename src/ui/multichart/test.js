@@ -8,7 +8,7 @@ include('/ui/multichart/testdataseries.js');
     var pollTimer_ = null;
 
     async function test_multichart() {
-        var dataSeries = new TestDataSeries();
+        var dataSeries = new TestDataSeries.SimpleSeries();
         var config1 = {
             'width': 720,
             'height': 360,
@@ -20,6 +20,9 @@ include('/ui/multichart/testdataseries.js');
         ctrls_.push(new Ui.MultiChart('test2', { titlebar: 'Test2' }, null, '/ui/multichart/shaders/default'));
         //ctrls_[0].onclick = e => { ctrls_[0].isRunning = false; isDone_ = true; };
         ctrls_[0].dataBind(dataSeries);
+        ctrls_[0].selectedChannelId = 0;
+        ctrls_[1].dataBind(dataSeries);
+        ctrls_[1].selectedChannelId = 1;
 
         for (var i=0; i<ctrls_.length; i++) {
             await ctrls_[i].render({'element': document.body});
