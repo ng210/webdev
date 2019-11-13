@@ -128,13 +128,7 @@ include('/webgl/webgl.js');
         // set uniforms
         this.uniforms.uFrame = this.frame++;
         this.program.setUniforms(this.gl, this.uniforms);
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.the2triangles);
-        this.gl.enableVertexAttribArray(0);
-        this.gl.useProgram(this.program.prg);
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, 0);
-        this.gl.disableVertexAttribArray(0);
-        this.gl.useProgram(0);
     };
 
     Ui.MultiChart.prototype.onmousemove = function(ctrl, e) {
