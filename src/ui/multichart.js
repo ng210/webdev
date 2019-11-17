@@ -24,7 +24,7 @@ include('/webgl/webgl.js');
         this.uniforms = {
             uSize: new Float32Array([300.0, 240.0]),
             uOffset: new Float32Array([0.0, 0.0]),
-            uRange: 0.0,
+            uRange: new Float32Array([0.0, 0.0]),
             uZoom: new Float32Array([1.0, 1.0]),
             uUnit: new Float32Array(template.unit),
             uGridColor: new Float32Array(template['grid-color']),
@@ -51,12 +51,15 @@ include('/webgl/webgl.js');
     };
     Ui.MultiChart.prototype.render = async function(node) {
         Ui.MultiChart.base.render.call(this, node);
+        this.element.style.boxSizing = 'border-box';
         // create and initialize canvas for webgl rendering
         if (this.canvas === null) {
             this.canvas = document.createElement('canvas');
+            this.template.width = this.template.width || this.canvas.width;
+            this.template.height = this.template.height || this.canvas.height;
+            this.canvas.width = this.template.width;
+            this.canvas.height = this.template.height;
             this.canvas.id = this.id+'_canvas';
-            if (this.template.width) this.canvas.width = this.template.width;
-            if (this.template.height) this.canvas.height = this.template.height;
             this.element.appendChild(this.canvas);
             this.gl = await this.initializeWebGL();
             this.updateDataPoints();
@@ -68,10 +71,12 @@ include('/webgl/webgl.js');
             this.titleBar.className = this.cssText + 'titlebar';
             this.titleBar.innerHTML = this.template.titlebar;
             this.titleBar.control = this;
-            this.titleBar.style.width = this.canvas.width;
-            this.titleBar.style.height = this.canvas.height;
+            this.titleBar.style.boxSizing = 'border-box';
+            this.titleBar.style.width = this.canvas.width + 'px';
             this.element.insertBefore(this.titleBar, this.element.childNodes[0]);
         }
+        this.element.style.width = this.template.width + 'px';
+        //this.element.style.height = this.template.height + 'px';
         this.isRunning = true;
         Ui.MultiChart.render(this);
     };
@@ -97,7 +102,7 @@ include('/webgl/webgl.js');
                     uSize: {type:webGL.FLOAT2V },
                     uOffset: {type:webGL.FLOAT2V },
                     uZoom: {type:webGL.FLOAT2V },
-                    uRange: {type:webGL.FLOAT },
+                    uRange: {type:webGL.FLOAT2V },
                     uUnit: {type:webGL.FLOAT2V },
                     uGridColor: {type:webGL.FLOAT3V },
                     uMousePos: {type:webGL.FLOAT2V },
@@ -141,7 +146,6 @@ include('/webgl/webgl.js');
     Ui.MultiChart.prototype.updateDataPoints = function(start, length) {
         start = start || 0;
         length = length || this.uniforms.uSize[0] / this.uniforms.uUnit[0];
-        var data = [];
         if (this.dataSource) {
             var range = { start:start, end:start+length, step:1.0 };
             var points = this.dataSource.getRange(this.selectedChannelId, range);
@@ -150,6 +154,7 @@ include('/webgl/webgl.js');
                 this.gl.uniform2fv(this.program.uniforms.uDataPoints.ref, new Float32Array(points));
             }
         }
+        console.log(points);
     }
 
     Ui.MultiChart.prototype.onclick = function(ctrl, e) {

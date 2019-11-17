@@ -195,10 +195,11 @@ async function createPatternUi(id, el) {
     multiChart.onclick = multiChartOnClick;
     var ix = _patternUi.length;
     _patternUi.push(multiChart);
-    var info = _patterns[ix].getRange(multiChart.selectedChannelId, 0, 255);
-    console.log(info.max);
-    multiChart.scroll(0, -12*10);
-    multiChart.uniforms.uRange = info.max;
+    var range = {start:0, end:255, step:1};
+    _patterns[ix].getRange(multiChart.selectedChannelId, range);
+    multiChart.scroll(0, 2);
+    multiChart.uniforms.uRange[0] = range.max[0];
+    multiChart.uniforms.uRange[1] = range.max[1];
     await multiChart.render({'element': el});
 }
 
@@ -231,10 +232,10 @@ function fillSoundBuffer(buffer, bufferSize) {
     }
 }
 
-var tones = {
-    'c': 0, 'c#': 1, 'd': 2, 'd#': 3, 'e': 4, 'f':5, 'f#': 6, 'g': 7, 'g#': 8, 'a': 9, 'a#': 10, 'h': 11,
-    'C': 12, 'C#': 13, 'D': 14, 'D#': 15, 'E': 16, 'F':17, 'F#':18, 'G':19, 'G#':20, 'A':21, 'A#':22, 'H':23
-};
+// var tones = {
+//     'c': 0, 'c#': 1, 'd': 2, 'd#': 3, 'e': 4, 'f':5, 'f#': 6, 'g': 7, 'g#': 8, 'a': 9, 'a#': 10, 'h': 11,
+//     'C': 12, 'C#': 13, 'D': 14, 'D#': 15, 'E': 16, 'F':17, 'F#':18, 'G':19, 'G#':20, 'A':21, 'A#':22, 'H':23
+// };
 
 async function initializePlayer() {
     _player = new Player();
@@ -466,7 +467,6 @@ function importPresets() {
 }
 
 function handleImport(fileList) {
-    console.log(fileList);
     if (fileList != null && fileList[0] instanceof File) {
         const reader = new FileReader();
         reader.onload = function(e) {

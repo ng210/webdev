@@ -4,7 +4,7 @@
  the series, the second dimension indexes a value within the selected series.
  - A value may not exist at the requested index.
  - The series may not share a common range.
- The 3 main methods are 'get' and 'set' and 'getRange'.
+ The 3 main methods are 'get', 'set' and 'getRange'.
  
  Array get(seriesId, x)
  Returns every value stored at the selected x within the requested series as
@@ -24,15 +24,15 @@
      - not found it will be set or modified
  - Set and modify are distinguished only by looking at the internal structure:
    - value at x does not match y, the value is modified to y,
-   - value at x is different from y, a new value is added and set to y.
+   - value at x does not exist, a new value is added and set to y.
  - A series may allow or deny the storage of multiple values at the same x.
    - With multiple values allowed, the 'get' method can return more than one
      data point and 'getRange' can return multiple values with the same x.
  
  Values getRange(seriesId, Info)
  Returns an array of data points, selected by parameters in the Info structure.
- The data points are written as 2 values x and y.
- as a flat Array, and returns information about the range.
+ Each data point is written as 2 values (x and y) and the function also returns
+ information about the range.
  - The information includes 3 input parameters
      - step: size of step along the x axis,
      - start: start of the range of x values,
@@ -41,7 +41,7 @@
      - count: count of data points within the range,
      - min: a data point with the smallest x and y within the range,
      - max: a data point with the biggest x and y within the range,
- - The points in 'data' are sorted by x ascending.
+ - The points in 'Values' are sorted by x ascending.
  - The iteration tries to get a value from the selected series for each x.
  - If a value could be retrieved it is stored in the output array as a data
    point with x and y.
@@ -51,9 +51,8 @@
         this.data = enumerable || [ [] ];
     }
 
-    // The default implementation assumes a data source of a single series
-    // containing simple values only, thus the seriesId is always 0.
-    // Examples:
+    // The default implementation assumes a data source with simple arrays as 
+    // its series. Examples:
     //   [ [1, 3, 6, 7, 9, 10, ...] ] or
     //   { 'values': [0.1, 0.4, 0.8, 0.3, -0.2] }
 
@@ -77,28 +76,33 @@
         var count = 0, min = null, max = null;
         var data = [];
         if (seriesId != undefined) {
-            min = [0, Infinity];
-            max = [0, -Infinity];
+            min = [Infinity, Infinity];
+            max = [-Infinity, -Infinity];
+            var k = 0;
             for (var x=range.start; x<range.end; x+=range.step) {
                 var points = this.get(seriesId, x);
-                // get returns data points in the form of an Array
+                // get returns data points in the form of an Array or null
                 // [x1, y1, x2, y2, ..., xN, yN]
                 if (points != null) {
+                    if (min[0] >= x) {
+                        min[0] = x;
+                    }
+                    if (max[0] <= x) {
+                        max[0] = x;
+                    }
                     for (var i=0; i<points.length; i += 2) {
-                        var x = points[i];
-                        var y = points[i+1];
+                        var x = points[i], y = points[i+1];
                         if (min[1] > y) {
-                            min[0] = x;
                             min[1] = y;
                         }
                         if (max[1] < y) {
-                            max[0] = x;
                             max[1] = y;
                         }
-                        data.push(x, y);
+                        data.push(k, y);
                         count++;
                     }
                 }
+               k++;
             }
         }
         range.count = count;

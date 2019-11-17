@@ -27,12 +27,12 @@ include('/ui/idataseries.js');
         };
         // data is created in sorting order
         for (var i=0; i<36; i++) {
-            var v = 0.5*(1.0 + Math.sin(i*Math.PI/18.0));
-            var vi = Math.floor(20.0*v);
-            series.ints.push(new TestData(i, vi));
+            var v = Math.sin(i*Math.PI/18.0);
+            var vi = Math.floor(9.0*(v + 1.0));
+            series.ints.push(new TestData(2*i, vi));
             series.ints.push(new TestData(i, Math.floor(10.0-0.5*vi)));
-            series.floats.push(new TestData(0.1*i, v));
-            series.floats.push(new TestData(0.2*i, 1.0 - v));
+            series.floats.push(new TestData(0.2*i, v));
+            series.floats.push(new TestData(0.1*i, 1.0-v));
         }
         IDataSeries.call(this, series);
         this.constructor = ComplexSeries;
@@ -52,10 +52,10 @@ include('/ui/idataseries.js');
         return indices;
     };
 
-	ComplexSeries.prototype.get = function(seriesId, ix) {
+	ComplexSeries.prototype.get = function(seriesId, x) {
         // multiple values at the same ix possible!
         var data = [];
-        var indices = this.findIndex(seriesId, item => item.x == ix);
+        var indices = this.findIndex(seriesId, item => { var diff = Math.abs(item.x - x); return diff <= Number.EPSILON;} );
         var series = this.data[seriesId];
         for (var i=0; i<indices.length; i++) {
             var item = series[indices[i]];
