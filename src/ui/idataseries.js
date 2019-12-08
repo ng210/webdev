@@ -56,20 +56,47 @@
     //   [ [1, 3, 6, 7, 9, 10, ...] ] or
     //   { 'values': [0.1, 0.4, 0.8, 0.3, -0.2] }
 
-    IDataSeries.prototype.get = function(seriesId, ix) {
+    IDataSeries.prototype.getMin = function(seriesId) {
         var series = this.data[seriesId];
-        return (series && series[ix] != undefined) ? [ix, series[ix]] : null;
+        var result = [0, Infinity];
+        for (var i=0; i<series.length; i++) {
+            //if (!isNaN(result[0]) && series[i] != undefined) result[0] = i;
+            if (series[i] < result[1]) result[1] = series[i];
+        }
+        return result;
     };
 
-    IDataSeries.prototype.set = function(seriesId, ix, value) {
+    IDataSeries.prototype.getMax = function(seriesId) {
+        var series = this.data[seriesId];
+        var result = [series.length-1, -Infinity];
+        for (var i=0; i<series.length; i++) {
+            //if (series[i] != undefined) result[0] = i;
+            if (series[i] > result[1]) result[1] = series[i];
+        }
+        return result;
+    };
+
+    IDataSeries.prototype.get = function(seriesId, x) {
+        var series = this.data[seriesId];
+        return (series && series[x] != undefined) ? [x, series[x]] : null;
+    };
+
+    IDataSeries.prototype.set = function(seriesId, x, y) {
         if (this.data[seriesId] == undefined) {
             this.data[seriesId] = [];
         }
         var series = this.data[seriesId];
-        if (series[ix] != undefined) {
-            if (this.remove(seriesId, ix) == value) return;
-        }
-        series[ix] = value;
+        series[x] = y;
+    };
+
+    IDataSeries.prototype.query = function(seriesId, x, y) {
+        var series = this.data[seriesId];
+        return (series && series[x] != undefined) ? series[x] == y : false;
+    };
+
+    IDataSeries.prototype.removeAt = function(seriesId, ix) {
+        var series = this.data[seriesId];
+        series.splice(ix, 1);
     };
 
     IDataSeries.prototype.getRange = function(seriesId, range) {
@@ -78,7 +105,6 @@
         if (seriesId != undefined) {
             min = [Infinity, Infinity];
             max = [-Infinity, -Infinity];
-            var k = 0;
             for (var x=range.start; x<range.end; x+=range.step) {
                 var points = this.get(seriesId, x);
                 // get returns data points in the form of an Array or null
@@ -98,29 +124,20 @@
                         if (max[1] < y) {
                             max[1] = y;
                         }
-                        data.push(k, y);
+                        data.push(x, y);
                         count++;
                     }
                 }
-               k++;
             }
         }
         range.count = count;
         range.min = min;
         range.max = max;
+//console.log(data);
         return data;
     };
 
-    // IDataSeries.prototype.add = function(index, chnId) { throw new Error('Not implemented!'); };
-    IDataSeries.prototype.remove = function(seriesId, ix, value) {
-        var series = this.data[seriesId];
-        var oldValue = null;
-        if (series != undefined) {
-            oldValue = series[ix];
-            series[ix] = undefined;
-        }
-        return oldValue;
-    };
+
 
     public(IDataSeries, 'IDataSeries');
 })();

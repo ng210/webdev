@@ -2,10 +2,11 @@ include('/ui/control.js');
 include('/webgl/webgl.js');
 
 (function() {
+    var _supportedEvents = ['click', 'mousemove', 'mouseover', 'mouseout', 'mousedown', 'mouseup'];
     Ui.MultiChart = function(id, template, parent, path) {
         template = template || {};
         template.type = template.type || 'multichart';
-        template.events = ['click', 'mousemove'];
+        template.events = [/*'click',*/ 'mousemove', 'mousedown', 'mouseup'];
         template['unit'] = template['unit'] || [10, 10];
         template['grid-color'] = template['grid-color'] || [0.1, 0.2, 0.5];
         Ui.Control.call(this, id, template, parent);
@@ -22,16 +23,21 @@ include('/webgl/webgl.js');
 
         this.program = null;
         this.uniforms = {
-            uSize: new Float32Array([300.0, 240.0]),
-            uOffset: new Float32Array([0.0, 0.0]),
-            uRange: new Float32Array([0.0, 0.0]),
-            uZoom: new Float32Array([1.0, 1.0]),
-            uUnit: new Float32Array(template.unit),
-            uGridColor: new Float32Array(template['grid-color']),
-            uFrame: 0
-        };
+            uFrame: { type:webGL.FLOAT, value: 0 },
+            uMaxX: { type:webGL.FLOAT, value: 0.0 },
+            uSize: { type:webGL.FLOAT2V, value: new Float32Array(2) },
+            uOffset: { type:webGL.FLOAT2V, value: new Float32Array([0.0, 0.0]) },
+            uZoom: { type:webGL.FLOAT2V, value: new Float32Array([1.0, 1.0])},
+            uUnit: { type:webGL.FLOAT2V, value: new Float32Array(template.unit) },
+            uGridColor: { type:webGL.FLOAT3V, value: new Float32Array(template['grid-color']) },
+            uMousePos: { type:webGL.FLOAT2V, value: new Float32Array([0.0, 0.0]) },
+            uPointCount:  { type:webGL.INT, value: 0 },
+            uDataPoints:  { type:webGL.FLOAT2V, value: new Float32Array(2) }
+        }
         this.the2triangles = null;
         this.path = path || '/ui/multichart/shaders/default';
+        this.editState = 0;
+        this.dragStart = [0, 0];
         this.frame = 0;
         this.timer = null;
         this.isRunning = false;
@@ -45,8 +51,28 @@ include('/webgl/webgl.js');
         this.dataField = field !== undefined ? field : this.dataField;
 		return this.dataSource;
 	};
-	Ui.MultiChart.prototype.registerHandler = function(event) {
-        if (['click', 'mousemove', 'mouseover', 'mouseout'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
+    Ui.MultiChart.prototype.updateDataPoints = function(start, length) {
+        if (this.dataSource) {
+            var max = this.dataSource.getMax(this.selectedChannelId);
+            start = start || Math.floor(this.uniforms.uOffset.value[0]/this.uniforms.uUnit.value[0]) - 1;
+            length = length || Math.floor(this.uniforms.uSize.value[0]/this.uniforms.uUnit.value[0]) + 2;
+            var end = start + length;
+            if (start > max[0] || end < 0) return;
+            var range = { start:start, end:start + length, step:1.0 };
+            var points = this.dataSource.getRange(this.selectedChannelId, range);
+            this.uniforms.uMaxX.value = max[0] + 1;
+            this.program.updateUniform('uMaxX');
+            if (range.count > 0) {
+                this.uniforms.uPointCount.value = range.count;
+                this.program.updateUniform('uPointCount');
+console.log('upload ' + range.count + ' points');
+                this.uniforms.uDataPoints.value = new Float32Array(points);
+                this.program.updateUniform('uDataPoints');
+            }
+        }
+    };
+    Ui.MultiChart.prototype.registerHandler = function(event) {
+        if (_supportedEvents.indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
         Ui.Control.registerHandler.call(this, event);
     };
     Ui.MultiChart.prototype.render = async function(node) {
@@ -62,6 +88,7 @@ include('/webgl/webgl.js');
             this.canvas.id = this.id+'_canvas';
             this.element.appendChild(this.canvas);
             this.gl = await this.initializeWebGL();
+            this.resize();
             this.updateDataPoints();
         }
         // create titlebar
@@ -97,18 +124,7 @@ include('/webgl/webgl.js');
             shaders[gl.FRAGMENT_SHADER] =  resources[1].data;
             this.program = webGL.createProgram(gl, shaders,
                 { position:{type:gl.FLOAT, size:4} },
-                {
-                    uFrame: {type:webGL.FLOAT },
-                    uSize: {type:webGL.FLOAT2V },
-                    uOffset: {type:webGL.FLOAT2V },
-                    uZoom: {type:webGL.FLOAT2V },
-                    uRange: {type:webGL.FLOAT2V },
-                    uUnit: {type:webGL.FLOAT2V },
-                    uGridColor: {type:webGL.FLOAT3V },
-                    uMousePos: {type:webGL.FLOAT2V },
-                    uPointCount: {type:webGL.INT },
-                    uDataPoints:  {type:webGL.FLOAT2V }
-                }
+                this.uniforms
             );
         } else {
             // create default program
@@ -121,69 +137,120 @@ include('/webgl/webgl.js');
         gl.enableVertexAttribArray(0);
         gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
         gl.useProgram(this.program.prg);
-        this.uniforms.uSize[0] = this.canvas.width;
-        this.uniforms.uSize[1] = this.canvas.height;
+        // set initial uniforms
+        this.program.setUniforms();
         return gl;
     };
-
     Ui.MultiChart.prototype.paint = function() {
         this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-    
-        // set uniforms
-        this.uniforms.uFrame = this.frame++;
-        this.program.setUniforms(this.gl, this.uniforms);
+        this.uniforms.uFrame.value++;
+        this.program.updateUniform('uFrame');
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     };
+    Ui.MultiChart.prototype.resize = function(width, height) {
+        if (width != undefined) {
+            this.canvas.width = width;
+            this.canvas.height = height;
+        }
+        this.uniforms.uSize.value[0] = this.canvas.width;
+        this.uniforms.uSize.value[1] = this.canvas.height;
+        this.program.updateUniform('uSize');
+    };
+
+    Ui.MultiChart.prototype.draw = function(from, to, isComplete) {
+        if (!this.dataSource.query(this.selectedChannelId, to[0], to[1])) {
+            this.dataSource.set(this.selectedChannelId, to[0], to[1]);
+        }
+        if (isComplete) {
+            console.log(from, to);
+        }
+    };
+    Ui.MultiChart.prototype.erase = function(from, to, isComplete) {
+        var indices = this.dataSource.findIndex(this.selectedChannelId, item => item.x == to[0] && item.y == to[1]);
+        if (indices.length == 1) this.dataSource.removeAt(this.selectedChannelId, indices[0]);
+    };
+    Ui.MultiChart.prototype.edit = function(pos, isComplete) {
+        var from = this.pointToData(this.dragStart);
+        var to = this.pointToData(pos);
+        switch (this.editState) {
+            case 1: // edit
+                this.draw(from, to, isComplete);
+                this.updateDataPoints();
+                this.paint();
+                break;
+            case 4: // remove
+                this.erase(from, to, isComplete);
+                this.updateDataPoints();
+                this.paint();
+                break;
+        }
+    };
+
 
     Ui.MultiChart.prototype.onmousemove = function(ctrl, e) {
-        var pos = [e.layerX, e.layerY];
+        var pos = [e.layerX, ctrl.canvas.height - e.layerY];
+        switch (this.editState) {
+            case 2: // scroll/drag
+                var deltaX = this.dragStart[0] - pos[0];
+                var deltaY = this.dragStart[1] - pos[1];
+                this.dragStart[0] = pos[0];
+                this.dragStart[1] = pos[1];
+                this.scroll(deltaX, deltaY);
+                // if (this.uniforms.uOffset[0] == this.uniforms.uUnit[0]) {
+                this.updateDataPoints();
+                this.paint();
+                // }
+                break;
+            case 3: // select
+                break;
+            default: // edit
+                this.edit(pos);
+                break;
+        }
         if (this.gl) {
             this.gl.uniform2fv(this.program.uniforms.uMousePos.ref, pos);
         }
     };
-
-    Ui.MultiChart.prototype.updateDataPoints = function(start, length) {
-        start = start || 0;
-        length = length || this.uniforms.uSize[0] / this.uniforms.uUnit[0];
-        if (this.dataSource) {
-            var range = { start:start, end:start+length, step:1.0 };
-            var points = this.dataSource.getRange(this.selectedChannelId, range);
-            if (range.count > 0) {
-                this.gl.uniform1i(this.program.uniforms.uPointCount.ref, range.count);
-                this.gl.uniform2fv(this.program.uniforms.uDataPoints.ref, new Float32Array(points));
-            }
+    Ui.MultiChart.prototype.onmousedown = function(ctrl, e) {
+        var pos = [e.layerX, ctrl.canvas.height - e.layerY];
+        this.dragStart[0] = pos[0];
+        this.dragStart[1] = pos[1];
+        //if (e.altKey) this.editState = 1; // 
+        if (e.ctrlKey) this.editState = 2; // scroll/drag
+        else if (e.shiftKey) this.editState = 3; // select
+        else {
+            var dataPoint = this.pointToData(pos);
+            this.editState = this.dataSource.query(this.selectedChannelId, dataPoint[0], dataPoint[1]) ? 4 : 1; // erase : draw
         }
-        console.log(points);
-    }
-
-    Ui.MultiChart.prototype.onclick = function(ctrl, e) {
-        var pos = [e.layerX, e.layerY];
-        var dataPoint = ctrl.pointToData(pos);
-        this.dataSource.set(this.selectedChannelId, dataPoint[0], dataPoint[1]);
-        this.updateDataPoints();
+        console.log(this.editState);
+        return false;
+    };
+    Ui.MultiChart.prototype.onmouseup = function(ctrl, e) {
+        var pos = [e.layerX, ctrl.canvas.height - e.layerY];
+        this.edit(pos, true);
+        this.editState = 0;
+        var onclick = this.handlers['onclick'];
+        if (onclick) {
+            onclick.fn.call(onclick.obj, ctrl, e);
+        }
     };
 
     Ui.MultiChart.prototype.scroll = function(scrollX, scrollY) {
-        var offsetX = this.uniforms.uOffset[0] + scrollX;
-        var offsetY = this.uniforms.uOffset[1] + scrollY;
-        // todo: check max values
+        var offsetX = this.uniforms.uOffset.value[0] + scrollX;
+        var offsetY = this.uniforms.uOffset.value[1] + scrollY;
         if (offsetX < 0) offsetX = 0;
-        else if (offsetX > 100) {
-            offsetX = 100;
-        }
-        if (offsetY < 0) offsetX = 0;
-        else if (offsetY > 100) {
-            offsetY = 100;
-        }
-        this.uniforms.uOffset[0] = offsetX;
-        this.uniforms.uOffset[1] = offsetY;
+        if (offsetY < 0) offsetY = 0;
+        this.uniforms.uOffset.value[0] = offsetX;
+        this.uniforms.uOffset.value[1] = offsetY;
+        this.program.updateUniform('uOffset');
+        this.updateDataPoints();
     };
 
     Ui.MultiChart.prototype.pointToData = function(point) {
         // apply offset and zoom
-        var frame = Math.floor((point[0] - this.uniforms.uOffset[0]) / this.uniforms.uUnit[0]);
-        var value = Math.floor((point[1] - this.uniforms.uOffset[1]) / this.uniforms.uUnit[1]);
+        var frame = Math.floor((point[0] + this.uniforms.uOffset.value[0]) / this.uniforms.uUnit.value[0]);
+        var value = Math.floor((point[1] + this.uniforms.uOffset.value[1]) / this.uniforms.uUnit.value[1]);
         return [frame, value];
     };
 

@@ -1,4 +1,5 @@
 include('/ui/multichart.js');
+include('/synth/notechart.js');
 include('/ui/multichart/testdataseries.js');
 
 (function() {
@@ -19,11 +20,13 @@ include('/ui/multichart/testdataseries.js');
         var multiChart = new Ui.MultiChart('test1', config, null);
         multiChart.dataBind(dataSeries);
         multiChart.selectedChannelId = 'ints';
+        multiChart.template.width = 960;
         ctrls_.push(multiChart);
 
         dataSeries = new TestDataSeries.SimpleSeries();
         config = {
-            'titlebar': 'Test2'
+            'titlebar': 'Test2',
+            'height': 240
         };
         multiChart = new Ui.MultiChart('test2', config, null);
         multiChart.dataBind(dataSeries);
@@ -31,17 +34,28 @@ include('/ui/multichart/testdataseries.js');
         ctrls_.push(multiChart);
         //multiChart.onclick = function(ctrl) { ctrl.isRunning = false; isDone_ = true; };
 
-        ctrls_[0].template.width = 960;
+        dataSeries = new TestDataSeries.ComplexSeries();
+        config = {
+            'titlebar': 'Test3',
+            'height': 240
+        };
+        multiChart = new Ui.MultiChart('test3', config, null);
+        multiChart.dataBind(dataSeries);
+        multiChart.selectedChannelId = 'notes';
+        ctrls_.push(multiChart);
+
         for (var i=0; i<ctrls_.length; i++) {
             await ctrls_[i].render({'element': document.body});
         }
+        ctrls_[0].scroll(0, 0);
         return new Promise(resolve => poll(resolve) );
     }
 
     function poll(resolve) {
         clearTimeout(pollTimer_);
         if (!isDone_) {
-            pollTimer_ = setTimeout(poll, 1000, resolve);
+            //ctrls_[1].scroll(0.1, 0);
+            pollTimer_ = setTimeout(poll, 250, resolve);
         } else {
             resolve();
         }

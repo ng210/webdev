@@ -20,19 +20,23 @@ include('/ui/idataseries.js');
         this.y = y;
     }
 
+    function TestNote(frame, note, length) {
+        this.frame = frame;
+        this.note = note;
+        this.length = length;
+    }
+
     function ComplexSeries() {
         var series = {
             'ints': [],
-            'floats': []
+            'floats': [],
+            'notes': []
         };
         // data is created in sorting order
-        for (var i=0; i<36; i++) {
+        for (var i=0; i<12; i++) {
             var v = Math.sin(i*Math.PI/18.0);
-            var vi = Math.floor(9.0*(v + 1.0));
-            series.ints.push(new TestData(2*i, vi));
-            series.ints.push(new TestData(i, Math.floor(10.0-0.5*vi)));
-            series.floats.push(new TestData(0.2*i, v));
-            series.floats.push(new TestData(0.1*i, 1.0-v));
+            series.floats.push(new TestData(2*i, i%2?v:1.0-v));
+            series.notes.push(new TestNote(2*i, 12+i, 2));
         }
         IDataSeries.call(this, series);
         this.constructor = ComplexSeries;
@@ -64,25 +68,47 @@ include('/ui/idataseries.js');
         return data;
     };
 
-	ComplexSeries.prototype.set = function(seriesId, ix, value) {
+	ComplexSeries.prototype.set = function(seriesId, x, y) {
         var series = this.data[seriesId];
-        var indices = this.findIndex(seriesId, item => item.x == ix);
-        if (indices.length > 0) {
-            for (var i=0; i<indices.length; i++) {
-                var item = series[indices[i]];
-                var diff = item.y - value;
-                if (diff <= Number.EPSILON && diff >= -Number.EPSILON) {
-                    var oldValue = series.splice(indices[i], 1)[0];
-                    return oldValue;
-                }
-            }
-        }
-        series.splice(ix, 0, new TestData(ix, value));
+        // var indices = this.findIndex(seriesId, item => item.x == ix);
+        // if (indices.length > 0) {
+        //     for (var i=0; i<indices.length; i++) {
+        //         var item = series[indices[i]];
+        //         var diff = item.y - value;
+        //         if (diff <= Number.EPSILON && diff >= -Number.EPSILON) {
+        //             var oldValue = series.splice(indices[i], 1)[0];
+        //             return oldValue;
+        //         }
+        //     }
+        // }
+        var ix = 0;
+        while (ix<series.length && (x > series[ix].x || x == series[ix].x && y > series[ix].y)) ix++;
+        series.splice(ix, 0, new TestData(x, y));
         return null;
     };
 
-    ComplexSeries.prototype.remove = function(seriesId, ix, value) {
+    ComplexSeries.prototype.query = function(seriesId, x, y) {
+        return this.findIndex(seriesId, item => item.x == x && item.y == y).length != 0;
+    };
 
+    ComplexSeries.prototype.getMin = function(seriesId) {
+        var series = this.data[seriesId];
+        var result = [NaN, Infinity];
+        for (var i=0; i<series.length; i++) {
+            if (!isNaN(result[0]) && series[i] != undefined) result[0] = series[i].x;
+            if (series[i].y < result[1]) result[1] = series[i].y;
+        }
+        return result;
+    };
+
+    ComplexSeries.prototype.getMax = function(seriesId) {
+        var series = this.data[seriesId];
+        var result = [0, -Infinity];
+        for (var i=0; i<series.length; i++) {
+            if (series[i] != undefined) result[0] = series[i].x;
+            if (series[i].y > result[1]) result[1] = series[i].y;
+        }
+        return result;
     };
 
     public({ 'SimpleSeries': SimpleSeries, 'ComplexSeries': ComplexSeries }, 'TestDataSeries');
