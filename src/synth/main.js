@@ -197,9 +197,9 @@ async function createPatternUi(id, el) {
     _patternUi.push(multiChart);
     var range = {start:0, end:255, step:1};
     _patterns[ix].getRange(multiChart.selectedChannelId, range);
-    multiChart.scroll(0, 2);
-    multiChart.uniforms.uRange[0] = range.max[0];
-    multiChart.uniforms.uRange[1] = range.max[1];
+    //multiChart.scroll(0, 0);
+    multiChart.uniforms.uMaxX.value = range.max[0];
+    //multiChart.uniforms.uRange[1] = range.max[1];
     await multiChart.render({'element': el});
 }
 

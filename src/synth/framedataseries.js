@@ -41,9 +41,13 @@ include('/ui/idataseries.js');
         var frames = this.data;
         var result = { frame: null, ix: -1 };
         for (var i=0; i<frames.length; i++) {
-            if (frames[i].sync >= pos) {
+            if (frames[i].sync == pos) {
                 result.ix = i;
                 result.frame = frames[i];
+                break;
+            } else if (frames[i].sync > pos) {
+                result.ix = i-1;
+                result.frame = frames[i-1];
                 break;
             }
         }
