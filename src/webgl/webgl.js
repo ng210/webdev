@@ -1,5 +1,6 @@
 (function () {
 	function GlProgram(gl, shaders, attributes, uniforms) {
+		this.gl = gl;
     	this.prg = gl.createProgram();
 		this.attributes = {};
 		this.uniforms = {};
@@ -31,88 +32,108 @@
 			this.size += size;
         }
         for (var uk in uniforms) {
-        	var uniform = uniforms[uk];
-	        this.uniforms[uk] = {
-				'ref': gl.getUniformLocation(this.prg, uk),
-				'type': uniform.type
-			};
-        }
+			var uniform = uniforms[uk];
+			uniform.ref = gl.getUniformLocation(this.prg, uk);
+			uniform.update = (uniform.ref) ? webGL.uniformUpdaters[uniform.type] : () => {};
+			this.uniforms[uk] = uniform;
+		}
         this.constructor = GlProgram;
-    }
-    GlProgram.prototype.setUniforms = function(gl, uniforms) {
-		if (!uniforms) return;
-		//Dbg.prln('setUniforms');
-		for (var ui in uniforms) {
-			var uniform = this.uniforms[ui];
-			if (uniform !== undefined && uniform.ref) {
-				var v = uniforms[ui];
-			//Dbg.prln(ui+':'+v);
-				switch (uniform.type) {
-					case webGL.FLOAT: gl.uniform1f(uniform.ref, v); break;
-					case webGL.FLOAT2V: gl.uniform2fv(uniform.ref, v); break;
-					case webGL.FLOAT3V: gl.uniform3fv(uniform.ref, v); break;
-					case webGL.FLOAT4V: gl.uniform4fv(uniform.ref, v); break;
-					case webGL.FLOAT2x2M: gl.uniformMatrix2fv(uniform.ref, false, v); break;
-					case webGL.FLOAT3x3M: gl.uniformMatrix3fv(uniform.ref, false, v); break;
-					case webGL.FLOAT4x4M: gl.uniformMatrix4fv(uniform.ref, false, v); break;
+	}
+	GlProgram.prototype.updateUniform = function(name) {
+		var uniform = this.uniforms[name];
+		if (uniform) {
+			uniform.update(this.gl, uniform);
+		}
+	};
+
+    GlProgram.prototype.setUniforms = function(uniforms) {
+		if (uniforms) {
+			for (var uk in uniforms) {
+				var uniform = this.uniforms[uk];
+				if (uniform !== undefined && uniform.ref) {
+					uniform.value = uniforms[uk];
+					uniform.update(this.gl, uniform);
 				}
+			}
+		} else {
+			for (var uk in this.uniforms) {
+				var uniform = this.uniforms[uk];
+				uniform.update(this.gl, uniform);
 			}
 		}
 	};
 
+
+
 	var webGL = {
-		createShader: function(gl, type, code) {
-			var shader = gl.createShader(type);
-			gl.shaderSource(shader, code);
-			gl.compileShader(shader);
-			if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-				throw new Error('Error compiling shader:' + gl.getShaderInfoLog(shader));
+		INT: 0x00,
+		FLOAT:  0x01,
+		FLOAT2V:  0x02,
+		FLOAT3V:  0x03,
+		FLOAT4V:  0x04,
+		FLOAT2x2M:  0x05,
+		FLOAT3x3M:  0x06,
+		FLOAT4x4M:  0x07,
+		VERTEX_ATTRIB_POSITION:  0x01,
+		VERTEX_ATTRIB_NORMAL:  0x02,
+		VERTEX_ATTRIB_COLOR:  0x04,
+		VERTEX_ATTRIB_TEXTURE1:  0x08,
+		VERTEX_ATTRIB_TEXTURE2:  0x10
+	};
+
+	webGL.createShader = function(gl, type, code) {
+		var shader = gl.createShader(type);
+		gl.shaderSource(shader, code);
+		gl.compileShader(shader);
+		if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+			throw new Error('Error compiling shader:' + gl.getShaderInfoLog(shader));
+		}
+		// var node = typeof sh === 'string' ? document.getElementById(sh) : sh;
+		// if (node != null) {
+		//     var code = node.childNodes[0].nodeValue;
+		//     var type = {
+		//         'x-shader/x-vertex': gl.VERTEX_SHADER,
+		//         'x-shader/x-fragment': gl.FRAGMENT_SHADER
+		//     }[node.getAttribute('type')];
+		//     var shader = gl.createShader(type);
+		//     gl.shaderSource(shader, code);
+		//     gl.compileShader(shader);
+		//     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+		//         throw new Error('Error compiling shader:' + gl.getShaderInfoLog(shader));
+		//     }
+		// } else {
+		//     throw new Error('Shader id not found!');
+		// }
+		return shader;
+	};
+	webGL.createProgram = function(gl, shaders, attributes, uniforms) {
+		return new GlProgram(gl, shaders, attributes, uniforms);
+	};
+	webGL.useProgram = function(gl, p, uniforms) {
+		gl.useProgram(p.prg);
+		for (var ai in p.attributes) {
+			var a = p.attributes[ai];
+			if (a.ref != -1) {
+				gl.enableVertexAttribArray(a.ref);
+				gl.vertexAttribPointer(a.ref, a.size, a.type, false, p.size, a.offset);
 			}
-	        // var node = typeof sh === 'string' ? document.getElementById(sh) : sh;
-	        // if (node != null) {
-	        //     var code = node.childNodes[0].nodeValue;
-	        //     var type = {
-	        //         'x-shader/x-vertex': gl.VERTEX_SHADER,
-	        //         'x-shader/x-fragment': gl.FRAGMENT_SHADER
-	        //     }[node.getAttribute('type')];
-	        //     var shader = gl.createShader(type);
-	        //     gl.shaderSource(shader, code);
-	        //     gl.compileShader(shader);
-	        //     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-	        //         throw new Error('Error compiling shader:' + gl.getShaderInfoLog(shader));
-	        //     }
-	        // } else {
-	        //     throw new Error('Shader id not found!');
-	        // }
-	        return shader;
-	    },
-		createProgram: function(gl, shaders, attributes, uniforms) {
-	        return new GlProgram(gl, shaders, attributes, uniforms);
-	    },
-		useProgram: function(gl, p, uniforms) {
-			gl.useProgram(p.prg);
-			for (var ai in p.attributes) {
-				var a = p.attributes[ai];
-				if (a.ref != -1) {
-					gl.enableVertexAttribArray(a.ref);
-					gl.vertexAttribPointer(a.ref, a.size, a.type, false, p.size, a.offset);
-				}
-			}
-			p.setUniforms(uniforms);
-		},
-    };
-	webGL.FLOAT        = 0x01;
-    webGL.FLOAT2V      = 0x02;
-    webGL.FLOAT3V      = 0x03;
-    webGL.FLOAT4V      = 0x04;
-	webGL.FLOAT2x2M    = 0x05;
-    webGL.FLOAT3x3M    = 0x06;
-    webGL.FLOAT4x4M    = 0x07;
-	webGL.VERTEX_ATTRIB_POSITION = 0x01;
-    webGL.VERTEX_ATTRIB_NORMAL   = 0x02;
-    webGL.VERTEX_ATTRIB_COLOR    = 0x04;
-    webGL.VERTEX_ATTRIB_TEXTURE1 = 0x08;
-    webGL.VERTEX_ATTRIB_TEXTURE2 = 0x10;
+		}
+		p.setUniforms(uniforms);
+	};
+	webGL.uniformUpdaters = (function() {
+		var map = {};
+		map[webGL.INT] = (gl, uniform) => gl.uniform1i(uniform.ref, uniform.value);
+		map[webGL.FLOAT] = (gl, uniform) => gl.uniform1f(uniform.ref, uniform.value);
+		map[webGL.FLOAT2V] = (gl, uniform) => gl.uniform2fv(uniform.ref, uniform.value);
+		map[webGL.FLOAT3V] = (gl, uniform) => gl.uniform3fv(uniform.ref, uniform.value);
+		map[webGL.FLOAT4V] = (gl, uniform) => gl.uniform4fv(uniform.ref, uniform.value);
+		map[webGL.FLOAT2x2M] = (gl, uniform) => gl.uniformMatrix2fv(uniform.ref, false, uniform.value);
+		map[webGL.FLOAT3x3M] = (gl, uniform) => gl.uniformMatrix3fv(uniform.ref, false, uniform.value);
+		map[webGL.FLOAT4x4M] = (gl, uniform) => gl.uniformMatrix4fv(uniform.ref, false, uniform.value);
+		return map;
+	})();
+
+
 
 	public(webGL, 'webGL');
 
