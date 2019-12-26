@@ -13,7 +13,7 @@
     width:180px; height:32px;
     border: outset 1px #c0c0e0;
     margin: 1px;
-    background-image: url('env.png');
+    background-image: url('/src/synth/res/env.png');
     background-repeat: no-repeat;
 }
 
@@ -22,7 +22,7 @@
     width:160px; height:32px;
     border: outset 1px #c0c0e0;
     margin: 1px;
-    background-image: url('osc.png');
+    background-image: url('/src/synth/res/osc.png');
     background-repeat: no-repeat;
 }
 .lfo {
@@ -30,7 +30,7 @@
     width:136px; height:32px;
     border: outset 1px #c0c0e0;
     margin: 1px;
-    background-image: url('lfo.png');
+    background-image: url('/src/synth/res/lfo.png');
     background-repeat: no-repeat;
 }
 
@@ -39,7 +39,7 @@
     width:160px; height:32px;
     border: outset 1px #c0c0e0;
     margin: 1px;
-    background-image: url('flt.png');
+    background-image: url('/src/synth/res/flt.png');
     background-repeat: no-repeat;
 }
 

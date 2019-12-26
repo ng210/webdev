@@ -1,15 +1,15 @@
 include('/base/dbg.js');
 
 include('/ge/sound.js');
+include('/ge/player/player.js');
+include('/utils/syntax.js');
+include('/ui/multichart.js');
+
 include('./synth.js');
 include('./synth-adapter.js');
-include('./pot.js');
-include('/ge/player/player.js');
+include('./ui/pot.js');
 
-include('/utils/syntax.js');
 include('grammar.js');
-
-include('/ui/multichart.js');
 include('framedataseries.js');
 
 var _synth = null;
@@ -39,7 +39,7 @@ var _masterTune = 12;
 var _patternConfig = {
     'width': 320,
     'height': 120,
-    'grid-color': [0.20, 0.24, 0.30],
+    'grid-color': [0.1, 0.2, 0.3],
     'unit': [10, 5],
     'titlebar': 'Pattern1'
 };
@@ -47,8 +47,9 @@ var _patternConfig = {
 var _patternUi = [];
 var _patterns = [];
 
+// resource handling
 async function loadTemplate() {
-    var res = await load('./synth.tmpl.html');
+    var res = await load('./ui/synth.tmpl.html');
     if (res.error instanceof Error) {
         alert(res.error);
         return;
@@ -67,7 +68,48 @@ async function loadTemplate() {
     // synth2 (bass)
     //_template.synth2 = buildSynthTemplate(res.node.querySelector('div.synth2'));
 }
+function buildSynthTemplate(synth) {
+    var modules = synth.querySelector('.modules').children;
+    for (var i=0; i<modules.length; i++) {
+        var node = modules[i];
+        var className = node.className.toLowerCase().split(' ')[0];
+        var template = _template[className];
+        if (template != undefined) {
+            var lbl = node.id.split('}}')[1];
+            node.innerHTML = template.innerHTML.replace(/{{id}}/g, lbl);
+        }
+    }
+    synth.querySelector('div.osc').onclick = alert;
+    return synth;
+}
+async function createSequences(path) {
+    var res = await load(path);
+    if (res.error instanceof Error) {
+        throw res.error;
+    }
+    var sequences = [];
+    var syntax = new Syntax(_grammar);
+    var lines = res.data.split('\n');
+    var i=0;
+    while (i<lines.length) {
+        var sequence = new Player.Sequence(psynth.SynthAdapter.getInfo().id);
+        while (i<lines.length) {
+            var line = lines[i++];
+            if (line.search(/^\s*\/\/|^\s*$/) == -1) {
+                var expr = syntax.parse(line);
+                if (expr.resolve().evaluate(sequence)) {
+                    sequences.push(sequence);
+                    break;
+                }
+            }
+        }
+    }
+    Dbg.prln(`${sequences.length} sequences loaded.`);
+    return sequences;
+}
 
+
+// preset management
 async function loadPresets() {
     _presets = JSON.parse(localStorage.getItem('psynth'));
     if (!_presets) {
@@ -93,22 +135,147 @@ async function loadPresets() {
         }
     }
 }
-
-function buildSynthTemplate(synth) {
-    var modules = synth.querySelector('.modules').children;
-    for (var i=0; i<modules.length; i++) {
-        var node = modules[i];
-        var className = node.className.toLowerCase().split(' ')[0];
-        var template = _template[className];
-        if (template != undefined) {
-            var lbl = node.id.split('}}')[1];
-            node.innerHTML = template.innerHTML.replace(/{{id}}/g, lbl);
+async function getPresets(select) {
+    localStorage.setItem('psynth', JSON.stringify(_presets));
+    for (var key in _presets) {
+        var hasPreset = false;
+        for (var i=0; i<select.options.length; i++) {
+            var option = select.options[i];
+            if (option.label == key) {
+                option.value = key;
+                hasPreset = true;
+                break;
+            }
+        }
+        if (!hasPreset) {
+            var option = document.createElement("option");
+            option.label = key;
+            option.value = key;
+            select.add(option);
         }
     }
-    synth.querySelector('div.osc').onclick = alert;
-    return synth;
+    for (var i=0; i<select.options.length; i++) {
+        var isUsed = false;
+        for (var key in _presets) {
+            if (select.options[i].label == key) {
+                isUsed = true;
+                break;
+            }
+        }
+        if (!isUsed) {
+            select.remove(i);
+            i--;
+        }
+    }
+}
+function updatePresets() {
+    localStorage.setItem('psynth', JSON.stringify(_presets));
+    var selectors = document.querySelectorAll('.controls select.preset');
+    for (var i=0; i<selectors.length; i++) {
+        getPresets(selectors[i]);
+    }
+}
+function selectPreset(e) {
+    var select = e.target;
+    var preset = _presets[select.selectedOptions[0].value];
+    var synthElem = select.parentNode.parentNode;
+    synthElem.synth.setup(preset);
+    var pots = synthElem.querySelectorAll('pot');
+    for (var i=0; i<pots.length; i++) {
+        Pot.update(pots[i]);
+    }
+    var toggles = synthElem.querySelectorAll('toggle');
+    for (var i=0; i<toggles.length; i++) {
+        var toggle = toggles[i];
+        toggle.state = (toggle.pot.value & toggle.value) != 0;
+        enableWaveform(toggle);
+    }
+}
+function savePreset(e) {
+    var synthElem = e.target.parentNode.parentNode;
+    var name = prompt('Preset name?', 'Preset'+Object.keys(_presets).length);
+    if (name == 'default') {
+        alert('Please use a different name!');
+        savePreset(e);
+        return;
+    }
+    if (name != null) {
+        var preset = [];
+        for (var key in psynth.Ctrl) {
+            var ctrlId = psynth.Ctrl[key];
+            preset.push(ctrlId, synthElem.synth.getControl(ctrlId).value);
+        }
+        _presets[name] = preset;
+        updatePresets();
+        synthElem.querySelector('select.preset').selectedIndex = Object.keys(_presets).findIndex(x => x == name);
+    }
+}
+function removePreset(e) {
+    var synth = e.target.parentNode.parentNode;
+    var select = synth.querySelector('.controls select');
+    if (select.selectedOptions[0].value != 'default') {
+        delete _presets[select.selectedOptions[0].value];
+        updatePresets();
+        selectPreset({target:select})
+    } else {
+        alert('The "default" preset cannot be removed!');
+    }
+}
+function importPresets() {
+    const fileElem = document.getElementById("fileElem");
+    fileElem.click();
+}
+function handleImport(fileList) {
+    if (fileList != null && fileList[0] instanceof File) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                _presets = JSON.parse(e.target.result);
+            } catch (error) {
+                alert('Import resulted in an error\n('+error.message+')');
+                return;
+            }
+            updatePresets();
+            alert('Preset loaded');
+        };        
+        reader.readAsText(fileList[0]);
+    }
+}
+function exportPresets() {
+    var fileName = prompt('File name?', 'presets.json');
+    if (fileName != null) {
+        if (!fileName.endsWith('.json')) {
+            fileName = fileName+'.json';
+        }
+        var data = new Blob([JSON.stringify(_presets)], {type: 'application/json'});
+        var url = window.URL.createObjectURL(data);
+        var link = document.getElementById('exportPresets');
+        link.setAttribute('download', fileName);
+        link.href = url;
+        link.click();
+        window.URL.revokeObjectURL(url)
+    }
+    
 }
 
+// UI
+async function buildUi() {
+    var tab = document.getElementById('modules');
+    for (var i=0; i<_synthCount; i++) {
+        var tr = document.createElement('TR');
+        // create synth
+        var td = document.createElement('TD');
+        var lbl = 'synth' + (i+1);
+        psynth.SynthAdapter.devices[i].label = lbl;
+        td.appendChild(await createSynth(lbl, psynth.SynthAdapter.devices[i]));
+        tr.appendChild(td);
+        // create pattern
+        td = document.createElement('TD');
+        await createPatternUi(i, td);
+        tr.appendChild(td);
+        tab.appendChild(tr);
+    }
+}
 async function createSynth(lbl, synth) {
     //var synth = new psynth.Synth(48000, voiceCount);
     voiceCount = synth.voices.length;
@@ -179,13 +346,6 @@ async function createSynth(lbl, synth) {
 
     return synthElem;
 }
-
-function multiChartOnClick(ctrl, e) {
-    this.__proto__.onclick.call(this, ctrl, e);
-    this.dataSource.sequence.fromFrames(this.dataSource.data);
-    return true;
-}
-
 async function createPatternUi(id, el) {
     var lbl = `Pattern${id}`;
     var multiChart = new Ui.MultiChart(`${lbl}_chart`, _patternConfig, null);
@@ -202,7 +362,29 @@ async function createPatternUi(id, el) {
     //multiChart.uniforms.uRange[1] = range.max[1];
     await multiChart.render({'element': el});
 }
+function multiChartOnClick(ctrl, e) {
+    this.__proto__.onclick.call(this, ctrl, e);
+    this.dataSource.sequence.fromFrames(this.dataSource.data);
+    return true;
+}
+function toggleWaveform(e) {
+    var toggle = e.target.parentNode;
+    toggle.state = !toggle.state;
+    enableWaveform(toggle);
+}
+function enableWaveform(toggle, enable) {
+    var waveform = toggle.pot.value;
+    if (enable || toggle.state) {
+        toggle.bar.style.opacity = '0.0';
+        waveform |= toggle.value;
+    } else {
+        toggle.bar.style.opacity = '0.6';
+        waveform &= ~toggle.value;
+    }
+    toggle.pot.set(waveform);
+}
 
+// program and misc.
 function fillSoundBuffer(buffer, bufferSize) {
     //var samplesPerFrame = 48000 / SynthApp.player.refreshRate;
     var start = 0;
@@ -231,7 +413,10 @@ function fillSoundBuffer(buffer, bufferSize) {
         _buffer[i] = buffer[i];
     }
 }
-
+function updateBpm() {
+    // bpm 4th per minute => bpm*8/60 8th per second = bpm/7.5
+    _samplePerFrame = Math.floor(48000*7.5/this.pot.value);
+}
 // var tones = {
 //     'c': 0, 'c#': 1, 'd': 2, 'd#': 3, 'e': 4, 'f':5, 'f#': 6, 'g': 7, 'g#': 8, 'a': 9, 'a#': 10, 'h': 11,
 //     'C': 12, 'C#': 13, 'D': 14, 'D#': 15, 'E': 16, 'F':17, 'F#':18, 'G':19, 'G#':20, 'A':21, 'A#':22, 'H':23
@@ -258,7 +443,7 @@ async function initializePlayer() {
     sound.init(48000, fillSoundBuffer);
 
     // SEQUENCES
-    var sequences = await createSequences('demo02.seq');
+    var sequences = await createSequences('res/demo02.seq');
 
     for (var i=0; i<_synthCount; i++) {
         // var sequence = new Player.Sequence(psynth.SynthAdapter.getInfo().id);
@@ -298,33 +483,6 @@ async function initializePlayer() {
         _player.channels.push(channel);
     }
 }
-
-async function createSequences(path) {
-    var res = await load(path);
-    if (res.error instanceof Error) {
-        throw res.error;
-    }
-    var sequences = [];
-    var syntax = new Syntax(_grammar);
-    var lines = res.data.split('\n');
-    var i=0;
-    while (i<lines.length) {
-        var sequence = new Player.Sequence(psynth.SynthAdapter.getInfo().id);
-        while (i<lines.length) {
-            var line = lines[i++];
-            if (line.search(/^\s*\/\/|^\s*$/) == -1) {
-                var expr = syntax.parse(line);
-                if (expr.resolve().evaluate(sequence)) {
-                    sequences.push(sequence);
-                    break;
-                }
-            }
-        }
-    }
-    Dbg.prln(`${sequences.length} sequences loaded.`);
-    return sequences;
-}
-
 function update() {
     for (var i=0; i<_player.channels.length; i++) {
         _player.channels[i].run(1);
@@ -345,177 +503,6 @@ function main(frame) {
         }
     }
     // paint oscillators
-}
-
-function updateBpm() {
-    // bpm 4th per minute => bpm*8/60 8th per second = bpm/7.5
-    _samplePerFrame = Math.floor(48000*7.5/this.pot.value);
-}
-
-async function getPresets(select) {
-    localStorage.setItem('psynth', JSON.stringify(_presets));
-    for (var key in _presets) {
-        var hasPreset = false;
-        for (var i=0; i<select.options.length; i++) {
-            var option = select.options[i];
-            if (option.label == key) {
-                option.value = key;
-                hasPreset = true;
-                break;
-            }
-        }
-        if (!hasPreset) {
-            var option = document.createElement("option");
-            option.label = key;
-            option.value = key;
-            select.add(option);
-        }
-    }
-    for (var i=0; i<select.options.length; i++) {
-        var isUsed = false;
-        for (var key in _presets) {
-            if (select.options[i].label == key) {
-                isUsed = true;
-                break;
-            }
-        }
-        if (!isUsed) {
-            select.remove(i);
-            i--;
-        }
-    }
-}
-
-function updatePresets() {
-    localStorage.setItem('psynth', JSON.stringify(_presets));
-    var selectors = document.querySelectorAll('.controls select.preset');
-    for (var i=0; i<selectors.length; i++) {
-        getPresets(selectors[i]);
-    }
-}
-
-function selectPreset(e) {
-    var select = e.target;
-    var preset = _presets[select.selectedOptions[0].value];
-    var synthElem = select.parentNode.parentNode;
-    synthElem.synth.setup(preset);
-    var pots = synthElem.querySelectorAll('pot');
-    for (var i=0; i<pots.length; i++) {
-        Pot.update(pots[i]);
-    }
-    var toggles = synthElem.querySelectorAll('toggle');
-    for (var i=0; i<toggles.length; i++) {
-        var toggle = toggles[i];
-        toggle.state = (toggle.pot.value & toggle.value) != 0;
-        enableWaveform(toggle);
-    }
-}
-
-function savePreset(e) {
-    var synthElem = e.target.parentNode.parentNode;
-    var name = prompt('Preset name?', 'Preset'+Object.keys(_presets).length);
-    if (name == 'default') {
-        alert('Please use a different name!');
-        savePreset(e);
-        return;
-    }
-    if (name != null) {
-        var preset = [];
-        for (var key in psynth.Ctrl) {
-            var ctrlId = psynth.Ctrl[key];
-            preset.push(ctrlId, synthElem.synth.getControl(ctrlId).value);
-        }
-        _presets[name] = preset;
-        updatePresets();
-        synthElem.querySelector('select.preset').selectedIndex = Object.keys(_presets).findIndex(x => x == name);
-    }
-}
-
-function removePreset(e) {
-    var synth = e.target.parentNode.parentNode;
-    var select = synth.querySelector('.controls select');
-    if (select.selectedOptions[0].value != 'default') {
-        delete _presets[select.selectedOptions[0].value];
-        updatePresets();
-        selectPreset({target:select})
-    } else {
-        alert('The "default" preset cannot be removed!');
-    }
-}
-
-function toggleWaveform(e) {
-    var toggle = e.target.parentNode;
-    toggle.state = !toggle.state;
-    enableWaveform(toggle);
-}
-
-function enableWaveform(toggle, enable) {
-    var waveform = toggle.pot.value;
-    if (enable || toggle.state) {
-        toggle.bar.style.opacity = '0.0';
-        waveform |= toggle.value;
-    } else {
-        toggle.bar.style.opacity = '0.6';
-        waveform &= ~toggle.value;
-    }
-    toggle.pot.set(waveform);
-}
-
-function importPresets() {
-    const fileElem = document.getElementById("fileElem");
-    fileElem.click();
-}
-
-function handleImport(fileList) {
-    if (fileList != null && fileList[0] instanceof File) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                _presets = JSON.parse(e.target.result);
-            } catch (error) {
-                alert('Import resulted in an error\n('+error.message+')');
-                return;
-            }
-            updatePresets();
-            alert('Preset loaded');
-        };        
-        reader.readAsText(fileList[0]);
-    }
-}
-
-function exportPresets() {
-    var fileName = prompt('File name?', 'presets.json');
-    if (fileName != null) {
-        if (!fileName.endsWith('.json')) {
-            fileName = fileName+'.json';
-        }
-        var data = new Blob([JSON.stringify(_presets)], {type: 'application/json'});
-        var url = window.URL.createObjectURL(data);
-        var link = document.getElementById('exportPresets');
-        link.setAttribute('download', fileName);
-        link.href = url;
-        link.click();
-        window.URL.revokeObjectURL(url)
-    }
-    
-}
-
-async function buildUi() {
-    var tab = document.getElementById('modules');
-    for (var i=0; i<_synthCount; i++) {
-        var tr = document.createElement('TR');
-        // create synth
-        var td = document.createElement('TD');
-        var lbl = 'synth' + (i+1);
-        psynth.SynthAdapter.devices[i].label = lbl;
-        td.appendChild(await createSynth(lbl, psynth.SynthAdapter.devices[i]));
-        tr.appendChild(td);
-        // create pattern
-        td = document.createElement('TD');
-        await createPatternUi(i, td);
-        tr.appendChild(td);
-        tab.appendChild(tr);
-    }
 }
 
 async function onpageload(e) {
