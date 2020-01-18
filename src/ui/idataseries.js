@@ -1,4 +1,9 @@
  (function() {
+
+    function _match(v1, v2) {
+        var result = Math.abs(v1.x - v2.x) < Number.EPSILON && Math.abs(v1.y - v2.y) < Number.EPSILON;
+        return result;
+    }
 /******************************************************************************
  Data series are 2 dimensional, enumerable structures. The first dimension is
  the series, the second dimension indexes a value within the selected series.
@@ -48,96 +53,109 @@
  - The count of minimum and maximum of x and y are stored in the info.
 ******************************************************************************/
     function IDataSeries(enumerable) {
-        this.data = enumerable || [ [] ];
+        this.data = enumerable || [];
     }
 
-    // The default implementation assumes a data source with simple arrays as 
-    // its series. Examples:
-    //   [ [1, 3, 6, 7, 9, 10, ...] ] or
-    //   { 'values': [0.1, 0.4, 0.8, 0.3, -0.2] }
-
-    IDataSeries.prototype.getMin = function(seriesId) {
-        var series = this.data[seriesId];
-        var result = [0, Infinity];
-        for (var i=0; i<series.length; i++) {
-            //if (!isNaN(result[0]) && series[i] != undefined) result[0] = i;
-            if (series[i] < result[1]) result[1] = series[i];
-        }
-        return result;
-    };
-
-    IDataSeries.prototype.getMax = function(seriesId) {
-        var series = this.data[seriesId];
-        var result = [series.length-1, -Infinity];
-        for (var i=0; i<series.length; i++) {
-            //if (series[i] != undefined) result[0] = i;
-            if (series[i] > result[1]) result[1] = series[i];
-        }
-        return result;
-    };
-
-    IDataSeries.prototype.get = function(seriesId, x) {
-        var series = this.data[seriesId];
-        return (series && series[x] != undefined) ? [x, series[x]] : null;
-    };
-
-    IDataSeries.prototype.set = function(seriesId, x, y) {
-        if (this.data[seriesId] == undefined) {
-            this.data[seriesId] = [];
-        }
-        var series = this.data[seriesId];
-        series[x] = y;
-    };
-
-    IDataSeries.prototype.query = function(seriesId, x, y) {
-        var series = this.data[seriesId];
-        return (series && series[x] != undefined) ? series[x] == y : false;
-    };
-
-    IDataSeries.prototype.removeAt = function(seriesId, ix) {
-        var series = this.data[seriesId];
-        series.splice(ix, 1);
-    };
-
-    IDataSeries.prototype.getRange = function(seriesId, range) {
-        var count = 0, min = null, max = null;
-        var data = [];
-        if (seriesId != undefined) {
-            min = [Infinity, Infinity];
-            max = [-Infinity, -Infinity];
-            for (var x=range.start; x<range.end; x+=range.step) {
-                var points = this.get(seriesId, x);
-                // get returns data points in the form of an Array or null
-                // [x1, y1, x2, y2, ..., xN, yN]
-                if (points != null) {
-                    if (min[0] >= x) {
-                        min[0] = x;
-                    }
-                    if (max[0] <= x) {
-                        max[0] = x;
-                    }
-                    for (var i=0; i<points.length; i += 2) {
-                        var x = points[i], y = points[i+1];
-                        if (min[1] > y) {
-                            min[1] = y;
-                        }
-                        if (max[1] < y) {
-                            max[1] = y;
-                        }
-                        data.push(x, y);
-                        count++;
-                    }
-                }
+    IDataSeries.prototype.query = function(callback) {
+        var q = {
+            this: this,
+            ix: 0,
+            value: null,
+            continue: false
+        };
+        var indices = [];
+        for (q.ix=0; q.ix<this.data.length; q.ix++) {
+            q.value = this.data[q.ix];
+            if (q.value == undefined) continue;
+            if (callback.call(this, q)) {
+                indices.push(q.ix);
             }
+            if (!q.continue) break;
         }
-        range.count = count;
-        range.min = min;
-        range.max = max;
-//console.log(data);
+        return indices;
+    };
+
+    IDataSeries.prototype.getInfo = function() {
+        var info = {
+            min: { x: Infinity, y: Infinity },
+            max: { x: -Infinity, y: -Infinity }
+        };
+        this.query(data => {
+            var point = this.getAsPoint(data.ix);
+            if (point.y != undefined) {
+                if (point.x < info.min.x) info.min.x = point.x;
+                if (point.x > info.max.x) info.max.x = point.x;
+                if (point.y < info.min.y) info.min.y = point.y;
+                if (point.y > info.max.y) info.max.y = point.y;
+            }
+            data.continue = true;
+            return false;
+        });
+        return info;
+    };
+
+    IDataSeries.prototype.getRange = function(range) {
+        var indices = this.query(data => {
+            var point = this.getAsPoint(data.ix);
+            data.continue = point.x <= range.end;
+            return data.continue && point.x >= range.start;
+        });
+        var data= [];
+        range.min = { x: Infinity, y: Infinity };
+        range.max = { x: -Infinity, y: -Infinity };
+        range.count = 0;
+        for (var i=0; i<indices.length; i++) {
+            var ix = indices[i];
+            var point = this.getAsPoint(ix);
+            data.push(point.x, point.y);
+            range.count++;
+            if (range.min.x > point.x) range.min.x = point.x;
+            if (range.max.x < point.x) range.max.x = point.x;
+            if (range.min.y > point.y) range.min.y = point.y;
+            if (range.max.y < point.y) range.max.y = point.y;
+        }
+
         return data;
     };
 
+    IDataSeries.prototype.getByIndex = function(ix) {
+        return (this.data[ix] != undefined) ? this.getAsPoint(ix) : null;
+    };
 
+    IDataSeries.prototype.get = function(x) {
+        var data = [];
+        for (var i=0; i<this.data.length; i++) {
+            var point = this.getAsPoint(i);
+            if (Math.abs(point.x - x) <= Number.EPSILON) {
+                data.push(point.x, point.y);
+            }
+        }
+        return data.length ? data : null;
+    };
+
+    IDataSeries.prototype.removeAt = function(ix) {
+        var start = ix;
+        while (--start > 0 && this.data[start] == undefined);
+        start++;
+        while (++ix < this.data.length && this.data[ix] == undefined);
+        this.data.splice(start, ix - start);
+    };
+
+    // The default implementation assumes a series as a simple array.
+    // Examples:
+    //   [1, 3, 6, 7, 9, 10, ...] or
+    //   [0.1, 0.4, 0.8, 0.3, -0.2]
+    IDataSeries.prototype.getAsPoint = function(ix) {
+        return { x: ix, y: this.data[ix] };
+    };
+
+    IDataSeries.prototype.set = function(x, y) {
+        this.data[x] = y;
+    };
+
+    IDataSeries.prototype.contains = function(x, y) {
+        return this.query(data => !(data.continue = !_match(this.getAsPoint(data.ix), {x:x, y:y}))).length > 0;
+    };
 
     public(IDataSeries, 'IDataSeries');
 })();

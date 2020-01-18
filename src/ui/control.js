@@ -174,6 +174,6 @@ include('/ui/datalink.js');
 		}
 	};
 
-	Boot.addToSearchPath();
+	addToSearchPath();
 	public(Ui, 'Ui');
 })();
