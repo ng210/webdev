@@ -1,10 +1,9 @@
+include('/ge/player/player.js');
 /******************************************************************************
  * Adapter interface prototype
  *  - should be singleton object
  ******************************************************************************/
-include('/ge/player/player.js');
 (function() {
-    Player = Player || {};
     Player.IAdapter = {
         getInfo: function() { throw new Error('Not implemented!'); },
         registerCommands: function(registry) { throw new Error('Not implemented!'); },

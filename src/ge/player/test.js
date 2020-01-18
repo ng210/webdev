@@ -1,5 +1,5 @@
-include('/ge/player/player.js');
-include('/ge/stream.js');
+include('/ge/player/player-lib.js');
+
 (function(){
 
     const TestAdapter = {
@@ -70,14 +70,14 @@ include('/ge/stream.js');
     function createPlayer() {
         //var testAdapter = new TestAdapter();
         var player = new Player();
-        player.adapters[TestAdapter.getInfo().id] = TestAdapter;
+        player.addAdapter(TestAdapter);
         TestAdapter.createTargets(player.targets, null);
         return player;
     }
 
     function createTestSequences() {
         var sequences = [];
-        var sequence = new Player.Sequence(TestAdapter.getInfo().id);
+        var sequence = new Player.Sequence(TestAdapter);
         sequence.writeHeader();
         // Frame #1
         sequence.writeDelta(16);
@@ -110,7 +110,7 @@ include('/ge/stream.js');
         sequence.writeEOS();
         sequences.push(sequence);
 
-        sequence = new Player.Sequence(TestAdapter.getInfo().id);
+        sequence = new Player.Sequence(TestAdapter);
         // Frame #1
         sequence.writeDelta(16);
         sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq2.1');
@@ -123,7 +123,7 @@ include('/ge/stream.js');
         sequence.writeEOS();
         sequences.push(sequence);
 
-        sequence = new Player.Sequence(TestAdapter.getInfo().id);
+        sequence = new Player.Sequence(TestAdapter);
         // Frame #1
         sequence.writeDelta(16);
         sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq3.1');
@@ -175,7 +175,7 @@ include('/ge/stream.js');
         Dbg.prln('Test Sequence.toFrames');
         var player = createPlayer();
         var sequence = createTestSequences()[0];
-        var frames = sequence.toFrames(player);
+        var frames = sequence.toFrames();
         // check frames
         if (frames.length != 6) errors.push('Frame count is not 5!');
         var fi = 0;
@@ -213,12 +213,12 @@ include('/ge/stream.js');
         return errors.length > 0 ? errors.join('\n') : 'Tests successful!';
     }
 
-    function test_channel_toStream() {
+    function test_channel_toSequence() {
         Dbg.prln('Test Channel.toFrames');
         var channel = setup();
         channel.toFrames();
         var sequence = channel.sequence;
-        channel.toStream();
+        channel.toSequence();
         var pos = 0;
         var hasError = false;
         for (var i=0; i<channel.sequence.cursor; i++) {
@@ -235,14 +235,14 @@ include('/ge/stream.js');
         Dbg.prln('Test insert frame');
         var channel = setup();
         channel.toFrames();
-        var testAdapter = channel.player.adapters[TestAdapter.getInfo().id];
+        var adapter = channel.adapter;
         // create new frame
         var frame = new Player.Frame();
         frame.delta = 8;
-        frame.commands.push(testAdapter.makeCommand(TestAdapter.SETTEXT, 'New'));
-        frame.commands.push(testAdapter.makeCommand(TestAdapter.SETINK, 4));
+        frame.commands.push(adapter.makeCommand(TestAdapter.SETTEXT, 'New'));
+        frame.commands.push(adapter.makeCommand(TestAdapter.SETINK, 4));
         channel.frames.splice(1, 0, frame);
-        channel.toStream();
+        channel.toSequence();
         //channel.reset();
         channel.loopCount = 1;
         channel.isActive = true;
@@ -279,7 +279,7 @@ include('/ge/stream.js');
         //Dbg.prln(await test_channel_run());
         Dbg.prln(test_channel_toFrames());
         Dbg.prln(test_sequence_toFrames());
-        Dbg.prln(test_channel_toStream());
+        Dbg.prln(test_channel_toSequence());
         Dbg.prln(await test_channel_insertFrame());
         //Dbg.prln(test_channel_deleteFrames());
         return 0;

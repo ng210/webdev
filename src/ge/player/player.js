@@ -1,9 +1,5 @@
-include('/ge/player/iadapter.js');
-include('/ge/player/channel.js');
-
 (function() {
     var player = function() {
-        this.adapters = {};
         this.sequences = [];
         this.userDataBlocks = [];
         this.targets = [];
@@ -11,9 +7,15 @@ include('/ge/player/channel.js');
         this.refreshRate = 25.0;
         this.constructor = Player.Player;
     };
+    player.adapters = {};
+    player.prototype.addAdapter = function(adapter) {
+        player.adapters[adapter.getInfo().id] = adapter;
+    };
+
     player.prototype.xxx = function() {
 
     };
 
     public(player, 'Player');
+
 })();

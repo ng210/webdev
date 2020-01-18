@@ -27,9 +27,9 @@ include('/ge/player/sequence.js');
         this.sequence = sequence;
         this.cursor = sequence.headerSizeInBytes;
         this.target = target;
-        this.adapter = this.player.adapters[sequence.adapterId];
-        if (this.adapter === undefined) {
-            throw new Error(`Unsupported adapter type ${sequence.adapterId}`);
+        this.adapter = sequence.adapter;
+        if (!this.adapter) {
+            throw new Error(`Missing adapter!`);
         }
     };
 
@@ -82,12 +82,12 @@ include('/ge/player/sequence.js');
     };
 
     channel.prototype.toFrames = function() {
-        this.frames = this.sequence.toFrames(this.player);
+        this.frames = this.sequence.toFrames();
         return this.frames;
     };
 
-    channel.prototype.toStream = function() {
-        this.sequence = new Player.Sequence(this.sequence.adapterId);
+    channel.prototype.toSequence = function() {
+        this.sequence = new Player.Sequence(this.adapter);
         this.sequence.fromFrames(this.frames);
         return this.sequence;
     };
