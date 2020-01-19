@@ -1,4 +1,4 @@
-include('ui/datalink.js')
+include('/ui/datalink.js')
 include('/ui/label.js');
 include('/ui/textbox.js');
 include('/ui/slider.js');
@@ -110,7 +110,7 @@ include('/ui/grid.js');
         return demo;
     };
 
-    Boot.addToSearchPath();
+    addToSearchPath();
     public(Demo, 'Demo');
 
 })();

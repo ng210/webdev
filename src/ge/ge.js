@@ -216,7 +216,7 @@
 		delete buffer;
 	}
 
-	Boot.addToSearchPath();
+	addToSearchPath();
 
 	public(GE, 'GE');
 })();

@@ -1,0 +1,52 @@
+<html>
+    <head>
+        <script src="/src/base/base2.js"></script>
+        <script>
+            window.onload = onpageload;
+
+var cons = null;
+function out(text) {
+    cons.innerHTML += text +'<br/>'
+}
+
+var counter = 0;
+var result = 0.0;
+
+function calculate() {
+    var n = 100;
+    for (var i=0; i<n; i++) {
+        result += Math.pow(result, i/n);
+        out(result.toFixed(8));
+    }
+}
+
+async function onpageload() {
+    cons = document.getElementById('cons');
+
+    out('Tests');
+
+    // out(await load({url:'grid.html'}));
+    // var res = await load({url:'demo/data/aliens.gif'});
+    // out(res);
+    //document.body.appendChild(res.node);
+
+    //out(await load('base/test/mdl0.js'));
+    out(await load('synth/test.js'));
+
+    // await poll( () => { out(counter); if (counter < 10) { counter++; return false;} return true; });
+    // out('---');
+
+    // counter = 0;
+    // lock('counter', () => poll( () => { out('#1:' + counter); if (counter < 6) { counter+=2; return false;} return true; }, 1000));
+    // lock('counter', () => poll( () => { out('#2:' + counter); if (counter > 0) { counter-=1; return false;} return true; }));
+    // lock('counter', () => poll( () => { out('#3:' + counter); if (counter < 6) { counter+=1; return false;} return true; }, 1000));
+    // lock('counter', () => poll( () => { out('#4:' + counter); if (counter > 0) { counter-=2; return false;} return true; }));
+
+}
+
+        </script>
+    </head>
+    <body>
+        <code id="cons"></code>
+    </body>
+</html>
