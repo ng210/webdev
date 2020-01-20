@@ -47,41 +47,38 @@
             min: { x: Infinity, y: Infinity },
             max: { x: -Infinity, y: -Infinity }
         };
-        this.query(data => {
-            var point = this.getAsPoint(data.ix);
+        this.query(q => {
+            var point = this.getAsPoint(q.ix);
             if (point.y != undefined) {
                 if (point.x < info.min.x) info.min.x = point.x;
                 if (point.x > info.max.x) info.max.x = point.x;
                 if (point.y < info.min.y) info.min.y = point.y;
                 if (point.y > info.max.y) info.max.y = point.y;
             }
-            data.continue = true;
+            q.continue = true;
             return false;
         });
         return info;
     };
 
     IDataSeries.prototype.getRange = function(range) {
-        var indices = this.query(data => {
-            var point = this.getAsPoint(data.ix);
-            data.continue = point.x <= range.end;
-            return data.continue && point.x >= range.start;
-        });
-        var data= [];
+        var data = [];
         range.min = { x: Infinity, y: Infinity };
         range.max = { x: -Infinity, y: -Infinity };
         range.count = 0;
-        for (var i=0; i<indices.length; i++) {
-            var ix = indices[i];
+        for (var ix=0; ix<this.data.length; ix++) {
             var point = this.getAsPoint(ix);
-            data.push(point.x, point.y);
-            range.count++;
-            if (range.min.x > point.x) range.min.x = point.x;
-            if (range.max.x < point.x) range.max.x = point.x;
-            if (range.min.y > point.y) range.min.y = point.y;
-            if (range.max.y < point.y) range.max.y = point.y;
+            if (point.x >= range.min) {
+                data.push(point.x, point.y);
+                range.count++;
+                if (range.min.x > point.x) range.min.x = point.x;
+                if (range.max.x < point.x) range.max.x = point.x;
+                if (range.min.y > point.y) range.min.y = point.y;
+                if (range.max.y < point.y) range.max.y = point.y;
+            } else if (point.x > range.end) {
+                break;
+            }
         }
-
         return data;
     };
 
