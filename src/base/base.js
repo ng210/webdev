@@ -529,78 +529,97 @@ function lock(token, action) {
  *  - load([ { url: 'user.html', contentType: 'html', method: 'get' },
  *              { url: 'app.cfg', contentType: 'xml', method: 'post' } ]);
  ******************************************************************************/
-    function load(obj) {
-        if (!Array.isArray(obj)) {
-            var options = { error: null };
-            if (typeof obj === 'string') {
-                options.url = obj;
-            } else {
-                for (var i in obj) {
-                    options[i] = obj[i];
-                }
+function load(obj) {
+    if (!Array.isArray(obj)) {
+        var options = { error: null };
+        if (typeof obj === 'string') {
+            options.url = obj;
+        } else {
+            for (var i in obj) {
+                options[i] = obj[i];
             }
+        }
+        if (options.process === undefined) {
+            options.process = true;
+        }
+        return Resource.load(options);
+    } else {
+        var loads = [];
+        for (var i=0; i<obj.length; i++) {
+            var item = obj[i];
+            var options = typeof item === 'string' ? { url: item } : item;
+            // process response by default
             if (options.process === undefined) {
                 options.process = true;
             }
-            return Resource.load(options);
-        } else {
-            var loads = [];
-            for (var i=0; i<obj.length; i++) {
-                var item = obj[i];
-                var options = typeof item === 'string' ? { url: item } : item;
-                // process response by default
-                if (options.process === undefined) {
-                    options.process = true;
-                }
-                loads.push(Resource.load(options));
-            }
-            return Promise.all(loads);
+            loads.push(Resource.load(options));
         }
+        return Promise.all(loads);
     }
+}
 
-    function public(obj, name) {
-        var script = document.currentScript;
-        var url = script.src || script.url;
-        var mdl = Resource.cache[url];
-        if (mdl === undefined) {
-            throw new Error('Module \'' + url + '\' not found!');
-        }
-        window[name] = mdl.symbols[name] = obj;            
+function public(obj, name) {
+    var script = document.currentScript;
+    var url = script.src || script.url;
+    var mdl = Resource.cache[url];
+    if (mdl === undefined) {
+        throw new Error('Module \'' + url + '\' not found!');
     }
+    window[name] = mdl.symbols[name] = obj;            
+}
 
-    async function include(path) {
+async function include(path) {
 debug_('INCLUDE @' + path);
 if (path == '/ui/valuecontrol.js') debugger;
-        var mdl = null;
-        var searchPath = null;
-        if (path.startsWith('/')) {
-            searchPath = [rootUrl];
-            path = path.substr(1);
-        } else {
-            searchPath = [baseUrl.toString()];
-            searchPath.push(...Resource.searchPath);
-        }
-        for (var i=0; i<searchPath.length; i++) {
-            var url = searchPath[i] + '/' + path;
-            mdl = await load(url);
-            if (!mdl.error) {
-                break;
-            }
-        }
-debug_('INCLUDED @' + mdl.toString());
-        return mdl;
+    var mdl = null;
+    var searchPath = null;
+    if (path.startsWith('/')) {
+        searchPath = [rootUrl];
+        path = path.substr(1);
+    } else {
+        searchPath = [baseUrl.toString()];
+        searchPath.push(...Resource.searchPath);
     }
-
-    window.onload = e => poll(function() {
-        var errors = [];
-        for (var i in Resource.cache) {
-            var res = Resource.cache[i];
-            if (res.status == Resource.ERROR) {
-                errors.push(res.error);
-            } else if (res.status != Resource.COMPLETE && res.status != Resource.ERROR && res.status != Module.RESOLVED) {
-                return false;
-            }
+    for (var i=0; i<searchPath.length; i++) {
+        var url = searchPath[i] + '/' + path;
+        mdl = await load(url);
+        if (!mdl.error) {
+            break;
         }
-        onpageload(errors);
-        return true;
-    });
+    }
+debug_('INCLUDED @' + mdl.toString());
+    return mdl;
+}
+
+/*****************************************************************************/
+Array.prototype.binSearch = function(item, cmp, min, max) {
+	if (min == undefined) min = 0;
+	if (max == undefined) max = this.length-1;
+    if (cmp == undefined) cmp = (a, b) => a - b;
+
+	while (min < max) {
+		var mid = (min + max)>>1;
+        var i = (cmp != undefined) ? cmp(item, this[mid]) : item.compare != undefined ? item.compare(this[mid]) : item - mid;
+		if (i == 0) return mid;
+		if (i < 0) { // continue with the first half-range: [min, mid]
+			max = mid;
+		} else { // continue with the second half-range: [mid+1, max]
+			min = mid + 1;
+		}
+	}
+	return -max;
+};
+
+window.onload = e => poll(function() {
+    var errors = [];
+    for (var i in Resource.cache) {
+        var res = Resource.cache[i];
+        if (res.status == Resource.ERROR) {
+            errors.push(res.error);
+        } else if (res.status != Resource.COMPLETE && res.status != Resource.ERROR && res.status != Module.RESOLVED) {
+            return false;
+        }
+    }
+    onpageload(errors);
+    return true;
+});
