@@ -367,12 +367,19 @@ debug_('LOAD ' + resource.toString());
     Module.prototype.resolveIncludes = async function() {
     debug_('RESOLVE @' + this.url);
         // replace #include '...' and trigger loading of the resource
-        var re = /[^\/*]?include\('([^']+)'\)/g;
+        //var re = /include\('([^']+)'\)/g;
+        var re = /\/\/.*include\('([^']+)'\)|include\('([^']+)'\)/g;
         var loads = [];
     //var mdl = this;
-        this.data = this.data.replace(re, (match, p1) => {
-            loads.push(include(p1));
-            return `// '${p1}' resolved`;
+        this.data = this.data.replace(re, (match, p1, p2) => {
+            if (p1 != undefined) {
+                return `${match} // skipped`;
+            }
+            if (p2 != undefined) {
+                loads.push(include(p2));
+                return `// ${match} // included`;
+            }
+            return p2;
         });
         // load every includes
         var includes = await Promise.all(loads);
@@ -593,8 +600,11 @@ debug_('INCLUDED @' + mdl.toString());
 
 /*****************************************************************************/
 Array.prototype.binSearch = function(item, cmp, min, max) {
+    if (this.length == 0) {
+        return 0;
+    }
 	if (min == undefined) min = 0;
-	if (max == undefined) max = this.length-1;
+	if (max == undefined) max = this.length;
     if (cmp == undefined) cmp = (a, b) => a - b;
 
 	while (min < max) {

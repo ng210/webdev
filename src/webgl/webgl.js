@@ -67,6 +67,7 @@
 
 	var webGL = {
 		INT: 0x00,
+		INTV: 0x10,
 		FLOAT:  0x01,
 		FLOATV: 0x20,
 		FLOAT2V:  0x02,
@@ -124,6 +125,7 @@
 	webGL.uniformUpdaters = (function() {
 		var map = {};
 		map[webGL.INT] = (gl, uniform) => gl.uniform1i(uniform.ref, uniform.value);
+		map[webGL.INTV] = (gl, uniform) => gl.uniform1iv(uniform.ref, uniform.value);
 		map[webGL.FLOAT] = (gl, uniform) => gl.uniform1f(uniform.ref, uniform.value);
 		map[webGL.FLOATV] = (gl, uniform) => gl.uniform1fv(uniform.ref, uniform.value);
 		map[webGL.FLOAT2V] = (gl, uniform) => gl.uniform2fv(uniform.ref, uniform.value);
