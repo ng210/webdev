@@ -1,5 +1,5 @@
 (function() {
-    include('/ge/tree.js');
+    include('/data/tree.js');
 
     var rs = r => `${r.priority} ${r.input}(${r.in.join('.')})=>${r.output}(${r.out})`
 

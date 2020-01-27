@@ -1,5 +1,5 @@
 include('/ge/player/player.js');
-include('/ge/stream.js');
+include('/data/stream.js');
 
 (function() {
     // byte streams
