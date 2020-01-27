@@ -1,5 +1,5 @@
 body {
-    background-color: gray;
+    background-color: #101020;
     font-family: Verdana;
 }
 
@@ -24,6 +24,7 @@ div.group {
     /* padding:0px; margin: 0px; */
     height: 8px;
     cursor: pointer;
+    
 }
 
 #synth1 {

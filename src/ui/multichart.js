@@ -368,9 +368,12 @@ include('/webgl/webgl.js');
     };
     // Event handlers
     Ui.MultiChart.prototype.onmousemove = function(ctrl, e) {
+        //var deltaX = e.screenX - Pot.dragPoint[0];
+        //var deltaY = e.screenY - Pot.dragPoint[1];
         var pos = [e.layerX, ctrl.canvas.height - e.layerY];
         this.edit(pos);
         this.gl.uniform2fv(this.program.uniforms.uMousePos.ref, pos);
+        e.preventDefault();
     };
     Ui.MultiChart.prototype.onmousedown = function(ctrl, e) {
         var pos = [e.layerX, ctrl.canvas.height - e.layerY];
@@ -408,6 +411,7 @@ include('/webgl/webgl.js');
                 this.editState = Ui.MultiChart.EditModes.draw;
                 break;
         }
+        e.preventDefault();
         return false;
     };
     Ui.MultiChart.prototype.onmouseup = function(ctrl, e) {
@@ -418,6 +422,7 @@ include('/webgl/webgl.js');
         if (onclick) {
             onclick.fn.call(onclick.obj, ctrl, e);
         }
+        e.preventDefault();
     };
 
     // Statics

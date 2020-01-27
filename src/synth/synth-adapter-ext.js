@@ -1,4 +1,4 @@
-include('/ui/multichart/dataseries.js');
+include('/data/dataseries.js');
 include('/synth/synth-adapter.js');
 
 // Extensions to the synth-adapter
@@ -62,10 +62,10 @@ psynth.SynthAdapter.toDataSeries = function(sequence) {
             if (!series) {
                 switch (cmdId) {
                     case psynth.SynthAdapter.SETNOTE:
-                        map[seriesId] = series = new DataSeries.V4DataSeries();
+                        map[seriesId] = series = new DataSeries();
                         break;
                     case psynth.SynthAdapter.SETCTRL8:
-                        map[seriesId] = series = new DataSeries.V2DataSeries();
+                        map[seriesId] = series = new DataSeries();
                         break;
                 }
             }
@@ -74,10 +74,10 @@ psynth.SynthAdapter.toDataSeries = function(sequence) {
                     var pitch = command.readUint8(cursor++);
                     var velocity = command.readUint8(cursor++);
                     if (velocity != 0) {
-                        noteMap[pitch] = series.set(delta, pitch, velocity, delta);                        
+                        noteMap[pitch] = series.set([delta, pitch, velocity, delta]);
                     } else {
                         var dataPoint = noteMap[pitch];
-                        dataPoint.w = delta - dataPoint.w;
+                        dataPoint[3] = delta - dataPoint[3];
                     }
                     break;
                 case psynth.SynthAdapter.SETCTRL8:

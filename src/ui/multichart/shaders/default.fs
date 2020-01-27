@@ -222,6 +222,6 @@ void main() {
 		col += vec3(0.1, 0.2, 0.24);
 	}
 
-	//col *= 0.8 + 0.5*rand(gl_FragCoord.xy)*vignette();
+	col *= 0.8 + 0.5*rand(gl_FragCoord.xy)*vignette();
     gl_FragColor.rgb = col;
 }

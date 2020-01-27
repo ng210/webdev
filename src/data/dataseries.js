@@ -120,6 +120,7 @@
                 this.data.splice(ix, 0, value);
             }
         }
+        return value;
     };
 
     // remove the value

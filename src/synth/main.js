@@ -1,16 +1,16 @@
 include('/base/dbg.js');
 
 include('/ge/sound.js');
-include('/ge/player/player.js');
+include('/ge/player/player-lib.js');
 include('/utils/syntax.js');
 include('/ui/multichart.js');
 
-include('./synth.js');
-include('./synth-adapter.js');
-include('./ui/pot.js');
+include('/synth/synth.js');
+include('/synth/synth-adapter.js');
+include('./synth-adapter-ext.js');
+include('/synth/ui/pot.js');
 
 include('grammar.js');
-include('framedataseries.js');
 
 var _synth = null;
 var _synthCount = 3;
@@ -41,7 +41,9 @@ var _patternConfig = {
     'height': 120,
     'grid-color': [0.1, 0.2, 0.3],
     'unit': [10, 5],
-    'titlebar': 'Pattern1'
+    'titlebar': 'Pattern1',
+    'render-mode': 'bar2',
+    'line-width': 0.1
 };
 
 var _patternUi = [];
@@ -92,7 +94,7 @@ async function createSequences(path) {
     var lines = res.data.split('\n');
     var i=0;
     while (i<lines.length) {
-        var sequence = new Player.Sequence(psynth.SynthAdapter.getInfo().id);
+        var sequence = new Player.Sequence(psynth.SynthAdapter);
         while (i<lines.length) {
             var line = lines[i++];
             if (line.search(/^\s*\/\/|^\s*$/) == -1) {
@@ -351,19 +353,19 @@ async function createPatternUi(id, el) {
     var multiChart = new Ui.MultiChart(`${lbl}_chart`, _patternConfig, null);
     multiChart.template.titlebar = lbl;
     multiChart.dataBind(_patterns[id]);
-    multiChart.selectedChannelId = psynth.SynthAdapter.SETNOTE;
-    multiChart.onclick = multiChartOnClick;
+    multiChart.selectChannel(psynth.SynthAdapter.SETNOTE);
+    //multiChart.onclick = multiChartOnClick;
     var ix = _patternUi.length;
     _patternUi.push(multiChart);
-    var range = {start:0, end:255, step:1};
-    _patterns[ix].getRange(multiChart.selectedChannelId, range);
-    //multiChart.scroll(0, 0);
-    multiChart.uniforms.uMaxX.value = range.max[0];
-    //multiChart.uniforms.uRange[1] = range.max[1];
+    // var range = {start:0, end:255, step:1};
+    // _patterns[ix].getRange(multiChart.selectedChannelId, range);
+    // //multiChart.scroll(0, 0);
+    // multiChart.uniforms.uMaxX.value = range.max[0];
+    // //multiChart.uniforms.uRange[1] = range.max[1];
     await multiChart.render({'element': el});
 }
 function multiChartOnClick(ctrl, e) {
-    this.__proto__.onclick.call(this, ctrl, e);
+    if (this.__proto__.onclick) this.__proto__.onclick.call(this, ctrl, e);
     this.dataSource.sequence.fromFrames(this.dataSource.data);
     return true;
 }
@@ -426,7 +428,7 @@ async function initializePlayer() {
     _player = new Player();
     // ADAPTERS
     // add adapter singletons
-    _player.adapters[psynth.SynthAdapter.getInfo().id] = psynth.SynthAdapter;
+    _player.addAdapter(psynth.SynthAdapter);
     // initialize adapters: create targets and create context
     psynth.SynthAdapter.createTargets(_player.targets, new Uint8Array(
         [
@@ -446,7 +448,7 @@ async function initializePlayer() {
     var sequences = await createSequences('res/demo02.seq');
 
     for (var i=0; i<_synthCount; i++) {
-        // var sequence = new Player.Sequence(psynth.SynthAdapter.getInfo().id);
+        // var sequence = new Player.Sequence(psynth.SynthAdapter);
         // // init sequence
         // sequence.writeHeader();
         // var delta = 0;
@@ -472,8 +474,9 @@ async function initializePlayer() {
         // sequence.writeEOS();
 
         var sequence = sequences[i % sequences.length];
-
-        _patterns[i] = new FrameDataSeries(sequence.toFrames(_player), psynth.SynthAdapter);
+        var map = psynth.SynthAdapter.toDataSeries(sequence);
+        Dbg.prln(`Sequence channels: ${Object.keys(map)}`);
+        _patterns[i] = map;
         _patterns[i].sequence = sequence;
 
         // create channel
@@ -507,6 +510,10 @@ function main(frame) {
 
 async function onpageload(e) {
     Dbg.init('con');
+    if (e && e.length) {
+        alert(e);
+        return;
+    }
 
     _startButton = document.getElementById('start');
     _startButton.onclick = function() {
