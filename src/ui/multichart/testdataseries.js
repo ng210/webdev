@@ -16,9 +16,10 @@ include('/ui/idataseries.js');
         this.y = y;
     }
 
-    function TestNote(frame, note, length) {
+    function TestNote(frame, note, velocity, length) {
         this.frame = frame;
         this.note = note;
+        this.velocity = velocity;
         this.length = length;
     }
 
@@ -35,7 +36,7 @@ include('/ui/idataseries.js');
         return null;
     };
 
-    ComplexSeries.prototype.getAsPoint = function(ix) { return this.data[ix] };
+    ComplexSeries.prototype.getAsArray = function(ix) { return [this.data[ix].x, this.data[ix].y]; };
 
     public({'TestData': TestData, 'TestNote': TestNote, 'ComplexSeries': ComplexSeries }, 'TestDataSeries');
 })();
