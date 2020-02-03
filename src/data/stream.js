@@ -57,6 +57,7 @@
     };
 
     Stream.prototype.writeStream = function(stream, offset, length) {
+        offset = offset || 0;
         var byteCount = length || stream.length - offset;
         ensureSize(this, byteCount);
         for (var i=offset; i<offset+byteCount; i++) {

@@ -10,28 +10,28 @@ include('/synth/grammar.js');
     function createSequence() {
         var seq = new Player.Sequence(psynth.SynthAdapter);
         seq.writeHeader();
-        // #0
+        // #00: frame(0, on(17, 127))
         seq.writeDelta(0); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(17); seq.writeUint8(127); seq.writeEOF();
-        // #2
+        // #02: frame(2, off(17))
         seq.writeDelta(2); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(17); seq.writeUint8(0); seq.writeEOF();
-        // #4
+        // #04: frame(2, on(29, 127))
         seq.writeDelta(2); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(29); seq.writeUint8(127); seq.writeEOF();
-        // #6
+        // #06: frame(2, off(29))
         seq.writeDelta(2); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(29); seq.writeUint8(0); seq.writeEOF();
-        // #7
-        seq.writeDelta(1); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(17); seq.writeUint8(127); seq.writeEOF();
-        // #8
+        // #08: frame(2, on(17, 127))
+        seq.writeDelta(2); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(17); seq.writeUint8(127); seq.writeEOF();
+        // #09: frame(1, off(17))
         seq.writeDelta(1); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(17); seq.writeUint8(0); seq.writeEOF();
-        // #9
+        // #10: frame(1, on(17, 127))
         seq.writeDelta(1); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(17); seq.writeUint8(127); seq.writeEOF();
-        // #10
+        // #11: frame(1, off(17))
         seq.writeDelta(1); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(17); seq.writeUint8(0); seq.writeEOF();
-        // #12
-        seq.writeDelta(2); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(29); seq.writeUint8(127); seq.writeEOF();
-        // #14
+        // #12: frame(1, on(29, 127))
+        seq.writeDelta(1); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(29); seq.writeUint8(127); seq.writeEOF();
+        // #14: frame(2, off(29))
         seq.writeDelta(2); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(29); seq.writeUint8(0); seq.writeEOF();
-        // #16
-        seq.writeDelta(0); seq.writeEOS();
+        // #16: frame(2, end)
+        seq.writeDelta(2); seq.writeEOS();
         return seq;
     }
 
@@ -44,11 +44,6 @@ include('/synth/grammar.js');
         return 0;
     }
 
-    function setup() {
-        var ds = psynth.SynthAdapter.toDataSeries(createSequence());
-        return ds;
-    }
-
     function test(lbl, action, errors) {
         Dbg.pr(lbl + '..');
         var err = action();
@@ -59,7 +54,7 @@ include('/synth/grammar.js');
 
     function test_synthAdapterToDataSeries() {
         var errors = [];
-        var series = setup();
+        var series = psynth.SynthAdapter.toDataSeries(createSequence());
         var channelCount = Object.keys(series);
 
         test('Channel count', () => {
@@ -89,8 +84,32 @@ include('/synth/grammar.js');
         return errors.length > 0 ? errors.join('\n') : 'Tests successful!';   
     }
 
+    function test_synthAdapterFromDataSeries() {
+        var errors = [];
+        var sequence = createSequence();
+        var expected = new Uint8Array(sequence.stream.buffer);
+        var series = psynth.SynthAdapter.toDataSeries(sequence);
+        var received =  new Uint8Array(psynth.SynthAdapter.fromDataSeries(series).stream.buffer);
+
+        test('convert all channels', () => {
+            var result = compare(expected, received);
+            if (result != 0) {
+                var start = result-2 >= 0 ? result-2 : 0;
+                var a1 = expected.slice(start, start+4);
+                var a2 = received.slice(start, start+4);
+                debugger;
+                return `Mismatch at ${result-1}!\n expected: ${a1}\n received: ${a2}`;
+            } else {
+                return false;
+            }
+        }, errors);
+
+        return errors.length > 0 ? errors.join('\n') : 'Tests successful!';   
+    }
+
     var tests = async function() {
-        Dbg.prln(test_synthAdapterToDataSeries());
+        //Dbg.prln(test_synthAdapterToDataSeries());
+        Dbg.prln(test_synthAdapterFromDataSeries());
         return 0;
     };
     public(tests, 'Synth-DataSeries tests');
