@@ -13,6 +13,7 @@ include('/data/dataseries.js');
             for (var i=0; i<10; i++) {
                 ds.set([2*i, Math.floor(0.4*i*i)]);
             }
+            //ds.isStrict = true;
             return ds;
         })(),
         'floats': (function() {
@@ -117,6 +118,14 @@ include('/data/dataseries.js');
         multiChart.dataBind(MultiDataSeries);
         multiChart.selectChannel('notes');
         ctrls_.push(multiChart);
+        multiChart.onSet = function(from, to) {
+            var dx = Math.abs(to[0] - from[0]) + 1;
+            var dy = Math.abs(to[1] - from[1]) + 1;
+            var velocity = Math.floor(255 * dy * this.uniforms.uUnit.value[1]/this.uniforms.uSize.value[1]);
+            var note = [from[0], from[1], velocity, dx];
+            this.series.set(note);
+            console.log('custom: [' + note +']');
+        };
 
         for (var i=0; i<ctrls_.length; i++) {
             await ctrls_[i].render({'element': document.body});

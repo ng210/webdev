@@ -2,7 +2,7 @@ include('/ui/control.js');
 include('/webgl/webgl.js');
 
 (function() {
-    var _supportedEvents = ['click', 'mousemove', 'mouseover', 'mouseout', 'mousedown', 'mouseup'];
+    var _supportedEvents = ['click', 'mousemove', 'mouseover', 'mouseout', 'mousedown', 'mouseup', 'keyup'];
     var _vertexShader = null;
     Ui.MultiChart = function(id, template, parent, path) {
         template = template || {};
@@ -10,11 +10,16 @@ include('/webgl/webgl.js');
         template.titlebar = template.titlebar || id;
         template['render-mode'] = template['render-mode'] || Object.keys(Ui.MultiChart.RenderModes)[0];
         template.type = template.type || 'multichart';
-        template.events = ['click', 'mousemove', 'mousedown', 'mouseup'];
         template.unit = template.unit || [10, 10];
         template['grid-color'] = template['grid-color'] || [0.1, 0.2, 0.5];
         template['color'] = template['color'] || [0.8, 0.78, 0.5];
         template['line-width'] = template['line-width'] || 0.1;
+        if (!template.events) template.events = [];
+        for (var i=0; i<_supportedEvents.length; i++) {
+            if (template.events.indexOf(_supportedEvents[i]) == -1) {
+                template.events.push(_supportedEvents[i]);
+            }
+        }
         Ui.Control.call(this, id, template, parent);
         // template
         // - titlebar (bool|text): titlebar
@@ -47,6 +52,7 @@ include('/webgl/webgl.js');
             uDataPoints:  { type:webGL.FLOATV, value: new Float32Array(1) },
             uRenderMode:  { type:webGL.INT, value: 0 },
             uLineWidth:  { type:webGL.FLOAT, value: this.template['line-width'] },
+            uDrawingRect: { type:webGL.FLOAT2V, value: new Float32Array(4)  },
             uSelectionRect: { type:webGL.FLOAT2V, value: new Float32Array(4)  },
             uSelectedPoints: { type:webGL.INTV, value: new Int8Array(1)  },
             uSelectionLength: { type:webGL.INT, value: 0  }
@@ -54,6 +60,7 @@ include('/webgl/webgl.js');
         this.the2triangles = null;
         this.path = path || '/ui/multichart/shaders';
         this.editState = 0;
+        this.editMode = 0;
         this.dragStart = [0, 0];
         this.frame = 0;
         this.timer = null;
@@ -96,31 +103,33 @@ include('/webgl/webgl.js');
             var prev = null, next = null;
             var values = [];
             var selection = [];
+            var data = this.series.data;
+            var x = NaN;
+            var ix = 0;
             var pointCount = 0;
-            this.series.iterate((value, it ,series) => {
-                if (value[0] < start) {
-                    prev = value;
-                } else
-                if (value[0] > end) {
-                    next = value;
-                    // break the iteration
-                    it.ix = series.data.length;
-                } else {
-                    values.push(...value);
-                    if (pointCount == 0 && prev) {
-                        pointCount++;
+            for (var i=0; i<data.length; i++) {
+                if (data[i][0] != x) {
+                    if (data[i][0] >= start) {
+                        break;
                     }
-                    for (var j=0; j<this.selection.length; j++) {
-                        if (this.selection[j] == it.ix) {
-                            selection.push(pointCount);
-                            break;
-                        }
-                    }
-                    pointCount++;
+                    ix = i;
+                    x = data[i][0];
                 }
-            });
-            if (prev) values.unshift(...prev);
-            if (next) values.push(...next);
+            }
+            for (;ix < data.length; ix++) {
+                values.push(...data[ix]);
+                for (var j=0; j<this.selection.length; j++) {
+                    if (this.selection[j] == ix) {
+                        selection.push(pointCount);
+                        break;
+                    }
+                }
+                pointCount++;
+                if (data[ix][0] > end) {
+                    break;
+                }
+            }
+
             this.uniforms.uMaxX.value = max[0];
             this.program.updateUniform('uMaxX');
             this.uniforms.uDataLength.value = values.length;
@@ -216,7 +225,7 @@ include('/webgl/webgl.js');
         }
     };
     Ui.MultiChart.prototype.initializeWebGL = async function() {
-        this.gl = this.canvas.getContext('webgl');
+        this.gl = this.canvas.getContext('webgl', { alpha: false });
         await this.setMode();
         // create "canvas" of 2 triangles
         const positions = [-1.0,  1.0,  1.0,  1.0,  -1.0, -1.0,  1.0, -1.0];
@@ -245,10 +254,6 @@ include('/webgl/webgl.js');
         this.uniforms.uSize.value[1] = this.canvas.height;
         this.program.updateUniform('uSize');
     };
-    Ui.MultiChart.prototype.draw = function(from, to, isComplete) {
-        //this.series.setRange(from, to);
-        this.canvas.style.cursor = 'pointer';
-    };
     Ui.MultiChart.prototype.erase = function(from, to, isComplete) {
         this.series.removeRange(from, to);
     };
@@ -265,6 +270,10 @@ include('/webgl/webgl.js');
         return [min, max];
     };
 
+    Ui.MultiChart.prototype.onSet = function(from, to) {
+        console.log('set ' + to);
+        this.series.set(to);
+    };
     Ui.MultiChart.prototype.onDragging = function(from, to) {
         var deltaX = from[0] - to[0];
         var deltaY = from[1] - to[1];
@@ -273,14 +282,14 @@ include('/webgl/webgl.js');
         this.scroll(deltaX, deltaY);
         this.updateDataPoints();
     };
-    Ui.MultiChart.prototype.onSelecting = function(from, to, isAdd) {
-        this.uniforms.uSelectionRect.value[0] = from[0] + this.uniforms.uOffset.value[0];
-        this.uniforms.uSelectionRect.value[1] = from[1] + this.uniforms.uOffset.value[1];
-        this.uniforms.uSelectionRect.value[2] = to[0] + this.uniforms.uOffset.value[0];
-        this.uniforms.uSelectionRect.value[3] = to[1] + this.uniforms.uOffset.value[1];
+    Ui.MultiChart.prototype.onSelecting = function(rect) {
+        this.uniforms.uSelectionRect.value[0] = rect[0][0] + this.uniforms.uOffset.value[0];
+        this.uniforms.uSelectionRect.value[1] = rect[0][1] + this.uniforms.uOffset.value[1];
+        this.uniforms.uSelectionRect.value[2] = rect[1][0] + this.uniforms.uOffset.value[0];
+        this.uniforms.uSelectionRect.value[3] = rect[1][1] + this.uniforms.uOffset.value[1];
         this.program.updateUniform('uSelectionRect');
     };
-    Ui.MultiChart.prototype.onSelect = function(from, to, isAdd) {
+    Ui.MultiChart.prototype.onSelect = function(from, to) {
         var rect = this.getRect(from, to);
         this.series.iterate(rect[0], rect[1], (value, it) => {
             this.selection.push(it.ix);
@@ -288,6 +297,20 @@ include('/webgl/webgl.js');
 
         this.updateDataPoints();
         this.onSelecting([0,0], [0,0]);
+    };
+    Ui.MultiChart.prototype.onDrawing = function(rect) {
+        this.uniforms.uDrawingRect.value[0] = rect[0][0] + this.uniforms.uOffset.value[0];
+        this.uniforms.uDrawingRect.value[1] = rect[0][1] + this.uniforms.uOffset.value[1];
+        this.uniforms.uDrawingRect.value[2] = rect[1][0] + this.uniforms.uOffset.value[0];
+        this.uniforms.uDrawingRect.value[3] = rect[1][1] + this.uniforms.uOffset.value[1];
+        this.program.updateUniform('uDrawingRect');
+        this.canvas.style.cursor = 'pointer';
+    };
+    Ui.MultiChart.prototype.onDraw = function(from, to) {
+        this.onSet(from, to);
+        this.updateDataPoints();
+        this.canvas.style.cursor = 'default';
+        this.onDrawing([0,0], [0,0]);
     };
     Ui.MultiChart.prototype.onZoom = function(dx, dy) {
         var zx = this.zoom[0] + 0.005 * dx;
@@ -304,14 +327,13 @@ include('/webgl/webgl.js');
         this.titleBar.innerHTML = `${this.template.titlebar} - (${(100*zx).toFixed(1)}%, ${(100*zy).toFixed(1)}%)`;
     };
 
-
     Ui.MultiChart.prototype.edit = function(pos, isComplete) {
         if (this.series) {
             var from = this.pointToData(this.dragStart);
             var to = this.pointToData(pos);
             switch (this.editState) {
                 // default
-                case Ui.MultiChart.EditModes.none:
+                case Ui.MultiChart.EditStates.none:
                     var p = this.pointToData(pos);
                     if (p != null && this.series.get(p).length > 0) {
                         this.canvas.style.cursor = 'pointer';
@@ -320,30 +342,38 @@ include('/webgl/webgl.js');
                     }
                     break;
                 // dragging
-                case Ui.MultiChart.EditModes.drag:
+                case Ui.MultiChart.EditStates.drag:
                     this.onDragging(this.dragStart, pos);
                     break;
                 // selection
-                case Ui.MultiChart.EditModes.reselect:
+                case Ui.MultiChart.EditStates.reselect:
                     this.selection = [];
                     var rect = this.getRect(this.dragStart, pos);
-                    !isComplete ? this.onSelecting(rect[0], rect[1], true) : this.onSelect(from, to, true);
+                    if (this.editMode == Ui.MultiChart.EditModes.select) {
+                        !isComplete ? this.onSelecting(rect) : this.onSelect(from, to);
+                    } else if (this.editMode == Ui.MultiChart.EditModes.draw) {
+                        !isComplete ? this.onDrawing(rect) : this.onDraw(from, to);
+                    }
                     break;
-                case Ui.MultiChart.EditModes.select:
+                case Ui.MultiChart.EditStates.select:
                     var rect = this.getRect(this.dragStart, pos);
-                    !isComplete ? this.onSelecting(rect[0], rect[1], true) : this.onSelect(from, to, true);
+                    !isComplete ? this.onSelecting(rect) : this.onSelect(from, to);
                     break;
-                case Ui.MultiChart.EditModes.deselect:
+                case Ui.MultiChart.EditStates.deselect:
                     var rect = this.getRect(this.dragStart, pos);
                     !isComplete ? this.onSelecting(rect[0], rect[1], false) : this.onSelect(from, to, false);
                     break;
-                case Ui.MultiChart.EditModes.zoom:
+                case Ui.MultiChart.EditStates.zoom:
                     if (!isComplete) {
                         this.onZoom(pos[0] - this.dragStart[0], pos[1] - this.dragStart[1]);
                     } else {
                         this.zoom[0] = this.uniforms.uUnit.value[0]/this.unit[0];
                         this.zoom[1] = this.uniforms.uUnit.value[1]/this.unit[1];
                     }                    
+                    break;
+                case Ui.MultiChart.EditStates.draw:
+                    //var rect = this.getRect(this.dragStart, pos);
+                    !isComplete ? this.onDrawing(from, to) : this.onDraw(from, to);
                     break;
                 default:
                     throw new Error('Illegal edit state!');
@@ -385,43 +415,57 @@ include('/webgl/webgl.js');
         if (e.shiftKey) keys |= 4;
         switch (keys) {
             case 0: // select
-                this.editState = Ui.MultiChart.EditModes.reselect;
+                this.editState = Ui.MultiChart.EditStates.reselect;
                 break;
             case 1: // alt only - zoom
-                this.editState = Ui.MultiChart.EditModes.zoom;
+                this.editState = Ui.MultiChart.EditStates.zoom;
                 break;
             case 2: // ctrl only - drag
-                this.editState = Ui.MultiChart.EditModes.drag;
+                this.editState = Ui.MultiChart.EditStates.drag;
                 break;
             case 3: // alt + ctrl - drag
-            this.editState = Ui.MultiChart.EditModes.drag;
+            this.editState = Ui.MultiChart.EditStates.drag;
                 break;
             case 4: // shift only - add to select
-                this.editState = Ui.MultiChart.EditModes.select;
+                this.editState = Ui.MultiChart.EditStates.select;
                 break;
             case 5: // alt + shift - ?
-                this.editState = Ui.MultiChart.EditModes.none;
+                this.editState = Ui.MultiChart.EditStates.none;
                 break;
             case 6: // ctrl + shift - deselection
-                this.editState = Ui.MultiChart.EditModes.deselect;
+                this.editState = Ui.MultiChart.EditStates.deselect;
                 break;
             case 7: // alt + ctrl + shift - ?
                 break;
             default:
-                this.editState = Ui.MultiChart.EditModes.draw;
+                this.editState = Ui.MultiChart.EditStates.draw;
                 break;
         }
+        this.edit(pos, false);
         e.preventDefault();
         return false;
     };
     Ui.MultiChart.prototype.onmouseup = function(ctrl, e) {
         var pos = [e.layerX, ctrl.canvas.height - e.layerY];
         this.edit(pos, true);
-        this.editState = Ui.MultiChart.EditModes.none;
+        this.editState = Ui.MultiChart.EditStates.none;
         var onclick = this.handlers['onclick'];
         if (onclick) {
             onclick.fn.call(onclick.obj, ctrl, e);
         }
+        e.preventDefault();
+    };
+    Ui.MultiChart.prototype.onkeyup = function(ctrl, e) {
+        var key = e.keyCode || e.which;
+        switch (key) {
+            case 83:
+                this.editMode = Ui.MultiChart.EditModes.select;
+                break;
+            case 68:
+                this.editMode = Ui.MultiChart.EditModes.draw;
+                break;
+        }
+        console.log(this.editMode);
         e.preventDefault();
     };
 
@@ -436,7 +480,7 @@ include('/webgl/webgl.js');
         'area': { 'shader': 'default', 'code': 5 },
         'line2': { 'shader': 'default', 'code': 6 }
     };
-    Ui.MultiChart.EditModes = {
+    Ui.MultiChart.EditStates = {
         'none': 0,
         'draw': 1,
         'erase': 2,
@@ -446,6 +490,12 @@ include('/webgl/webgl.js');
         'deselect': 6,
         'select': 7
     };
+    Ui.MultiChart.EditModes = {
+        'select': 0,
+        'draw': 1,
+        'erase': 2
+    };
+
     Ui.MultiChart.MinZoom = 0.5;
     Ui.MultiChart.MaxZoom = 2.0;
 

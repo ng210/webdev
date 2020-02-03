@@ -19,10 +19,6 @@ include('/ui/datalink.js');
 		this.css = [];
 		this.cssText = '';
 		this.handlers = {};
-		// // add onfocus and onblur events
-		// Ui.Control.registerHandler.call(this, 'focus', this);
-		// Ui.Control.registerHandler.call(this, 'blur', this);
-		// Ui.Control.registerHandler.call(this);
 		this.info = Ui.Control.Types[this.template.type];
 		this.element = null;
 		this.labelElem = null;
@@ -102,8 +98,8 @@ include('/ui/datalink.js');
 	};
 	Ui.Control.prototype.registerHandler = function(event) {
 		throw new Error('Not implemented!');
-    };
-
+	};
+	
 	Ui.Control.registerHandler = function(eventName) {
 		if (eventName === undefined) {
 			if (Array.isArray(this.template.events)) {
@@ -156,11 +152,27 @@ include('/ui/datalink.js');
 		return ctrl;
 	};
 	Ui.Control.onevent = function(e) {
+debugger;
 		var event = e.type;
-		var control = this.control;
+		var control = this.control || Ui.Control.focused;
 		//var target = e.target.control;
-		//console.log(`${event} for ${e.target.id} - ${control.id}, ${target.id}`);
+		//console.log(`${event} for ${e.target.id} - ${control.id}, ${e.target.id}`);
 		if (control) {
+			if (event == 'mousedown') {
+				if (control != Ui.Control.focused) {
+					if (Ui.Control.focused != null) {
+						//console.log(Ui.Control.focused.id + '.onblur');
+						if (typeof Ui.Control.focused.onblur === 'function') {
+							Ui.Control.focused.onblur(e);
+						}
+					}
+					Ui.Control.focused = control;
+					//console.log(Ui.Control.focused.id + '.onfocus');
+					if (typeof control.onfocus === 'function') {
+						control.onfocus(e);
+					}
+				}
+			}
 			var handlers = control.handlers[event];
 			if (handlers != undefined) {
 				for (var i=0; i<handlers.length; i++) {
@@ -171,8 +183,16 @@ include('/ui/datalink.js');
 					if (handler.fn.call(handler.obj, control, e)) break;
 				}
 			}
+		} else  if (Ui.Control.focused) {
+			Ui.Control.focused.onblur(e);
+			Ui.Control.focused = null;
 		}
 	};
+	Ui.Control.focused = null;
+
+	document.addEventListener('keydown', Ui.Control.onevent);
+	document.addEventListener('keyup', Ui.Control.onevent);
+	document.addEventListener('mousedown', Ui.Control.onevent);
 
 	addToSearchPath();
 	public(Ui, 'Ui');

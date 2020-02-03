@@ -19,6 +19,7 @@ uniform float uMaxX;
 uniform bool uArea;
 uniform int uRenderMode;
 uniform float uLineWidth;
+uniform vec2 uDrawingRect[2];
 uniform vec2 uSelectionRect[2];
 uniform int uSelectedPoints[MAXPOINT];
 uniform int uSelectionLength;
@@ -27,7 +28,8 @@ float rand(vec2 co){
    return fract(sin(0.001*uFrame*dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
 float vignette() {
-	return mix(1.0, smoothstep(0.6, 0.1, distance(uSize/2.0, gl_FragCoord.xy)/uSize.x), 1.6);
+	vec2 ratio = vec2(uSize.x/uSize.y, 1.0);
+	return mix(1.0, smoothstep(0.8, 0.1, 0.95*distance(vec2(0.5), gl_FragCoord.xy/uSize)), 1.2);
 }
 
 float greater(float x, float a) {
@@ -185,7 +187,7 @@ float getColorForLine2(vec2 pos) {
 }
 
 void main() {
-	vec3 col = 0.25*uGridColor;
+	vec3 col = 0.5*uGridColor;
     vec2 world = gl_FragCoord.xy + uOffset;
 	vec2 grid = mod(world, uUnit);
 	if (grid.x < 1.0 || grid.y < 1.0) col = uGridColor;
@@ -222,6 +224,10 @@ void main() {
 		col += vec3(0.1, 0.2, 0.24);
 	}
 
-	col *= 0.8 + 0.5*rand(gl_FragCoord.xy)*vignette();
+	if (between(uDrawingRect[0], uDrawingRect[1], world) == 1.0) {
+		col += 0.5*uColor;
+	}
+
+	col *= 0.2 + 0.8*vignette()*mix(1.0, rand(gl_FragCoord.xy), 0.2);
     gl_FragColor.rgb = col;
 }
