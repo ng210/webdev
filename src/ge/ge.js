@@ -181,22 +181,14 @@
 			if (managed === true) {
 				GE.managedBuffers.push(this);
 			}
-			Object.defineProperties(this, {
-				'width': {
-					writeable: false,
-					enumerable: false,
-					get: function() { return this.canvas.width; }
-				},
-				'height': {
-					writeable: false,
-					enumerable: false,
-					get: function() { return this.canvas.height; }
-				}
-			});
 
 			this.constructor = GE.Buffer;
 		}
 	};
+        GE.Buffer.prototype = {
+	    get width = { return this.canvas.width; },
+	    get height = { return this.canvas.height; }
+        };
 	GE.Buffer.prototype.blit = function(target) {
 		target = target || GE.frontBuffer;
 		target.ctx.putImageData(this.imgData, 0, 0);
