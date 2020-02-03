@@ -103,6 +103,7 @@ psynth.SynthAdapter.fromDataSeries = function(series, channelId) {
     var noteMap = [];
     while (true) {
         for (var k=0; k<keys.length; k++) {
+            if (channelId != undefined && channelId != k) continue;
             var ds = series[k];
             var data = ds.get(f0);
             if (data) {
