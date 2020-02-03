@@ -11,15 +11,12 @@ include('/data/stream.js');
         this.stream = new Stream(256);
         this.headerSizeInBytes = 2;
         this.adapter = adapter;
-        Object.defineProperties(this, {
-            'cursor': {
-                'enumerable': true,
-                set(v) { this.stream.cursor = v; },
-                get() { return this.stream.cursor; }
-            },
-        });
 
         this.constructor = Player.Sequence;
+    };
+    Sequence.prototype = {
+        get cursor() { return this.stream.cursor; },
+        set cursor(v) { this.stream.cursor = v; },
     };
 
     Sequence.prototype.writeHeader = function() {
