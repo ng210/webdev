@@ -36,15 +36,17 @@
         this.cursor = 0;
         this.view = new DataView(this.buffer);
 
-        Object.defineProperties(this, {
+        /*Object.defineProperties(this, {
             'size': {
                 'enumerable': true,
                 get() { return this.buffer.byteLength; }
             },
-        });
+        });*/
         this.constructor = Stream;
     }
-
+    Stream.prototype = {
+        get size() { return this.buffer.byteLength; }
+    };
     Stream.prototype.writeString = function(str) {
         ensureSize(this, str.length+1);
         for (var i=0; i<str.length; i++) {
