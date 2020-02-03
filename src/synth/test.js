@@ -49,54 +49,42 @@ include('/synth/grammar.js');
         return ds;
     }
 
+    function test(lbl, action, errors) {
+        Dbg.pr(lbl + '..');
+        var err = action();
+        if (!err) Dbg.prln('Ok');
+        else errors.push(err);
+        return err;
+    }
+
     function test_synthAdapterToDataSeries() {
         var errors = [];
-        var map = setup();
-        var channelCount = Object.keys(map);
-        if (channelCount.length != 1) {
-            errors.push(`Channel count: Expected 1 but received ${channelCount.length}!`);
-        }
+        var series = setup();
+        var channelCount = Object.keys(series);
 
-        var ds = map[psynth.SynthAdapter.SETNOTE];
-        Dbg.prln(' - Each');
-        var indices = ds.query(q => { q.continue = true; return q.this.getAsPoint(q.ix).y != undefined; });
-        var expected = [0, 1, 2, 3, 4];
-        if (compare(indices, expected)) {
-            errors.push(`Each: Expected ${expected} but received ${indices}!`);
-        }
+        test('Channel count', () => {
+            if (channelCount.length != 2)  return `Channel count: Expected 2 but received ${channelCount.length}!`;
+        }, errors);
 
-        Dbg.prln(' - FindFirst');
-        indices = ds.query(q => !(q.continue = q.this.getAsPoint(q.ix).y != 29));
-        expected = [1];
-        if (compare(indices, expected)) {
-            errors.push(`FindFirst: Expected ${expected} but received ${indices}!`);
-        }
+        var notes = series[psynth.SynthAdapter.SETNOTE];
+        var velocity = series[psynth.SynthAdapter.SETVELOCITY];
 
-        Dbg.prln(' - FindAll');
-        indices = ds.query(q => { q.continue = true; return q.this.getAsPoint(q.ix).y == 29; });
-        expected = [1, 4];
-        if (compare(indices, expected)) {
-            errors.push(`FindAll: Expected ${expected} but received ${indices}!`);
-        }
+        test('Note channel', () => !notes ? 'SetNote channel missing!' : (notes.data.length != 5) ? `expected to have 5 notes  but received ${notes.data.length}!` : false, errors);
+        test('Velocity', () => !velocity ? 'SetVelocity channel missing!' : (velocity.data.length != 5) ? `expected to have 5 velocity commands  but received ${velocity.data.length}!` : false, errors);
 
-        Dbg.prln(' - InRange');
-        indices = ds.getRange({ start:4, end:10 });
-        expected = [4, 29, 7, 17, 9, 17];
-        if (compare(indices, expected)) {
-            errors.push(`InRange: Expected ${expected} but received ${indices}!`);
-        }
+        test('Note commands', () => {
+            var testData = {
+                0: [0, 17, 127, 2],
+                4: [4, 29, 127, 2],
+                7: [7, 17, 127, 1]
+            };
 
-        Dbg.prln(' - getInfo');
-        var info = ds.getInfo();
-        Dbg.prln(JSON.stringify(info));
-        if (info.min.x != 0 || info.min.y != 17 || info.max.x != 12 || info.max.y != 29) {
-            errors.push(`getInfo: Expected {min:{x:0, y:17}, max:{x:12, y:29}} but received ${JSON.stringify(info)}!`);
-        }
-
-        // Dbg.prln(' - contains');
-        // if (!ds.contains(8, 20)) {
-        //     errors.push(`contains: Expected to return true!`);
-        // }
+            for (var fi in testData) {
+                var data = notes.get(fi)[0];
+                if (!Array.isArray(data)) return `Command at ${fi} did not return an array!`;
+                if (compare(data, testData[fi]) != 0) return `Command at ${fi} expected to be [${testData[fi]}] but was [${data}]!`;
+            }
+        }, errors);
 
         return errors.length > 0 ? errors.join('\n') : 'Tests successful!';   
     }

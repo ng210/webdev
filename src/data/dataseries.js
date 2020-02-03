@@ -110,7 +110,6 @@
     DataSeries.prototype.set = function(value) {
         var key = [value[0],];
         var ix = this.data.binSearch(key, this.compare);
-
         if (ix < 0) {
             this.data.splice(-ix, 0, value);
         } else {

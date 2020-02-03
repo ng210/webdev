@@ -56,6 +56,7 @@ include('/synth/synth.js');
 	psynth.SynthAdapter.SETCTRL8 = 3;
 	psynth.SynthAdapter.SETCTRL16 = 4;
 	psynth.SynthAdapter.SETCTRLF = 5;
+	psynth.SynthAdapter.SETVELOCITY = 6;
 
 	psynth.SynthAdapter.DEVICE_SYNTH = 0;
 	psynth.SynthAdapter.DEVICE_DELAY = 1;

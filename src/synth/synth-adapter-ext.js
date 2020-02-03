@@ -1,4 +1,5 @@
 include('/data/dataseries.js');
+include('/data/stream.js');
 include('/synth/synth-adapter.js');
 
 // Extensions to the synth-adapter
@@ -46,47 +47,63 @@ psynth.SynthAdapter.makeCommand = function(command) {
 };
 
 psynth.SynthAdapter.toDataSeries = function(sequence) {
-    var map = {};
-    var frames = sequence.toFrames();
+    var series = {};
+    var stream = sequence.stream;
+    var cursor = sequence.headerSizeInBytes;
     var delta = 0;
     var noteMap = {};
-    for (var fi=0; fi<frames.length; fi++) {
-        var frame = frames[fi];
-        delta += frame.delta;
-        for (var ci=0; ci<frame.commands.length; ci++) {
-            var command = frame.commands[ci];
-            var cursor = 0;
-            var cmdId = command.readUint8(cursor++);
-            var seriesId = (cmdId == psynth.SynthAdapter.SETNOTE) ? cmdId : command.readUint8(cursor++);
-            var series = map[seriesId];
-            if (!series) {
-                switch (cmdId) {
-                    case psynth.SynthAdapter.SETNOTE:
-                        map[seriesId] = series = new DataSeries();
-                        break;
-                    case psynth.SynthAdapter.SETCTRL8:
-                        map[seriesId] = series = new DataSeries();
-                        break;
+    while (true) {
+        delta += stream.readUint16(cursor); cursor += 2;
+        var cmd = 0;
+        while (true) {
+            // read command code, 1 byte
+            cmd = stream.readUint8(cursor++);
+            if (cmd == Player.EOF || cmd == Player.EOS) { //EOF or EOS
+                break;
+            }
+            var seriesId = (cmd == psynth.SynthAdapter.SETNOTE) ? cmd : stream.readUint8(cursor++);
+            var ds = series[seriesId];
+            if (!ds) {
+                ds = series[seriesId] = new DataSeries();
+                if (cmd == psynth.SynthAdapter.SETNOTE && !series[psynth.SynthAdapter.SETVELOCITY]) {
+                    series[psynth.SynthAdapter.SETVELOCITY] = new DataSeries();
                 }
             }
-            switch (cmdId) {
+
+            switch (cmd) {
                 case psynth.SynthAdapter.SETNOTE:
-                    var pitch = command.readUint8(cursor++);
-                    var velocity = command.readUint8(cursor++);
+                    var pitch = stream.readUint8(cursor++);
+                    var velocity = stream.readUint8(cursor++);
                     if (velocity != 0) {
-                        noteMap[pitch] = series.set([delta, pitch, velocity, delta]);
+                        // note on
+                        noteMap[pitch] = ds.set([delta, pitch, velocity, delta]);
+                        series[psynth.SynthAdapter.SETVELOCITY].set([delta, velocity]);
                     } else {
+                        // note off
                         var dataPoint = noteMap[pitch];
                         dataPoint[3] = delta - dataPoint[3];
                     }
                     break;
                 case psynth.SynthAdapter.SETCTRL8:
-                    series.set(delta, command.readUint8(cursor++));
+                    series.set(delta, stream.readUint8(cursor++));
                     break;
             }
         }
+        if (cmd == Player.EOS) {
+            break;
+        }
     }
-
-    return map;
+    return series;
 };
 
+psynth.SynthAdapter.fromDataSeries = function(series, channelId) {
+    var sequence = null;
+    var ds = series[channelId];
+    if (ds) {
+        sequence = new Sequence();
+        for (var i=0; i<ds.data.length; i++) {
+            
+        }
+    }
+    return sequence;
+};

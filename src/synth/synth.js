@@ -393,10 +393,14 @@
 		this.hp[1] = this.hp[0]; this.hp[0] = hp;
 
 		var output = 0.0;
-		if ((this.mode.value & psynth.FM_LP) != 0) // lowpass
+		if ((this.mode.value & psynth.FM_LP) != 0)     // lowpass
 			output += lp;
-		if ((this.mode.value & psynth.FM_HP) != 0) // hipass
+		if ((this.mode.value & psynth.FM_HP) != 0)	  // hipass
 			output += hp;
+		if ((this.mode.value & psynth.FM_BP) != 0) { // bandpass
+			output += input - hp - lp;
+			gain *= 1.5;
+		}
 		return gain * output;
 	};
 	psynth.Filter.prototype.onchange = function(cut) {

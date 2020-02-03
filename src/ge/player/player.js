@@ -16,6 +16,9 @@
 
     };
 
+    player.EOF = 0;
+    player.EOS = 1;
+
     public(player, 'Player');
 
 })();
