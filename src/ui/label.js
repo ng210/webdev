@@ -2,6 +2,8 @@ include('/ui/valuecontrol.js');
 
 (function() {
 	Ui.Label = function(id, template, parent) {
+		template = template || {};
+		template.type = template.type || 'label';
 		Ui.ValueControl.call(this, id, template, parent);
 	};
 	Ui.Label.base = Ui.ValueControl.prototype;

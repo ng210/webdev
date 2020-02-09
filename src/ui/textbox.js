@@ -2,6 +2,8 @@ include('/ui/valuecontrol.js');
 
 (function() {
 	Ui.Textbox = function(id, template, parent) {
+		template = template || {};
+		template.type = template.type || 'textbox';
 		Ui.ValueControl.call(this, id, template, parent);
 
 		this.constructor = Ui.Textbox;

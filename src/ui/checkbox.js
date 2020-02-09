@@ -1,8 +1,10 @@
 include('/ui/valuecontrol.js');
 
 (function() {
-	Ui.Checkbox = function(id, config, parent) {
-		Ui.ValueControl.call(this, id, config, parent);
+	Ui.Checkbox = function(id, template, parent) {
+		template = template || {};
+		template.type = template.type || 'checkbox';
+		Ui.ValueControl.call(this, id, template, parent);
 	}
 	Ui.Checkbox.base = Ui.ValueControl.prototype;
 	Ui.Checkbox.prototype = new Ui.ValueControl('checkbox');

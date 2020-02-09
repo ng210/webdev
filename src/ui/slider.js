@@ -2,6 +2,8 @@ include('/ui/valuecontrol.js');
 
 (function() {
 	Ui.Slider = function(id, template, parent) {
+		template = template || {};
+		template.type = template.type || 'slider';
 		Ui.ValueControl.call(this, id, template, parent);
 	};
 	Ui.Slider.base = Ui.ValueControl.prototype;
