@@ -112,26 +112,24 @@ include('/ui/datalink.js');
 		}
 
 		// check: node, node.prototype, node.parent...
-		var nodes = [];
-		nodes.push(this, this, this.__proto__, this);
+		var nodes = [this, this.__proto__];
 		var node = this.parent;
 		while (node) {
-			nodes.push(node, node);
+			nodes.push(node);
 			node = node.parent;
 		}
 		var handler;
 		var node = this;
-		for (var i=0; i<nodes.length; i+=2) {
+		for (var i=0; i<nodes.length; i++) {
 			node = nodes[i];
-			var context = nodes[i+1];
 			handler = node['on'+eventName];
 			if (handler !== undefined) {
 				if (typeof handler === 'function') {
 					if (this.handlers[eventName] === undefined) {
 						this.handlers[eventName] = [];
 					}
-					if (this.handlers[eventName].findIndex(x => x.fn == handler && x.obj == context) == -1) {
-						this.handlers[eventName].push({fn: handler, obj: context});
+					if (this.handlers[eventName].indexOf(handler) == -1) {
+						this.handlers[eventName].push(handler);
 						//console.log('register ' + eventName + ' for ' + node.id);
 					}
 				}
@@ -152,47 +150,55 @@ include('/ui/datalink.js');
 		return ctrl;
 	};
 	Ui.Control.onevent = function(e) {
-debugger;
 		var event = e.type;
-		var control = this.control || Ui.Control.focused;
-		//var target = e.target.control;
-		//console.log(`${event} for ${e.target.id} - ${control.id}, ${e.target.id}`);
-		if (control) {
-			if (event == 'mousedown') {
+		//console.log(`${event} for target=${e.target}, this=${this}, control=${this.control ? this.control : e.target.control ? e.target.control : 'none'}, Ui.Control.focused=${Ui.Control.focused}`);
+		var control = this.control || e.target.control;
+		if (event == 'mousedown' /* || other focus moving events*/ && control != Ui.Control.focused) {
+			if (control) {
 				if (control != Ui.Control.focused) {
-					if (Ui.Control.focused != null) {
-						//console.log(Ui.Control.focused.id + '.onblur');
-						if (typeof Ui.Control.focused.onblur === 'function') {
-							Ui.Control.focused.onblur(e);
-						}
+					if (Ui.Control.focused != null && typeof Ui.Control.focused.onblur === 'function') {
+						Ui.Control.focused.onblur();
+					}
+					if (typeof control.onfocus === 'function') {
+						control.onfocus();
 					}
 					Ui.Control.focused = control;
-					//console.log(Ui.Control.focused.id + '.onfocus');
-					if (typeof control.onfocus === 'function') {
-						control.onfocus(e);
-					}
 				}
+			} else {
+				if (Ui.Control.focused != null && typeof Ui.Control.focused.onblur === 'function') {
+					Ui.Control.focused.onblur();
+				}
+				Ui.Control.focused = null;
 			}
+		}
+
+		if (!control && (event == 'keydown' || event == 'keyup')) {
+			control = Ui.Control.focused;
+		}
+
+		if (control) {
 			var handlers = control.handlers[event];
 			if (handlers != undefined) {
 				for (var i=0; i<handlers.length; i++) {
 					var handler = handlers[i];
-// if (control != handler.obj) {
-// 	console.log(' *** not the same objects!!!');
-// }
-					if (handler.fn.call(handler.obj, control, e)) break;
+					//console.log(`Calling ${event} for ${control.id}`);
+					if (handler.call(control, e) == true) {
+						//console.log('break event handling')
+						e.stopPropagation();
+						e.preventDefault();
+						break;
+					}
 				}
 			}
-		} else  if (Ui.Control.focused) {
-			Ui.Control.focused.onblur(e);
-			Ui.Control.focused = null;
 		}
+		//console.log(Ui.Control.focused ? Ui.Control.focused.id : 'none')
 	};
 	Ui.Control.focused = null;
 
 	document.addEventListener('keydown', Ui.Control.onevent);
 	document.addEventListener('keyup', Ui.Control.onevent);
 	document.addEventListener('mousedown', Ui.Control.onevent);
+	document.addEventListener('mousemove', Ui.Control.onevent);
 
 	addToSearchPath();
 	public(Ui, 'Ui');

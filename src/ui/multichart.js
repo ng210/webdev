@@ -225,7 +225,7 @@ include('/webgl/webgl.js');
         }
     };
     Ui.MultiChart.prototype.initializeWebGL = async function() {
-        this.gl = this.canvas.getContext('webgl', { alpha: false });
+        this.gl = this.canvas.getContext('webgl'/*, { alpha: false }*/);
         await this.setMode();
         // create "canvas" of 2 triangles
         const positions = [-1.0,  1.0,  1.0,  1.0,  -1.0, -1.0,  1.0, -1.0];
@@ -397,16 +397,18 @@ include('/webgl/webgl.js');
         return [x, y];
     };
     // Event handlers
-    Ui.MultiChart.prototype.onmousemove = function(ctrl, e) {
+    Ui.MultiChart.prototype.onmousemove = function(e) {
         //var deltaX = e.screenX - Pot.dragPoint[0];
         //var deltaY = e.screenY - Pot.dragPoint[1];
-        var pos = [e.layerX, ctrl.canvas.height - e.layerY];
-        this.edit(pos);
-        this.gl.uniform2fv(this.program.uniforms.uMousePos.ref, pos);
-        e.preventDefault();
+        if (e.target == this.canvas) {
+            var pos = [e.layerX, this.canvas.height - e.layerY];
+            this.edit(pos);
+            this.gl.uniform2fv(this.program.uniforms.uMousePos.ref, pos);
+            return true;
+        }
     };
-    Ui.MultiChart.prototype.onmousedown = function(ctrl, e) {
-        var pos = [e.layerX, ctrl.canvas.height - e.layerY];
+    Ui.MultiChart.prototype.onmousedown = function(e) {
+        var pos = [e.layerX, this.canvas.height - e.layerY];
         this.dragStart[0] = pos[0];
         this.dragStart[1] = pos[1];
         var keys = 0;
@@ -442,20 +444,19 @@ include('/webgl/webgl.js');
                 break;
         }
         this.edit(pos, false);
-        e.preventDefault();
-        return false;
+        return true;
     };
-    Ui.MultiChart.prototype.onmouseup = function(ctrl, e) {
-        var pos = [e.layerX, ctrl.canvas.height - e.layerY];
+    Ui.MultiChart.prototype.onmouseup = function(e) {
+        var pos = [e.layerX, this.canvas.height - e.layerY];
         this.edit(pos, true);
         this.editState = Ui.MultiChart.EditStates.none;
         var onclick = this.handlers['onclick'];
         if (onclick) {
-            onclick.fn.call(onclick.obj, ctrl, e);
+            onclick.call(this, e);
         }
-        e.preventDefault();
+        return true;
     };
-    Ui.MultiChart.prototype.onkeyup = function(ctrl, e) {
+    Ui.MultiChart.prototype.onkeyup = function(e) {
         var key = e.keyCode || e.which;
         switch (key) {
             case 83:
@@ -466,7 +467,13 @@ include('/webgl/webgl.js');
                 break;
         }
         console.log(this.editMode);
-        e.preventDefault();
+        return true;
+    };
+    Ui.MultiChart.prototype.onfocus = function(e) {
+        this.canvas.style.backgroundColor = '#101010';
+    };
+    Ui.MultiChart.prototype.onblur = function() {
+        this.canvas.style.backgroundColor = '#000000';
     };
 
     // Statics

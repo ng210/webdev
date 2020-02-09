@@ -577,7 +577,7 @@ function public(obj, name) {
 
 async function include(path) {
 debug_('INCLUDE @' + path);
-if (path == '/ui/valuecontrol.js') debugger;
+//if (path == '/ui/valuecontrol.js') debugger;
     var mdl = null;
     var searchPath = null;
     if (path.startsWith('/')) {
