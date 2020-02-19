@@ -93,6 +93,12 @@ function debug_(txt) {
     if (DEBUGGING) console.log(txt);
 }
 
+function extend(b, e) {
+    e.prototype = Reflect.construct(b, []);
+    e.prototype.constructor = e;
+    e.base = b.prototype;
+}
+
 /******************************************************************************
  * URL
  ******************************************************************************/
@@ -230,198 +236,199 @@ Url.prototype.toString = function() {
 //*****************************************************************************
 
 function Resource(url) {
-        this.url = url;
-        // loaded data
-        this.data = null;
-        // created HTML node from the data
-        this.node = null;
-        // status of the resource
-        this.status = Resource.NEW;
-        // in case of error the instance of Error
-        this.error = null;
-        this.constructor = Resource;
-    }
-    Resource.load = async function(options) {
-        // check resource cache
-        var resource = Resource.cache[options.url];
-        if (!resource) {
-            // resource not found in cache
-            resource = new Resource(options.url);
-            // it will be loaded
-            resource.status = Resource.LOADING;
-            Resource.cache[options.url] = resource;
-            // load
+    this.url = url;
+    this.resolvedUrl = '';
+    // loaded data
+    this.data = null;
+    // created HTML node from the data
+    this.node = null;
+    // status of the resource
+    this.status = Resource.NEW;
+    // in case of error the instance of Error
+    this.error = null;
+}
+Resource.load = async function(options) {
+    // check resource cache
+    var resource = Resource.cache[options.url];
+    if (!resource) {
+        // resource not found in cache
+        resource = new Resource(options.url);
+        // it will be loaded
+        resource.status = Resource.LOADING;
+        Resource.cache[options.url] = resource;
+        // load
 debug_('LOAD ' + resource.toString());
-            await ajax.send(options);
-            resource.data = options.response;
-            if (options.error != null) {
-                resource.error = options.error;
-                resource.status = Resource.ERROR;
-            } else {
-                resource.status = Resource.LOADED;
-                if (options.process) {
-                    await resource.processContent(options);
-                    // update resource
-                    resource = Resource.cache[options.url];
-                }
-            }
+        await ajax.send(options);
+        resource.data = options.response;
+        if (options.error != null) {
+            resource.error = options.error;
+            resource.status = Resource.ERROR;
         } else {
-            if (resource.status != Resource.COMPLETE && resource.status != Module.RESOLVED) {
-                return new Promise( async function(resolve, reject) {
-                    var counter = 0;
-                    poll( function() {
-                        if (counter++ == 10) {
-                            resource.status = Resource.ERROR;
-                            resource.error = new Error('Unspecified error!');
-                            reject(resource);
-                            return true;
-                        }
-                        if (Resource.cache[resource.url].status != Resource.LOADING) {
-                            resolve(resource);
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    }, 100);
-                });
+            resource.resolvedUrl = options.resolvedUrl;
+            resource.status = Resource.LOADED;
+            if (options.process) {
+                await resource.processContent(options);
+                // update resource
+                resource = Resource.cache[options.url];
             }
         }
-        debug_('Cached\n' + Object.values(Resource.cache).map(x=>'-'+x.toString()).join('\n'));
-        return resource;
-    };
-    Resource.prototype.processContent = async function(options) {
-    debug_('PROCESS @' + this.url);
-        var data = options.response;
-        switch (options.contentType) {
-            case 'text/javascript':
-                // create Module from Resource
-                var mdl = Module.fromResource(this);
-                if (mdl.error == null) {
-                    Resource.cache[this.url] = mdl;
-                    debug_('CHANGED ' + mdl.toString());
-                    return mdl.resolveIncludes();
-                }
-                break;
-            case 'x-shader/*':
-            case 'x-shader/x-vertex':
-            case 'x-shader/x-fragment':
-                this.node = document.createElement('script');
-                this.node.setAttribute('type', options.contentType);
-                this.node.innerHTML = data;
-                this.node.url = options.url;
-                document.head.appendChild(this.node);
-                break;
-            case 'text/xml':
-                this.node = data;
-                break;
-            case 'text/json':
-                this.node = null;
-                break;
-            case 'text/html':
-                this.node = data
-                this.node.url = options.url;
-                break;
-            case 'text':
-            case 'text/css':
-                this.node = document.createElement('style');
-                this.node.innerHTML = data;
-                this.node.url = options.url;
-                document.head.appendChild(this.node);
-                break;
-            case 'image/bmp':
-            case 'image/gif':
-            case 'image/jpg':
-            case 'image/png':
-                this.node = new Image();
-                this.node.src = window.URL.createObjectURL(data);
-                break;
-            default: this.node = data; break;
+    } else {
+        if (resource.status != Resource.COMPLETE && resource.status != Module.RESOLVED) {
+            return new Promise( async function(resolve, reject) {
+                var counter = 0;
+                poll( function() {
+                    if (counter++ == 10) {
+                        resource.status = Resource.ERROR;
+                        resource.error = new Error('Unspecified error!');
+                        reject(resource);
+                        return true;
+                    }
+                    if (Resource.cache[resource.url].status != Resource.LOADING) {
+                        resolve(resource);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }, 100);
+            });
         }
-        this.status = Resource.COMPLETE;
-    };
-    Resource.prototype.toString = function() {
-        return `RES@(${this.url}) - (${this.status})`;
-    };
-
-    Resource.cache = {};
-
-    Resource.NEW = 'new';
-    Resource.LOADING = 'loading';
-    Resource.LOADED = 'loading';
-    Resource.COMPLETE = 'complete';
-    Resource.ERROR = 'error';
-    
-    Resource.searchPath = [];
-
-    //*************************************************************************
-    function Module(url) {
-        Resource.call(this, url);
-        // array of included modules
-        this.includes = {};
-        // published symbols
-        this.symbols = {};
-        this.constructor = Module;
     }
-    Module.prototype = new Resource;
+    debug_('Cached\n' + Object.values(Resource.cache).map(x=>'-'+x.toString()).join('\n'));
+    return resource;
+};
+Resource.prototype.processContent = async function(options) {
+debug_('PROCESS @' + this.url);
+    var data = options.response;
+    switch (options.contentType) {
+        case 'text/javascript':
+            // create Module from Resource
+            var mdl = Module.fromResource(this);
+            if (mdl.error == null) {
+                Resource.cache[this.url] = mdl;
+                debug_('CHANGED ' + mdl.toString());
+                return mdl.resolveIncludes();
+            }
+            break;
+        case 'x-shader/*':
+        case 'x-shader/x-vertex':
+        case 'x-shader/x-fragment':
+            this.node = document.createElement('script');
+            this.node.setAttribute('type', options.contentType);
+            this.node.innerHTML = data;
+            this.node.url = options.url;
+            document.head.appendChild(this.node);
+            break;
+        case 'text/xml':
+            this.node = data;
+            break;
+        case 'text/json':
+            this.node = null;
+            break;
+        case 'text/html':
+            this.node = data
+            this.node.url = options.url;
+            break;
+        case 'text':
+        case 'text/css':
+            this.node = document.createElement('style');
+            this.node.innerHTML = data;
+            this.node.url = options.url;
+            document.head.appendChild(this.node);
+            break;
+        case 'image/bmp':
+        case 'image/gif':
+        case 'image/jpg':
+        case 'image/png':
+            this.node = new Image();
+            this.node.src = window.URL.createObjectURL(data);
+            break;
+        default: this.node = data; break;
+    }
+    this.status = Resource.COMPLETE;
+};
+Resource.prototype.toString = function() {
+    return `RES@(${this.url}) - (${this.status})`;
+};
 
-    Module.prototype.resolveIncludes = async function() {
-    debug_('RESOLVE @' + this.url);
-        // replace #include '...' and trigger loading of the resource
-        //var re = /include\('([^']+)'\)/g;
-        var re = /\/\/.*include\('([^']+)'\)|include\('([^']+)'\)/g;
-        var loads = [];
-    //var mdl = this;
-        this.data = this.data.replace(re, (match, p1, p2) => {
-            if (p1 != undefined) {
-                return `${match} // skipped`;
-            }
-            if (p2 != undefined) {
-                loads.push(include(p2));
-                return `// ${match} // included`;
-            }
-            return p2;
-        });
-        // load every includes
-        var includes = await Promise.all(loads);
-debug_('DEPENDS @'+this.toString()+'\n' + includes.map(x=>`-${x.toString()}\n`).join(''));
- debug_('CACHE\n' + Object.values(Resource.cache).map(x=>`-${x.toString()}\n`).join(''));
-        this.includes = [];
-        for (var i=0; i<includes.length; i++) {
-            var im = includes[i];
-            if (im.status == Resource.ERROR) {
-                this.error = new Error(`Could not load dependency: ${im.url}`);
-                this.status = Resource.ERROR;
-                return;
-            }
-            this.includes.push(im.url);
+Resource.cache = {};
+
+Resource.NEW = 'new';
+Resource.LOADING = 'loading';
+Resource.LOADED = 'loading';
+Resource.COMPLETE = 'complete';
+Resource.ERROR = 'error';
+
+Resource.searchPath = [];
+
+//*************************************************************************
+function Module(url) {
+    Resource.call(this, url);
+    // array of included modules
+    this.includes = {};
+    // published symbols
+    this.symbols = {};
+    Resource.call(this, url);
+}
+extend(Resource, Module);
+
+Module.prototype.resolveIncludes = async function() {
+debug_('RESOLVE @' + this.url);
+    // replace #include '...' and trigger loading of the resource
+    //var re = /include\('([^']+)'\)/g;
+    var re = /\/\/.*include\('([^']+)'\)|include\('([^']+)'\)/g;
+    var loads = [];
+//var mdl = this;
+    this.data = this.data.replace(re, (match, p1, p2) => {
+        if (p1 != undefined) {
+            return `${match} // skipped`;
         }
-        this.includes = includes.map(x=>x.url);
-        // at this point every included module should be loaded and resolved
+        if (p2 != undefined) {
+            loads.push(include(p2));
+            return `// ${match} // included`;
+        }
+        return p2;
+    });
+    // load every includes
+    var includes = await Promise.all(loads);
+debug_('DEPENDS @'+this.toString()+'\n' + includes.map(x=>`-${x.toString()}\n`).join(''));
+debug_('CACHE\n' + Object.values(Resource.cache).map(x=>`-${x.toString()}\n`).join(''));
+    this.includes = [];
+    for (var i=0; i<includes.length; i++) {
+        var im = includes[i];
+        if (im.status == Resource.ERROR) {
+            this.error = new Error(`Could not load dependency: ${im.url}`);
+            this.status = Resource.ERROR;
+            return;
+        }
+        this.includes.push(im.url);
+    }
+    this.includes = includes.map(x=>x.url);
+    // at this point every included module should be loaded and resolved
 
-        this.status = Module.RESOLVED;
+    this.status = Module.RESOLVED;
 debug_('ADD @' + this.toString() + '\n' + this.includes.map(x=>`-${x}\n`).join(''));
 
-        this.node = document.createElement('script');
-        this.node.url = this.url;
-        this.node.innerHTML = this.data;
-        document.head.appendChild(this.node);
-    };
+    this.node = document.createElement('script');
+    this.node.url = this.url;
+    this.node.innerHTML = this.data;
+    document.head.appendChild(this.node);
+};
 
-    Module.prototype.toString = function() {
-        return `MDL@(${this.url}) - (${this.status})`;
-    };
+Module.prototype.toString = function() {
+    return `MDL@(${this.url}) - (${this.status})`;
+};
 
-    Module.fromResource = function(resource) {
-        var mdl = new Module();
-        for (var i in resource) {
-            if (resource.hasOwnProperty(i)) {
-                mdl[i] = resource[i];
-            }
+Module.fromResource = function(resource) {
+    var mdl = new Module();
+    for (var i in resource) {
+        if (resource.hasOwnProperty(i)) {
+            mdl[i] = resource[i];
         }
-        return mdl;
-    };
+    }
+    return mdl;
+};
 
-    Module.RESOLVED = 'resolved';
+Module.RESOLVED = 'resolved';
 
 /******************************************************************************
  * Boot, environment
@@ -523,7 +530,6 @@ function lock(token, action) {
         });
     });
 }
-
 
 /******************************************************************************
 /* Loading function
@@ -630,6 +636,7 @@ window.onload = e => poll(function() {
             return false;
         }
     }
+    debug_('onload - resource loading complete');
     onpageload(errors);
     return true;
 });

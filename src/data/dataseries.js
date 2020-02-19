@@ -36,11 +36,13 @@
     };
 
     DataSeries.prototype.between = function(v, min, max) {
-        var minX = min[0] != undefined ?  min[0] : -Infinity;
-        var minY = min[1] != undefined ?  min[1] : -Infinity;
-        var maxX = max[0] != undefined ?  max[0] : Infinity;
-        var maxY = max[1] != undefined ?  max[1] : Infinity;
-        return  minX <= v[0] && v[0] <= maxX && minY <= v[1] && v[1] <= maxY;
+        var x1 = min[0] != undefined ?  min[0] : -Infinity;
+        var y1 = min[1] != undefined ?  min[1] : -Infinity;
+        var x2 = max[0] != undefined ?  max[0] : Infinity;
+        var y2 = max[1] != undefined ?  max[1] : Infinity;
+        if (x1 > x2) { var tmp = x1; x1 = x2; x2 = tmp; }
+        if (y1 > y2) { var tmp = y1; y1 = y2; y2 = tmp; }
+        return  x1 <= v[0] && v[0] <= x2 && y1 <= v[1] && v[1] <= y2;
     };
 
     DataSeries.prototype.iterate_ = function(start, end, callback) {
@@ -85,7 +87,7 @@
         for (var i=0; i<this.data.length; i++) {
             var value = this.data[i];
             if (info.min[1] > value[1]) info.min[1] = value[1];
-            else if (info.max[1] < value[1]) info.max[1] = value[1];
+            if (info.max[1] < value[1]) info.max[1] = value[1];
         }
         return info;
     };
@@ -141,24 +143,6 @@
         }
         this.data = values;
     };
-
-    // // add or update the values between start and end
-    // DataSeries.prototype.setRange = function(start, end, value) {
-    //     var ix = this.data.binSearch(start, this.compare);
-    //     var values = [];
-    //     if (ix < 0) ix = -ix;
-    //     for (; ix<this.data.length; ix++) {
-    //         var value = this.data[ix];
-    //         if (value[0] > end[0]) break;
-    //         if (start[1] == undefined || start[1] <= value[1] && value[1] <= end[1]) {
-    //             if (this.isStrict) {
-                    
-    //             }
-    //             values.push(value);
-    //         }
-    //     }
-    //     return values;
-    // };
 
     public(DataSeries, 'DataSeries');
 })();

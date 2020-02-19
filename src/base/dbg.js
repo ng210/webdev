@@ -5,9 +5,11 @@
 		clicked: false,
 		init: function(lbl) {
 			this.con = document.getElementById(lbl);
-			this.con.onmouseover = e => this.con.style.opacity = this.clicked ? 0.5 : 0.2;
-			this.con.onmouseout = e => { this.clicked = false; this.con.style.opacity = 0.01; }
-			this.con.onclick = e => { this.clicked = true; this.con.style.opacity = 0.5; };
+			this.con.onmouseout = e => Dbg.mouseOver = false;
+			this.con.onclick = e => {
+				this.clicked = true;
+				this.con.style.opacity = 0.75;
+			};
 			this.con.style.opacity = 0.02;
 			this.con.style.zIndex = 100;
 			this.con.style.width = window.innerWidth;
@@ -31,10 +33,24 @@
 			this.prln(lbl + ': ' + ti);
 		}
 	};
+
+	Dbg.con_onmouseover = function(e) {
+		var node = e.target;
+		while (node) {
+			if (node == Dbg.con) {
+				Dbg.mouseOver = true;
+			}
+			node = node.parentNode;
+		}
+		Dbg.con.style.opacity = Dbg.mouseOver ? (Dbg.clicked ? 0.75 : 0.5) : 0.2;
+	};
+
 	public(Dbg, 'Dbg');
 	
 	} catch (error) {
 		alert(error.message + '\n' + error.stack);
 	}
+
+	document.addEventListener('mouseover', Dbg.con_onmouseover);
 
 })();
