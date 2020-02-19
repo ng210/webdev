@@ -1,21 +1,27 @@
 include('/ui/valuecontrol.js');
 
 (function() {
-	Ui.Button = function(id, template, parent) {
-		template = template || {};
-		template.type = template.type || 'button';
+	function Button(id, template, parent) {
 		Ui.ValueControl.call(this, id, template, parent);
 	}
-	Ui.Button.base = Ui.ValueControl.prototype;
-	Ui.Button.prototype = new Ui.ValueControl('button');
-	Ui.Control.Types['button'] = { ctor: Ui.Button, tag: 'BUTTON' };
+	extend(Ui.ValueControl, Button);
 
-	Ui.Button.prototype.registerHandler = function(event) {
+	Ui.Control.Types['Button'] = { ctor: Button, tag: 'BUTTON' };
+
+	Button.prototype.getTemplate = function() {
+		var template = Button.base.getTemplate();
+		template.type = 'Button';
+		return template;
+	};
+
+	Button.prototype.registerHandler = function(event) {
 		if (['click', 'mousedown', 'mouseup'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
 		Ui.Control.registerHandler.call(this, event);
     };
-	Ui.Button.prototype.render = function(ctx) {
-    	Ui.Button.base.render.call(this, ctx);
+	Button.prototype.render = function(ctx) {
+    	Button.base.render.call(this, ctx);
 	    //this.element.setAttribute('type', 'button');
-    };
+	};
+	
+	Ui.Button = Button;
 })();

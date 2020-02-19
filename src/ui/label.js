@@ -1,21 +1,27 @@
 include('/ui/valuecontrol.js');
 
 (function() {
-	Ui.Label = function(id, template, parent) {
-		template = template || {};
-		template.type = template.type || 'label';
+	function Label(id, template, parent) {
 		Ui.ValueControl.call(this, id, template, parent);
 	};
-	Ui.Label.base = Ui.ValueControl.prototype;
-	Ui.Label.prototype = new Ui.ValueControl('label');
-	Ui.Control.Types['label'] = { ctor: Ui.Label, tag: 'DIV' };
-	
-	Ui.Label.prototype.registerHandler = function(event) {
+	extend(Ui.ValueControl, Label);
+
+	Ui.Control.Types['Label'] = { ctor: Label, tag: 'DIV' };
+
+	Label.prototype.getTemplate = function() {
+        var template = Label.base.getTemplate();
+        template.type = 'Label';
+        return template;
+	};
+
+	Label.prototype.registerHandler = function(event) {
 		if (['click'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
 		Ui.Control.registerHandler.call(this, event);
-  };
-	Ui.Label.prototype.render = function(ctx) {
-    	Ui.Label.base.render.call(this, ctx);
 	};
+	Label.prototype.render = function(ctx) {
+    	Label.base.render.call(this, ctx);
+	};
+
+	Ui.Label = Label;
 
 })();
