@@ -28,7 +28,14 @@ div.wrapper {
 	margin:0;
 	background-color:#102030;
 	color:#208040;
-	opacity:0.5;
+	opacity:0.95;
 	height:25vh; width:100vw;
 	overflow:hidden auto
+}
+
+pre {
+	padding: 0;
+	margin: 0;
+	border: none;
+	display: inline;
 }
