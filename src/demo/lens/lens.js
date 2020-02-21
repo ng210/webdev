@@ -9,9 +9,9 @@ include('/ge/math/v2.js');
 		this.heightMap = null;
 		this.buffer = null;
 
-		this.constructor = Lens;
+		
 	}
-	Lens.prototype = new Demo;
+	extend(Demo, Lens);
 
 	Lens.prototype.prepare = async function() {
 		//var res = await load('/demo/lens/lens.gif');

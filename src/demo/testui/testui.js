@@ -2,9 +2,8 @@
     function TestUi(canvas) {
         Demo.call(this, 'Test-UI', canvas);
         this.config = {};
-        this.constructor = TestUi;
     }
-    TestUi.prototype = new Demo();
+    extend(Demo, TestUi);
     TestUi.prototype.prepare = async function() {
     };
     TestUi.prototype.initialize = function() {
@@ -22,11 +21,11 @@
     };
     TestUi.prototype.render = function(frame) {
     };
-    TestUi.prototype.onchange = function(ctrl) {
-        TestUi.flash(ctrl, 8);
+    TestUi.prototype.onchange = function(e) {
+        TestUi.flash(e.control, 8);
     };
-    TestUi.prototype.onclick = function(ctrl) {
-        TestUi.flash(ctrl, 4);
+    TestUi.prototype.onclick = function(e) {
+        TestUi.flash(e.control, 4);
     };
 
     TestUi.flash = function(ctrl, count) {

@@ -7,9 +7,9 @@ include('demo.js');
         Demo.call(this, 'noise', canvas);
         this.noise = new Noise(0);
         this.ctx = canvas.getContext('2d');
-        this.constructor = NoiseDemo;
+        
     }
-    NoiseDemo.prototype = new Demo;
+    extend(Demo, NoiseDemo);
 
     NoiseDemo.prototype.prepare = function() {
         ;

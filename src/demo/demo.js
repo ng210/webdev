@@ -1,12 +1,4 @@
-include('/ui/datalink.js')
-include('/ui/label.js');
-include('/ui/textbox.js');
-include('/ui/slider.js');
-include('/ui/ddlist.js');
-include('/ui/checkbox.js');
-include('/ui/button.js');
-include('/ui/board.js');
-include('/ui/grid.js');
+include('/ui/ui-lib.js');
 
 (function() {
     function Demo(id, canvas) {
@@ -19,24 +11,26 @@ include('/ui/grid.js');
         this.config = null;
         this.template = null;
         this.settings = null;
-
-        this.constructor = Demo;
     }
     Demo.prototype.prepare = function() { throw new Error('Not implemented'); };
     Demo.prototype.initialize = function() { throw new Error('Not implemented'); };
     Demo.prototype.processInputs = function() { throw new Error('Not implemented'); };
-    Demo.prototype.onchange = function(setting) { throw new Error('Not implemented'); };
+    Demo.prototype.onchange = function(e) { throw new Error('Not implemented'); };
     Demo.prototype.update = function(frame, dt) { throw new Error('Not implemented'); };
     Demo.prototype.render = function(frame, dt) { throw new Error('Not implemented'); };
     Demo.prototype.onresize = function(e) { ; };
-    Demo.prototype.onfocus = function(ctrl) {
+    Demo.prototype.onfocus = function(e) {
+        var hasContainer = e.control.parent instanceof Ui.Container || e.control.parent.parent instanceof Ui.Container;
+        console.log(`focus ctrl: ${e.control.id}, container: ${hasContainer}, color: ${e.control.backgroundColor}`);
         // save border settings
-        ctrl.backgroundColor = ctrl.element.style.backgroundColor;
-        ctrl.element.style.backgroundColor = 'lightblue';
+        e.control.backgroundColor = e.control.element.style.backgroundColor;
+        e.control.element.style.backgroundColor = 'lightblue';
     };
-    Demo.prototype.onblur = function(ctrl) {
+    Demo.prototype.onblur = function(e) {
+        var hasContainer = e.control.parent instanceof Ui.Container || e.control.parent.parent instanceof Ui.Container;
+        console.log(`blur ctrl: ${e.control.id}, container: ${hasContainer}, color: ${e.control.backgroundColor}`);
         // restore border settings
-        ctrl.element.style.backgroundColor = ctrl.backgroundColor;
+        e.control.element.style.backgroundColor = e.control.backgroundColor;
     };
     Demo.prototype.createUi = function() {
         this.ui.parent = this;

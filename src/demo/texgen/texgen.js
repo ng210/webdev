@@ -10,9 +10,9 @@ include('/ge/noise.js');
         this.srcBuffer = null;
         this.dstBuffer = null;
 
-        this.constructor = TexGen;
+        
     }
-    TexGen.prototype = new Demo();
+    extend(Demo, TexGen);
 
     TexGen.prototype.prepare = async function() {
     };

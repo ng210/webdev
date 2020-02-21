@@ -40,7 +40,7 @@ try {
                         this.status = Resource.NEW;
                         // in case of error the instance of Error
                         this.error = null;
-                        this.constructor = Resource;
+                        
                     }
                     Resource.NEW = 1;
                     Resource.LOADING = 2;
@@ -109,7 +109,7 @@ try {
                                 get: function() { return this.error_ != null ? this.error_ : this.resource.error; }
                             },
                         });
-                        this.constructor = Module;
+                        
                     }
                     // static cache of loaded modules
                     Module.cache = {};

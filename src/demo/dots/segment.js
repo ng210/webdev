@@ -10,7 +10,7 @@ function Segment(u, v) {
 	// }
 	this.d = this.b.sub(this.a);
 	
-	this.constructor = Segment;
+	
 }
 
 function cross2d(u, v) {

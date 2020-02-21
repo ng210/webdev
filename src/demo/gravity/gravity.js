@@ -18,9 +18,9 @@ include('/demo/gravity/star.js');
 		this.sun.radius = 0.1;
 		this.sun.updateByRadius();
 		this.stars.push(this.sun);
-        this.constructor = Gravity;
+        
     }
-	Gravity.prototype = new Demo;
+	extend(Demo, Gravity);
 
     Gravity.prototype.prepare = async function() {
 		return true;

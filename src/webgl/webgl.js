@@ -37,7 +37,7 @@
 			uniform.update = (uniform.ref) ? webGL.uniformUpdaters[uniform.type] : () => {};
 			this.uniforms[uk] = uniform;
 		}
-        this.constructor = GlProgram;
+        
 	}
 	GlProgram.prototype.updateUniform = function(name) {
 		var uniform = this.uniforms[name];

@@ -17,7 +17,9 @@ body {
 
 .titlebar {
 	font-size: 14pt;
-	background-color: silver;
+	background-color: gray;
+	padding:4px;
+	border-bottom: groove 2px lightgray;
 }
 
 .row {
@@ -54,7 +56,7 @@ body {
 	border: outset 1px lightgray;
 	font-family: Consolas;
 	font-size:small;
-	width: 16em;
+	width: 20em;
 	overflow: auto;
 }
 

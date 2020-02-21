@@ -12,11 +12,11 @@ include('/data/stream.js');
         this.headerSizeInBytes = 2;
         this.adapter = adapter;
 
-        this.constructor = Player.Sequence;
+        
     };
     Sequence.prototype = {
         get cursor() { return this.stream.cursor; },
-        set cursor(v) { this.stream.cursor = v; },
+        set cursor(v) { this.stream.cursor = v; }
     };
 
     Sequence.prototype.writeHeader = function() {

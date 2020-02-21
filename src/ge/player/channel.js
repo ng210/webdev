@@ -4,7 +4,7 @@ include('/ge/player/sequence.js');
     var frame = function() {
         this.delta = 0;
         this.commands = [];
-        this.constructor = Player.Frame;
+        
     };
     Player.Frame = frame;
 
@@ -20,7 +20,7 @@ include('/ge/player/sequence.js');
         this.loopCount = 0;
         this.cursor = 0;
 
-        this.constructor = Player.Channel;
+        
     };
 
     channel.prototype.assign = function(target, sequence) {

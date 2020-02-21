@@ -5,7 +5,7 @@
 	var fw = fw || {};
 	var array = function() {
 		Array.apply(this, arguments);
-		this.constructor = fw.Array;
+		
     };
     array.prototype = new Array;
 	array.prototype.compareTo = function(arr) {

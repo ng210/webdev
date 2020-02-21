@@ -1,18 +1,17 @@
 include('demo.js');
 include('/ge/math/v2.js');
 
-(function() {
+//(function() {
 	
     function Bump(canvas) {
-		Demo.call(this, 'bump', canvas);
 		this.images = [];
 		this.lightPos = new V2(.5, .5);
 		this.heightMap = null;
-		this.constructor = Bump;
-    }
-	Bump.prototype = new Demo;
+		Demo.call(this, 'bump', canvas);
+	}
+	extend(Demo, Bump);
 
-  Bump.prototype.prepare = async function() {
+  	Bump.prototype.prepare = async function() {
 		// create list of images
 		var urls = [
 			'/demo/bump/bump.gif', '/demo/bump/bump2.gif',
@@ -50,16 +49,17 @@ include('/ge/math/v2.js');
 		}
 	};
 	Bump.prototype.initialize = function() {
+		settings_.style.width = '16em';
 	};
 	Bump.prototype.renderUi = function(node) {
 		Demo.prototype.renderUi.call(this, node);
 		this.createHeightMap();
 	};
-  Bump.prototype.processInputs = function(e) {
+  	Bump.prototype.processInputs = function(e) {
 		this.getMouseCoors(this.lightPos);
 	};
-	Bump.prototype.onchange = function(setting) {
-		switch (setting.dataField) {
+	Bump.prototype.onchange = function(e) {
+		switch (e.control.dataField) {
 			case 'resolution':
 				this.onresize();
 				break;
@@ -68,7 +68,7 @@ include('/ge/math/v2.js');
 				break;
 		}
 	};
-  Bump.prototype.update = function(frame, dt) {
+  	Bump.prototype.update = function(frame, dt) {
 		var wi = this.heightMap.buffer.width;
 		var he = this.heightMap.buffer.height;
 		var radius = 0.5 * (this.settings.radius + 0.01) * wi;
@@ -112,15 +112,15 @@ include('/ge/math/v2.js');
 			ix+=2;
 		}
 	};
-  Bump.prototype.render = function(frame) {
+  	Bump.prototype.render = function(frame) {
 		GE.backBuffer.blit();
 	};
-  Bump.prototype.onresize = function(e) {
+  	Bump.prototype.onresize = function(e) {
 		// handler of window resize
-//		GE.resizeCanvas(GE.canvas, 1);	//this.data.resolution);
-//		var he = GE.canvas.height;
-//		this.aspect = GE.canvas.width/he;
-//		GE.ctx.setTransform(he/2, 0, 0, he/2, GE.canvas.width/2, he/2);
+		// GE.resizeCanvas(GE.canvas, 1);	//this.data.resolution);
+		// var he = GE.canvas.height;
+		// this.aspect = GE.canvas.width/he;
+		// GE.ctx.setTransform(he/2, 0, 0, he/2, GE.canvas.width/2, he/2);
 	};
 	Bump.prototype.getMouseCoors = function(v) {
 		v.x = GE.inputs.mpos[0]*GE.canvas.width/GE.canvas.clientWidth;	//2*GE.inputs.mpos[0]/this.data.resolution/GE.canvas.height - this.aspect;
@@ -128,5 +128,4 @@ include('/ge/math/v2.js');
 	};
 
 	public(Bump, 'Bump');
-})();
-
+//})();

@@ -11,9 +11,9 @@ include('/ge/noise.js');
 		this.lastRing = null;
 		this.cursorPos = new V3();
 
-        this.constructor = Wormhole;
+        
     }
-    Wormhole.prototype = new Demo();
+    extend(Demo, Wormhole);
 
     Wormhole.prototype.prepare = async function() {
     };

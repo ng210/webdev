@@ -7,7 +7,7 @@
 		
 		this.fillCache();
 		
-		this.constructor = Noise;
+		
 	}
 	Noise.SIZE = 256;  // must be power of 2
 	Noise.MASK = Noise.SIZE-1;

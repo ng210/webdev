@@ -6,9 +6,9 @@ include('asu/asu.js');
         this.id = 'Test-UI';
         this.canvas = canvas;
         this.config = {};
-        this.constructor = Space;
+        
     }
-    Space.prototype = new Demo();
+    extend(Demo, Space);
     Space.prototype.initialize = function() {
         Asu.initialize();
 		Dbg.prln('Space initialize');

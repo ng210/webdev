@@ -19,9 +19,9 @@ include('/ge/fn.js');
 			[0.10, 0.70, 0.10]
 		]);
 
-		this.constructor = Fire;
+		
     }
-	Fire.prototype = new Demo;
+	extend(Demo, Fire);
 
     Fire.prototype.prepare = async function() {
 		// create list of images

@@ -9,7 +9,7 @@
 	Fn.Filter = function(coeffs) {
 		this.coeffs = coeffs;
 
-		this.constructor = Fn.Filter;
+		
 	};
 	Fn.Filter.prototype.apply = function(data, width, height, stride, x, y, z) {
 		var n1 = Math.floor(this.coeffs[0].length/2);

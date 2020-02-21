@@ -5,7 +5,7 @@
         this.targets = [];
         this.channels = [];
         this.refreshRate = 25.0;
-        this.constructor = Player.Player;
+        
     };
     player.adapters = {};
     player.prototype.addAdapter = function(adapter) {

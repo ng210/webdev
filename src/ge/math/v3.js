@@ -18,7 +18,7 @@
         }
             
         this.length();
-        this.constructor = V3;
+        
     }
     // return length*(cos(arg), sin(arg))
     V3.fromPolar = function (a, d, length) {

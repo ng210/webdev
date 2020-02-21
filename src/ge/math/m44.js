@@ -16,7 +16,7 @@
             this.m41 = data[i++]; this.m42 = data[i++]; this.m43 = data[i++]; this.m44 = data[i];    
         }
         
-        this.constructor = M44;
+        
     }
 
     //                     n11 n12 n13 n14

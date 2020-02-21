@@ -8,7 +8,7 @@ function Dot() {
 	Actor.call(this);
 	this.color = '#e0d080';
 	this.r = Dot.pSize/2;
-	this.constructor = Dot;
+	
 }
 Dot.prototype = new Actor();
 

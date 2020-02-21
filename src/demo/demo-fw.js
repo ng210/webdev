@@ -87,9 +87,9 @@ function adjustContainer(ctrl) {
         //this.clicked = false;
         // }
     };
-    ctrl.registerHandler('click');
-    ctrl.registerHandler('mouseover');
-    ctrl.registerHandler('mouseout');
+    // ctrl.registerHandler('click');
+    // ctrl.registerHandler('mouseover');
+    // ctrl.registerHandler('mouseout');
 
     //el.style.opacity = 0.1;
 }
@@ -175,7 +175,7 @@ async function createDemo(id) {
         if (demo !== null) {
             // set up ui
             demo.createUi();
-            adjustContainer(demo.ui);
+            //adjustContainer(demo.ui);
             // do async preparations, like loading resources
             await demo.prepare();
             // initialize demo after

@@ -14,7 +14,7 @@
             this.y = x.y || 0.0;
         }
         this.length();
-        this.constructor = V2;
+        
     }
     // return length*(cos(arg), sin(arg))
     V2.fromPolar = function (arg, length) {

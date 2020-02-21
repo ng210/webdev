@@ -1,9 +1,9 @@
-include('ge/fn.js');
+include('/ge/fn.js');
 (function() {
 
 	function Star() {
 		this.reset();
-		this.constructor = Star;
+		
 	}
 	Star.prototype.reset = function() {
 		// position

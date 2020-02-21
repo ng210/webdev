@@ -9,19 +9,20 @@ include('/ge/fn.js');
 		this.vy = 0;
 		this.counter = 0;
 
-		this.constructor = Plasma;
+		
     }
-	Plasma.prototype = new Demo;
+	extend(Demo, Plasma);
 
     Plasma.prototype.prepare = async function() {
 	};
 	Plasma.prototype.initialize = function() {
+		settings_.style.width = '15.5em';
 		this.onresize();
 	};
     Plasma.prototype.processInputs = function(e) {
 	};
-	Plasma.prototype.onchange = function(setting) {
-		switch (setting.dataField) {
+	Plasma.prototype.onchange = function(e) {
+		switch (e.control.dataField) {
 			case 'shape':
 				this.onresize();
 				break;

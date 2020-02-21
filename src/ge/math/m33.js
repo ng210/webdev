@@ -12,7 +12,7 @@
             this.m31 = data[i++]; this.m32 = data[i++]; this.m33 = data[i++];
         }
         
-        this.constructor = M33;
+        
     }
 
     //              n11 n12 n13

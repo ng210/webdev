@@ -65,7 +65,7 @@ function MyActor() {
 	this.color = '#e0d080';
 	this.topLeft = new V3(-aspect_ + .02, -0.98, 0);
 	this.bottomRight = new V3(aspect_ - .02, .98, 0);
-	this.constructor = MyActor;
+	
 }
 MyActor.prototype = new Actor();
 

@@ -11,9 +11,9 @@ include('/ge/fn.js');
 		this.zoom = 0;
 		this.angle = 0;
 
-		this.constructor = Rotozoom;
+		
     }
-	Rotozoom.prototype = new Demo;
+	extend(Demo, Rotozoom);
 
     Rotozoom.prototype.prepare = async function() {
 		// create list of images

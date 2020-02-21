@@ -26,14 +26,15 @@ include('/ge/noise.js');
 		this.noise = new Noise();
 		this.lastMousePosition = new V3();
 		this.mode = 0;
-		this.constructor = Dots;
+		
 	}
-	Dots.prototype = new Demo;
+	extend(Demo, Dots);
 
 	Dots.prototype.prepare = async function() {
-			await load('/demo/dots/dot.js');
+		await load('/demo/dots/dot.js');
 	};
 	Dots.prototype.initialize = function() {
+		settings_.style.width = '16em';
 		this.onresize();
 		this.createSegmentsFromFbm();
 		this.createPlatforms();
@@ -66,13 +67,13 @@ include('/ge/noise.js');
 			this.mode |= 0x02;
 		}
 	};
-	Dots.prototype.onchange = function(setting) {
-		switch (setting.dataField) {
+	Dots.prototype.onchange = function(e) {
+		switch (e.control.dataField) {
 			case 'resolution':
 				this.onresize();
 				break;
 			case 'count':
-				var n = setting.getValue();
+				var n = e.control.getValue();
 				for (var i=this.data.count; i<n; i++) {
 					this.dots[i] = new Dots.Dot();
 					this.dots[i].setMass(5.0*Math.random()+5.0);

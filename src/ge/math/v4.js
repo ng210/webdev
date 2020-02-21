@@ -21,7 +21,7 @@
         }
             
         this.length();
-        this.constructor = V4;
+        
     }
     // return u = this + v
     V4.prototype.add = function (v) {

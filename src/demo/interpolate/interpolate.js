@@ -5,9 +5,9 @@
         this.points = [];
         this.time = 0;
         this.frame = 0;
-        this.constructor = Interpolate;
+        
     }
-    Interpolate.prototype = new Demo;
+    extend(Demo, Interpolate);
 
     Interpolate.prototype.functions = {
         "none": x => 0.0,
