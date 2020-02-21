@@ -1,19 +1,30 @@
 include('/ui/valuecontrol.js');
 
 (function() {
-	Ui.Slider = function(id, template, parent) {
-		template = template || {};
-		template.type = template.type || 'slider';
+	function Slider(id, template, parent) {
 		Ui.ValueControl.call(this, id, template, parent);
 	};
-	Ui.Slider.base = Ui.ValueControl.prototype;
-	Ui.Slider.prototype = new Ui.ValueControl('slider');
-	Ui.Control.Types['slider'] = { ctor: Ui.Slider, tag: 'INPUT' };
-	
-	Ui.Slider.prototype.render = function(ctx) {
-    	Ui.Slider.base.render.call(this, ctx);
-	    this.element.setAttribute('type', 'range');
-		//this.element.setAttribute('size', this.template.size || 4);
-    };
+	extend(Ui.ValueControl, Slider);
 
+	Ui.Control.Types['slider'] = { ctor: Slider, tag: 'INPUT' };
+
+	Slider.prototype.getTemplate = function() {
+		var template = Slider.base.getTemplate();
+		template.type = 'slider';
+		return template;
+	};
+	Slider.prototype.ondragging = function(e) {
+		alert(1);
+	};
+
+	Slider.prototype.render = function(ctx) {
+		Slider.base.render.call(this, ctx);
+		this.element.setAttribute('type', 'range');
+		this.element.setAttribute('min', this.min);
+		this.element.setAttribute('max', this.max);
+		this.element.setAttribute('step', this.step);
+		//this.element.setAttribute('size', this.template.size || 4);
+	};
+
+	Ui.Slider = Slider;
 })();

@@ -89,7 +89,8 @@ include('/ui/ui-lib.js');
                     var errors = [];
                     if (control.id != 'test'+i) errors.push('Id is invalid');
                     //if (control.template?.type != i) errors.push('Type is invalid');
-                    if (control.getValue() != i) errors.push('Value is not correct');
+                    var value = control.getValue();
+                    if (!control.isNumeric && value != i || control.isNumeric && value != control.defaultValue) errors.push('Value is not correct');
                     return errors.length > 0 ? errors : false;
                 }),
                 test('Can bind control to data', () => {
@@ -99,7 +100,7 @@ include('/ui/ui-lib.js');
                         levelLink = control.dataBind(data.level, 'value');
                     }
                     var dataField = control.template['data-field'];
-                    var value = dataField != 'level' ? dataLink[control.template['data-field']] : levelLink['value'];
+                    var value = dataField != 'level' ? dataLink[control.template['data-field']] : control.fromSource(levelLink['value']);
                     return control.dataLink && control.getValue() != value ? ['Data is not correctly bound'] : false;
                 }),
                 test('Can be changed by its bound data', () => {
@@ -110,7 +111,7 @@ include('/ui/ui-lib.js');
                             if (control.getValue() != data1[control.dataField]) error = ["Data write did not change control's value"];
                         } else {
                             levelLink.value = 3;
-                            if (control.getValue() != 3) error = ["Data write did not change control's value"];
+                            if (control.getValue() != control.fromSource(3)) error = ["Data write did not change control's value"];
                         }
                     }
                     return error;
@@ -120,10 +121,10 @@ include('/ui/ui-lib.js');
                     if (control.dataLink) {
                         if (control.template['data-field'] != 'level') {
                             control.setValue(data2[control.dataField]);
-                            if (dataLink[control.dataField] != data2[control.dataField]) error = ["Data write did not change control's value"];
+                            if (dataLink[control.dataField] != data2[control.dataField]) error = ["Change of control's value did not write data"];
                         } else {
-                            levelLink.value = 3;
-                            if (control.getValue() != 3) error = ["Data write did not change control's value"];
+                            control.setValue(75);
+                            if (levelLink.value != control.toSource(75)) error = ["Change of control's value did not write data"];
                         }
                     }
                     return error;
@@ -142,7 +143,6 @@ include('/ui/ui-lib.js');
         }
         return results;
     }
-
 
     var tests = async function() {
         return [

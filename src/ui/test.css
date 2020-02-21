@@ -1,0 +1,24 @@
+.test {
+    position: relative;
+    color: #40a060;
+    font-family: Verdana;
+    font-size: 12pt;
+    padding: 2px;
+    width: 6em;
+}
+
+div.test {
+    background-color: #402030;
+    border: solid 2px #804060;
+}
+
+button.test {
+    border-width: 3px;
+}
+
+span.test {
+    margin-top: 1em;
+    background-color: #e080c0;
+    border: solid 1px #e080c0;
+    color: #20080c
+}

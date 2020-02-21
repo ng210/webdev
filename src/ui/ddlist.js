@@ -7,10 +7,9 @@ include('/ui/valuecontrol.js');
 		if (Array.isArray(template.items)) {
 			this.setItems(template.items);
 		}
-        this.constructor = Ui.DropDownList;
     };
-    Ui.DropDownList.base = Ui.ValueControl.prototype;
-    Ui.DropDownList.prototype = new Ui.ValueControl('ddlist');
+	extend(Ui.ValueControl, Ui.DropDownList);
+
     Ui.Control.Types['ddlist'] = { ctor: Ui.DropDownList, tag: 'SELECT' };
 
     Ui.DropDownList.prototype.setValue = function(v) {

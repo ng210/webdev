@@ -6,8 +6,8 @@ include('/ui/valuecontrol.js');
 		template.type = template.type || 'checkbox';
 		Ui.ValueControl.call(this, id, template, parent);
 	}
-	Ui.Checkbox.base = Ui.ValueControl.prototype;
-	Ui.Checkbox.prototype = new Ui.ValueControl('checkbox');
+	extend(Ui.ValueControl, Ui.Checkbox);
+
 	Ui.Control.Types['checkbox'] = { ctor: Ui.Checkbox, tag: 'INPUT' };
 	Ui.Checkbox.prototype.getValue = function() { return this.element.checked; };
 	Ui.Checkbox.prototype.render = function(ctx) {

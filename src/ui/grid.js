@@ -16,11 +16,9 @@ try {
 		// set templates
 		this.rowTemplate = template['row-template'] || null;
 		this.cellTemplate = template['cell-template'] || null;
-
-		this.constructor = Ui.Grid;
 	};
-	Ui.Grid.base = Ui.Container.prototype;
-	Ui.Grid.prototype = new Ui.Container('grid');
+	extend(Ui.Container, Ui.Grid);
+
 	Ui.Control.Types['grid'] = { ctor: Ui.Grid, tag: 'DIV' };
 
 	Ui.Grid.prototype.buildRow = function(row, src, rowTmpl) {
@@ -46,18 +44,20 @@ try {
 	Ui.Grid.prototype.updateColumnCountFromDataSource = function(src) {
 		// The count of columns/cells is defined by columnCount (or maximum count of items in the data source)
 		for (var i in src) {
-			var rowItem = src[i];
-			if (!Array.isArray(rowItem) && typeof rowItem !== 'object') {
-				throw new Error('Invalid item at row ' +  i + '! It has to be an enumerable.');
-			}
-			var count = Object.keys(rowItem);
-			if (count > this.columnCount) {
-				this.columnCount = count;
+			if (src.hasOwnProperty(i)) {
+				var rowItem = src[i];
+				if (!Array.isArray(rowItem) && typeof rowItem !== 'object') {
+					throw new Error('Invalid item at row ' +  i + '! It has to be an enumerable.');
+				}
+				var count = Object.keys(rowItem);
+				if (count > this.columnCount) {
+					this.columnCount = count;
+				}
 			}
 		}
 	};
 	Ui.Grid.prototype.build = function() {
-		var src = this.dataField ? this.dataSource.obj[this.dataField] : this.dataSource.obj;
+		var src = this.dataField ? this.dataSource.obj[this.dataField] : this.dataSource;
 		// get or create row template
 		var rowTemplate = this.rowTemplate;
 		this.rows = {};
@@ -92,7 +92,6 @@ try {
 		if (this.template.header) {
 			this.rowKeys.unshift(headKey);
 			var row = { id: '00', name: headKey, cells:{}, parent: this };
-			debugger;
 			for (var ci=0; ci<this.columnKeys.length; ci++) {
 				var key = this.columnKeys[ci];
 				var column = this.columns[key];
@@ -116,10 +115,10 @@ try {
 		//Ui.Control.registerHandler.call(this);
 	};
 	Ui.Grid.prototype.dataBind = function(obj, field) {
-		var dataLink = Ui.Grid.base.dataBind.call(this, obj, field);
-		//this.dataSource = field ? obj[field] : obj;
+		//var dataLink = Ui.Grid.base.dataBind.call(this, obj, field);
+		this.dataSource = field ? obj[field] : obj;
 		this.build();
-		return dataLink;
+		return this.dataSource;
 	};
 	Ui.Grid.prototype.getCell = function(ri, ci) {
 		if (typeof ri === 'string') {

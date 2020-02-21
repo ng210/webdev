@@ -12,14 +12,16 @@ include('/ui/control.js');
 			this.max = this.parse(this.template.max); if (isNaN(this.max)) this.max = 100;
 			this.step = this.parse(this.template.step); if (isNaN(this.step)) this.step = 1;
 			// default min/max validations
-			this.addValidation('value', x => x < this.min, 'Value is less than minimum!');
-			this.addValidation('value', x => x > this.max, 'Value is greater than maximum!');
+			this.addValidation('value', x => x < this.min, 'Value is less than minimum!', x => this.min);
+			this.addValidation('value', x => x > this.max, 'Value is greater than maximum!', x => this.max);
 		}
 		this.dataLink = null;
 		this.dataSource = null;
 		this.dataField = this.template['data-field'];
-		this.offset = 0.0;
-		this.scale = 1.0;
+		this.fromSource = null;
+		this.toSource = null;
+		// this.offset = 0.0;
+		// this.scale = 1.0;
 		this.value = this.template.value;
 	}
 	extend(Ui.Control, ValueControl);
@@ -36,24 +38,28 @@ include('/ui/control.js');
 		template['default'] = 0;
         return template;
 	};
-
 	ValueControl.prototype.dataBind = function(dataSource, dataField) {
 		this.dataSource = dataSource instanceof Ui.DataLink ? dataSource : new Ui.DataLink(dataSource);
 		this.dataField = dataField !== undefined ? dataField : this.dataField;
 		if (this.dataSource && this.dataField) {
-			var srcToDst = null, dstToSrc = null;
 			if (this.isNumeric) {
 				var min = typeof dataSource.min === 'number' ? dataSource.min : this.min;
 				var max = typeof dataSource.max === 'number' ? dataSource.max : this.max;
-				this.offset = min;
-				this.scale = (max - min)/(this.max - this.min);
-				this.step = typeof dataSource.step === 'number' ? dataSource.step/this.scale : this.parse(this.template.step) ?? this.scale;
-				srcToDst = v => this.offset + this.scale*v;
-				dstToSrc = v => (v - this.offset)/this.scale*v;
+				this.scale = (max - min)/(this.max - this.min)
+				// (x-min)/(max-min) = (x'-min')/(max'-min')
+				// x = (x'-min')(max-min)/(max'-min') + min
+				this.toSource = x => (x - this.min)*this.scale + min;
+				this.fromSource = x => (x - min)/this.scale + this.min
+				// this.offset = min;
+				// this.scale = (max - min)/(this.max - this.min);
+				this.step = typeof dataSource.step === 'number' ? this.fromSource(dataSource.step) : this.parse(this.template.step) ?? this.step;
+				// srcToDst = v => this.offset + this.scale*v;
+				// dstToSrc = v => (v - this.offset)/this.scale;
 			}
 			this.dataLink = new Ui.DataLink(this);
-			this.dataLink.link('value', this.dataSource, this.dataField);
-			this.value = this.getValue();
+			this.dataLink.link('value', this.dataSource, this.dataField, this.toSource, this.fromSource);
+			var value = this.dataSource[this.dataField];
+			this.value = this.fromSource ? this.fromSource(value) : value;
 		}
 		return this.dataSource;
 	};
@@ -104,47 +110,33 @@ include('/ui/control.js');
 		}
 	};
 	ValueControl.prototype.getValue = function() {
-		return this.dataLink ? this.dataSource[this.dataField] : this.value;
-		// var text = this.element.value || this.element.innerText || '';
-		// if (this.isNumeric) {
-		// 	var v = this.parse(text);
-		// 	this.value = v !== NaN ? this.scale*v + this.offset : this.defaultValue;
-		// } else {
-		// 	this.value = text;
-		// }
-		// return this.value;
+		return this.value;
 	};
 	ValueControl.prototype.setValue = function(value) {
 		if (this.isNumeric) {
 			if (typeof value !== 'number') {
 				value = this.parse(value);
-				if (value === NaN) {
+				if (isNaN(value)) {
 					value = this.defaultValue;
 				}
 			}
 		} else {
 			value = value || '';
 		}
-		var results = this.validate(value);
+		var results = this.validate(value, true);
 		if (results.length == 0) {
-			if (this.dataLink) {
-				this.dataLink.value = value;
-			} else {
-				this.value = value;
+			this.dataLink ? this.dataLink.value = value : this.value = value;
+			if (this.element != null) {
+				if (this.element.value !== undefined) {
+					this.element.value = value;
+				} else {
+					this.element.innerHTML = value;
+				}			
 			}
 		} else {
 			results.forEach(x => console.warn(x));
 		}
-
-		if (this.element != null) {
-			if (this.element.value !== undefined) {
-				this.element.value = this.value;
-			} else {
-				this.element.innerHTML = this.value;
-			}			
-		}
 	};
-
 	ValueControl.prototype.registerHandler = function(event) {
 		if (['change'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
 		Ui.Control.registerHandler.call(this, event);
@@ -158,6 +150,31 @@ include('/ui/control.js');
 		}
 		var attribute = this.element.tagName == 'INPUT' ? 'value' : 'innerHTML';
 		this.element[attribute] = this.getValue();
+	};
+
+	ValueControl.prototype.addValidation = function(field, check, message, fix) {
+		if (this.validations[field] == undefined) this.validations[field] = [];
+		this.validations[field].push(new ValueControl.Validation(message || `Validation error for '${field}'`, check, fix));
+	}
+	ValueControl.prototype.validate = function(value, isStrict) {
+		var results = [];
+		for (var field in this.validations) {
+			for (var j=0; j<this.validations[field].length; j++) {
+				var validation = this.validations[field][j];
+				if (validation.check.call(this, value)) {
+					if (validation.fix && isStrict) {
+						value = validation.fix.call(this, value);
+					}
+					results.push({'field': `${this.id}#field`, 'value': value, 'message':validation.message});
+				}
+			}
+		}
+		return results;
+	};
+	ValueControl.Validation = function(message, check, fix) {	// bool check(field)
+		this.check = check;
+		this.message = message;
+		this.fix = fix;
 	};
 
 	Ui.ValueControl = ValueControl;

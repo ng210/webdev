@@ -1,33 +1,23 @@
-include('/ui/control.js');
+include('/ui/ui-lib.js');
 include('/webgl/webgl.js');
 
 (function() {
-    var _supportedEvents = ['click', 'mousemove', 'mouseover', 'mouseout', 'mousedown', 'mouseup', 'keyup'];
+    var _supportedEvents = ['click', 'mousemove', 'mouseover', 'mouseout', 'mousedown', 'mouseup', 'keydown', 'keyup'];
     var _vertexShader = null;
-    Ui.MultiChart = function(id, template, parent, path) {
-        template = template || {};
-        template.grid = template.grid || true;
-        template.titlebar = template.titlebar || id;
-        template['render-mode'] = template['render-mode'] || Object.keys(Ui.MultiChart.RenderModes)[0];
-        template.type = template.type || 'multichart';
-        template.unit = template.unit || [10, 10];
-        template['grid-color'] = template['grid-color'] || [0.1, 0.2, 0.5];
-        template['color'] = template['color'] || [0.8, 0.78, 0.5];
-        template['line-width'] = template['line-width'] || 0.1;
-        if (!template.events) template.events = [];
+    Ui.MultiChart = function MultiChart(id, template, parent) {
+        Ui.Control.call(this, id, template, parent);
+
         for (var i=0; i<_supportedEvents.length; i++) {
-            if (template.events.indexOf(_supportedEvents[i]) == -1) {
-                template.events.push(_supportedEvents[i]);
+            if (this.template.events.indexOf(_supportedEvents[i]) == -1) {
+                this.template.events.push(_supportedEvents[i]);
             }
         }
-        Ui.Control.call(this, id, template, parent);
-        // template
-        // - titlebar (bool|text): titlebar
-        // - grid: bool
-        // - stepX, stepY: number
-        this.template = template;
-        this.titleBar = null;
+
+        this.title_ = this.template.titlebar === true ? id : this.template.titlebar;
+        this.toolbar = null;
+        this.toolbarTemplate = null;
         this.canvas = null;
+        this.state = {};
         this.gl = null;
         this.renderModeName = null;
         this.renderMode = null;
@@ -37,7 +27,6 @@ include('/webgl/webgl.js');
         this.selectedChannelId = 0;
         this.series = null;
         this.selection = [];
-
         this.program = null;
         this.uniforms = {
             uFrame: { type:webGL.FLOAT, value: 0 },
@@ -52,13 +41,15 @@ include('/webgl/webgl.js');
             uDataPoints:  { type:webGL.FLOATV, value: new Float32Array(1) },
             uRenderMode:  { type:webGL.INT, value: 0 },
             uLineWidth:  { type:webGL.FLOAT, value: this.template['line-width'] },
-            uDrawingRect: { type:webGL.FLOAT2V, value: new Float32Array(4)  },
+            //uDrawingRect: { type:webGL.FLOAT2V, value: new Float32Array(4)  },
             uSelectionRect: { type:webGL.FLOAT2V, value: new Float32Array(4)  },
+            //uMode: { type:webGL.INT, value: 0 },
             uSelectedPoints: { type:webGL.INTV, value: new Int8Array(1)  },
             uSelectionLength: { type:webGL.INT, value: 0  }
         };
         this.the2triangles = null;
-        this.path = path || '/ui/multichart/shaders';
+        this.defaultPath = '/ui/multichart/shaders';
+        this.path = this.template.path;
         this.editState = 0;
         this.editMode = 0;
         this.dragStart = [0, 0];
@@ -66,9 +57,32 @@ include('/webgl/webgl.js');
         this.timer = null;
         this.isRunning = false;
     }
-    Ui.MultiChart.base = Ui.Control.prototype;
-    Ui.MultiChart.prototype = new Ui.Control();
+    extend(Ui.Control, Ui.MultiChart);
+    Object.defineProperties(Ui.MultiChart.prototype, {
+        'title': {
+            get: function() {return this.title_; },
+            set: function(v) { this.title_ = v; }
+        }
+    });
+
     Ui.Control.Types['multichart'] = { ctor: Ui.MultiChart, tag: 'DIV' };
+
+    Ui.MultiChart.prototype.getTemplate = function() {
+        var template = Ui.MultiChart.base.getTemplate();
+        template.grid = true;
+        template.titlebar = true;
+        template.toolbar = '/ui/multichart/toolbar.json';
+        template['render-mode'] = Object.keys(Ui.MultiChart.RenderModes)[0];
+        template.type = 'multichart';
+        template.unit = [10, 10];
+        template['grid-color'] = [0.1, 0.2, 0.5];
+        template['color'] = [0.8, 0.78, 0.5];
+        template['line-width'] = 0.1;
+        template.events = [];
+        template.width = 320;
+        template.height = 240;
+        return template;
+    }
 
 	Ui.MultiChart.prototype.dataBind = function(obj, field) {
 		this.dataSource = obj;
@@ -153,8 +167,31 @@ include('/webgl/webgl.js');
         if (_supportedEvents.indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
         Ui.Control.registerHandler.call(this, event);
     };
+    Ui.MultiChart.prototype.createToolbar = async function() {
+        if (this.toolbar == null) {
+            this.toolbar = document.createElement('table');
+            this.toolbar.style.width = '100%';
+            var tr = document.createElement('tr');
+            var res = await load(this.template.toolbar);
+            if (res.error) throw res.error;
+            this.toolbarTemplate = res.data;
+            for (var key in this.toolbarTemplate) {
+                if (this.toolbarTemplate.hasOwnProperty(key)) {
+                    var td = document.createElement('td');
+                    var ctrl = Ui.Control.create(`${this.id}#toolbar#${key}`, this.toolbarTemplate[key], this);
+                    ctrl.dataSource = this;
+                    ctrl.render({element:td});
+                    tr.appendChild(td);
+                }
+            }
+            this.toolbar.appendChild(tr);
+            this.toolbar.id = this.id + '#title';
+            this.toolbar.className = this.cssText + 'titlebar';
+            this.element.insertBefore(this.toolbar, this.element.childNodes[0]);
+        }
+    };
     Ui.MultiChart.prototype.render = async function(node) {
-        Ui.MultiChart.base.render.call(this, node);
+        Ui.Control.prototype.render.call(this, node);
         this.element.style.boxSizing = 'border-box';
         // create and initialize canvas for webgl rendering
         if (this.canvas === null) {
@@ -169,17 +206,9 @@ include('/webgl/webgl.js');
             this.resize();
             this.updateDataPoints();
         }
-        // create titlebar
-        if (this.titleBar === null && this.template.titlebar) {
-            this.titleBar = document.createElement('div');
-            this.titleBar.id = this.id + '#title';
-            this.titleBar.className = this.cssText + 'titlebar';
-            this.titleBar.innerHTML = this.template.titlebar;
-            this.titleBar.control = this;
-            this.titleBar.style.boxSizing = 'border-box';
-            this.titleBar.style.width = this.canvas.width + 'px';
-            this.element.insertBefore(this.titleBar, this.element.childNodes[0]);
-        }
+        // add titlebar as toolbar
+        await this.createToolbar();
+
         this.element.style.width = this.template.width + 'px';
         //this.element.style.height = this.template.height + 'px';
         this.isRunning = true;
@@ -196,9 +225,14 @@ include('/webgl/webgl.js');
         this.renderModeName = modeName;
         if (this.gl) {
             if (_vertexShader == null) {
-                _vertexShader = await load({ url: `${this.path}/default.vs`, contentType: 'x-shader/x-vertex', shaderType: this.gl.VERTEX_SHADER });
+                var resource = { url: `${this.path}/default.vs`, contentType: 'x-shader/x-vertex', shaderType: this.gl.VERTEX_SHADER };
+                _vertexShader = await load(resource);
                 if (_vertexShader.error instanceof Error) {
-                    throw new Error('Could not initialize v-shader!');
+                    resource.url = `${this.defaultPath}/default.vs`;
+                    _vertexShader = await load(resource);
+                    if (_vertexShader.error instanceof Error) {
+                        throw new Error('Could not initialize v-shader!');
+                    }
                 }
             }
             if (renderMode != this.renderMode) {
@@ -209,8 +243,12 @@ include('/webgl/webgl.js');
                     if (Ui.MultiChart.resources[url] == undefined) {
                         Ui.MultiChart.resources[url] = await load(resource);
                     }
-                    if (Ui.MultiChart.resources[url] == undefined || Ui.MultiChart.resources[url].error instanceof Error) {
-                        throw new Error('Could not initialize f-shader!');
+                    if (/*Ui.MultiChart.resources[url] == undefined ||*/ Ui.MultiChart.resources[url].error instanceof Error) {
+                        resource.url = `${this.defaultPath}/${this.renderMode.shader}.fs`;
+                        Ui.MultiChart.resources[url] = await load(resource);
+                        if (Ui.MultiChart.resources[url].error instanceof Error) {
+                            throw new Error('Could not initialize f-shader!');
+                        }
                     }
                     var shaders = {};
                     shaders[this.gl.VERTEX_SHADER] = _vertexShader.data;
@@ -269,11 +307,22 @@ include('/webgl/webgl.js');
         }
         return [min, max];
     };
+    Ui.MultiChart.prototype.updateRect = function(rect) {
+        rect = rect || [[0,0], [0,0]];
+        this.uniforms.uSelectionRect.value[0] = rect[0][0] + this.uniforms.uOffset.value[0];
+        this.uniforms.uSelectionRect.value[1] = rect[0][1] + this.uniforms.uOffset.value[1];
+        this.uniforms.uSelectionRect.value[2] = rect[1][0] + this.uniforms.uOffset.value[0];
+        this.uniforms.uSelectionRect.value[3] = rect[1][1] + this.uniforms.uOffset.value[1];
+        this.program.updateUniform('uSelectionRect');
+    };
 
     Ui.MultiChart.prototype.onSet = function(from, to) {
-        console.log('set ' + to);
         this.series.set(to);
     };
+    Ui.MultiChart.prototype.onRemove = function(from, to) {
+        this.series.removeRange(from, to);
+    };
+    
     Ui.MultiChart.prototype.onDragging = function(from, to) {
         var deltaX = from[0] - to[0];
         var deltaY = from[1] - to[1];
@@ -283,11 +332,7 @@ include('/webgl/webgl.js');
         this.updateDataPoints();
     };
     Ui.MultiChart.prototype.onSelecting = function(rect) {
-        this.uniforms.uSelectionRect.value[0] = rect[0][0] + this.uniforms.uOffset.value[0];
-        this.uniforms.uSelectionRect.value[1] = rect[0][1] + this.uniforms.uOffset.value[1];
-        this.uniforms.uSelectionRect.value[2] = rect[1][0] + this.uniforms.uOffset.value[0];
-        this.uniforms.uSelectionRect.value[3] = rect[1][1] + this.uniforms.uOffset.value[1];
-        this.program.updateUniform('uSelectionRect');
+        this.updateRect(rect);
     };
     Ui.MultiChart.prototype.onSelect = function(from, to) {
         var rect = this.getRect(from, to);
@@ -299,18 +344,22 @@ include('/webgl/webgl.js');
         this.onSelecting([0,0], [0,0]);
     };
     Ui.MultiChart.prototype.onDrawing = function(rect) {
-        this.uniforms.uDrawingRect.value[0] = rect[0][0] + this.uniforms.uOffset.value[0];
-        this.uniforms.uDrawingRect.value[1] = rect[0][1] + this.uniforms.uOffset.value[1];
-        this.uniforms.uDrawingRect.value[2] = rect[1][0] + this.uniforms.uOffset.value[0];
-        this.uniforms.uDrawingRect.value[3] = rect[1][1] + this.uniforms.uOffset.value[1];
-        this.program.updateUniform('uDrawingRect');
-        this.canvas.style.cursor = 'pointer';
+        this.updateRect(rect);
     };
     Ui.MultiChart.prototype.onDraw = function(from, to) {
         this.onSet(from, to);
         this.updateDataPoints();
         this.canvas.style.cursor = 'default';
-        this.onDrawing([0,0], [0,0]);
+        this.updateRect();
+    };
+    Ui.MultiChart.prototype.onErasing = function(rect) {
+        this.updateRect(rect);
+    };
+    Ui.MultiChart.prototype.onErase = function(from, to) {
+        this.onRemove(from, to);
+        this.updateDataPoints();
+        this.canvas.style.cursor = 'default';
+        this.updateRect();
     };
     Ui.MultiChart.prototype.onZoom = function(dx, dy) {
         var zx = this.zoom[0] + 0.005 * dx;
@@ -323,12 +372,12 @@ include('/webgl/webgl.js');
         this.uniforms.uUnit.value[1] = this.unit[1]*zy;
         this.program.updateUniform('uUnit');
         this.updateDataPoints();
-
-        this.titleBar.innerHTML = `${this.template.titlebar} - (${(100*zx).toFixed(1)}%, ${(100*zy).toFixed(1)}%)`;
+        this.titleBar.innerHTML = `${this.titleBar.innerHTML.split('-')[0]} - (${(100*zx).toFixed(1)}%, ${(100*zy).toFixed(1)}%)`;
     };
 
     Ui.MultiChart.prototype.edit = function(pos, isComplete) {
         if (this.series) {
+            var rect = this.getRect(this.dragStart, pos);
             var from = this.pointToData(this.dragStart);
             var to = this.pointToData(pos);
             switch (this.editState) {
@@ -348,20 +397,19 @@ include('/webgl/webgl.js');
                 // selection
                 case Ui.MultiChart.EditStates.reselect:
                     this.selection = [];
-                    var rect = this.getRect(this.dragStart, pos);
-                    if (this.editMode == Ui.MultiChart.EditModes.select) {
-                        !isComplete ? this.onSelecting(rect) : this.onSelect(from, to);
-                    } else if (this.editMode == Ui.MultiChart.EditModes.draw) {
-                        !isComplete ? this.onDrawing(rect) : this.onDraw(from, to);
-                    }
+                    // if (this.editMode == Ui.MultiChart.EditModes.select) {
+                         !isComplete ? this.onSelecting(rect) : this.onSelect(from, to);
+                    // } else if (this.editMode == Ui.MultiChart.EditModes.draw) {
+                    //     !isComplete ? this.onDrawing(rect) : this.onDraw(from, to);
+                    // }
                     break;
                 case Ui.MultiChart.EditStates.select:
-                    var rect = this.getRect(this.dragStart, pos);
+                    //var rect = this.getRect(this.dragStart, pos);
                     !isComplete ? this.onSelecting(rect) : this.onSelect(from, to);
                     break;
                 case Ui.MultiChart.EditStates.deselect:
-                    var rect = this.getRect(this.dragStart, pos);
-                    !isComplete ? this.onSelecting(rect[0], rect[1], false) : this.onSelect(from, to, false);
+                    //var rect = this.getRect(this.dragStart, pos);
+                    !isComplete ? this.onSelecting(rect) : this.onSelect(from, to);
                     break;
                 case Ui.MultiChart.EditStates.zoom:
                     if (!isComplete) {
@@ -372,8 +420,10 @@ include('/webgl/webgl.js');
                     }                    
                     break;
                 case Ui.MultiChart.EditStates.draw:
-                    //var rect = this.getRect(this.dragStart, pos);
-                    !isComplete ? this.onDrawing(from, to) : this.onDraw(from, to);
+                    !isComplete ? this.onDrawing(rect) : this.onDraw(from, to);
+                    break;
+                case Ui.MultiChart.EditStates.erase:
+                    !isComplete ? this.onErasing(rect) : this.onErase(from, to);
                     break;
                 default:
                     throw new Error('Illegal edit state!');
@@ -396,6 +446,7 @@ include('/webgl/webgl.js');
         var y = Math.floor((point[1] + this.uniforms.uOffset.value[1]) / this.uniforms.uUnit.value[1]);
         return [x, y];
     };
+
     // Event handlers
     Ui.MultiChart.prototype.onmousemove = function(e) {
         //var deltaX = e.screenX - Pot.dragPoint[0];
@@ -416,8 +467,18 @@ include('/webgl/webgl.js');
         if (e.ctrlKey) keys |= 2;
         if (e.shiftKey) keys |= 4;
         switch (keys) {
-            case 0: // select
-                this.editState = Ui.MultiChart.EditStates.reselect;
+            case 0: // default
+                switch (this.editMode) {
+                    case Ui.MultiChart.EditModes.select:
+                        this.editState = Ui.MultiChart.EditStates.reselect;
+                        break;
+                    case Ui.MultiChart.EditModes.draw:
+                        this.editState =Ui.MultiChart.EditStates.draw;
+                        break;
+                    case Ui.MultiChart.EditModes.erase:
+                        this.editState =Ui.MultiChart.EditStates.erase;
+                        break;
+                }
                 break;
             case 1: // alt only - zoom
                 this.editState = Ui.MultiChart.EditStates.zoom;
@@ -450,10 +511,13 @@ include('/webgl/webgl.js');
         var pos = [e.layerX, this.canvas.height - e.layerY];
         this.edit(pos, true);
         this.editState = Ui.MultiChart.EditStates.none;
-        var onclick = this.handlers['onclick'];
-        if (onclick) {
-            onclick.call(this, e);
-        }
+        // var onclick = this.handlers['onclick'];
+        // if (onclick) {
+        //     onclick.call(this, e);
+        // }
+        return true;
+    };
+    Ui.MultiChart.prototype.onkeydown = function(e) {
         return true;
     };
     Ui.MultiChart.prototype.onkeyup = function(e) {
@@ -461,19 +525,30 @@ include('/webgl/webgl.js');
         switch (key) {
             case 83:
                 this.editMode = Ui.MultiChart.EditModes.select;
+                this.canvas.style.backgroundColor = '#001020';
                 break;
             case 68:
                 this.editMode = Ui.MultiChart.EditModes.draw;
+                this.canvas.style.cursor = 'pointer';
+                this.canvas.style.backgroundColor = '#081008';
+                break;
+            case 69:
+                this.editMode = Ui.MultiChart.EditModes.erase;
+                this.canvas.style.cursor = 'pointer';
+                this.canvas.style.backgroundColor = '#100808';
                 break;
         }
         console.log(this.editMode);
         return true;
     };
     Ui.MultiChart.prototype.onfocus = function(e) {
-        this.canvas.style.backgroundColor = '#101010';
+        this.state['canvas.style.backgroundColor'] = this.canvas.style.backgroundColor;
+        this.canvas.style.backgroundColor = '#001020';
     };
     Ui.MultiChart.prototype.onblur = function() {
-        this.canvas.style.backgroundColor = '#000000';
+        this.canvas.style.backgroundColor = this.state['canvas.style.backgroundColor'];
+        this.editState = Ui.MultiChart.EditStates.none;
+        this.editMode = Ui.MultiChart.EditModes.select;
     };
 
     // Statics

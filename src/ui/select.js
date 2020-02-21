@@ -3,40 +3,44 @@ include('/ui/board.js');
 (function() {
     var _supportedEvents = ['mousedown', 'mouseup', 'keydown', 'keyup', 'mouseover', 'mouseout', 'change'];
 
-    Ui.Select = function(id, tmpl, parent) {
+    function Select(id, tmpl, parent) {
         Ui.Board.call(this, id, tmpl, parent);
-        this.options = new Ui.Board(`${id}#options`, null, this);
+        var template = {
+            titlebar: this.template.titlebar
+        };
+        this.options = new Ui.Board(`${id}#options`, template, this);
         this.isFlag = this.template.flag;
-        this.value = 0;
         this.registerHandler('change');
     };
-    extend(Ui.Board, Ui.Select);
+    extend(Ui.ValueControl, Select);
 
-    Ui.Control.Types['select'] = { ctor: Ui.Select, tag: 'DIV' };
+    Ui.Control.Types['select'] = { ctor: Select, tag: 'DIV' };
 
-    Ui.Select.prototype.getTemplate = function() {
-        var template = Ui.Select.base.getTemplate();
+    Select.prototype.getTemplate = function() {
+        var template = Select.base.getTemplate();
+        template.titlebar = false;
         template.flag = false;
         template.type = 'select';
         return template;
     };
-    Ui.Select.prototype.registerHandler = function(event) {
+    Select.prototype.registerHandler = function(event) {
         if (_supportedEvents.indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
         Ui.Control.registerHandler.call(this, event);
     };
 
-    Ui.Select.prototype.addOption = function(ctrl, key) {
+    Select.prototype.addOption = function(ctrl, key) {
         ctrl.css.push('option');
-        Ui.Select.base.add.call(this, ctrl, key);
+        this.options.add(ctrl, key);
         ctrl.registerHandler('click');
     };
-    Ui.Select.prototype.add = undefined;
+    Select.prototype.add = undefined;
 
-    Ui.Select.prototype.render = function(ctx) {
-        Ui.Select.base.render.call(this, ctx);
+    Select.prototype.render = function(ctx) {
+        Select.base.render.call(this, ctx);
+        this.options.render(ctx);
     };
 
-    Ui.Select.prototype.onclick = function(e) {
+    Select.prototype.onclick = function(e) {
         var value = e.control.getValue();
         if (this.isFlag) {
             var oldValue = this.dataSource[this.dataField];
@@ -52,14 +56,14 @@ include('/ui/board.js');
         this.setValue(value);
     };
 
-    Ui.Select.prototype.setValue = function(value) {
-        this.value = value;
-        this.element.dispatchEvent(new CustomEvent('change'));
-    };
+    // Select.prototype.setValue = function(value) {
+    //     this.value = value;
+    //     this.element.dispatchEvent(new CustomEvent('change'));
+    // };
 
-    Ui.Select.prototype.getValue = function() {
-        return this.value;
-    };
+    // Select.prototype.getValue = function() {
+    //     return this.value;
+    // };
 
-
+    Ui.Select = Select;
 })();

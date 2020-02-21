@@ -19,7 +19,6 @@ uniform float uMaxX;
 uniform bool uArea;
 uniform int uRenderMode;
 uniform float uLineWidth;
-uniform vec2 uDrawingRect[2];
 uniform vec2 uSelectionRect[2];
 uniform int uSelectedPoints[MAXPOINT];
 uniform int uSelectionLength;
@@ -222,10 +221,6 @@ void main() {
 
 	if (between(uSelectionRect[0], uSelectionRect[1], world) == 1.0) {
 		col += vec3(0.1, 0.2, 0.24);
-	}
-
-	if (between(uDrawingRect[0], uDrawingRect[1], world) == 1.0) {
-		col += 0.5*uColor;
 	}
 
 	col *= 0.2 + 0.8*vignette()*mix(1.0, rand(gl_FragCoord.xy), 0.2);

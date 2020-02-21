@@ -227,27 +227,6 @@ include('/ui/datalink.js');
 	Control.dragStart = [0, 0];
 	Control.isDragging = false;
 
-	Control.prototype.addValidation = function(field, check, message) {
-		if (this.validations[field] == undefined) this.validations[field] = [];
-		this.validations[field].push(new Control.Validation(message || `Validation error for '${field}'`, check));
-	}
-	Control.prototype.validate = function() {
-		var results = [];
-		for (var field in this.validations) {
-			for (var j=0; j<this.validations[field].length; j++) {
-				var validation = this.validations[field][j];
-				if (validation.check.call(this, this[field])) {
-					results.push({'field': `${this.id}#field`, 'value': this[field], 'message':validation.message});
-				}
-			}
-		}
-		return results;
-	};
-	Control.Validation = function(message, check) {	// bool check(field)
-		this.check = check;
-		this.message = message;
-	};
-
 	document.addEventListener('keydown', Control.onevent);
 	document.addEventListener('keyup', Control.onevent);
 	document.addEventListener('mouseup', Control.onevent);
