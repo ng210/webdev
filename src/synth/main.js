@@ -3,12 +3,12 @@ include('/base/dbg.js');
 include('/ge/sound.js');
 include('/ge/player/player-lib.js');
 include('/utils/syntax.js');
-include('/ui/multichart.js');
+include('ui/notechart.js');
 
 include('/synth/synth.js');
 include('/synth/synth-adapter.js');
 include('./synth-adapter-ext.js');
-include('/synth/ui/pot.js');
+include('ui/synth-ui.js');
 
 include('grammar.js');
 
@@ -20,9 +20,9 @@ var _frame = 0;
 var _presets = null;
 var _presetSelect = null;
 var _timer = null;
-var _lastNote = 0;
+//var _lastNote = 0;
 var _frame = 0;
-var _playerFrame = 0;
+//var _playerFrame = 0;
 var _synths = [];
 var _ledColor = [128, 160, 255];
 var _player = null;
@@ -31,16 +31,15 @@ var _samplePerFrame = 0;
 var _buffer = new Float32Array(16*1024);
 
 
-
 var _masterTune = 12;
 
 
 
 var _patternConfig = {
-    'width': 320,
-    'height': 120,
-    'grid-color': [0.1, 0.2, 0.3],
-    'unit': [10, 5],
+    'width': 400,
+    'height': 240,
+    // 'grid-color': [0.5, 0.5, 0.5],
+    'unit': [20, 12],
     'titlebar': 'Pattern1',
     'render-mode': 'bar2',
     'line-width': 0.1
@@ -265,17 +264,21 @@ async function buildUi() {
     var tab = document.getElementById('modules');
     for (var i=0; i<_synthCount; i++) {
         var tr = document.createElement('TR');
+        tab.appendChild(tr);
+
         // create synth
         var td = document.createElement('TD');
         var lbl = 'synth' + (i+1);
         psynth.SynthAdapter.devices[i].label = lbl;
-        td.appendChild(await createSynth(lbl, psynth.SynthAdapter.devices[i]));
+        var synth = await createSynth(lbl, psynth.SynthAdapter.devices[i]);
+        td.appendChild(synth);
         tr.appendChild(td);
+        updateSynth(synth);
+
         // create pattern
         td = document.createElement('TD');
         await createPatternUi(i, td);
         tr.appendChild(td);
-        tab.appendChild(tr);
     }
 }
 async function createSynth(lbl, synth) {
@@ -287,6 +290,7 @@ async function createSynth(lbl, synth) {
     synthElem.className = 'synth';
     synthElem.innerHTML = _template.synth1.innerHTML.replace(/{{id}}/g, lbl);
     synthElem.synth = synth;
+    synth.element = synthElem;
 
     // set potmeters
     var pots = synthElem.getElementsByClassName('pot');
@@ -337,25 +341,32 @@ async function createSynth(lbl, synth) {
         tr.appendChild(td);
     }
     synthElem.querySelector('div.voiceLEDs').appendChild(tbl);
+    return synthElem;
+}
+function updateSynth(synthElem) {
     var style = window.getComputedStyle(synthElem);
     var match = style.backgroundColor.match(/\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/)
     var color = match != null ? [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])] : _ledColor;
+    synthElem.synth.color = Array.from(color);
     for (var i=0; i<3; i++) {
-        color[i] = Math.floor((255 - color[i]) * 1.8);
+        color[i] = Math.floor(color[i] * 1.8);
         if (color[i] > 255) color[1] = 255;
     }
-    synth.voiceLeds.color = color;
+    synthElem.synth.voiceLeds.color = color;
 
-    return synthElem;
+    synthElem.onfocus = synthOnFocus;
+    synthElem.onblur = synthOnBlur;
 }
 async function createPatternUi(id, el) {
     var lbl = `Pattern${id}`;
-    var multiChart = new Ui.MultiChart(`${lbl}_chart`, _patternConfig, null);
-    multiChart.template.titlebar = lbl;
-    multiChart.dataBind(_patterns[id]);
+    var multiChart = new Ui.NoteChart(`${lbl}_chart`, _patternConfig, null);
+    multiChart.title = lbl;
+    multiChart.pattern = _patterns[id];
+    multiChart.dataBind(multiChart.pattern.map);
     multiChart.selectChannel(psynth.SynthAdapter.SETNOTE);
-    //multiChart.onclick = multiChartOnClick;
-    var ix = _patternUi.length;
+    multiChart.onSet = multiChartOnSet;
+    multiChart.onRemove = multiChartOnRemove;
+    //var ix = _patternUi.length;
     _patternUi.push(multiChart);
     // var range = {start:0, end:255, step:1};
     // _patterns[ix].getRange(multiChart.selectedChannelId, range);
@@ -363,11 +374,19 @@ async function createPatternUi(id, el) {
     // multiChart.uniforms.uMaxX.value = range.max[0];
     // //multiChart.uniforms.uRange[1] = range.max[1];
     await multiChart.render({'element': el});
+    multiChart.toolbar.style.backgroundColor = `rgb(${_synths[id].color})`;
 }
-function multiChartOnClick(ctrl, e) {
-    if (this.__proto__.onclick) this.__proto__.onclick.call(this, ctrl, e);
-    this.dataSource.sequence.fromFrames(this.dataSource.data);
-    return true;
+function multiChartOnSet(from, to) {
+    this.__proto__.onSet.call(this, from, to);
+    this.pattern.sequence.stream = psynth.SynthAdapter.fromDataSeries(this.dataSource).stream;
+    this.updateDataPoints(from, to);
+}
+function multiChartOnRemove(from, to) {
+    this.__proto__.onRemove.call(this, from, to);
+    resetPlayer();
+    this.pattern.sequence.stream = psynth.SynthAdapter.fromDataSeries(this.dataSource).stream;
+    this.updateDataPoints(from, to);
+
 }
 function toggleWaveform(e) {
     var toggle = e.target.parentNode;
@@ -419,10 +438,6 @@ function updateBpm() {
     // bpm 4th per minute => bpm*8/60 8th per second = bpm/7.5
     _samplePerFrame = Math.floor(48000*7.5/this.pot.value);
 }
-// var tones = {
-//     'c': 0, 'c#': 1, 'd': 2, 'd#': 3, 'e': 4, 'f':5, 'f#': 6, 'g': 7, 'g#': 8, 'a': 9, 'a#': 10, 'h': 11,
-//     'C': 12, 'C#': 13, 'D': 14, 'D#': 15, 'E': 16, 'F':17, 'F#':18, 'G':19, 'G#':20, 'A':21, 'A#':22, 'H':23
-// };
 
 async function initializePlayer() {
     _player = new Player();
@@ -448,44 +463,26 @@ async function initializePlayer() {
     var sequences = await createSequences('res/demo02.seq');
 
     for (var i=0; i<_synthCount; i++) {
-        // var sequence = new Player.Sequence(psynth.SynthAdapter);
-        // // init sequence
-        // sequence.writeHeader();
-        // var delta = 0;
-        // for (var j=0; j<16; j++) {
-        //     // note on
-        //     sequence.writeDelta(delta);
-        //     sequence.writeCommand(psynth.SynthAdapter.SETNOTE);
-        //     sequence.writeUint8(_masterTune);
-        //     sequence.writeUint8(127);
-        //     // end of frame
-        //     sequence.writeEOF();
-        //     delta = 1;
-        //     // note off
-        //     sequence.writeDelta(delta);
-        //     sequence.writeCommand(psynth.SynthAdapter.SETNOTE);
-        //     sequence.writeUint8(_masterTune);
-        //     sequence.writeUint8(0);
-        //     // end of frame
-        //     sequence.writeEOF();
-        // }
-        // // end of sequence
-        // sequence.writeDelta(delta);
-        // sequence.writeEOS();
-
         var sequence = sequences[i % sequences.length];
-        var map = psynth.SynthAdapter.toDataSeries(sequence);
-        Dbg.prln(`Sequence channels: ${Object.keys(map)}`);
-        _patterns[i] = map;
-        _patterns[i].sequence = sequence;
+        _patterns[i] = {
+            map: psynth.SynthAdapter.toDataSeries(sequence),
+            sequence: sequence
+        };
+        Dbg.prln(`Sequence channels: ${Object.keys(_patterns[i].map)}`);
 
         // create channel
         var channel = new Player.Channel(`channel${i}`, _player);
         channel.loopCount = 1000;
-        channel.assign(_player.targets[i], sequence);
+        channel.assign(_player.targets[i], _patterns[i].sequence);
         _player.channels.push(channel);
     }
 }
+function resetPlayer() {
+    for (var i=0; i<_player.channels.length; i++) {
+        _player.channels[i].reset();
+    }
+}
+
 function update() {
     for (var i=0; i<_player.channels.length; i++) {
         _player.channels[i].run(1);

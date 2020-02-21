@@ -113,6 +113,7 @@ psynth.SynthAdapter.fromDataSeries = function(series, channelId) {
         for (var k=0; k<keys.length; k++) {
             var key = parseInt(keys[k]);
             var ds = series[key];
+            if (ds.data.length == 0) continue;
             if (info[k] == undefined) {
                 info[k] = ds.getInfo();
             }
@@ -140,6 +141,7 @@ psynth.SynthAdapter.fromDataSeries = function(series, channelId) {
                 }
             }
         }
+        sequence = sequence || new Player.Sequence(psynth.SynthAdapter);
         for (var n in noteMap) {
             if (noteMap[n] == f0) {
                 if (lastWrite == sequence.cursor) {

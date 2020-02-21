@@ -5,29 +5,32 @@
 
 	var psynth = {
 
-		WF_NONE: 0,
-		WF_SIN:  1,
-		WF_TRI:  2,
-		WF_SAW:  4,
-		WF_PLS:  8,
-		WF_RND: 16,
-
-		FM_LP: 1,
-		FM_BP: 2,
-		FM_HP: 4,
-
+		WaveForms: {
+			None:		 0,
+			Sinus:		 1,
+			Triangle:	 2,
+			Saw:		 4,
+			Pulse:		 8,
+			Noise:		16
+		},
+		FilterModes: {
+			LowPass:  	 1,
+			BandPass: 	 2,
+			HighPass:	 4
+		}
+,
 		Ctrl: {
 			// GENERAL
 			amp: 	   0,
 
 			// LFO
 			lfo1amp:  10,
-			lfo1dc: 11,
+			lfo1dc:	  11,
 			lfo1fre:  12,
 			lfo1wave: 13,
 
 			lfo2amp:  20,
-			lfo2dc: 21,
+			lfo2dc:   21,
 			lfo2fre:  22,
 			lfo2wave: 23,
 
@@ -71,11 +74,11 @@
 			osc2wave: 66,
 
 			// flt
-			fltamp: 80,
-			fltcut: 81,
-			fltres: 82,
-			fltmod: 84,
-			fltmode: 83
+			flt1amp: 80,
+			flt1cut: 81,
+			flt1res: 82,
+			flt1mod: 84,
+			flt1mode: 83
 		},
 
 		theta: 2 * Math.PI,
@@ -158,9 +161,10 @@
 			// create a basic synth with 2 oscillators and 2 envelopes for AM
 			this.envelopes = [ new psynth.Env(parent, parent.controls.env1), new psynth.Env(parent, parent.controls.env2), new psynth.Env(parent, parent.controls.env3) ];
 			this.lfos = [ new psynth.Osc(parent, parent.controls.lfo1), new psynth.Osc(parent, parent.controls.lfo2) ];
-			parent.controls.osc1.note = this.note; parent.controls.osc2.note = this.note;
+			parent.controls.osc1.note = this.note;
+			parent.controls.osc2.note = this.note;
 			this.oscillators = [ new psynth.Osc(parent, parent.controls.osc1), new psynth.Osc(parent, parent.controls.osc2) ];
-			this.filter = new psynth.Filter(parent, parent.controls.flt);
+			this.filter = new psynth.Filter(parent, parent.controls.flt1);
 		},
 
 		/******************************************************************************
@@ -234,7 +238,7 @@
 					psw: new psynth.Pot(0, 1, .5),
 					wave: new psynth.Pot(0, 127, 2),
 				},
-				flt: {
+				flt1: {
 					amp: new psynth.Pot(0, 1, .5),
 					cut:  new psynth.Pot(0, 1, .4),
 					res: new psynth.Pot(0, 1, .2),
@@ -343,26 +347,26 @@
 		var out = 0.0;
 		var wf = this.wave.value;
 		var wfc = 0;
-		if ((wf & psynth.WF_SIN) != 0) {
+		if ((wf & psynth.WaveForms.Sinus) != 0) {
 			var arg = psynth.theta * this.timer;
 			out += Math.sin(arg);
 			wfc++;
 		}
-		if ((wf & psynth.WF_TRI) != 0) {
+		if ((wf & psynth.WaveForms.Triangle) != 0) {
 			var tmp = ((this.timer < psw) ? this.timer/psw : (1.0 - this.timer)/(1.0 - psw));
 			out += 2*tmp - 1.0;
 			wfc++;
 		}
-		if ((wf & psynth.WF_SAW) != 0) {
+		if ((wf & psynth.WaveForms.Saw) != 0) {
 			out += ((this.timer < psw) ? 2.0 * this.timer/psw : 0.0);
 			out -= 1.0;
 			wfc++;
 		}
-		if ((wf & psynth.WF_PLS) != 0) {
+		if ((wf & psynth.WaveForms.Pulse) != 0) {
 			out += this.timer < psw ? 1.0 : -1.0;
 			wfc++;
 		}
-		if ((wf & psynth.WF_RND) != 0) {
+		if ((wf & psynth.WaveForms.Noise) != 0) {
 			if (this.timer < delta ||
 				this.timer > 0.5 && this.timer < 0.5 + delta)
 				this.smp = Math.random();
@@ -393,11 +397,11 @@
 		this.hp[1] = this.hp[0]; this.hp[0] = hp;
 
 		var output = 0.0;
-		if ((this.mode.value & psynth.FM_LP) != 0)     // lowpass
+		if ((this.mode.value & psynth.FilterModes.LowPass) != 0)     // lowpass
 			output += lp;
-		if ((this.mode.value & psynth.FM_HP) != 0)	  // hipass
+		if ((this.mode.value & psynth.FilterModes.HighPass) != 0)	  // hipass
 			output += hp;
-		if ((this.mode.value & psynth.FM_BP) != 0) { // bandpass
+		if ((this.mode.value & psynth.FilterModes.BandPass) != 0) { // bandpass
 			output += input - hp - lp;
 			gain *= 1.5;
 		}
@@ -516,11 +520,11 @@
 			case psynth.Ctrl.osc2wave: pot = this.controls.osc2.wave; break;
 
 			// filter
-			case psynth.Ctrl.fltamp: pot = this.controls.flt.amp; break;
-			case psynth.Ctrl.fltcut:  pot = this.controls.flt.cut; break;
-			case psynth.Ctrl.fltres: pot = this.controls.flt.res; break;
-			case psynth.Ctrl.fltmod: pot = this.controls.flt.mod; break;
-			case psynth.Ctrl.fltmode: pot = this.controls.flt.mode; break;
+			case psynth.Ctrl.flt1amp: pot = this.controls.flt1.amp; break;
+			case psynth.Ctrl.flt1cut:  pot = this.controls.flt1.cut; break;
+			case psynth.Ctrl.flt1res: pot = this.controls.flt1.res; break;
+			case psynth.Ctrl.flt1mod: pot = this.controls.flt1.mod; break;
+			case psynth.Ctrl.flt1mode: pot = this.controls.flt1.mode; break;
 
 			default: console.log('The control id ' + controlId + ' is invalid!'); break
 		}
@@ -531,15 +535,15 @@
 		if (velocity != 0) {
 			// get free voice
 			var voice = this.voices[0];
-			var ix = 0;
+			//var ix = 0;
 			for (var i=0; i<this.voices.length; i++) {
 				if (voice.getTicks() < this.voices[i].getTicks()) {
 					voice = this.voices[i];
-					ix = i;
+					//ix = i;
 				}
 				if (!this.voices[i].isActive()) {
 					voice = this.voices[i];
-					ix = i;
+					//ix = i;
 					break;
 				}
 			}

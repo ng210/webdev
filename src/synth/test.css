@@ -1,0 +1,134 @@
+body {
+    background-color: #405070;
+}
+
+.synth {
+    position: relative;
+    width:320px
+}
+
+.env {
+    position:absolute; left: 2px;
+    width:180px; height:32px;
+    border: outset 1px #c0c0e0;
+    margin: 0px;
+    background-image: url('/src/synth/res/env.png');
+    background-repeat: no-repeat;
+}
+
+.osc {
+    position:absolute; left: 185px; 
+    width:160px; height:32px;
+    border: outset 1px #c0c0e0;
+    margin: 0px; padding: 0px;
+    background-image: url('/src/synth/res/osc.png');
+    background-repeat: no-repeat;
+}
+.lfo {
+    position:absolute; left: 349px;
+    width:136px; height:32px;
+    border: outset 1px #c0c0e0;
+    margin: 0px;
+    background-image: url('/src/synth/res/lfo.png');
+    background-repeat: no-repeat;
+}
+
+.flt {
+    position:absolute; left: 185px;
+    width:160px; height:32px;
+    border: outset 1px #c0c0e0;
+    margin: 0px;
+    background-image: url('/src/synth/res/flt.png');
+    background-repeat: no-repeat;
+}
+
+.pot {
+    position: absolute;
+    font-size: 10px; font-family: Verdana; font-weight: bold; color: #ff4020;
+    width: 24px; height: 15px; text-align: center; margin: 0px; padding: 1px 0px 0px 0px;
+    background: transparent; border: none;
+    cursor: pointer;
+}
+
+input.synth.amp {
+    top:48px;left:356px;
+    width:120px;height:42px;
+}
+
+.option {
+    cursor: pointer;
+}
+
+.wave {
+    margin: 0px; padding: 0px;
+    border: none;
+    background: transparent;
+    width:38px;
+    height:20px;
+    font-family: Consolas;
+    font-size:2pt;
+}
+
+.lfo.select.wave { top: 0px; left: 98px; }
+.osc.select.wave { top: 0px; left: 122px; }
+
+.select.wave.option { width:18px; height:10px; background-color: #000000; opacity: 0.4 }
+
+.wave.option.sinus    { top: 0px; left: 2px; }
+.wave.option.triangle { top:11px; left: 2px; }
+.wave.option.saw      { top:22px; left: 2px; }
+.wave.option.pulse    { top: 0px; left:20px; }
+.wave.option.noise    { top:11px; left:20px; }
+
+.mode {
+    left:125px; top:1px;
+    margin: 0px; padding: 0px;
+    border: none;
+    background: transparent;
+    width:19px;
+    height:30px;
+    font-family: Consolas;
+    font-size:2pt;
+}
+
+.flt1.select.mode { top:0px; left:125px; width: 19px; height: 32px; }
+.select.mode.option { width: 19px; height: 10px; background-color: #000000; opacity: 0.4; }
+
+.mode.option.lowpass  { top: 0px; left: 0px; }
+.mode.option.bandpass { top:11px; left: 0px; }
+.mode.option.highpass { top:22px; left: 0px; }
+
+.env1.env { top:2px; }
+.env2.env { top:36px; }
+.env3.env { top:71px; }
+.osc1.osc { top:2px; }
+.osc2.osc { top:36px; }
+.lfo1.lfo { top:2px; }
+.lfo2.lfo { top:36px; }
+.flt1.flt { top:71px; }
+
+.pot.env.amp { left:  19px; top: 15px }
+.pot.env.dc  { left:  46px; top: 15px }
+.pot.env.atk { left:  73px; top: 15px }
+.pot.env.dec { left: 100px; top: 15px }
+.pot.env.sus { left: 127px; top: 15px }
+.pot.env.rel { left: 154px; top: 15px }
+
+.pot.osc.amp { left:  19px; top: 15px }
+.pot.osc.dc  { display: none }
+.pot.osc.fre { left:  45px; top: 15px }
+.pot.osc.note { display: none }
+.pot.osc.tune { left:  71px; top: 15px }
+.pot.osc.psw { left: 97px; top: 15px }
+
+.pot.lfo.amp { left:  19px; top: 15px }
+.pot.lfo.dc  { left:  46px; top: 15px }
+.pot.lfo.fre { left:  73px; top: 15px }
+.pot.lfo.note { display: none }
+.pot.lfo.tune { display: none }
+.pot.lfo.psw { display: none }
+
+.pot.flt.amp { left: 19px; top: 15px }
+.pot.flt.cut  { left: 46px; top: 15px }
+.pot.flt.res { left: 73px; top: 15px }
+.pot.flt.mod { left: 100px; top: 15px }

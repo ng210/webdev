@@ -1,7 +1,8 @@
-
 include('/ge/player/player-lib.js');
+include('/synth/synth.js');
 include('/synth/synth-adapter.js');
 include('/synth/synth-adapter-ext.js');
+include('/synth/ui/synth-ui.js');
 include('/utils/syntax.js');
 include('/synth/grammar.js');
 
@@ -44,73 +45,153 @@ include('/synth/grammar.js');
         return 0;
     }
 
-    function test(lbl, action, errors) {
-        Dbg.pr(lbl + '..');
-        var err = action();
-        if (!err) Dbg.prln('Ok');
-        else errors.push(err);
-        return err;
-    }
-
     function test_synthAdapterToDataSeries() {
-        var errors = [];
         var series = psynth.SynthAdapter.toDataSeries(createSequence());
         var channelCount = Object.keys(series);
-
-        test('Channel count', () => {
-            if (channelCount.length != 2)  return `Channel count: Expected 2 but received ${channelCount.length}!`;
-        }, errors);
-
         var notes = series[psynth.SynthAdapter.SETNOTE];
-        var velocity = series[psynth.SynthAdapter.SETVELOCITY];
+        //var velocity = series[psynth.SynthAdapter.SETVELOCITY];
 
-        test('Note channel', () => !notes ? 'SetNote channel missing!' : (notes.data.length != 5) ? `expected to have 5 notes  but received ${notes.data.length}!` : false, errors);
-        test('Velocity', () => !velocity ? 'SetVelocity channel missing!' : (velocity.data.length != 5) ? `expected to have 5 velocity commands  but received ${velocity.data.length}!` : false, errors);
-
-        test('Note commands', () => {
-            var testData = {
-                0: [0, 17, 127, 2],
-                4: [4, 29, 127, 2],
-                7: [7, 17, 127, 1]
-            };
-
-            for (var fi in testData) {
-                var data = notes.get(fi)[0];
-                if (!Array.isArray(data)) return `Command at ${fi} did not return an array!`;
-                if (compare(data, testData[fi]) != 0) return `Command at ${fi} expected to be [${testData[fi]}] but was [${data}]!`;
-            }
-        }, errors);
-
-        return errors.length > 0 ? errors.join('\n') : 'Tests successful!';   
+        return [
+            'SynthAdapter.toDataSeries',
+            test('Channel count', () => {
+                if (channelCount.length != 2) return [`Channel count: Expected 2 but received ${channelCount.length}!`];
+            }),
+            test('Note channel', () => !notes ? ['SetNote channel missing!'] : (notes.data.length != 5) ? [`expected to have 5 notes  but received ${notes.data.length}!`] : false),
+            //test('Velocity', () => !velocity ? ['SetVelocity channel missing!'] : (velocity.data.length != 5) ? [`expected to have 5 velocity commands  but received ${velocity.data.length}!`] : false),
+            test('Note commands', () => {
+                var testData = {
+                    0: [ 0, 17, 127, 2],
+                    4: [ 4, 29, 127, 2],
+                   10: [10, 17, 127, 1]
+                };
+                for (var fi in testData) {
+                    var data = notes.get(fi)[0];
+                    if (!Array.isArray(data)) return [`Command at ${fi} did not return an array!`];
+                    if (compare(data, testData[fi]) != 0) return [`Command at ${fi} expected to be [${testData[fi]}] but was [${data}]!`];
+                }
+            })
+        ];
     }
 
     function test_synthAdapterFromDataSeries() {
-        var errors = [];
         var sequence = createSequence();
         var expected = new Uint8Array(sequence.stream.buffer);
         var series = psynth.SynthAdapter.toDataSeries(sequence);
         var received =  new Uint8Array(psynth.SynthAdapter.fromDataSeries(series).stream.buffer);
 
-        test('convert all channels', () => {
-            var result = compare(expected, received);
-            if (result != 0) {
-                var start = result-2 >= 0 ? result-2 : 0;
-                var a1 = expected.slice(start, start+4);
-                var a2 = received.slice(start, start+4);
-                debugger;
-                return `Mismatch at ${result-1}!\n expected: ${a1}\n received: ${a2}`;
-            } else {
-                return false;
-            }
-        }, errors);
+        return [
+            'SynthAdapter.fromDataSeries',
+            test('Convert all channels', () => {
+                var result = compare(expected, received);
+                if (result != 0) {
+                    var start = result-2 >= 0 ? result-2 : 0;
+                    var a1 = expected.slice(start, start+4);
+                    var a2 = received.slice(start, start+4);
+                    return [`Mismatch at ${result-1}!\n expected: ${a1}\n received: ${a2}`];
+                }
+            })
+        ];
+    }
 
-        return errors.length > 0 ? errors.join('\n') : 'Tests successful!';   
+    function test_synth_controls(synth, expected) {
+        var errors = [];
+        for (var i in psynth.Ctrl) {
+            var ctrl = synth.getControl(psynth.Ctrl[i]);
+            var value = ctrl.value;
+            if ((value != expected) && (value != ctrl.min || expected > ctrl.min) && (value != ctrl.max || expected < ctrl.max)) {
+                errors.push(`Value of ${i}=${value} should be ${expected}`);
+            }
+        }
+        return errors.length ? errors : false;
+    }
+
+    function test_ui_controls(pots, expected) {
+        var errors = [];
+        for (var i=0; i<pots.length; i++) {
+            if (pots[i].value != expected) {
+                errors.push(`Value of ${pots[i].id}=${value} should be ${expected}`);
+            }
+        }
+        return errors.length ? errors : false;
+    }
+
+    async function test_synth_Ui_binding() {
+        var results = ['Synth Ui binding'];
+
+        var tmpl = {
+            //"type": "board"
+        };
+        var synth = new psynth.Synth(48000, 6);
+        var ui = new Ui.Synth('synth1', tmpl, null);
+        ui.css.push('synth');
+        ui.dataBind(synth);
+        ui.render({element: document.body});
+
+        var inputs = [ui.items];
+        var pots = [];
+
+        while (inputs.length > 0) {
+            var control = inputs.pop();
+            if (control instanceof Ui.ValueControl) {
+                pots.push(control);
+            } else {
+                var collection = control instanceof Ui.Board ? control.items : control;
+                for (var i in collection) {
+                    inputs.push(collection[i]);
+                }
+            }
+        }
+        for (var i=0; i<pots.length; i++) {
+            pots[i].setValue(500.0);
+            // if (pots[i] instanceof Ui.Pot) {
+            //     pots[i].setValue(500.0);
+            // } else if (pots[i] instanceof Ui.Select) {
+            //     console.log(pots[i].id);
+            // }
+        }
+
+        results.push(
+            test('All ui controls set to 500', () => {
+                return test_synth_controls(synth, 500.0)
+            })
+        );
+
+        for (var i=0; i<pots.length; i++) {
+            pots[i].setValue(0.0);
+        }
+        results.push(
+            test('All ui controls set to 0.0', () => {
+                return test_synth_controls(synth, 0.0)
+            })
+        );
+
+        for (var i in psynth.Ctrl) {
+            synth.getControl(psynth.Ctrl[i]).set(1.0);
+        }
+        results.push(
+            test('All synth controls set to 1.0', () => {
+                return test_ui_controls(synth, 1.0)
+            })
+        );
+
+        for (var i in psynth.Ctrl) {
+            synth.getControl(psynth.Ctrl[i]).set(0.0);
+        }
+        results.push(
+            test('All synth controls set to 0.0', () => {
+                return test_ui_controls(synth, 0.0)
+            })
+        );
+
+        return results;
     }
 
     var tests = async function() {
-        //Dbg.prln(test_synthAdapterToDataSeries());
-        Dbg.prln(test_synthAdapterFromDataSeries());
-        return 0;
+        return [
+            test_synthAdapterToDataSeries(),
+            test_synthAdapterFromDataSeries(),
+            await test_synth_Ui_binding()
+        ];
     };
-    public(tests, 'Synth-DataSeries tests');
+    public(tests, 'Synth tests');
 })();

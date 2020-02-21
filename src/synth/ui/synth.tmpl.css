@@ -81,7 +81,7 @@ select.preset {
 
 .modules {
     padding:0px;
-    border: solid 1px black;
+    /* border: solid 1px black; */
 }
 
 .env.env1 { top:2px; }

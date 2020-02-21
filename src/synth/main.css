@@ -73,6 +73,10 @@ div.pattern {
     height: 360px; */
 }
 
+canvas {
+    background-color: #000810
+}
+
 #pattern1_chart {
     position: relative;
     box-sizing: border-box;
