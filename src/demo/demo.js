@@ -38,7 +38,7 @@ include('/ui/ui-lib.js');
         // add controls from template
         for (var key in this.template) {
             var template = this.template[key];
-            var control = this.ui.addNew(template, key);
+            var control = this.ui.addNew(key, template);
             if (typeof template.label !== 'string') {
                 control.label = key;
             }
