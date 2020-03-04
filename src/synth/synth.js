@@ -17,8 +17,7 @@
 			LowPass:  	 1,
 			BandPass: 	 2,
 			HighPass:	 4
-		}
-,
+		},
 		Ctrl: {
 			// GENERAL
 			amp: 	   0,
@@ -173,6 +172,7 @@
 		Synth: function(smpRate, voiceCount) {
 			this.smpRate = smpRate;
 			this.omega = psynth.theta / smpRate;
+			this.isActive = true;
 			this.nextVoice = 0;
 			this.label = '';
 			// create controls
@@ -565,14 +565,16 @@
 		//throw new Error('voice not found!');
 	};
 	psynth.Synth.prototype.run = function(buffer, start, end) {
-		for (var i=start; i<end; i++) {
-			var smp = 0;
-			for (var j=0; j<this.voices.length; j++) {
-				smp += this.voices[j].run();
+		if (this.isActive) {
+			for (var i=start; i<end; i++) {
+				var smp = 0;
+				for (var j=0; j<this.voices.length; j++) {
+					smp += this.voices[j].run();
+				}
+				buffer[i] += smp;
 			}
-			buffer[i] += smp;
+			//console.log(buffer[start]);
 		}
-		//console.log(buffer[start]);
 	};
 
 	public(psynth, 'psynth');

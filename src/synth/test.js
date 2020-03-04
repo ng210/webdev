@@ -98,8 +98,10 @@ include('/synth/grammar.js');
         for (var i in psynth.Ctrl) {
             var ctrl = synth.getControl(psynth.Ctrl[i]);
             var value = ctrl.value;
-            if ((value != expected) && (value != ctrl.min || expected > ctrl.min) && (value != ctrl.max || expected < ctrl.max)) {
-                errors.push(`Value of ${i}=${value} should be ${expected}`);
+            //if (value == expected || expected < ctrl.min && value == ctrl.min || expected > ctrl.max && value == ctrl.max)
+            if (value != expected && (expected >= ctrl.min || value != ctrl.min) && (expected <= ctrl.max || value != ctrl.max))
+            {
+                errors.push(`Value of ${i}=${value} should be ${expected} or minimum or maximum`);
             }
         }
         return errors.length ? errors : false;
@@ -115,19 +117,26 @@ include('/synth/grammar.js');
         return errors.length ? errors : false;
     }
 
-    async function test_synth_Ui_binding() {
+    var _synth = null;
+    var _ui = null;
+    function setupSynth() {
+        _synth = new psynth.Synth(48000, 6);
+        _ui = new Ui.Synth('Synth1');
+        _ui.addClass('synth');
+        _ui.dataBind(_synth);
+        _ui.render({element: document.body});
+
+        return _ui;
+    }
+
+    function test_synth_Ui_binding() {
         var results = ['Synth Ui binding'];
 
-        var tmpl = {
-            //"type": "board"
-        };
-        var synth = new psynth.Synth(48000, 6);
-        var ui = new Ui.Synth('synth1', tmpl, null);
-        ui.css.push('synth');
-        ui.dataBind(synth);
-        ui.render({element: document.body});
+        if (!_synth) setupSynth();
+        var ui = _ui;
+        var synth = _synth;
 
-        var inputs = [ui.items];
+        var inputs = [ui.modules];
         var pots = [];
 
         while (inputs.length > 0) {
@@ -186,11 +195,33 @@ include('/synth/grammar.js');
         return results;
     }
 
+    async function test_synth_fromPreset() {
+        var results = ['Test presets'];
+        if (!_synth) setupSynth();
+        var ui = _ui;
+        var synth = _synth;
+
+        await Ui.Synth.loadPresets();
+        ui.render({force:true});
+        results.push(
+            test('Creates a new preset', () => {
+                ui.createPreset('blank');        
+            }),
+            test('Setting a preset changes the controls', () => {
+                ui.toolbar.items.preset.select('default');
+            }),
+        );
+
+        return results;
+    }
+
     var tests = async function() {
         return [
             test_synthAdapterToDataSeries(),
             test_synthAdapterFromDataSeries(),
-            await test_synth_Ui_binding()
+            test_synth_Ui_binding(),
+            await test_synth_fromPreset()
+
         ];
     };
     public(tests, 'Synth tests');

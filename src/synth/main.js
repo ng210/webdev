@@ -109,156 +109,6 @@ async function createSequences(path) {
     return sequences;
 }
 
-
-// preset management
-async function loadPresets() {
-    _presets = JSON.parse(localStorage.getItem('psynth'));
-    if (!_presets) {
-        var res = await load('./presets.json');
-        if (res.error instanceof Error) {
-            _presets = {
-                'default': [
-                    psynth.Ctrl.amp, 1.0,
-            
-                    psynth.Ctrl.lfo1amp, 0.2, psynth.Ctrl.lfo1dc, 0.5, psynth.Ctrl.lfo1fre, 3.3, psynth.Ctrl.lfo1wave, psynth.WF_SIN,
-                    psynth.Ctrl.lfo2amp, 2.0, psynth.Ctrl.lfo2dc, 0.0, psynth.Ctrl.lfo2fre, 6.1, psynth.Ctrl.lfo2wave, psynth.WF_SIN,
-            
-                    psynth.Ctrl.env1amp, 0.7, psynth.Ctrl.env1dc, 0, psynth.Ctrl.env1atk, 0.0, psynth.Ctrl.env1dec, 0.1, psynth.Ctrl.env1sus, 0.4, psynth.Ctrl.env1rel, 0.2,
-                    psynth.Ctrl.env2amp, 0.28, psynth.Ctrl.env2dc, 0.7,psynth.Ctrl.env2atk, 0.04, psynth.Ctrl.env2dec, 0.1, psynth.Ctrl.env2sus, 0.9, psynth.Ctrl.env2rel, 0.12,
-            
-                    psynth.Ctrl.osc1amp, 0.4, psynth.Ctrl.osc1fre, 1.0, psynth.Ctrl.osc1psw, 0.0, psynth.Ctrl.osc1wave, psynth.WF_TRI, psynth.Ctrl.osc1tune, 0,
-                    psynth.Ctrl.osc2amp, 0.5, psynth.Ctrl.osc2fre, 0.0, psynth.Ctrl.osc2psw, 0.0, psynth.Ctrl.osc2wave, psynth.WF_PLS, psynth.Ctrl.osc2tune, 12
-                ]
-            };
-        } else {
-            _presets = res.data;
-            Dbg.prln(`${Object.keys(_presets).length} presets loaded.`);
-        }
-    }
-}
-async function getPresets(select) {
-    localStorage.setItem('psynth', JSON.stringify(_presets));
-    for (var key in _presets) {
-        var hasPreset = false;
-        for (var i=0; i<select.options.length; i++) {
-            var option = select.options[i];
-            if (option.label == key) {
-                option.value = key;
-                hasPreset = true;
-                break;
-            }
-        }
-        if (!hasPreset) {
-            var option = document.createElement("option");
-            option.label = key;
-            option.value = key;
-            select.add(option);
-        }
-    }
-    for (var i=0; i<select.options.length; i++) {
-        var isUsed = false;
-        for (var key in _presets) {
-            if (select.options[i].label == key) {
-                isUsed = true;
-                break;
-            }
-        }
-        if (!isUsed) {
-            select.remove(i);
-            i--;
-        }
-    }
-}
-function updatePresets() {
-    localStorage.setItem('psynth', JSON.stringify(_presets));
-    var selectors = document.querySelectorAll('.controls select.preset');
-    for (var i=0; i<selectors.length; i++) {
-        getPresets(selectors[i]);
-    }
-}
-function selectPreset(e) {
-    var select = e.target;
-    var preset = _presets[select.selectedOptions[0].value];
-    var synthElem = select.parentNode.parentNode;
-    synthElem.synth.setup(preset);
-    var pots = synthElem.querySelectorAll('pot');
-    for (var i=0; i<pots.length; i++) {
-        Pot.update(pots[i]);
-    }
-    var toggles = synthElem.querySelectorAll('toggle');
-    for (var i=0; i<toggles.length; i++) {
-        var toggle = toggles[i];
-        toggle.state = (toggle.pot.value & toggle.value) != 0;
-        enableWaveform(toggle);
-    }
-}
-function savePreset(e) {
-    var synthElem = e.target.parentNode.parentNode;
-    var name = prompt('Preset name?', 'Preset'+Object.keys(_presets).length);
-    if (name == 'default') {
-        alert('Please use a different name!');
-        savePreset(e);
-        return;
-    }
-    if (name != null) {
-        var preset = [];
-        for (var key in psynth.Ctrl) {
-            var ctrlId = psynth.Ctrl[key];
-            preset.push(ctrlId, synthElem.synth.getControl(ctrlId).value);
-        }
-        _presets[name] = preset;
-        updatePresets();
-        synthElem.querySelector('select.preset').selectedIndex = Object.keys(_presets).findIndex(x => x == name);
-    }
-}
-function removePreset(e) {
-    var synth = e.target.parentNode.parentNode;
-    var select = synth.querySelector('.controls select');
-    if (select.selectedOptions[0].value != 'default') {
-        delete _presets[select.selectedOptions[0].value];
-        updatePresets();
-        selectPreset({target:select})
-    } else {
-        alert('The "default" preset cannot be removed!');
-    }
-}
-function importPresets() {
-    const fileElem = document.getElementById("fileElem");
-    fileElem.click();
-}
-function handleImport(fileList) {
-    if (fileList != null && fileList[0] instanceof File) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                _presets = JSON.parse(e.target.result);
-            } catch (error) {
-                alert('Import resulted in an error\n('+error.message+')');
-                return;
-            }
-            updatePresets();
-            alert('Preset loaded');
-        };        
-        reader.readAsText(fileList[0]);
-    }
-}
-function exportPresets() {
-    var fileName = prompt('File name?', 'presets.json');
-    if (fileName != null) {
-        if (!fileName.endsWith('.json')) {
-            fileName = fileName+'.json';
-        }
-        var data = new Blob([JSON.stringify(_presets)], {type: 'application/json'});
-        var url = window.URL.createObjectURL(data);
-        var link = document.getElementById('exportPresets');
-        link.setAttribute('download', fileName);
-        link.href = url;
-        link.click();
-        window.URL.revokeObjectURL(url)
-    }
-    
-}
-
 // UI
 async function buildUi() {
     var tab = document.getElementById('modules');
@@ -512,6 +362,8 @@ async function onpageload(e) {
         return;
     }
 
+    createUi();
+
     _startButton = document.getElementById('start');
     _startButton.onclick = function() {
         if (_isRunning) {
@@ -528,7 +380,7 @@ async function onpageload(e) {
     var bpm = document.getElementById('bpm');
     bpm.onchange = updateBpm;
     _bpm = new psynth.Pot(0, 1, 0);
-    Pot.bind(bpm, _bpm);
+    Ui.Pot.bind(bpm, _bpm);
     updateBpm.call(bpm);
    
     document.getElementById('import').onclick = importPresets;
