@@ -6,4 +6,8 @@ include('/ui/ddlist.js');
 include('/ui/checkbox.js');
 include('/ui/button.js');
 include('/ui/board.js');
+include('/ui/panel.js');
 include('/ui/grid.js');
+include('/ui/select.js');
+
+include('/ui/pot.js');

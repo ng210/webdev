@@ -3,8 +3,8 @@ include('/ui/datalink.js');
 (function() {
 	var Ui = window.Ui || {};
 	function Control(id, template, parent) {
-		this.applyTemplate(template);
 		this.id = id || 'control';
+		this.applyTemplate(template);
 		this.validations = {};
 		this.label = false;
 		this.parent = parent || null;
@@ -21,10 +21,19 @@ include('/ui/datalink.js');
 		this.info = Control.Types[this.template.type];
 		this.element = null;
 		this.labelElem = null;
+		this.dataSource = null;
+		this.dataField = this.template['data-field'];
 	}
 	Control.prototype.template = {};
 	Control.prototype.getTemplate = function() {
-		return { type: 'none', label: false, css:'' };
+		return {
+			type: 'none',
+			label: false,
+			'data-source': null,
+			'data-field': null,
+			css:'',
+			events:[]
+		};
 	};
 	Control.prototype.applyTemplate = function(tmpl) {
 		this.template = this.getTemplate();
@@ -59,9 +68,8 @@ include('/ui/datalink.js');
 			this.element.id = this.id;
 			this.element.control = this;
 		}
-		if (this.parent && this.parent.cssText) {
-			this.cssText = this.parent.cssText;
-		}
+
+		this.cssText = this.parent && this.parent.cssText ? this.parent.cssText : '';
 		if (this.css.length > 0) {
 			this.cssText += this.css.join(' ');
 			this.cssText += ' ';
@@ -92,7 +100,7 @@ include('/ui/datalink.js');
 			this.addHandler(eventName, Control.onevent);
 		}
 
-		if (this.element.parentNode != ctx.element) {
+		if (ctx && ctx.element && ctx.element != this.element.parentNode) {
 			if (this.element.parentNode != null) {
 				this.element.parentNode.removeChild(this.element);
 			}
@@ -101,7 +109,33 @@ include('/ui/datalink.js');
 	};
 	Control.prototype.registerHandler = function(event) {
 		throw new Error('Not implemented!');
-	};	
+	};
+	Control.prototype.addClass = function(cssClass, noRepaint) {
+		var ix = this.css.findIndex(x => x == cssClass);
+		if (ix == -1) {
+			this.css.push(cssClass);
+		}
+		if (!noRepaint)	{
+			this.render();
+		}
+	};
+	Control.prototype.removeClass = function(cssClass, noRepaint) {
+		var ix = this.css.findIndex(x => x == cssClass);
+		if (ix != -1) {
+			this.css.splice(ix, 1);
+		}
+		if (!noRepaint)	{
+			this.render();
+		}
+	};
+	Control.prototype.dataBind = function(dataSource, dataField) {
+		dataSource = dataSource || this.template['data-source'];
+		if (dataSource) {
+			this.dataSource = dataSource instanceof Ui.DataLink ? dataSource : new Ui.DataLink(dataSource);
+			this.dataField = dataField !== undefined ? dataField : this.dataField;
+		}
+	};
+
 	Control.registerHandler = function(eventName) {
 		if (eventName === undefined) {
 			if (Array.isArray(this.template.events)) {
@@ -143,11 +177,14 @@ include('/ui/datalink.js');
 	Control.DataTypes = {
 		Int:	'int',
 		Float:  'float',
-		String: 'string'
+		String: 'string',
+		Bool:	'bool'
 	};
 	Control.Types = {};
 	Control.create = function(id, template, parent) {
-		var info = Control.Types[template.type];
+		var templateType = template.type.toUpperCase();
+		var type = Object.keys(Control.Types).find(x => x.toUpperCase() == templateType);
+		var info = Control.Types[type];
 		if (info === undefined) throw new Error('Unsupported Control type ('+template.type+')!');
 		var ctrl = Reflect.construct(info.ctor, [id, template, parent]);
 		return ctrl;
@@ -188,12 +225,19 @@ include('/ui/datalink.js');
 					bubbles: false,
 					cancelable: false
 				});
+				draggingEvent.clientX = e.clientX;
+				draggingEvent.clientY = e.clientY;
+				draggingEvent.screenX = e.screenX;
+				draggingEvent.screenY = e.screenY;
 				draggingEvent.deltaX = e.clientX - Control.dragStart[0];
 				draggingEvent.deltaY = e.clientY - Control.dragStart[1];
 				//draggingEvent.control = Control.focused;
-				if (Control.focused.handlers.dragging?.length) {
-					Control.focused.element.dispatchEvent(draggingEvent);
-					e.preventDefault();
+				control = Control.focused;
+				if (control?.handlers.dragging?.length) {
+					control.element.dispatchEvent(draggingEvent);
+					if (!(control instanceof Ui.Slider)) {
+						e.preventDefault();
+					}
 				}
 				Control.dragStart[0] = e.clientX;
 				Control.dragStart[1] = e.clientY;
@@ -223,6 +267,7 @@ include('/ui/datalink.js');
 		}
 		//console.log(Control.focused ? Control.focused.id : 'none')
 	};
+
 	Control.focused = null;
 	Control.dragStart = [0, 0];
 	Control.isDragging = false;

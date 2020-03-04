@@ -5,8 +5,6 @@ include('/ui/valuecontrol.js');
 
     function Pot(id, tmpl, parent) {
         Ui.ValueControl.call(this, id, tmpl, parent);
-        this.scale = 1.0;
-        this.offset = 0.0;
         this.registerHandler('dragging');
     };
     extend(Ui.ValueControl, Pot);
@@ -52,7 +50,6 @@ include('/ui/valuecontrol.js');
     // };
     Pot.prototype.ondragging = function(e) {
         var value = Math.floor(this.getValue() + -e.deltaY);
-console.log(value);
         this.setValue(value);
         return false;
     };

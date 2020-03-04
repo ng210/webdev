@@ -8,52 +8,62 @@ include('/ui/container.js');
         if (this.template.items) {
 			var i = 0;
             for (var key in this.template.items) {
-				var itemId = this.template.items[key].id || ('00'+i).slice(-3);
-				this.items[key] = Ui.Control.create(`${id}_${itemId}`, this.template.items[key], this);
-				i++;
+				if (this.template.items.hasOwnProperty(key)) {
+					var itemId = this.template.items[key].id || key;	//('00'+i).slice(-3);
+					this.items[key] = Ui.Control.create(`${id}_${itemId}`, this.template.items[key], this);
+					i++;
+				}
             }
         }		
 	};
 	extend(Ui.Container, Board);
 
-	Ui.Control.Types['Board'] = { ctor: Board, tag: 'DIV' };
+	Ui.Control.Types['board'] = { ctor: Board, tag: 'DIV' };
 	Board.prototype.getTemplate = function() {
-		var template = Board.base.getTemplate();
-		template.type = 'Board';
+		var template = Board.base.getTemplate.call(this);
+		template.type = 'board';
 		template.items = null;
 		return template;
 	};
-	Board.prototype.add = function(ctrl, key) {
-		this.items[key] = ctrl;
-		ctrl.css.push(key);
+	Board.prototype.add = function(key, ctrl) {
+		if (typeof key === 'string' && ctrl instanceof Ui.Control) {
+			this.items[key] = ctrl;
+			ctrl.css.push(key);
+		} else {
+			this.items['item' + Object.keys(this.items).length] = key;
+			ctrl = key;
+		}
 		ctrl.parent = this;
 		return ctrl;
 	};
-	Board.prototype.addNew = function(template, key) {
+	Board.prototype.addNew = function(key, template) {
 		key = key || ('i' + Object.keys(this.items).length);
 		var ctrl = Ui.Control.create(key, template, this);
-		this.add(ctrl, key);
+		this.add(key, ctrl);
 		return ctrl;
 	};
 	Board.prototype.dataBind = function(dataSource, dataField) {
 		Board.base.dataBind.call(this, dataSource, dataField);
 		for (var key in this.items) {
 			var item = this.items[key];
-			if (item.dataSource == null) {
-				item.dataBind(this.dataSource[this.dataField]);
+			if (!item.dataSource && item.dataField) {
+				item.dataBind(this.dataSource[item.dataField]);
 			}
 		}
 	};
 	Board.prototype.render = function(ctx) {
-		Board.base.render.call(this, ctx);
-		for (var i=1; i<this.element.childNodes.length; i++) {
-			this.element.removeChild(this.element.childNodes[i]);
+		if (this.element) {
+			while (this.element.children.length > 0) {
+				this.element.removeChild(this.element.children[0]);
+			}
 		}
+
+		Board.base.render.call(this, ctx);
+		var context = ctx ? Object.create(ctx) : {};
+		context.element = this.element;
 		for (var key in this.items) {
 			var item = this.items[key];
-			if (item.element == null) {
-				item.render( { 'element': this.element } );
-			}
+			item.render(context);
 		}
 	};
 	Ui.Board = Board;

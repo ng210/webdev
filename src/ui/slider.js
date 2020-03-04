@@ -11,10 +11,21 @@ include('/ui/valuecontrol.js');
 	Slider.prototype.getTemplate = function() {
 		var template = Slider.base.getTemplate();
 		template.type = 'slider';
+		if (!template.events.includes('change')) template.events.push('change');
+		if (!template.events.includes('dragging')) template.events.push('dragging');
 		return template;
 	};
+	Slider.prototype.registerHandler = function(event) {
+		if (['change', 'dragging'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
+		Ui.Control.registerHandler.call(this, event);
+	};
+
 	Slider.prototype.ondragging = function(e) {
-		alert(1);
+		this.setValue(this.element.valueAsNumber);
+		return true;
+	};
+	Slider.prototype.onchange = function(e) {
+		this.setValue(this.element.valueAsNumber);
 	};
 
 	Slider.prototype.render = function(ctx) {

@@ -6,11 +6,14 @@ include('/ui/valuecontrol.js');
 	}
 	extend(Ui.ValueControl, Button);
 
-	Ui.Control.Types['Button'] = { ctor: Button, tag: 'BUTTON' };
+	Ui.Control.Types['button'] = { ctor: Button, tag: 'BUTTON' };
 
 	Button.prototype.getTemplate = function() {
-		var template = Button.base.getTemplate();
-		template.type = 'Button';
+		var template = Button.base.getTemplate.call(this);
+		if (!template.events.includes('click')) {
+			template.events.push('click');
+		}
+		template.type = 'button';
 		return template;
 	};
 

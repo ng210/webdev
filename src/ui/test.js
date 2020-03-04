@@ -46,7 +46,7 @@ include('/ui/ui-lib.js');
         return results;
     }
 
-    async function test_valueControls() {
+    function test_valueControls() {
         var results = ['Test ValueControls'];
 
         var data = {
@@ -75,7 +75,7 @@ include('/ui/ui-lib.js');
             'Label3': new Ui.Label('testLabel3', { 'data-type':Ui.Control.DataTypes.Float, 'data-field':'score' }),
             'Label4': new Ui.Label('testLabel4', { 'numeric':true, 'data-field':'level' }),
             'Button': new Ui.Button('testButton'),
-            'Textbox': new Ui.Textbox('testTextbox', { 'data-type':Ui.Control.DataTypes.Float, 'data-field':'score' }),
+            'Textbox': new Ui.Textbox('testTextbox', { 'data-type':Ui.Control.DataTypes.Float, 'data-field':'score' })
         };
         for (var i in controls) {
             var control = controls[i];
@@ -144,10 +144,40 @@ include('/ui/ui-lib.js');
         return results;
     }
 
+    function test_panel() {
+        return [
+            'Test boards',
+            test('Creates a 2-level panel', () => {
+                var panel = new Ui.Panel('TestPanel', {
+                     layout:'horizontal',
+                     css: 'main',
+                     split: [20, 80],
+                     items: {
+                         'left': { type: 'label', value: 'left' },
+                         'right': {
+                             type: 'panel',
+                             css: 'right',
+                             titlebar: false,
+                             layout: 'vertical',
+                             split: [30, 50, 20],
+                             items: {
+                                'top': { type: 'label', value: 'top' },
+                                'middle': { type: 'label', value: 'middle' },
+                                'bottom': { type: 'label', value: 'bottom' }
+                             }
+                        }
+                     }
+                });
+                panel.render({element:document.body});
+            })
+        ];
+    }
+
     var tests = async function() {
         return [
             //test_dataLink(),
-            await test_valueControls()
+            test_valueControls(),
+            test_panel()
         ];
     };
     public(tests, 'Ui tests');

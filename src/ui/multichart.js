@@ -372,7 +372,9 @@ include('/webgl/webgl.js');
         this.uniforms.uUnit.value[1] = this.unit[1]*zy;
         this.program.updateUniform('uUnit');
         this.updateDataPoints();
-        this.titleBar.innerHTML = `${this.titleBar.innerHTML.split('-')[0]} - (${(100*zx).toFixed(1)}%, ${(100*zy).toFixed(1)}%)`;
+        if (this.titleBar) {
+            this.titleBar.innerHTML = `${this.titleBar.innerHTML.split('-')[0]} - (${(100*zx).toFixed(1)}%, ${(100*zy).toFixed(1)}%)`;
+        }
     };
 
     Ui.MultiChart.prototype.edit = function(pos, isComplete) {

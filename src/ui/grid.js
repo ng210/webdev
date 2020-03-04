@@ -1,9 +1,8 @@
 include('/ui/container.js');
 // strict structure of controls based on rows and columns
 // templates for rows or for cells
-try {
 (function() {
-	Ui.Grid = function(id, template, parent) {
+	function Grid(id, template, parent) {
 		Ui.Container.call(this, id, template, parent);
 		this.table = null;
 		// set rows/columns array
@@ -17,11 +16,11 @@ try {
 		this.rowTemplate = template['row-template'] || null;
 		this.cellTemplate = template['cell-template'] || null;
 	};
-	extend(Ui.Container, Ui.Grid);
+	extend(Ui.Container, Grid);
 
-	Ui.Control.Types['grid'] = { ctor: Ui.Grid, tag: 'DIV' };
+	Ui.Control.Types['grid'] = { ctor: Grid, tag: 'DIV' };
 
-	Ui.Grid.prototype.buildRow = function(row, src, rowTmpl) {
+	Grid.prototype.buildRow = function(row, src, rowTmpl) {
 		// build a row from the given data source
 		// using the selected template
 		var ri = row.id;
@@ -41,7 +40,7 @@ try {
 		}
 		return row;
 	};
-	Ui.Grid.prototype.updateColumnCountFromDataSource = function(src) {
+	Grid.prototype.updateColumnCountFromDataSource = function(src) {
 		// The count of columns/cells is defined by columnCount (or maximum count of items in the data source)
 		for (var i in src) {
 			if (src.hasOwnProperty(i)) {
@@ -56,7 +55,7 @@ try {
 			}
 		}
 	};
-	Ui.Grid.prototype.build = function() {
+	Grid.prototype.build = function() {
 		var src = this.dataField ? this.dataSource.obj[this.dataField] : this.dataSource;
 		// get or create row template
 		var rowTemplate = this.rowTemplate;
@@ -96,7 +95,7 @@ try {
 				var key = this.columnKeys[ci];
 				var column = this.columns[key];
 				var cell = Ui.Control.create(this.id + '#00' + '#' + ci, {'type':'label', 'label':false}, row);
-				cell.setValue(Ui.Grid.decodeText(rowTemplate[key].column, key));
+				cell.setValue(Grid.decodeText(rowTemplate[key].column, key));
 				cell.row = row; cell.column = column;
 				row.cells[ci] = row.cells[key] = cell;
 				//column.cells.push(cell);
@@ -114,13 +113,13 @@ try {
 		}
 		//Ui.Control.registerHandler.call(this);
 	};
-	Ui.Grid.prototype.dataBind = function(obj, field) {
-		//var dataLink = Ui.Grid.base.dataBind.call(this, obj, field);
+	Grid.prototype.dataBind = function(obj, field) {
+		//var dataLink = Grid.base.dataBind.call(this, obj, field);
 		this.dataSource = field ? obj[field] : obj;
 		this.build();
 		return this.dataSource;
 	};
-	Ui.Grid.prototype.getCell = function(ri, ci) {
+	Grid.prototype.getCell = function(ri, ci) {
 		if (typeof ri === 'string') {
 			var tokens = ri.split('#');
 			ri = tokens[0];
@@ -129,9 +128,9 @@ try {
 		var row = this.rows[ri];
 		return row ? row.cells[ci] : null;
 	};
-	Ui.Grid.prototype.render = function(ctx) {
+	Grid.prototype.render = function(ctx) {
 		if (!this.element) {
-			Ui.Grid.base.render.call(this, ctx);
+			Grid.base.render.call(this, ctx);
 			this.table = document.createElement('TABLE');
 			this.table.className = 'grid table';
 			this.table.setAttribute('cellpadding', 0);
@@ -158,7 +157,7 @@ try {
 				// tmplLabel=true => cell.label = calculated value
 				// tmplLabel=string => cell.label = tmplLabel
 				// tmplLabel="$key" => cell.label = key
-				cell.label = Ui.Grid.decodeText(tmplLabel, key);
+				cell.label = Grid.decodeText(tmplLabel, key);
 				/* else if (tmplLabel === true) {
 					label = cell.label;
 				}*/
@@ -175,7 +174,7 @@ try {
 		}
 		this.refresh();
 	};
-	Ui.Grid.prototype.refresh = function() {
+	Grid.prototype.refresh = function() {
 		for (var ri=0; ri<this.rowKeys.length; ri++) {
 			// repaint every row
 			var rowKey = this.rowKeys[ri];
@@ -191,7 +190,7 @@ try {
 				var td = cell.element.parentNode;
 				td.className = 'grid cell ' + cellClass;
 				// var tmplLabel = cell.template.label;
-				// cell.label = Ui.Grid.decodeText(tmplLabel, key);
+				// cell.label = Grid.decodeText(tmplLabel, key);
 				// tmplLabel=true => cell.label = calculated value
 				// tmplLabel=string => cell.label = tmplLabel
 				// tmplLabel="$key" => cell.label = key
@@ -214,11 +213,11 @@ try {
 			}
 		}
 	};
-	// Ui.Grid.prototype.registerHandler = function(event) {
+	// Grid.prototype.registerHandler = function(event) {
 	// 	if (['click', 'mouseover', 'mouseout'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
 	// 	Ui.Control.registerHandler.call(this, event);
 	// };
-	Ui.Grid.decodeText = function(text, key) {
+	Grid.decodeText = function(text, key) {
 		var result = text;
 		if (typeof text === 'string') {
 			if (text == '$key') {
@@ -229,8 +228,7 @@ try {
 		}
 		return result;
 	}
+	Ui.Grid = Grid;
 
 })();
-} catch (err) {
-	Dbg.prln(err);
-}
+

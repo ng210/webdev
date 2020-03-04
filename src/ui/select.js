@@ -4,7 +4,7 @@ include('/ui/board.js');
     var _supportedEvents = ['mousedown', 'mouseup', 'keydown', 'keyup', 'mouseover', 'mouseout', 'change'];
 
     function Select(id, tmpl, parent) {
-        Ui.Board.call(this, id, tmpl, parent);
+        Ui.ValueControl.call(this, id, tmpl, parent);
         var template = {
             titlebar: this.template.titlebar
         };
@@ -21,6 +21,8 @@ include('/ui/board.js');
         template.titlebar = false;
         template.flag = false;
         template.type = 'select';
+        template['data-type'] = Ui.Control.DataTypes.Int;
+        template['item-type'] = 'label';
         return template;
     };
     Select.prototype.registerHandler = function(event) {
@@ -28,17 +30,14 @@ include('/ui/board.js');
         Ui.Control.registerHandler.call(this, event);
     };
 
-    Select.prototype.addOption = function(ctrl, key) {
+    Select.prototype.addOption = function(key, value) {
+        var ctrl = value instanceof Ui.Control ? value : Ui.Control.create(`${this.id}#${key}`, { 'data-type': this.dataType, value:value, type:this.template['item-type'] });
         ctrl.css.push('option');
-        this.options.add(ctrl, key);
+        this.options.add(key, ctrl);
+        ctrl.parent = this;
         ctrl.registerHandler('click');
     };
     Select.prototype.add = undefined;
-
-    Select.prototype.render = function(ctx) {
-        Select.base.render.call(this, ctx);
-        this.options.render(ctx);
-    };
 
     Select.prototype.onclick = function(e) {
         var value = e.control.getValue();
@@ -47,13 +46,16 @@ include('/ui/board.js');
             var isSet = (oldValue & value) != 0;
             if (isSet) {
                 value = oldValue & ~value;
-                e.control.element.style.opacity = '0.4';
+                e.control.removeClass('on');
+                //e.control.element.style.opacity = '0.4';
             } else {
                 value = oldValue | value;
-                e.control.element.style.opacity = '0.1';
+                //e.control.element.style.opacity = '0.1';
+                e.control.addClass('on');
             }
         }
         this.setValue(value);
+        //console.log(`${this.id}: ${this.value}`);
     };
 
     // Select.prototype.setValue = function(value) {
@@ -64,6 +66,18 @@ include('/ui/board.js');
     // Select.prototype.getValue = function() {
     //     return this.value;
     // };
+
+	Select.prototype.render = function(ctx) {
+        Ui.Control.prototype.render.call(this, ctx);
+        var value = this.getValue();
+        for (var i in this.options.items) {
+            var item = this.options.items[i];
+            ((value & item.value) != 0) ? item.addClass('on') : item.removeClass('on');
+            item.render({element:this.element});
+        }        
+		// var attribute = this.element.tagName == 'INPUT' ? 'value' : 'innerHTML';
+		// this.element[attribute] = this.getValue();
+	};
 
     Ui.Select = Select;
 })();

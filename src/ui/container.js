@@ -9,7 +9,7 @@ include('/ui/control.js');
     extend(Ui.Control, Container);
 
 	Container.prototype.getTemplate = function() {
-        var template = Container.base.getTemplate();
+        var template = Container.base.getTemplate.call(this);
         template.fixed = false;
         template.titlebar = this.id;
         return template;
@@ -18,10 +18,6 @@ include('/ui/control.js');
         if (['click', 'mouseover', 'mouseout'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
         Ui.Control.registerHandler.call(this, event);
     };
-	Container.prototype.dataBind = function(dataSource, dataField) {
-		this.dataSource = dataSource instanceof Ui.DataLink ? dataSource : new Ui.DataLink(dataSource);
-		this.dataField = dataField !== undefined ? dataField : this.dataField;
-	};
     Container.prototype.render = function(node) {
         Container.base.render.call(this, node);
         // eventually create titlebar
