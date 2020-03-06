@@ -47,6 +47,8 @@ span.test {
 }
 
 .panel.handler {
+    display: block;
+    border: none;
     background-color: #e0e0e0;
 }
 

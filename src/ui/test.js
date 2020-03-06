@@ -151,9 +151,10 @@ include('/ui/ui-lib.js');
                 var panel = new Ui.Panel('TestPanel', {
                      layout:'horizontal',
                      css: 'main',
-                     split: [20, 80],
+                     split: [20, 30],
                      items: {
                          'left': { type: 'label', value: 'left' },
+                         'middle': { type: 'label', value: 'middle' },
                          'right': {
                              type: 'panel',
                              css: 'right',
@@ -169,6 +170,7 @@ include('/ui/ui-lib.js');
                      }
                 });
                 panel.render({element:document.body});
+                console.log(panel.element.clientWidth);
             })
         ];
     }
