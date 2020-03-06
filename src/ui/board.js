@@ -4,17 +4,18 @@ include('/ui/container.js');
 (function() {
 	function Board(id, template, parent) {
 		Ui.Container.call(this, id, template, parent);
-		this.items = {};
+		this.items = [];
         if (this.template.items) {
-			var i = 0;
             for (var key in this.template.items) {
 				if (this.template.items.hasOwnProperty(key)) {
-					var itemId = this.template.items[key].id || key;	//('00'+i).slice(-3);
-					this.items[key] = Ui.Control.create(`${id}_${itemId}`, this.template.items[key], this);
-					i++;
+					var itemId = this.template.items[key].id || key;
+					if (this.template.items.find(x => x.id == itemId) == -1) {
+						this.items.push(Ui.Control.create(`${id}_${itemId}`, this.template.items[key], this));
+					}
 				}
             }
-        }		
+		}
+		this.rebuild = true;
 	};
 	extend(Ui.Container, Board);
 
@@ -22,30 +23,31 @@ include('/ui/container.js');
 	Board.prototype.getTemplate = function() {
 		var template = Board.base.getTemplate.call(this);
 		template.type = 'board';
-		template.items = null;
+		template.items = {};
 		return template;
 	};
-	Board.prototype.add = function(key, ctrl) {
-		if (typeof key === 'string' && ctrl instanceof Ui.Control) {
-			this.items[key] = ctrl;
-			ctrl.css.push(key);
+	Board.prototype.add = function(ctrl, beforeItem) {
+		var ix = -1;
+		if (beforeItem) {
+			ix = this.items.findIndex(x => x.id == beforeItem.id);
+		}
+		if (ix >= 0 && ix < this.items.length) {
+			this.items.splice(ix, 0, ctrl);
 		} else {
-			this.items['item' + Object.keys(this.items).length] = key;
-			ctrl = key;
+			this.items.push(ctrl);
 		}
 		ctrl.parent = this;
 		return ctrl;
 	};
-	Board.prototype.addNew = function(key, template) {
-		key = key || ('i' + Object.keys(this.items).length);
-		var ctrl = Ui.Control.create(key, template, this);
-		this.add(key, ctrl);
+	Board.prototype.addNew = function(key, template, beforeItem) {
+		var ctrl = Ui.Control.create(`${this.id}_${key}`, template, this);
+		this.add(ctrl, beforeItem);
 		return ctrl;
 	};
 	Board.prototype.dataBind = function(dataSource, dataField) {
 		Board.base.dataBind.call(this, dataSource, dataField);
-		for (var key in this.items) {
-			var item = this.items[key];
+		for (var i=0; i<this.items.length; i++) {
+			var item = this.items[i];
 			if (!item.dataSource && item.dataField) {
 				item.dataBind(this.dataSource[item.dataField]);
 			}
@@ -61,8 +63,8 @@ include('/ui/container.js');
 		Board.base.render.call(this, ctx);
 		var context = ctx ? Object.create(ctx) : {};
 		context.element = this.element;
-		for (var key in this.items) {
-			var item = this.items[key];
+		for (var i=0; i<this.items.length; i++) {
+			var item = this.items[i];
 			item.render(context);
 		}
 	};
