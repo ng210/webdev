@@ -38,7 +38,7 @@ include('/ui/datalink.js');
 	Control.prototype.applyTemplate = function(tmpl) {
 		this.template = this.getTemplate();
 		for (var i in tmpl) {
-			if (this.template.hasOwnProperty(i)) {
+			if (this.template.hasOwnProperty(i) && tmpl[i] != undefined) {
 				this.template[i] = tmpl[i];
 			} else {
 				console.log(`${this.constructor.name}.template does not define '${i}'`);

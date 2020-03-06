@@ -4,6 +4,10 @@ include('/ui/control.js');
 (function() {
     function Container(id, template, parent) {
         Ui.Control.call(this, id, template, parent);
+        this.titleBarText = null;
+        if (this.template.titlebar != undefined && this.template.titlebar !== false && this.template.titlebar != '') {
+            this.titleBarText = this.template.titlebar === true ? this.id : this.template.titlebar;
+        }
         this.titleBar = null;
     }
     extend(Ui.Control, Container);
@@ -21,13 +25,15 @@ include('/ui/control.js');
     Container.prototype.render = function(node) {
         Container.base.render.call(this, node);
         // eventually create titlebar
-        if (this.titleBar === null && this.template.titlebar) {
+        if (this.titleBar == null && this.titleBarText) {
             this.titleBar = document.createElement('div');
             this.titleBar.id = this.id + '#title';
             this.titleBar.className = this.cssText + 'titlebar';
-            this.titleBar.innerHTML = this.template.titlebar;
+            this.titleBar.innerHTML = this.titleBarText;
             this.titleBar.control = this;
-            this.element.insertBefore(this.titleBar, this.element.childNodes[0]);
+        }
+        if (this.titleBar != null && this.element.children[0] != this.titleBar) {
+            this.element.insertBefore(this.titleBar, this.element.children[0]);
         }
     };
     Ui.Container = Container;

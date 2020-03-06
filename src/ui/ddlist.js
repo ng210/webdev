@@ -3,10 +3,10 @@ include('/ui/valuecontrol.js');
 
     function DropDownList(id, template, parent) {
         Ui.ValueControl.call(this, id, template, parent);
-        this.items = this.template.items || [];
+        this.items = this.template.items;
         this.itemsChanged = true;
-        this.itemKey = this.template['item-key'] || false;
-        this.itemValue = this.template['item-value'] || false;
+        this.itemKey = this.template['item-key'];
+        this.itemValue = this.template['item-value'];
     };
 	extend(Ui.ValueControl, DropDownList);
 
@@ -15,10 +15,10 @@ include('/ui/valuecontrol.js');
     DropDownList.prototype.getTemplate = function() {
         var template = DropDownList.base.getTemplate.call(this);
         template.type = 'ddlist';
-        template.items = null;
+        template.items = [];
         template['item-key'] = '$key';
         template['item-value'] = false;
-        if (!template.events.includes('change')) template.events.push('change');
+        if (!template?.events.includes('change')) template.events.push('change');
         return template;
     };
 

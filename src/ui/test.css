@@ -43,7 +43,7 @@ span.test {
 }
 
 .panel.content {
-    border: none;
+    border: silver 0px solid;
 }
 
 .panel.handler {
@@ -55,5 +55,5 @@ span.test {
 #TestPanel {
     position: absolute;
     border: #ffffff 1px solid;
-    width: 20em; height: 18em;
+    width: 320px; height: 256px;
 }

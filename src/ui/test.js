@@ -151,7 +151,7 @@ include('/ui/ui-lib.js');
                 var panel = new Ui.Panel('TestPanel', {
                      layout:'horizontal',
                      css: 'main',
-                     split: [20, 30],
+                     split: [20, 30, 50],
                      items: {
                          'left': { type: 'label', value: 'left' },
                          'middle': { type: 'label', value: 'middle' },
@@ -169,6 +169,9 @@ include('/ui/ui-lib.js');
                         }
                      }
                 });
+                panel.onSplit = function(item) {
+                    return new Ui.Label(item.id+'#1', {type:'label', value:'new'});
+                }
                 panel.render({element:document.body});
                 console.log(panel.element.clientWidth);
             })

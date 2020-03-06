@@ -187,7 +187,7 @@ include('/webgl/webgl.js');
             this.toolbar.appendChild(tr);
             this.toolbar.id = this.id + '#title';
             this.toolbar.className = this.cssText + 'titlebar';
-            this.element.insertBefore(this.toolbar, this.element.childNodes[0]);
+            this.element.insertBefore(this.toolbar, this.element.children[0]);
         }
     };
     Ui.MultiChart.prototype.render = async function(node) {

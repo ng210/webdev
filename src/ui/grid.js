@@ -8,17 +8,25 @@ include('/ui/container.js');
 		// set rows/columns array
 		this.rowKeys = null;
 		this.rows = null;
-		this.rowCount = parseInt(template['rows']) || 0;
+		this.rowCount = parseInt(this.template.rows);
 		this.columnKeys = null;
 		this.columns = null;
-		this.columnCount = parseInt(template['cols']) || 0;
+		this.columnCount = parseInt(this.template.cols);
 		// set templates
-		this.rowTemplate = template['row-template'] || null;
-		this.cellTemplate = template['cell-template'] || null;
+		this.rowTemplate = this.template['row-template'];
+		this.cellTemplate = this.template['cell-template'];
 	};
 	extend(Ui.Container, Grid);
-
 	Ui.Control.Types['grid'] = { ctor: Grid, tag: 'DIV' };
+
+	Grid.prototype.getTemplate = function() {
+		var template = Grid.base.getTemplate.call(this);
+		template.rows = '0';
+		template.cols = '0';
+		template['row-template'] = null;
+		template['cell-template'] = null;
+		return template;
+	}
 
 	Grid.prototype.buildRow = function(row, src, rowTmpl) {
 		// build a row from the given data source
