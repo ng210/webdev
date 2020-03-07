@@ -1,6 +1,7 @@
 include('/ui/ui-lib.js');
 
 (function() {
+    load('/synth/ui/synth.css');
     function Synth(id, tmpl, parent) {
         Ui.Board.call(this, id, tmpl, parent);
         this.preset = 'default';
@@ -15,7 +16,7 @@ include('/ui/ui-lib.js');
                 'remove': { type: 'button', value:'Remove', css: 'preset remove' }
             }
         };
-        this.toolbar = new Ui.Board(`${this.id}#toolbar`, toolbarTemplate);
+        this.toolbar = new Ui.Board(`${this.id}_toolbar`, toolbarTemplate);
         this.add('toolbar', this.toolbar);
         this.toolbar.items.on.render = Synth.renderOnOff;
         this.toolbar.items.on.onclick = Synth.onOnOffClick;
@@ -23,12 +24,12 @@ include('/ui/ui-lib.js');
         this.toolbar.items.save.onclick = Synth.onPresetSaveClick;
         this.toolbar.items.remove.onclick = Synth.onPresetRemoveClick;
 
-        this.modules = new Ui.Board(`${this.id}#modules`, { titlebar:false });
-        this.add(this.modules);
+        this.modules = new Ui.Board(`${this.id}_modules`, { titlebar:false });
+        this.add('modules', this.modules);
     }
     extend(Ui.Board, Synth);
 
-    Ui.Control.Types['synth'] = { ctor: Ui.Synth, tag: 'DIV' };
+    Ui.Control.Types['synth'] = { ctor: Ui.Synth, tag: 'SYNTH' };
 
     Synth.prototype.getTemplate = function() {
         var template = Synth.base.getTemplate.call(this);
@@ -49,7 +50,7 @@ include('/ui/ui-lib.js');
             var path = item.path.slice(1).join('.');
             if (item.ctrl instanceof psynth.Pot) {
                 if (item.ctrl == synth.getControl(psynth.Ctrl.amp)) {
-                    var control = new Ui.Slider(item.path.join('#'), {numeric:true, 'data-type':Ui.Control.DataTypes.Float, min:0, max:100, step:1}, this);
+                    var control = new Ui.Slider(item.path.join('_'), {numeric:true, 'data-type':Ui.Control.DataTypes.Float, min:0, max:100, step:1}, this);
                     this.modules.add('amp', control);
                     control.dataBind(item.ctrl, 'value');
                     this.controls[path] = control;
@@ -57,10 +58,10 @@ include('/ui/ui-lib.js');
                     var type = item.path[item.path.length-1];
                     var control = null;
                     if (selectTypes.indexOf(type) == -1) {
-                        control = new Ui.Pot(item.path.join('#'), {'numeric': true, 'decimal-digits':2}, this)
+                        control = new Ui.Pot(item.path.join('_'), {'numeric': true, 'decimal-digits':2}, this)
                         control.css.push('pot');
                     } else {
-                        control = new Ui.Select(item.path.join('#'), {titlebar:false, 'data-type': 'bool', 'item-type': 'label', flag:true}, this);
+                        control = new Ui.Select(item.path.join('_'), {titlebar:false, 'data-type': 'bool', 'item-type': 'label', flag:true}, this);
                         control.css.push('select');
                         if (type == 'wave') {
                             for (var i in psynth.WaveForms) {
@@ -71,7 +72,7 @@ include('/ui/ui-lib.js');
                         } else if (type == 'mode') {
                             for (var i in psynth.FilterModes) {
                                 var key = i.toLowerCase();
-                                control.addOption(key, new Ui.Label(`${control.id}#${key}`, {numeric:true,value:psynth.FilterModes[i]}));
+                                control.addOption(key, new Ui.Label(`${control.id}_${key}`, {numeric:true,value:psynth.FilterModes[i]}));
                             }
                         }
                     }                
@@ -86,7 +87,7 @@ include('/ui/ui-lib.js');
                     var mdl = item.module;
                     var path = [...item.path, i];
                     if (!(ctrl instanceof psynth.Pot)) {
-                        mdl = new Ui.Board(path.join('#'), {titlebar:false}, this);
+                        mdl = new Ui.Board(path.join('_'), {titlebar:false}, this);
                         var css = mdlTypes.find(x => i.startsWith(x));
                         mdl.css.push(css);
                         this.modules.add(i, mdl);

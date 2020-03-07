@@ -27,7 +27,7 @@ include('/ui/control.js');
         // eventually create titlebar
         if (this.titleBar == null && this.titleBarText) {
             this.titleBar = document.createElement('div');
-            this.titleBar.id = this.id + '#title';
+            this.titleBar.id = this.id + '_title';
             this.titleBar.className = this.cssText + 'titlebar';
             this.titleBar.innerHTML = this.titleBarText;
             this.titleBar.control = this;

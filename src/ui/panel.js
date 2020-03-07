@@ -8,7 +8,7 @@ include('/ui/board.js');
         if (this.template.items) {
             for (var key in this.template.items) {
 				if (this.template.items.hasOwnProperty(key)) {
-                    this.container.addNew(this.id + '#' + (this.template.items[key].id || key), this.template.items[key]);
+                    this.addNew(key, this.template.items[key]);
 				}
             }
         }
@@ -18,7 +18,10 @@ include('/ui/board.js');
 	extend(Ui.Container, Panel);
     Ui.Control.Types['panel'] = { ctor: Panel, tag: 'DIV' };
 
-    Object.defineProperty(Panel.prototype, 'count', { get: function() { return Object.keys(this.container.items).length; }});
+    Object.defineProperties(Panel.prototype, {
+        'count': { get: function() { return Object.keys(this.container.items).length; }},
+        'items': { get: function() { return this.container.items; }}
+    });
 
 	Panel.prototype.getTemplate = function() {
 		var template = Panel.base.getTemplate.call(this);
@@ -27,6 +30,7 @@ include('/ui/board.js');
         template.split = [];
         template.items = {};
         template.handlerSize = 4;
+        template.fixed = false;
         if (!template.events.includes('dblclick'))  template.events.push('dblclick');
 		return template;
     };
@@ -60,13 +64,13 @@ include('/ui/board.js');
         var restWidth = container.clientWidth;
         var restHeight = container.clientHeight;
         var restSize = 100;
-        var restCount = this.container.items.length;
-        for (var i=0; i<this.container.items.length; i++) {
-            var lastButOneItem = i == this.container.items.length-1;
-            var item = this.container.items[i];
+        var restCount = this.container.itemOrder.length;
+        for (var i=0; i<this.container.itemOrder.length; i++) {
+            var lastButOneItem = i == this.container.itemOrder.length-1;
+            var item = this.container.items[this.container.itemOrder[i]];
             item.render(context);
-            var size = restSize/restCount;
-            //var size = this.split[i] ?? restSize/restCount;
+            //var size = restSize/restCount;
+            var size = this.split[i] ?? restSize/restCount;
             restSize -= size;
             if (this.layout == Panel.Layout.horizontal) {
                 var width = !lastButOneItem ? Math.floor(container.clientWidth*size/100) : restWidth;
@@ -77,7 +81,7 @@ include('/ui/board.js');
                 item.element.style.height = height + 'px';
                 restHeight -= height;
             }
-            if (!lastButOneItem) {
+            if (!lastButOneItem && !this.template.fixed) {
                 var handler = new Ui.Label(`${this.id}#handler`, { css:'handler', value:'', events:['dragging'] }, this.container);
                 handler.panel = this;
                 handler.render(context);
@@ -96,12 +100,20 @@ include('/ui/board.js');
         return;
     };
 
-    Panel.prototype.add = function(item, beforeItem) {
-        return this.container.add(item, beforeItem);
+    Panel.prototype.add = function(key, item, itemBefore) {
+        var item = this.container.add(key, item, itemBefore);
+        item.id = `${this.id}_${key}`;
+        item.element.id = item.id;
+        item.panel = this;
+        return item;
     };
 
-    Panel.prototype.addNew = function(key, template, beforeItem) {
-        return this.container.addNew(key, template, beforeItem);
+    Panel.prototype.addNew = function(key, template, itemBefore) {
+        var item = this.container.addNew(key, template, itemBefore);
+        item.id = `${this.id}_${key}`;
+        item.element.id = item.id;
+        item.panel = this;
+        return item;
     };
     
     Panel.prototype.ondragging = function(e) {
@@ -139,8 +151,10 @@ console.log(sizes);
 
     Panel.prototype.ondblclick = function(e) {
         if (this.onSplit) {
-            var newItem = this.onSplit(e.target.nextSibling.control);
-            e.control.add(newItem, e.target.nextSibling.nextSibling.control);
+            var itemBefore = e.target.control;
+            var newItem = this.onSplit(itemBefore);
+debugger;
+            e.control.add(`${e.target.control.panel.id}#${e.target.control.panel.count}`, newItem, itemBefore);
             e.control.render();
             return true;
         }

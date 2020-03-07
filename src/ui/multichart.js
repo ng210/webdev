@@ -185,7 +185,7 @@ include('/webgl/webgl.js');
                 }
             }
             this.toolbar.appendChild(tr);
-            this.toolbar.id = this.id + '#title';
+            this.toolbar.id = this.id + '_title';
             this.toolbar.className = this.cssText + 'titlebar';
             this.element.insertBefore(this.toolbar, this.element.children[0]);
         }

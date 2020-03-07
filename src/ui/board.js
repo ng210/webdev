@@ -4,14 +4,13 @@ include('/ui/container.js');
 (function() {
 	function Board(id, template, parent) {
 		Ui.Container.call(this, id, template, parent);
-		this.items = [];
+		this.itemOrder = [];
+		this.items = {};
         if (this.template.items) {
             for (var key in this.template.items) {
 				if (this.template.items.hasOwnProperty(key)) {
 					var itemId = this.template.items[key].id || key;
-					if (this.template.items.find(x => x.id == itemId) == -1) {
-						this.items.push(Ui.Control.create(`${id}_${itemId}`, this.template.items[key], this));
-					}
+					this.addNew(itemId, this.template.items[key]);
 				}
             }
 		}
@@ -26,28 +25,30 @@ include('/ui/container.js');
 		template.items = {};
 		return template;
 	};
-	Board.prototype.add = function(ctrl, beforeItem) {
+	Board.prototype.add = function(key, ctrl, itemBefore) {
 		var ix = -1;
-		if (beforeItem) {
-			ix = this.items.findIndex(x => x.id == beforeItem.id);
+		if (itemBefore) {
+			ix = this.itemOrder.findIndex(x => this.items[x] == itemBefore) + 1;
 		}
-		if (ix >= 0 && ix < this.items.length) {
-			this.items.splice(ix, 0, ctrl);
+		ctrl.addClass(key);
+		if (ix > 0 && ix < this.itemOrder.length) {
+			this.itemOrder.splice(ix, 0, key);
 		} else {
-			this.items.push(ctrl);
+			this.itemOrder.push(key);
 		}
+		this.items[key] = ctrl;
 		ctrl.parent = this;
 		return ctrl;
 	};
-	Board.prototype.addNew = function(key, template, beforeItem) {
+	Board.prototype.addNew = function(key, template, itemBefore) {
 		var ctrl = Ui.Control.create(`${this.id}_${key}`, template, this);
-		this.add(ctrl, beforeItem);
+		this.add(key, ctrl, itemBefore);
 		return ctrl;
 	};
 	Board.prototype.dataBind = function(dataSource, dataField) {
 		Board.base.dataBind.call(this, dataSource, dataField);
-		for (var i=0; i<this.items.length; i++) {
-			var item = this.items[i];
+		for (var i=0; i<this.itemOrder.length; i++) {
+			var item = this.items[this.itemOrder[i]];
 			if (!item.dataSource && item.dataField) {
 				item.dataBind(this.dataSource[item.dataField]);
 			}
@@ -63,8 +64,8 @@ include('/ui/container.js');
 		Board.base.render.call(this, ctx);
 		var context = ctx ? Object.create(ctx) : {};
 		context.element = this.element;
-		for (var i=0; i<this.items.length; i++) {
-			var item = this.items[i];
+		for (var i=0; i<this.itemOrder.length; i++) {
+			var item = this.items[this.itemOrder[i]];
 			item.render(context);
 		}
 	};

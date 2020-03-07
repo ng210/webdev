@@ -31,7 +31,7 @@ include('/ui/board.js');
     };
 
     Select.prototype.addOption = function(key, value) {
-        var ctrl = value instanceof Ui.Control ? value : Ui.Control.create(`${this.id}#${key}`, { 'data-type': this.dataType, value:value, type:this.template['item-type'] });
+        var ctrl = value instanceof Ui.Control ? value : Ui.Control.create(`${this.id}_${key}`, { 'data-type': this.dataType, value:value, type:this.template['item-type'] });
         ctrl.css.push('option');
         this.options.add(key, ctrl);
         ctrl.parent = this;
