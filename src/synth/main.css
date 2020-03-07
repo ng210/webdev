@@ -1,5 +1,5 @@
 body {
-    background-color: #101020;
+    background-color: #203040;
     font-family: Verdana;
 }
 
@@ -16,54 +16,37 @@ div.group {
     border: groove 2px silver;
 }
 
+#ui {
+    width: 100%; height: 80vh;
+}
+
+#ui#modules {
+    border: #202050 2px groove;
+}
+
+.synth01 {
+    background-color: #8090A0;
+}
+
+.synth02 {
+    background-color: #80A090;
+}
+
+
+.content.editors.panel {
+    border: none;
+}
+
+
 #start {
     width: 3em;
 }
 
 #bpm {
-    /* padding:0px; margin: 0px; */
+    padding:0px; margin: 0px;
     height: 8px;
     cursor: pointer;
     
-}
-
-#synth1 {
-    width: 492px; height: 134px;
-    background-color: #606080;
-    border: outset 2px #606080;
-}
-
-#synth2 {
-    width: 492px; height: 134px;
-    background-color: #608060;
-    border: outset 2px #608060;
-}
-
-#synth3 {
-    width: 492px; height: 134px;
-    background-color: #c0a050;
-    border: outset 2px #c0a050;
-}
-
-#synth4 {
-    width: 492px; height: 134px;
-    background-color: #a07060;
-    border: outset 2px #a07060;
-}
-
-#synth5 {
-    width: 492px; height: 134px;
-    background-color: #9090a0;
-    border: outset 2px #9090a0;
-}
-
-div.titlebar {
-    color: #000000;
-    font-family: Verdana;
-    font-size: 11pt;
-    padding: 2px;
-    background-color: #6070a0;
-    border: solid 2px #405080
 }
 
 div.pattern {
