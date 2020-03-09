@@ -30,13 +30,14 @@
     // 3. Parser
     // The parser creates instances of the node prototypes by processing the input.
     // - identify the next term as the keyword of a node prototype
-    // - inidentified sequences are interpreted as literal nodes
+    // - unidentified sequences are interpreted as literal nodes
     // - create a new instance of the prototype and store the term
     // - store the instance
-    // The nodes are added to a tree, however without any links. Links are defined later during the resolution.
+    // The nodes are added to a set, later becoming a tree when links are defined during the resolution.
 
     // 4. Resolve
-    // The output of the parser is an Expression instance, which stores the nodes in its tree created by the parser.
+    // The output of the parser is an Expression instance, which stores its terms as nodes and their dependecies as link of a tree.
+    // The term-nodes are created by the parser.
     // The resolve method of the Expression accepts a 'context' argument and follows the steps below:
     // - tries to apply the rules to the input starting with the rule of the highest priority with the longest input sequence
     // - applying a rule means executing the rule's action if defined and merging the input nodes if possible
@@ -52,12 +53,6 @@
     // This 
 
     function Node(code, type, term) {
-        // // unique id of the node
-        // this.id = id;
-        // // parent node
-        // this.parent = null;
-        // // child nodes
-        // this.children = [];
         // interpreted value (parsed or calculated)
         this.value = parseFloat(term) || term;
         // prototype defined in the grammar
@@ -77,32 +72,24 @@
         this.syntax = syntax;
         this.expression = '';
         this.lastNode = null;
-    }
+    }4
     Expression.prototype.resolve = function(context) {
         this.lastNode = null;
         var nodes = Array.from(this.tree.nodes);
-      //  console.log(`Input: (${nodes.map(x => this.nodeToString(x, true)).join(' ')}`);
         while (nodes.length > 0) {
             for (var r=0; r<this.syntax.ruleMap.length;) {
-                //console.log('Input: (', nodes.map(x => this.symbols[x.data.code]).join(' '), ')');
                 var hasMatch = false;
                 var rule = this.syntax.ruleMap[r];
-                //console.log(`Matching ${rs(rule)} against ${nodes.map(x => x.data.type.symbol)}`);
                 for (var n=0; n<nodes.length;) {
                     var i = 0;
                     if (rule.in.length <= nodes.length - n) {
-                        while (i<rule.in.length && (rule.in[i] == nodes[n+i].data.code)) {
-                            //console.log(rule.in[i] + ' ? ' + nodes[n+i].data.code);
-                            i++;
-                        }
+                        while (i<rule.in.length && (rule.in[i] == nodes[n+i].data.code)) i++;
                     } else {
                         break;
                     }
                     if (i == rule.in.length) {
                         // match found, replace input by output
-                        //console.log('Matched: ' + rs(rule));
                         var args = nodes.slice(n, n+i);
-                        //console.log(args.length);
                         var output = null;
                         if (typeof rule.action === 'function') {
                             output = rule.action.apply(context, args);
@@ -113,7 +100,6 @@
                         } else if (rule.out && !output) {
                             output = this.mergeNodes(args);
                             output.data.code = rule.out;
-                            //console.log(`Merge: ${args.map(x => this.nodeToString(x, true)).join(' ')} => ${this.nodeToString(output, true)}`);
                             nodes.splice(n, i, output);
                         } else if (!rule.out && !output) {
                             nodes.slice(n, i);
@@ -125,7 +111,6 @@
                         if (output) {
                             this.lastNode = output;
                         }
-                      //  console.log(` - match at ${n}: (${args.map(x => this.nodeToString(x, true)).join(' ')}) : (${nodes.map(x => this.nodeToString(x, true)).join(' ')})`);
                         hasMatch = true;
                         break;
                     } else n++;
@@ -141,7 +126,6 @@
             if (typeof n.data.type.action === 'function') {
                 var args = n.edges.map(x => x.to);
                 n.data.value = n.data.type.action.apply(context, args);
-                //console.log(`${n.data.term}(${args.join(',')}) = ${n.data.value}`);
             }
         });
         for (var i=0; i<this.tree.nodes.length; i++) {
