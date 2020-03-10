@@ -49,8 +49,9 @@ include('/ui/container.js');
 		Board.base.dataBind.call(this, dataSource, dataField);
 		for (var i=0; i<this.itemOrder.length; i++) {
 			var item = this.items[this.itemOrder[i]];
-			if (!item.dataSource && item.dataField) {
-				item.dataBind(this.dataSource[item.dataField]);
+			var ds = item.dataSource || dataSource;
+			if (ds && item.dataField) {
+				item.dataBind(ds, item.dataField);
 			}
 		}
 	};
@@ -68,6 +69,9 @@ include('/ui/container.js');
 			var item = this.items[this.itemOrder[i]];
 			item.render(context);
 		}
+	};
+	Board.prototype.item = function(ix) {
+		return Object.values(this.items)[ix];
 	};
 	Ui.Board = Board;
 })();

@@ -15,7 +15,12 @@ include('/webgl/webgl.js');
 
         this.title_ = this.template.titlebar === true ? id : this.template.titlebar;
         this.toolbar = null;
-        this.toolbarTemplate = null;
+        this.toolbarTemplate = {
+            titlebar:false,
+            items: {
+                'title': { type: 'label', css:'title', 'data-field': 'title' },
+            }
+        };
         this.canvas = null;
         this.state = {};
         this.gl = null;
@@ -81,6 +86,7 @@ include('/webgl/webgl.js');
         template.events = [];
         template.width = 320;
         template.height = 240;
+        template.path = '';
         return template;
     }
 
@@ -169,30 +175,16 @@ include('/webgl/webgl.js');
     };
     Ui.MultiChart.prototype.createToolbar = async function() {
         if (this.toolbar == null) {
-            this.toolbar = document.createElement('table');
-            this.toolbar.style.width = '100%';
-            var tr = document.createElement('tr');
-            var res = await load(this.template.toolbar);
-            if (res.error) throw res.error;
-            this.toolbarTemplate = res.data;
-            for (var key in this.toolbarTemplate) {
-                if (this.toolbarTemplate.hasOwnProperty(key)) {
-                    var td = document.createElement('td');
-                    var ctrl = Ui.Control.create(`${this.id}#toolbar#${key}`, this.toolbarTemplate[key], this);
-                    ctrl.dataSource = this;
-                    ctrl.render({element:td});
-                    tr.appendChild(td);
-                }
-            }
-            this.toolbar.appendChild(tr);
-            this.toolbar.id = this.id + '_title';
-            this.toolbar.className = this.cssText + 'titlebar';
-            this.element.insertBefore(this.toolbar, this.element.children[0]);
+            this.toolbar = new Ui.Board(this.id+'_toolbar', this.toolbarTemplate, this);
+            this.toolbar.dataBind(this);
+            this.toolbar.render({element:this.element});
         }
     };
     Ui.MultiChart.prototype.render = async function(node) {
         Ui.Control.prototype.render.call(this, node);
         this.element.style.boxSizing = 'border-box';
+        // add titlebar as toolbar
+        await this.createToolbar();
         // create and initialize canvas for webgl rendering
         if (this.canvas === null) {
             this.canvas = document.createElement('canvas');
@@ -206,8 +198,6 @@ include('/webgl/webgl.js');
             this.resize();
             this.updateDataPoints();
         }
-        // add titlebar as toolbar
-        await this.createToolbar();
 
         this.element.style.width = this.template.width + 'px';
         //this.element.style.height = this.template.height + 'px';
@@ -277,11 +267,13 @@ include('/webgl/webgl.js');
         this.program.setUniforms();
     };
     Ui.MultiChart.prototype.paint = function() {
-        this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-        this.uniforms.uFrame.value++;
-        this.program.updateUniform('uFrame');
-        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+        if (this.program) {
+            this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+            this.uniforms.uFrame.value++;
+            this.program.updateUniform('uFrame');
+            this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+        }
     };
     Ui.MultiChart.prototype.resize = function(width, height) {
         if (width != undefined) {

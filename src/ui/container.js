@@ -22,18 +22,14 @@ include('/ui/control.js');
         if (['click', 'mouseover', 'mouseout'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
         Ui.Control.registerHandler.call(this, event);
     };
-    Container.prototype.render = function(node) {
-        Container.base.render.call(this, node);
+    Container.prototype.render = function(ctx) {
+        Container.base.render.call(this, ctx);
         // eventually create titlebar
         if (this.titleBar == null && this.titleBarText) {
-            this.titleBar = document.createElement('div');
-            this.titleBar.id = this.id + '_title';
-            this.titleBar.className = this.cssText + 'titlebar';
-            this.titleBar.innerHTML = this.titleBarText;
-            this.titleBar.control = this;
+            this.titleBar = new Ui.Label(this.id + '_title', {css:'titlebar', value:this.titleBarText, events:['click']}, this);
         }
-        if (this.titleBar != null && this.element.children[0] != this.titleBar) {
-            this.element.insertBefore(this.titleBar, this.element.children[0]);
+        if (this.titleBar != null) {
+            this.titleBar.render({element:this.element});
         }
     };
     Ui.Container = Container;

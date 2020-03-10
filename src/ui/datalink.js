@@ -1,46 +1,3 @@
-// (function() {
-//     var Ui = window.Ui || {};
-// 	function DataLink(obj) {
-//         this.obj = obj;
-//     }
-//     DataLink.prototype.add = function(control, field) {
-//         control.dataField = control.dataField || field;
-//         field = control.dataField;
-//         if (Object.keys(this.obj).includes(field)) {
-//             Object.defineProperty(this, field, {
-//                 enumerable:true,
-//                 set: function set(v) {
-//                     if (this.obj[field] !== v) {
-//                         //console.log(`set ${this.obj[field]} to ${v}`);
-//                         this.obj[field] = v;
-//                         control.setValue(v);
-//                     }
-//                 },
-//                 get: function() { return this.obj[field]; }
-//             });
-//             // add handler as the very first one
-//             if (control.handlers['change'] === undefined) {
-//                 control.handlers['change'] = [];
-//             }
-//             control.handlers['change'].unshift(
-//                 {
-//                     obj: this,
-//                     fn: function(e) {
-//                         var v = e.control.getValue();
-//                         if (this[e.control.dataField] !== v) {
-//                             this[e.control.dataField] = v;
-//                         }
-//                     }
-//                 }
-//             );
-//         }
-//     }
-//     Ui.DataLink = DataLink;
-//     public(Ui, 'Ui');
-// })();
-
-
-
 (function() {
     // 1. datalink transparent: accessing datalink.field is equal to accessing datalink.obj.field
     // 2. subscribe for changes: datalink.field changed triggers handlers
@@ -67,8 +24,7 @@
     }
     DataLink.prototype.add = function add(field, handler, dataLink, field2) {
         var link = null;
-        //console.log('bind ' + field + (field2 ? ' to ' + field2 : ''));
-        if (Object.keys(this.obj).includes(field)) {
+        if (this.obj[field] != undefined) {
             if (!Object.keys(this).includes(field)) {
                 Object.defineProperty(this, field, {
                     enumerable: true,

@@ -99,12 +99,14 @@ include('/ui/datalink.js');
 		for (eventName in this.handlers) {
 			this.addHandler(eventName, Control.onevent);
 		}
-
-		if (ctx && ctx.element && ctx.element != this.element.parentNode) {
-			if (this.element.parentNode != null) {
-				this.element.parentNode.removeChild(this.element);
+		if (ctx && ctx.element || this.parent && this.parent.element) {
+			var parentElement = ctx && ctx.element != null ? ctx.element : this.parent.element;
+			if (parentElement != this.element.parentNode) {
+				if (this.element.parentNode != null) {
+					this.element.parentNode.removeChild(this.element);
+				}
+				parentElement.appendChild(this.element);
 			}
-			ctx.element.appendChild(this.element);
 		}
 	};
 	Control.prototype.registerHandler = function(event) {
@@ -133,6 +135,7 @@ include('/ui/datalink.js');
 		if (dataSource) {
 			this.dataSource = dataSource instanceof Ui.DataLink ? dataSource : new Ui.DataLink(dataSource);
 			this.dataField = dataField !== undefined ? dataField : this.dataField;
+			this.dataSource.add(this.dataField);
 		}
 	};
 
@@ -233,7 +236,7 @@ include('/ui/datalink.js');
 				draggingEvent.deltaY = e.clientY - Control.dragStart[1];
 				//draggingEvent.control = Control.focused;
 				control = Control.focused;
-				if (control?.handlers.dragging?.length) {
+				if (control && control.handlers.dragging && control.handlers.dragging.length) {
 					control.element.dispatchEvent(draggingEvent);
 					if (!(control instanceof Ui.Slider)) {
 						e.preventDefault();

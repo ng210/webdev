@@ -88,7 +88,7 @@ include('/ui/ui-lib.js');
                     control.setValue(i);
                     var errors = [];
                     if (control.id != 'test'+i) errors.push('Id is invalid');
-                    //if (control.template?.type != i) errors.push('Type is invalid');
+                    //if (control.template.type != i) errors.push('Type is invalid');
                     var value = control.getValue();
                     if (!control.isNumeric && value != i || control.isNumeric && value != control.defaultValue) errors.push('Value is not correct');
                     return errors.length > 0 ? errors : false;

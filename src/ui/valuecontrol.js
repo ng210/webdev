@@ -1,6 +1,7 @@
 include('/ui/control.js');
 
 (function() {
+	var _digits = '0000000000000000';
 	// Abstract type for controls holding a single value
 	function ValueControl(id, template, parent) {
 		Ui.ValueControl.base.constructor.call(this, id, template, parent);
@@ -36,21 +37,22 @@ include('/ui/control.js');
 		template['data-type'] = null;
 		template['data-field'] = null;
 		template['default'] = 0;
-        template['decimal-digits'] = -1;
+		template['decimal-digits'] = -1;
+		template['digits'] = 1;
         return template;
 	};
 	ValueControl.prototype.dataBind = function(dataSource, dataField) {
 		ValueControl.base.dataBind.call(this, dataSource, dataField)
 		if (this.dataSource && this.dataField) {
 			if (this.isNumeric) {
-				var min = typeof dataSource.min === 'number' ? dataSource.min : this.min;
-				var max = typeof dataSource.max === 'number' ? dataSource.max : this.max;
+				var min = typeof this.dataSource.obj.min === 'number' ? this.dataSource.obj.min : this.min;
+				var max = typeof this.dataSource.obj.max === 'number' ? this.dataSource.obj.max : this.max;
 				this.scale = (max - min)/(this.max - this.min)
 				// (x-min)/(max-min) = (x'-min')/(max'-min')
 				// x = (x'-min')(max-min)/(max'-min') + min
 				this.toSource = x => (x - this.min)*this.scale + min;
 				this.fromSource = x => (x - min)/this.scale + this.min
-				this.step = typeof dataSource.step === 'number' ? this.fromSource(dataSource.step) : this.parse(this.template.step) ?? this.step;
+				this.step = typeof this.dataSource.obj.step === 'number' ? this.fromSource(this.dataSource.obj.step) : this.parse(this.template.step) || this.step;
 			}
 			this.dataLink = new Ui.DataLink(this);
 			this.dataLink.link('value', this.dataSource, this.dataField, this.toSource, this.fromSource);
@@ -129,7 +131,7 @@ include('/ui/control.js');
 				}
 			}
 		} else {
-			value = value ?? '';
+			value = value !== undefined && value != null ? value : '';
 		}
 		var results = this.validate(value, true);
 		if (results.length > 0) {
@@ -160,17 +162,20 @@ include('/ui/control.js');
 	};
 	ValueControl.prototype.render = function(ctx) {
 		ValueControl.base.render.call(this, ctx);
+		value = this.getValue();
 		if (this.isNumeric) {
 			this.element.setAttribute('min', this.min);
 			this.element.setAttribute('max', this.max);
 			this.element.setAttribute('step', this.step);
+			if (this.decimalDigits > -1) {
+				var pow = Math.pow(10, this.decimalDigits);
+				value = Math.round(value*pow)/pow;
+			}
+			if (this.template.digits > 0) {
+				value = (_digits + value).slice(-this.template.digits);
+			}
 		}
 		var attribute = this.element.tagName == 'INPUT' ? 'value' : 'innerHTML';
-		value = this.getValue();
-		if (this.decimalDigits != -1) {
-			var pow = Math.pow(10, this.decimalDigits);
-			value = Math.round(value*pow)/pow;
-		}
 		this.element[attribute] = value;
 	};
 

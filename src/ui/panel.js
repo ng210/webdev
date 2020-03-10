@@ -70,7 +70,7 @@ include('/ui/board.js');
             var item = this.container.items[this.container.itemOrder[i]];
             item.render(context);
             //var size = restSize/restCount;
-            var size = this.split[i] ?? restSize/restCount;
+            var size = this.split[i] || restSize/restCount;
             restSize -= size;
             if (this.layout == Panel.Layout.horizontal) {
                 var width = !lastButOneItem ? Math.floor(container.clientWidth*size/100) : restWidth;
@@ -119,7 +119,6 @@ include('/ui/board.js');
     Panel.prototype.ondragging = function(e) {
         var handler = e.control.element;
         var panel = e.control.panel;
-var sizes = [];
         if (panel.layout == Panel.Layout.horizontal) {
             var left = handler.previousSibling;
             var right = handler.nextSibling;
@@ -131,7 +130,6 @@ var sizes = [];
             left.style.width = leftWidth + 'px';
             //handler.style.left = leftWidth + 'px';
             right.style.width = rightWidth + 'px';
-sizes.push(leftWidth, rightWidth);
         } else {
             var top = handler.previousSibling;
             var bottom = handler.nextSibling;
@@ -143,9 +141,7 @@ sizes.push(leftWidth, rightWidth);
             top.style.height = topHeight + 'px';
             //handler.style.top = topHeight + 'px';
             bottom.style.height = bottomHeight + 'px';
-sizes.push(height, topHeight, bottomHeight, topHeight + bottomHeight, panel.element.clientHeight);
         }
-console.log(sizes);
         return true;
     };
 
@@ -153,7 +149,6 @@ console.log(sizes);
         if (this.onSplit) {
             var itemBefore = e.target.control;
             var newItem = this.onSplit(itemBefore);
-debugger;
             e.control.add(`${e.target.control.panel.id}#${e.target.control.panel.count}`, newItem, itemBefore);
             e.control.render();
             return true;

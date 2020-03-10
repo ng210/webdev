@@ -18,7 +18,7 @@ include('/ui/valuecontrol.js');
         template.items = [];
         template['item-key'] = '$key';
         template['item-value'] = false;
-        if (!template?.events.includes('change')) template.events.push('change');
+        if (!template.events.includes('change')) template.events.push('change');
         return template;
     };
 
