@@ -26,15 +26,10 @@
 
     Tree.prototype.addNode = function(parentNode, nodeData, edgeData) {
         var node = this.createNode(nodeData);
-        var childNode = node;
-        if (!parentNode || !this.root) {
-            childNode = this.root;
-            parentNode = node;
+        if (!this.root) {
             this.root = node;
-        }
-        this.nodes.push(node);
-        if (childNode != null) {
-            this.addEdge(parentNode, childNode, edgeData);
+        } else {
+            this.addEdge(parentNode || this.root, node, edgeData);
         }
         return node;
      };
@@ -83,11 +78,10 @@
                 tree.addNode(tree.nodes[parentId - 1], nodeId, `${parentId} -> ${nodeId}`);
                 nodeId++;
             }
-            nodeCount  *= nodeDegree;
+            nodeCount *= nodeDegree;
         }
         return tree;
     }
 
-    //module.exports = Tree;
-	public(Tree, 'Tree');
+    public(Tree, 'Tree');
 })();
