@@ -1,9 +1,9 @@
 include('/ge/player/player.js');
 include('/ge/player/iadapter.js');
 include('/synth/synth.js');
+include('/ge/sound.js');
 
 (function() {
-
 	function SynthAdapter() {
 		this.devices = [];
 	}
@@ -11,9 +11,9 @@ include('/synth/synth.js');
     SynthAdapter.prototype.getInfo = function() { return psynth.SynthAdapter.info; },
 	//registerCommands: function(registry) { throw new Error('Not implemented!'); },
 	SynthAdapter.prototype.prepareContext = function(data) {
-		// todo: initialize sound lib
+		sound.init(48000, data.callback);
 	};
-	SynthAdapter.prototype.createTargets = function(targets, data) {
+	SynthAdapter.prototype.addTargets = function(targets, data) {
 		var cursor = 0;
 		var deviceCount = data[cursor++];
 		for (var i=0; i<deviceCount; i++) {
@@ -42,9 +42,9 @@ include('/synth/synth.js');
 				cursor += 2;
 				break;
 			case psynth.SynthAdapter.SETCTRLF:
-					target.setControl(sequence.getUint8(cursor++), sequence.getFloat32(cursor));
-					cursor += 4;
-					break;
+				target.setControl(sequence.getUint8(cursor++), sequence.getFloat32(cursor));
+				cursor += 4;
+				break;
 		}
 		return cursor;
 	};

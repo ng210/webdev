@@ -8,7 +8,7 @@ include('/ge/player/player.js');
         getInfo: function() { throw new Error('Not implemented!'); },
         registerCommands: function(registry) { throw new Error('Not implemented!'); },
         prepareContext: function(data) { throw new Error('Not implemented!'); },
-        createTargets: function(targets, data) { throw new Error('Not implemented!'); },
+        addTargets: function(targets, data) { throw new Error('Not implemented!'); },
         processCommand: function(target, command, sequence, cursor) { throw new Error('Not implemented!'); },
         updateRefreshRate: function(target, command) { throw new Error('Not implemented!'); },
 

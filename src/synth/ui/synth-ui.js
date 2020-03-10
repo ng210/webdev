@@ -16,7 +16,7 @@ include('/ui/ui-lib.js');
                 'remove': { type: 'button', value:'Remove', css: 'preset remove' }
             }
         };
-        this.toolbar = new Ui.Board(`${this.id}_toolbar`, toolbarTemplate);
+        this.toolbar = new Ui.Board(`${this.id}_toolbar`, toolbarTemplate, this);
         this.add('toolbar', this.toolbar);
         this.toolbar.items.on.render = Synth.renderOnOff;
         this.toolbar.items.on.onclick = Synth.onOnOffClick;
@@ -24,7 +24,7 @@ include('/ui/ui-lib.js');
         this.toolbar.items.save.onclick = Synth.onPresetSaveClick;
         this.toolbar.items.remove.onclick = Synth.onPresetRemoveClick;
 
-        this.modules = new Ui.Board(`${this.id}_modules`, { titlebar:false });
+        this.modules = new Ui.Board(`${this.id}_modules`, { titlebar:false }, this);
         this.add('modules', this.modules);
     }
     extend(Ui.Board, Synth);
@@ -34,6 +34,7 @@ include('/ui/ui-lib.js');
     Synth.prototype.getTemplate = function() {
         var template = Synth.base.getTemplate.call(this);
         template.type = 'synth';
+        if (!template.events.includes('click')) template.events.push('click');
         return template;
     };
 
@@ -50,7 +51,7 @@ include('/ui/ui-lib.js');
             var path = item.path.slice(1).join('.');
             if (item.ctrl instanceof psynth.Pot) {
                 if (item.ctrl == synth.getControl(psynth.Ctrl.amp)) {
-                    var control = new Ui.Slider(item.path.join('_'), {numeric:true, 'data-type':Ui.Control.DataTypes.Float, min:0, max:100, step:1}, this);
+                    var control = new Ui.Slider(item.path.join('_'), {numeric:true, 'data-type':Ui.Control.DataTypes.Float, min:0, max:100, step:1, digits:0, 'decimal-digits':0}, this);
                     this.modules.add('amp', control);
                     control.dataBind(item.ctrl, 'value');
                     this.controls[path] = control;
@@ -58,7 +59,7 @@ include('/ui/ui-lib.js');
                     var type = item.path[item.path.length-1];
                     var control = null;
                     if (selectTypes.indexOf(type) == -1) {
-                        control = new Ui.Pot(item.path.join('_'), {'numeric': true, 'decimal-digits':2}, this)
+                        control = new Ui.Pot(item.path.join('_'), {'numeric': true, digits:0, 'decimal-digits':0}, this)
                         control.css.push('pot');
                     } else {
                         control = new Ui.Select(item.path.join('_'), {titlebar:false, 'data-type': 'bool', 'item-type': 'label', flag:true}, this);
@@ -175,6 +176,21 @@ include('/ui/ui-lib.js');
         this.toolbar.items.preset.add(name, preset);
         this.toolbar.items.preset.select(name);
     };
+    Synth.prototype.changePreset = function(id) {
+        var preset = Synth.presets[id];
+        if (preset) {
+            for (var key in preset) {
+                var ctrl = this.controls[key];
+                // if (ctrl instanceof Ui.Select) {
+                //     ctrl.dataSource.value = preset[key];
+                // } else
+                if (ctrl instanceof Ui.ValueControl) {
+                    ctrl.dataSource.value = preset[key];
+                }
+            }
+        }
+    };
+
 
     Synth.renderOnOff = function(ctx) {
         this.getValue() ? this.addClass('on', true) : this.removeClass('on', true);
@@ -187,23 +203,13 @@ include('/ui/ui-lib.js');
         // var synth = e.control.parent.parent.dataSource.obj
         // console.log(synth.isActive);
         // console.log(e.control.cssText);
+        return true;
     };
     Synth.onPresetChange = function(e) {
         Ui.DropDownList.prototype.onchange.call(this, e);
         var synthUi = e.control.parent.parent;
-        var preset = Synth.presets[synthUi.preset];
-        if (preset) {
-            for (var key in preset) {
-                var ctrl = synthUi.controls[key];
-                // if (ctrl instanceof Ui.Select) {
-                //     ctrl.dataSource.value = preset[key];
-                // } else
-                if (ctrl instanceof Ui.ValueControl) {
-                    ctrl.dataSource.value = preset[key];
-                }
-            }
-            synthUi.render();
-        }
+        synthUi.changePreset(synthUi.preset);
+        synthUi.render();
     };
     Synth.onPresetSaveClick = function(e) {
         var synthUi = e.control.parent.parent;
