@@ -46,7 +46,7 @@ include('/ge/player/sequence.js');
 
     channel.prototype.run = function(ticks) {
         var isRestarted = false;
-        while (true) {
+        while (this.isActive) {
             isRestarted = false;
             var delta = 0;
             while ((delta = this.sequence.getUint16(this.cursor)) <= this.currentTick) {
