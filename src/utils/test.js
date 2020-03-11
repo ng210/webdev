@@ -6,11 +6,11 @@ include('/utils/syntax.js');
             // separator
             ' ': { 'symbol': '' },
             // operator
-            '+':    { 'symbol': 'A', 'action': (x, y) => x + y },
-            '*':    { 'symbol': 'M', 'action': (x, y) => x * y },
-            'pow':  { 'symbol': 'F', 'action': (a, p) => Math.pow(a, p) },
-            'sqrt': { 'symbol': 'F', 'action': (x) => Math.sqrt(x) },
-            'get':  { 'symbol': 'F', 'action': function(name) { return this[name]; } },
+            '+':    { 'symbol': 'A', 'action': function(x, y) { return x.data.value + y.data.value; } },
+            '*':    { 'symbol': 'M', 'action': (x, y) => x.data.value * y.data.value },
+            'pow':  { 'symbol': 'F', 'action': (a, p) => Math.pow(a.data.value, p.data.value) },
+            'sqrt': { 'symbol': 'F', 'action': (x) => Math.sqrt(x.data.value) },
+            'get':  { 'symbol': 'F', 'action': function(name) { return this[name.data.value]; } },
             // syntax elements
             '(':    { 'symbol': 'B1' },
             ')':    { 'symbol': 'B2' },
@@ -32,7 +32,7 @@ include('/utils/syntax.js');
             { input:'F1L',  output:'F2', priority: 26,  action: null },
             { input:'F2C',  output:'F1', priority: 24,  action: null },
             { input:'F2B2', output:'L',  priority: 22,  action: null },
-            { input:'B1LB2',output:'L',  priority: 10,  action: (b1,l,b2) => l },
+            { input:'B1LB2',output:'L',  priority: 100,  action: (b1,l,b2) => l },
             { input:'L',    output:null, priority: 1,   action: null }
         ],
     };

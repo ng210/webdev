@@ -1,6 +1,9 @@
 (function() {
     include('/data/tree.js');
 
+
+    var isDebug = true;
+
     var rs = r => `${r.priority} ${r.input}(${r.in.join('.')})=>${r.output}(${r.out})`
 
     // A grammar consists of a list of node prototypes and rules.
@@ -72,10 +75,11 @@
         this.syntax = syntax;
         this.expression = '';
         this.lastNode = null;
-    }4
+    }
     Expression.prototype.resolve = function(context) {
         this.lastNode = null;
         var nodes = Array.from(this.tree.nodes);
+        if (isDebug) console.log(`input: ${nodes.map(x => `${this.syntax.symbols[x.data.code]}['${x.data.term}']`)}`);
         while (nodes.length > 0) {
             for (var r=0; r<this.syntax.ruleMap.length;) {
                 var hasMatch = false;
@@ -88,6 +92,7 @@
                         break;
                     }
                     if (i == rule.in.length) {
+                        if (isDebug) console.log(`match: ${rs(rule)}`);
                         // match found, replace input by output
                         var args = nodes.slice(n, n+i);
                         var output = null;
@@ -112,6 +117,7 @@
                             this.lastNode = output;
                         }
                         hasMatch = true;
+                        if (isDebug) console.log(`result: ${nodes.map(x => `${this.syntax.symbols[x.data.code]}['${x.data.term}']`)}`);
                         break;
                     } else n++;
                 }
