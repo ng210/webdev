@@ -564,14 +564,22 @@
 		//console.log(`${this.label}.off ???: ${note}`);
 		//throw new Error('voice not found!');
 	};
-	psynth.Synth.prototype.run = function(buffer, start, end) {
+	var delayBuffer = new Float32Array(96000);
+	var delayPos = 0;
+	var delay = Math.floor(0.1 * 48000);
+	psynth.Synth.prototype.run = function(left, right, start, end) {
 		if (this.isActive) {
 			for (var i=start; i<end; i++) {
 				var smp = 0;
 				for (var j=0; j<this.voices.length; j++) {
 					smp += this.voices[j].run();
 				}
-				buffer[i] += smp;
+				left[i] += smp;
+				//var delayed = 0.0*delayBuffer[delayPos];
+				delayBuffer[delayPos] = smp;
+				delayPos++;
+				if (delayPos == delay) delayPos = 0;
+				right[i] += delayBuffer[delayPos];
 			}
 			//console.log(buffer[start]);
 		}

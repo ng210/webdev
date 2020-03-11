@@ -7,7 +7,6 @@
         context: null,
         audioNode: null,
         smpRate: 0,
-        BUFFER_SIZE: 4096,
 
         init: function(smpRate, callback) {
             this.smpRate = smpRate || 48000;
@@ -18,12 +17,12 @@
                 window.msAudioContext ? new window.msAudioContext() :
                 undefined;
             if (!this.context) throw new Error('Could not create sound context!');
-            this.audioNode = this.context.createScriptProcessor(this.BUFFER_SIZE, 0, 1);
+            this.audioNode = this.context.createScriptProcessor(this.BUFFER_SIZE, 0, 2);
             this.audioNode.onaudioprocess = function(audioProcessingEvent) {
                 var outputBuffer = audioProcessingEvent.outputBuffer;
-                var channel = 0;
-                var outData = outputBuffer.getChannelData(channel);
-                sound.fillBuffer(outData, outputBuffer.length);
+                var left = outputBuffer.getChannelData(0);
+                var right = outputBuffer.getChannelData(1);
+                sound.fillBuffer(left, right, outputBuffer.length, 0);
             };
             this.fillBuffer = callback || function(buffer, count) {};
             this.audioNode.connect(this.context.destination);

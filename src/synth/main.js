@@ -20,7 +20,7 @@ var _selected = 0;
 var _frame = 0;
 var _samplePerFrame = 0;
 var _settings = {
-    'bpm': 96
+    'bpm': 60
 };
 
 /*****************************************************************************/
@@ -102,7 +102,7 @@ function createSynth(voiceCount) {
     
     // create channel
     var channel = new Player.Channel(`channel${si}`, _player);
-    channel.loopCount = 1000;
+    channel.loopCount = 0;
     channel.assign(_player.targets[si], _player.sequences[si]);
     _player.channels.push(channel);
 
@@ -191,23 +191,34 @@ async function initializePlayer() {
 }
 function resetPlayer() {
     for (var i=0; i<_player.channels.length; i++) {
+        _player.channels[i].loopCount = 1;
         _player.channels[i].reset();
+        _player.channels[i].isActive = true;
     }
 }
 function update() {
+    var isRunning = false;
     for (var i=0; i<_player.channels.length; i++) {
-        _player.channels[i].run(1);
+        var isActive = _player.channels[i].run(1);
+        console.log(`Chn #${i} is ${isActive ? 'active' : 'inactive'}`);
+        isRunning = isRunning || isActive;
+        console.log(`Playback is ${isRunning ? 'running' : 'stopped'}`);        
+    }
+    if (!isRunning) {
+        resetPlayer();
+        update();
     }
 }
 
 /*****************************************************************************/
-function fillSoundBuffer(buffer, bufferSize) {
+function fillSoundBuffer(left, right, bufferSize, channel) {
     //var samplesPerFrame = 48000 / SynthApp.player.refreshRate;
     var start = 0;
     var end = 0;
     var remains = bufferSize;
     for (var i=0; i<bufferSize; i++) {
-        buffer[i] = .0;
+        left[i] = .0;
+        right[i] = .0;
     }
     while (remains) {
         if (_frame == 0) {
@@ -219,7 +230,7 @@ function fillSoundBuffer(buffer, bufferSize) {
         end = start + len;
         _frame -= len;
         for (var i=0; i<_player.channels.length; i++) {
-            _player.channels[i].target.run(buffer, start, end);
+            _player.channels[i].target.run(left, right, start, end);
         }
         start = end;
         remains -= len;
@@ -269,5 +280,6 @@ async function onpageload(e) {
     
     updateBpm();
 
+    resetPlayer();
     sound.start();
 }
