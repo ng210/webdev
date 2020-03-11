@@ -153,6 +153,7 @@ function multiChartOnRemove(from, to) {
 function updateBpm() {
     // bpm 4th per minute => bpm*8/60 8th per second = bpm/7.5
     _samplePerFrame = Math.floor(48000*7.5/_settings.bpm);
+    console.log(_samplePerFrame);
 }
 
 function onSelectChannel(e) {
@@ -200,9 +201,9 @@ function update() {
     var isRunning = false;
     for (var i=0; i<_player.channels.length; i++) {
         var isActive = _player.channels[i].run(1);
-        console.log(`Chn #${i} is ${isActive ? 'active' : 'inactive'}`);
+        //console.log(`Chn #${i} is ${isActive ? 'active' : 'inactive'}`);
         isRunning = isRunning || isActive;
-        console.log(`Playback is ${isRunning ? 'running' : 'stopped'}`);        
+        //console.log(`Playback is ${isRunning ? 'running' : 'stopped'}`);        
     }
     if (!isRunning) {
         resetPlayer();
@@ -257,7 +258,7 @@ async function onpageload(e) {
 
     Dbg.prln('Load sequence script');
     await loadSequence('res/demo01.seq');
-    await Ui.Synth.loadPresets();
+    await Ui.Synth.loadPresets('res/presets.json');
 
     for (var i=0; i<_series.length; i++) {
         Dbg.prln('Add synths');
@@ -269,13 +270,14 @@ async function onpageload(e) {
     editor.dataBind(_series[0]);
     editor.selectChannel(psynth.SynthAdapter.SETNOTE);
 
-    _ui.render({element:document.getElementById('main')});
+    await _ui.render({element:document.getElementById('main')});
     //selectChannel(0);
     var bpm = new Ui.Pot('bpm', {
         min: 60, max: 160, step: 1,
         'digits': 3,
         'data-source': _settings, 'data-field': 'bpm'
     });
+    bpm.ondragging = function(e) { updateBpm(); };
     bpm.render({element:document.getElementById('bpm')});
     
     updateBpm();

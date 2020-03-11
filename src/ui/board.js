@@ -55,7 +55,7 @@ include('/ui/container.js');
 			}
 		}
 	};
-	Board.prototype.render = function(ctx) {
+	Board.prototype.render = async function(ctx) {
 		if (this.element) {
 			while (this.element.children.length > 0) {
 				this.element.removeChild(this.element.children[0]);
@@ -67,7 +67,7 @@ include('/ui/container.js');
 		context.element = this.element;
 		for (var i=0; i<this.itemOrder.length; i++) {
 			var item = this.items[this.itemOrder[i]];
-			item.render(context);
+			await item.render(context);
 		}
 	};
 	Board.prototype.item = function(ix) {

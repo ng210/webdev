@@ -107,7 +107,7 @@ include('/webgl/webgl.js');
             this.series = this.dataSource[id];
             this.selectedChannelId = id;
         }
-    }
+    };
     Ui.MultiChart.prototype.updateDataPoints = function(start, length) {
         if (this.series) {
             if (this.series.data.length == 0) {
@@ -177,7 +177,7 @@ include('/webgl/webgl.js');
         if (this.toolbar == null) {
             this.toolbar = new Ui.Board(this.id+'_toolbar', this.toolbarTemplate, this);
             this.toolbar.dataBind(this);
-            this.toolbar.render({element:this.element});
+            await this.toolbar.render({element:this.element});
         }
     };
     Ui.MultiChart.prototype.render = async function(node) {

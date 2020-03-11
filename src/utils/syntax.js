@@ -2,7 +2,7 @@
     include('/data/tree.js');
 
 
-    var isDebug = true;
+    var isDebug = false;
 
     var rs = r => `${r.priority} ${r.input}(${r.in.join('.')})=>${r.output}(${r.out})`
 

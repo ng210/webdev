@@ -39,7 +39,7 @@ include('/ui/board.js');
 		Ui.Control.registerHandler.call(this, event);
     };
 
-	Panel.prototype.render = function(ctx) {
+	Panel.prototype.render = async function(ctx) {
         if (!this.css.includes('panel') && !(this.parent instanceof Ui.Panel)) {
             this.css.push('panel');
         }
@@ -48,7 +48,7 @@ include('/ui/board.js');
         this.element.style.flexDirection = 'column';
         var context = ctx ? Object.create(ctx) : {};
         context.element = this.element;
-        Ui.Board.base.render.call(this.container, context);
+        await Ui.Board.base.render.call(this.container, context);
         var container = this.container.element;
         context.element = container;
         container.style.display = 'flex';
@@ -68,7 +68,7 @@ include('/ui/board.js');
         for (var i=0; i<this.container.itemOrder.length; i++) {
             var lastButOneItem = i == this.container.itemOrder.length-1;
             var item = this.container.items[this.container.itemOrder[i]];
-            item.render(context);
+            await item.render(context);
             //var size = restSize/restCount;
             var size = this.split[i] || restSize/restCount;
             restSize -= size;
@@ -84,7 +84,7 @@ include('/ui/board.js');
             if (!lastButOneItem && !this.template.fixed) {
                 var handler = new Ui.Label(`${this.id}#handler`, { css:'handler', value:'', events:['dragging'] }, this.container);
                 handler.panel = this;
-                handler.render(context);
+                await handler.render(context);
                 handler.element.style.boxSizing = 'border-box';
                 if (this.layout == Ui.Panel.Layout.horizontal) {
                     handler.element.style.width = this.template.handlerSize + 'px';
