@@ -44,21 +44,26 @@ include('/ui/control.js');
 	ValueControl.prototype.dataBind = function(dataSource, dataField) {
 		ValueControl.base.dataBind.call(this, dataSource, dataField)
 		if (this.dataSource && this.dataField) {
-			if (this.isNumeric) {
-				var min = typeof this.dataSource.obj.min === 'number' ? this.dataSource.obj.min : this.min;
-				var max = typeof this.dataSource.obj.max === 'number' ? this.dataSource.obj.max : this.max;
-				this.scale = (max - min)/(this.max - this.min)
-				// (x-min)/(max-min) = (x'-min')/(max'-min')
-				// x = (x'-min')(max-min)/(max'-min') + min
-				this.toSource = x => (x - this.min)*this.scale + min;
-				this.fromSource = x => (x - min)/this.scale + this.min
-				this.step = typeof this.dataSource.obj.step === 'number' ? this.fromSource(this.dataSource.obj.step) : this.parse(this.template.step) || this.step;
+			var value = this.value;
+			if (this.dataType == Ui.Control.DataTypes.Bool) {
+				value = this.template['text-true'] || this.value;
+			} else {
+				if (this.isNumeric) {
+					var min = typeof this.dataSource.obj.min === 'number' ? this.dataSource.obj.min : this.min;
+					var max = typeof this.dataSource.obj.max === 'number' ? this.dataSource.obj.max : this.max;
+					this.scale = (max - min)/(this.max - this.min)
+					// (x-min)/(max-min) = (x'-min')/(max'-min')
+					// x = (x'-min')(max-min)/(max'-min') + min
+					this.toSource = x => (x - this.min)*this.scale + min;
+					this.fromSource = x => (x - min)/this.scale + this.min
+					this.step = typeof this.dataSource.obj.step === 'number' ? this.fromSource(this.dataSource.obj.step) : this.parse(this.template.step) || this.step;
+				}
+				value = this.dataSource[this.dataField];
 			}
 			this.dataLink = new Ui.DataLink(this);
 			this.dataLink.link('value', this.dataSource, this.dataField, this.toSource, this.fromSource);
-			var value = this.dataSource[this.dataField];
 			this.value = this.fromSource ? this.fromSource(value) : value;
-		}
+		}		
 		return this.dataSource;
 	};
 	ValueControl.prototype.getDataType = function() {

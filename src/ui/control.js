@@ -21,7 +21,7 @@ include('/ui/datalink.js');
 		this.info = Control.Types[this.template.type];
 		this.element = null;
 		this.labelElem = null;
-		this.dataSource = null;
+		this.dataSource = this.template['data-source'] || null;
 		this.dataField = this.template['data-field'];
 	}
 	Control.prototype.template = {};
@@ -63,33 +63,38 @@ include('/ui/datalink.js');
 		}
 	};
 	Control.prototype.render = function(ctx) {
-		if (!this.element) {
-			this.element = document.createElement(this.info.tag);
-			this.element.id = this.id;
-			this.element.control = this;
-		}
 
 		this.cssText = this.parent && this.parent.cssText ? this.parent.cssText : '';
 		if (this.css.length > 0) {
 			this.cssText += this.css.join(' ');
 			this.cssText += ' ';
 		}
-		if (this.cssText) {
-			this.element.className = this.cssText;
-		}
-		if (this.label !== undefined && this.label !== false) {
+
+		if (this.label /*!== undefined && this.label !== false*/) {
 			if (this.labelElem == null) {
 				this.labelElem = document.createElement('SPAN');
 				this.labelElem.id = this.id + '#label';
-				this.labelElem.className = this.cssText + 'label';
-				this.labelElem.innerHTML = this.label;
 				this.labelElem.control = this;
 			}
-			ctx.element.appendChild(this.labelElem);
+			this.labelElem.className = this.cssText + 'label';
+			this.labelElem.innerHTML = this.label;
 		} else {
 			if (this.labelElem && this.labelElem.parentNode) {
 				this.labelElem.parentNode.removeChild(this.labelElem);
 			}
+			this.labelElem = null;
+		}
+
+		if (!this.element) {
+			this.element = document.createElement(this.info.tag);
+			this.element.id = this.id;
+			this.element.control = this;
+		}
+		if (this.cssText) {
+			this.element.className = this.cssText;
+		}
+		if (this.labelElem && !this.labelElem.parentNode && ctx && ctx.element) {
+			ctx.element.appendChild(this.labelElem);
 		}
 
 		// add onfocus and onblur events

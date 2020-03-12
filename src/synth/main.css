@@ -8,6 +8,24 @@ body {
     width:20em; height: 1.4em;
 }
 
+.pot.bpm.label {
+    color: #80c0ff
+}
+
+.main.controls {
+    position: relative;
+    font-size: 12pt; font-family: Verdana; font-weight: bold;
+    text-align: center; margin: 0px; padding: 1px 0px 0px 0px;
+}
+
+pot.main.controls {
+    font-size: 14pt;
+    font-family: Consolas;
+    color: #203040; background-color: #8090A0;
+    border: #8090A0 2px inset;
+    margin: 1px 4px;
+}
+
 div.group {
     box-sizing: border-box;
     display: inline-block;
@@ -46,18 +64,6 @@ div.group {
 
 .content.editors.panel {
     border: none;
-}
-
-
-#start {
-    width: 3em;
-}
-
-#bpm {
-    padding:0px; margin: 0px;
-    height: 8px;
-    cursor: pointer;
-    
 }
 
 div.pattern {

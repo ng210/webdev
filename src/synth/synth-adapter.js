@@ -11,7 +11,7 @@ include('/ge/sound.js');
     SynthAdapter.prototype.getInfo = function() { return psynth.SynthAdapter.info; },
 	//registerCommands: function(registry) { throw new Error('Not implemented!'); },
 	SynthAdapter.prototype.prepareContext = function(data) {
-		sound.init(48000, data.callback);
+		sound.init(data.samplingRate, data.callback);
 	};
 	SynthAdapter.prototype.addTargets = function(targets, data) {
 		var cursor = 0;
@@ -22,7 +22,10 @@ include('/ge/sound.js');
 				case psynth.SynthAdapter.DEVICE_SYNTH:
 					var voiceCount = data[cursor++];
 					// todo: sound banks
-					device = new psynth.Synth(48000, voiceCount);
+					device = new psynth.Synth(sound.smpRate, voiceCount);
+					break;
+                                case psynth.SynthAdapter.DEVICE_DELAY:
+					device = new psynth.Delay(sound.smpRate);
 					break;
 			}
 			psynth.SynthAdapter.devices.push(device);	
@@ -31,7 +34,7 @@ include('/ge/sound.js');
 	};
 	SynthAdapter.prototype.processCommand = function(target, command, sequence, cursor) {
 		switch (command) {
-				case psynth.SynthAdapter.SETNOTE:
+			case psynth.SynthAdapter.SETNOTE:
 				target.setNote(sequence.getUint8(cursor++), sequence.getUint8(cursor++)/256);
 				break;
 			case psynth.SynthAdapter.SETCTRL8:
@@ -62,8 +65,8 @@ include('/ge/sound.js');
 	psynth.SynthAdapter.DEVICE_DELAY = 1;
 
 	psynth.SynthAdapter.info = {
-			name: 'SynthAdapter',
-			id: 1
+	    name: 'SynthAdapter',
+	    id: 1
 	};
 
 })();

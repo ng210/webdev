@@ -49,7 +49,7 @@ include('/ui/container.js');
 		Board.base.dataBind.call(this, dataSource, dataField);
 		for (var i=0; i<this.itemOrder.length; i++) {
 			var item = this.items[this.itemOrder[i]];
-			var ds = item.dataSource || dataSource;
+			var ds = item.dataSource || dataSource || this.dataSource;
 			if (ds && item.dataField) {
 				item.dataBind(ds, item.dataField);
 			}
