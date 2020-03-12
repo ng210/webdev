@@ -566,9 +566,19 @@
 		//console.log(`${this.label}.off ???: ${note}`);
 		//throw new Error('voice not found!');
 	};
-	var delayBuffer = new Float32Array(96000);
-	var delayPos = 0;
-	var delay = Math.floor(0.1 * 48000);
+
+        var delay = {
+            buffer: new Float32Array(96000.0),
+            delaySec: 0,
+            set delay function(v) { this.delaySamples = Math.floor(v * 48000); this.delaySec = v; }
+            },
+            get delay function() { return this.delaySec; },
+            delaySamples: 0,
+            feedback: 0.4,
+            gain: 0.8,
+
+        };
+	
 	psynth.Synth.prototype.run = function(left, right, start, end) {
 		if (this.isActive) {
 			for (var i=start; i<end; i++) {
@@ -577,11 +587,11 @@
 					smp += this.voices[j].run();
 				}
 				left[i] += smp;
-				//var delayed = 0.0*delayBuffer[delayPos];
-				delayBuffer[delayPos] = smp;
-				delayPos++;
-				if (delayPos == delay) delayPos = 0;
-				right[i] += delayBuffer[delayPos];
+				var delayed = delay.buffer[this.delayPos];
+				delay.buffer[this.delayPos] = smp + delay.feedback*delayed;
+				this.delayPos++;
+				if (this.delayPos == delay.delay) this.delayPos = 0;
+				right[i] += delay.gain*delayed;
 			}
 			//console.log(buffer[start]);
 		}
