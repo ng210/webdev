@@ -251,6 +251,8 @@
 			for (var i=0; i<voiceCount; i++) {
 				this.voices.push(new psynth.Voice(this));
 			}
+
+			this.delayPos = 0;
 		}
 	};
 

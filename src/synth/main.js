@@ -20,7 +20,9 @@ var _selected = 0;
 var _frame = 0;
 var _samplePerFrame = 0;
 var _settings = {
-    'bpm': 60
+    'isRunning': true,
+    'bpm': 60,
+    'samplingRate': 24000
 };
 
 /*****************************************************************************/
@@ -30,7 +32,7 @@ async function createSequences(path) {
         throw res.error;
     }
     var sequences = [];
-    var syntax = new Syntax(_grammar);
+    var syntax = new Syntax(_grammar, false);
     var lines = res.data.split('\n');
     var i=0;
     while (i<lines.length) {
@@ -85,7 +87,7 @@ async function createUi() {
 }
 function createSynth(voiceCount) {
     // create synth
-    //var synth = new psynth.Synth(48000, 3);
+    //var synth = new psynth.Synth(_settings.samplingRate, 3);
     psynth.SynthAdapter.addTargets(_player.targets, new Uint8Array([1, psynth.SynthAdapter.DEVICE_SYNTH, voiceCount]));
     var synth = _player.targets[_player.targets.length-1];
     var si = _synths.length;
@@ -152,7 +154,7 @@ function multiChartOnRemove(from, to) {
 /*****************************************************************************/
 function updateBpm() {
     // bpm 4th per minute => bpm*8/60 8th per second = bpm/7.5
-    _samplePerFrame = Math.floor(48000*7.5/_settings.bpm);
+    _samplePerFrame = Math.floor(_settings.samplingRate*7.5/_settings.bpm);
 }
 
 function onSelectChannel(e) {
@@ -186,6 +188,7 @@ async function initializePlayer() {
     _player.addAdapter(psynth.SynthAdapter);
 
     psynth.SynthAdapter.prepareContext({
+        samplingRate: _settings.samplingRate,
         callback: fillSoundBuffer
     });
 }
@@ -200,9 +203,9 @@ function update() {
     var isRunning = false;
     for (var i=0; i<_player.channels.length; i++) {
         var isActive = _player.channels[i].run(1);
-        console.log(`Chn #${i} is ${isActive ? 'active' : 'inactive'}`);
+        //console.log(`Chn #${i} is ${isActive ? 'active' : 'inactive'}`);
         isRunning = isRunning || isActive;
-        console.log(`Playback is ${isRunning ? 'running' : 'stopped'}`);        
+        //console.log(`Playback is ${isRunning ? 'running' : 'stopped'}`);        
     }
     if (!isRunning) {
         resetPlayer();
@@ -212,7 +215,7 @@ function update() {
 
 /*****************************************************************************/
 function fillSoundBuffer(left, right, bufferSize, channel) {
-    //var samplesPerFrame = 48000 / SynthApp.player.refreshRate;
+    //var samplesPerFrame = _settings.samplingRate / SynthApp.player.refreshRate;
     var start = 0;
     var end = 0;
     var remains = bufferSize;
@@ -224,7 +227,7 @@ function fillSoundBuffer(left, right, bufferSize, channel) {
         if (_frame == 0) {
             update();
             _frame = _samplePerFrame;
-            //SynthApp.frameCounter = 48000 / SynthApp.player.refreshRate;
+            //SynthApp.frameCounter = _settings.samplingRate / SynthApp.player.refreshRate;
         }
         var len = _frame < remains ? _frame : remains;
         end = start + len;
@@ -264,19 +267,34 @@ async function onpageload(e) {
         createSynth(3);
     }
 
-    Dbg.prln('Add editor');
-    var editor = createEditor(true);
-    editor.dataBind(_series[0]);
-    editor.selectChannel(psynth.SynthAdapter.SETNOTE);
+    // Dbg.prln('Add editor');
+    // var editor = createEditor(true);
+    // editor.dataBind(_series[0]);
+    // editor.selectChannel(psynth.SynthAdapter.SETNOTE);
 
     _ui.render({element:document.getElementById('main')});
+
+    var toolbar = new Ui.Board(
+        'mainToolBar',
+        {
+            'titlebar': false,
+            'items': {
+                'bpm': { type:'pot', label:'Bpm', min: 60, max: 160, step: 1, digits: 3, 'data-field': 'bpm', css:'main controls pot' },
+                'start': { type:'button', value:'Start', 'data-type': Ui.Control.DataTypes.Bool, 'data-field': 'isRunning', css:'main controls'}
+            },
+            'data-source': _settings,
+            'css': 'group'
+        }
+    );
+    toolbar.dataBind();
+    toolbar.render({element:document.getElementById('controls')});
     //selectChannel(0);
-    var bpm = new Ui.Pot('bpm', {
-        min: 60, max: 160, step: 1,
-        'digits': 3,
-        'data-source': _settings, 'data-field': 'bpm'
-    });
-    bpm.render({element:document.getElementById('bpm')});
+    // var bpm = new Ui.Pot('bpm', {
+    //     min: 60, max: 160, step: 1,
+    //     'digits': 3,
+    //     'data-source': _settings, 'data-field': 'bpm'
+    // });
+    //bpm.render({element:document.getElementById('bpm')});
     
     updateBpm();
 

@@ -11,7 +11,7 @@ include('/ge/sound.js');
     SynthAdapter.prototype.getInfo = function() { return psynth.SynthAdapter.info; },
 	//registerCommands: function(registry) { throw new Error('Not implemented!'); },
 	SynthAdapter.prototype.prepareContext = function(data) {
-		sound.init(48000, data.callback);
+		sound.init(data.samplingRate, data.callback);
 	};
 	SynthAdapter.prototype.addTargets = function(targets, data) {
 		var cursor = 0;
