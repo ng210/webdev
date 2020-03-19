@@ -46,12 +46,12 @@ include('/ui/board.js');
             var isSet = (oldValue & value) != 0;
             if (isSet) {
                 value = oldValue & ~value;
-                e.control.removeClass('on');
+                e.control.removeClass('on', true);
                 //e.control.element.style.opacity = '0.4';
             } else {
                 value = oldValue | value;
                 //e.control.element.style.opacity = '0.1';
-                e.control.addClass('on');
+                e.control.addClass('on', true);
             }
         }
         this.setValue(value);

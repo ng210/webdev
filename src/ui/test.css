@@ -29,6 +29,10 @@ span.test {
     top: 240px;
 }
 
+.panel.right {
+    border: none;
+}
+
 .panel {
     background-color: #200040;
     border: #401060 2px solid;

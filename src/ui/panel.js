@@ -4,29 +4,21 @@ include('/ui/board.js');
 (function() {
 	function Panel(id, template, parent) {
         Ui.Container.call(this, id, template, parent);
-        this.container = new Ui.Board(`${this.id}#container`, {titlebar:false, css:'content'}, this);
-        if (this.template.items) {
-            for (var key in this.template.items) {
-				if (this.template.items.hasOwnProperty(key)) {
-                    this.addNew(key, this.template.items[key]);
-				}
-            }
-        }
-        this.layout = this.template.layout;
+        //this.container = new Ui.Board(`${this.id}#content`, { titlebar:false, css:'content' }, this);
+        //this.container.renderItems = Panel.renderItems;
         this.split = this.template.split;
 	};
 	extend(Ui.Container, Panel);
-    Ui.Control.Types['panel'] = { ctor: Panel, tag: 'DIV' };
+    Ui.Control.Types['panel'] = { ctor: Panel, tag: 'PANEL' };
 
-    Object.defineProperties(Panel.prototype, {
-        'count': { get: function() { return Object.keys(this.container.items).length; }},
-        'items': { get: function() { return this.container.items; }}
-    });
+    // Object.defineProperties(Panel.prototype, {
+    //     'count': { get: function() { return Object.keys(this.container.items).length; }},
+    //     'items': { get: function() { return this.container.items; }}
+    // });
 
 	Panel.prototype.getTemplate = function() {
 		var template = Panel.base.getTemplate.call(this);
         template.type = 'panel';
-        template.layout = Panel.Layout.horizontal;
         template.split = [];
         template.items = {};
         template.handlerSize = 4;
@@ -38,109 +30,95 @@ include('/ui/board.js');
 		if (['dblclick'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
 		Ui.Control.registerHandler.call(this, event);
     };
+    Panel.prototype.renderItems = async function(ctx) {
+        var cnt = ctx.element;
+        cnt.style.display = 'flex';
+        //cnt.style['box-sizing'] = 'border-box';
+        cnt.style.flexDirection = this.layout == Ui.Container.Layout.Horizontal ? 'row' : 'column';
+        //cnt.style.alignItems = 'stretch';
 
-	Panel.prototype.render = async function(ctx) {
-        if (!this.css.includes('panel') && !(this.parent instanceof Ui.Panel)) {
-            this.css.push('panel');
-        }
-        Ui.Panel.base.render.call(this, ctx);
-        this.element.style.display = 'flex';
-        this.element.style.flexDirection = 'column';
-        var context = ctx ? Object.create(ctx) : {};
-        context.element = this.element;
-        await Ui.Board.base.render.call(this.container, context);
-        var container = this.container.element;
-        context.element = container;
-        container.style.display = 'flex';
-        //this.container.element.style.alignItems = 'stretch';
-        container.style.height = '100%';
-        container.style.flexDirection = this.layout == Panel.Layout.horizontal ? 'row' : 'column';
-        if (this.container.rebuild) {
-            while (container.children.length > 0) {
-                container.removeChild(container.children[0]);
+        if (this.rebuild) {
+            while (cnt.children.length > 0) {
+                cnt.removeChild(cnt.children[0]);
             }
         }
-
-        var restWidth = container.clientWidth;
-        var restHeight = container.clientHeight;
+        var context = {element:cnt};
+        var restCount = this.itemOrder.length;
+        var clientWidth = cnt.clientWidth - (restCount-1)*this.template.handlerSize;
+        var restWidth = clientWidth;
+        var clientHeight = cnt.clientHeight - (restCount-1)*this.template.handlerSize;
+        var restHeight = clientHeight;
         var restSize = 100;
-        var restCount = this.container.itemOrder.length;
-        for (var i=0; i<this.container.itemOrder.length; i++) {
-            var lastButOneItem = i == this.container.itemOrder.length-1;
-            var item = this.container.items[this.container.itemOrder[i]];
+        for (var i=0; i<this.itemOrder.length; i++) {
+            var lastButOneItem = i == this.itemOrder.length-1;
+            var item = this.item(i);
             await item.render(context);
-            //var size = restSize/restCount;
+            var style = item.element.style;
+            //style.display = 'flex';
+            style['box-sizing'] = 'border-box';
             var size = this.split[i] || restSize/restCount;
             restSize -= size;
-            if (this.layout == Panel.Layout.horizontal) {
-                var width = !lastButOneItem ? Math.floor(container.clientWidth*size/100) : restWidth;
-                item.element.style.width = width + 'px';
+            if (this.layout == Ui.Container.Layout.Horizontal) {
+                var width = !lastButOneItem ? Math.floor(clientWidth*size/100) : restWidth;
+                style.width = width + 'px';
                 restWidth -= width;
             } else {
-                var height = !lastButOneItem ? Math.floor(container.clientHeight*size/100) : restHeight;
-                item.element.style.height = height + 'px';
+                var height = !lastButOneItem ? Math.floor(clientHeight*size/100) : restHeight;
+                style.height = height + 'px';
                 restHeight -= height;
             }
+            style.flex = '1 1 auto';
             if (!lastButOneItem && !this.template.fixed) {
-                var handler = new Ui.Label(`${this.id}#handler`, { css:'handler', value:'', events:['dragging'] }, this.container);
+                var handler = new Ui.Label(`${this.id}#handler`, { css:'handler', value:'', events:['dragging'] }, this.content);
                 handler.panel = this;
                 await handler.render(context);
                 handler.element.style.boxSizing = 'border-box';
-                if (this.layout == Ui.Panel.Layout.horizontal) {
+                if (this.layout == Ui.Container.Layout.Horizontal) {
                     handler.element.style.width = this.template.handlerSize + 'px';
                     handler.element.style.cursor = 'col-resize';
-                    restWidth -= this.template.handlerSize;
+                    //restWidth -= this.template.handlerSize;
                 } else {
                     handler.element.style.height = this.template.handlerSize + 'px';
                     handler.element.style.cursor = 'row-resize';
-                    restHeight -= this.template.handlerSize;
+                    //restHeight -= this.template.handlerSize;
                 }        
             }
         }
-        return;
     };
+    Panel.prototype.render = async function(ctx) {
+        if (!this.css.includes('panel') && !(this.parent instanceof Ui.Panel)) {
+            this.css.push('panel');
+        }
+        // this.container = this.container || new Ui.Control(`${this.id}_content`, null, this);
+        Panel.base.render.call(this, ctx);
+        //console.log(['this: ' + this.id, 'element.parentNode: ' + this.element?.parentNode?.id, 'parent.element: ' + this.parent?.element?.id, 'element: ' + this.element?.id]);
+        //this.container.render(ctx);
 
-    Panel.prototype.add = function(key, item, itemBefore) {
-        var item = this.container.add(key, item, itemBefore);
-        item.id = `${this.id}_${key}`;
-        item.element.id = item.id;
-        item.panel = this;
-        return item;
-    };
-
-    Panel.prototype.addNew = function(key, template, itemBefore) {
-        var item = this.container.addNew(key, template, itemBefore);
-        item.id = `${this.id}_${key}`;
-        item.element.id = item.id;
-        item.panel = this;
-        return item;
+        //this.container.render({element:this.element});
     };
     
     Panel.prototype.ondragging = function(e) {
         var handler = e.control.element;
         var panel = e.control.panel;
-        if (panel.layout == Panel.Layout.horizontal) {
-            var left = handler.previousSibling;
-            var right = handler.nextSibling;
-            var width = left.clientWidth + right.clientWidth;
-            var leftWidth = Math.floor(left.clientWidth + e.deltaX);
-            if (leftWidth < 0) leftWidth = 0;
-            else if (leftWidth > width) leftWidth = width;
+        var prev = handler.previousSibling;
+        var next = handler.nextSibling;
+        if (panel.layout == Ui.Container.Layout.Horizontal) {
+            var width = prev.offsetWidth + next.offsetWidth;
+            var leftWidth = Math.round(e.clientX - prev.control.left);
+            if (leftWidth < this.template.handlerSize) leftWidth = this.template.handlerSize;
+            else if (leftWidth > width-this.template.handlerSize) leftWidth = width-this.template.handlerSize;
             var rightWidth = width - leftWidth;
-            left.style.width = leftWidth + 'px';
-            //handler.style.left = leftWidth + 'px';
-            right.style.width = rightWidth + 'px';
+            prev.style.width = leftWidth + 'px';
+            next.style.width = rightWidth + 'px';
+console.log([width, leftWidth, prev.offsetWidth, rightWidth, next.offsetWidth]);
         } else {
-            var top = handler.previousSibling;
-            var bottom = handler.nextSibling;
-            var height = top.clientHeight + bottom.clientHeight;
-            var topHeight = Math.floor(top.clientHeight + e.deltaY);
-            if (topHeight < 0) topHeight = 0;
-            else if (topHeight > height) topHeight = height;
+            var height = prev.offsetHeight + next.offsetHeight;
+            var topHeight = Math.round(e.clientY - prev.control.top);
+            if (topHeight < this.template.handlerSize) topHeight = this.template.handlerSize;
+            else if (topHeight > height-this.template.handlerSize) topHeight = height-this.template.handlerSize;
             var bottomHeight = height - topHeight;
-            top.style.height = topHeight + 'px';
-            //handler.style.top = topHeight + 'px';
-            bottom.style.height = bottomHeight + 'px';
+            prev.style.height = topHeight + 'px';
+            next.style.height = bottomHeight + 'px';
         }
         return true;
     };
@@ -153,11 +131,6 @@ include('/ui/board.js');
             e.control.render();
             return true;
         }
-    };
-    
-    Panel.Layout = {
-        horizontal: 'horizontal',
-        vertical: 'vertical'
     };
 
 	Ui.Panel = Panel;

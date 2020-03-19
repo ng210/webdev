@@ -24,10 +24,41 @@ include('/ui/datalink.js');
 		this.dataSource = this.template['data-source'] || null;
 		this.dataField = this.template['data-field'];
 	}
+	Object.defineProperties(Control.prototype, {
+		'left': {
+			get: function() {
+				var left = -1;
+				if (this.element) {
+					left = 0;
+					var node = this.element;
+					while (node != null) {
+						left += node.offsetLeft;
+						node = node.offsetParent;
+					}
+				}
+				return left;
+			}
+		},
+		'top': {
+			get: function() {
+				var top = -1;
+				if (this.element) {
+					top = 0;
+					var node = this.element;
+					while (node != null) {
+						top += node.offsetTop;
+						node = node.offsetParent;
+					}
+				}
+				return top;
+			}
+		}
+	});
+
 	Control.prototype.template = {};
 	Control.prototype.getTemplate = function() {
 		return {
-			type: 'none',
+			type: 'control',
 			label: false,
 			'data-source': null,
 			'data-field': null,
@@ -105,8 +136,13 @@ include('/ui/datalink.js');
 			this.addHandler(eventName, Control.onevent);
 		}
 		if (ctx && ctx.element || this.parent && this.parent.element) {
-			var parentElement = ctx && ctx.element != null ? ctx.element : this.parent.element;
-			if (parentElement != this.element.parentNode) {
+			var parentNode = this.element.parentNode;
+			var parentElement = null;
+			if (ctx && ctx.element) parentElement = ctx.element;
+			else if (!(this.parent instanceof Ui.Container)) parentElement = this.parent.element;
+			else if (this == this.parent.content) parentElement = this.parent.element;
+			else parentElement = this.parent.content.element;
+			if (parentNode != parentElement) {
 				if (this.element.parentNode != null) {
 					this.element.parentNode.removeChild(this.element);
 				}
@@ -117,21 +153,21 @@ include('/ui/datalink.js');
 	Control.prototype.registerHandler = function(event) {
 		throw new Error('Not implemented!');
 	};
-	Control.prototype.addClass = function(cssClass, noRepaint) {
+	Control.prototype.addClass = function(cssClass, repaint) {
 		var ix = this.css.findIndex(x => x == cssClass);
 		if (ix == -1) {
 			this.css.push(cssClass);
 		}
-		if (!noRepaint)	{
+		if (repaint)	{
 			this.render();
 		}
 	};
-	Control.prototype.removeClass = function(cssClass, noRepaint) {
+	Control.prototype.removeClass = function(cssClass, repaint) {
 		var ix = this.css.findIndex(x => x == cssClass);
 		if (ix != -1) {
 			this.css.splice(ix, 1);
 		}
-		if (!noRepaint)	{
+		if (repaint)	{
 			this.render();
 		}
 	};
@@ -188,7 +224,9 @@ include('/ui/datalink.js');
 		String: 'string',
 		Bool:	'bool'
 	};
-	Control.Types = {};
+	Control.Types = {
+		'control': { ctor: Control, tag: 'DIV' }
+	};
 	Control.create = function(id, template, parent) {
 		var templateType = template.type.toUpperCase();
 		var type = Object.keys(Control.Types).find(x => x.toUpperCase() == templateType);
@@ -223,8 +261,8 @@ include('/ui/datalink.js');
 			}
 			if (Control.focused) {
 				Control.isDragging = true;
-				Control.dragStart[0] = e.clientX;
-				Control.dragStart[1] = e.clientY;
+				Control.dragStart[0] = e.screenX;
+				Control.dragStart[1] = e.screenY;
 			}
 
 		} else if (event == 'mousemove') {
@@ -233,22 +271,23 @@ include('/ui/datalink.js');
 					bubbles: false,
 					cancelable: false
 				});
-				draggingEvent.clientX = e.clientX;
-				draggingEvent.clientY = e.clientY;
+				control = Control.focused;
 				draggingEvent.screenX = e.screenX;
 				draggingEvent.screenY = e.screenY;
-				draggingEvent.deltaX = e.clientX - Control.dragStart[0];
-				draggingEvent.deltaY = e.clientY - Control.dragStart[1];
+				draggingEvent.clientX = e.clientX;
+				draggingEvent.clientY = e.clientY;
+				draggingEvent.deltaX = e.screenX - Control.dragStart[0];
+				draggingEvent.deltaY = e.screenY - Control.dragStart[1];
 				//draggingEvent.control = Control.focused;
-				control = Control.focused;
+
 				if (control && control.handlers.dragging && control.handlers.dragging.length) {
 					control.element.dispatchEvent(draggingEvent);
 					if (!(control instanceof Ui.Slider)) {
 						e.preventDefault();
 					}
 				}
-				Control.dragStart[0] = e.clientX;
-				Control.dragStart[1] = e.clientY;
+				Control.dragStart[0] = e.screenX;
+				Control.dragStart[1] = e.screenY;
 			}
 		} else if (event == 'mouseup') {
 			Control.isDragging = false;

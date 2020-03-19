@@ -173,7 +173,6 @@ include('/ui/ui-lib.js');
                     return new Ui.Label(item.id+'#1', {type:'label', value:'new'});
                 }
                 panel.render({element:document.body});
-                console.log(panel.element.clientWidth);
             })
         ];
     }

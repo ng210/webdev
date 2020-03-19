@@ -23,7 +23,6 @@ include('/ui/valuecontrol.js');
     };
 	Button.prototype.render = function(ctx) {
     	Button.base.render.call(this, ctx);
-	    //this.element.setAttribute('type', 'button');
 	};
 	
 	Ui.Button = Button;

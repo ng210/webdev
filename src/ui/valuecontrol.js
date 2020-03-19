@@ -184,6 +184,14 @@ include('/ui/control.js');
 		this.element[attribute] = value;
 	};
 
+	// ValueControl.prototype.onclick = function(e) {
+	// 	if (this.dataType == Ui.Control.DataTypes.Bool) {
+	// 		var value = this.dataSource[this.dataField];
+	// 		this.dataSource[this.dataField] = value ? false : true;
+	// 	}
+	// };
+
+
 	ValueControl.prototype.addValidation = function(field, check, message, fix) {
 		if (this.validations[field] == undefined) this.validations[field] = [];
 		this.validations[field].push(new ValueControl.Validation(message || `Validation error for '${field}'`, check, fix));
