@@ -1,47 +1,100 @@
 body {
     background-color: #203040;
     font-family: Verdana;
+    padding: 2em;
 }
 
 #controls {
     margin:1em 0em; padding: 0px;
-    width:20em; height: 1.4em;
+    height: 1.4em;
 }
 
 .pot.bpm.label {
     color: #80c0ff
 }
 
-.main.controls {
-    position: relative;
+#mainMenu {
+    position: absolute;
+}
+
+menu.main {
+    width: 26em;
+    height: fit-content;
+    display: block;
+    cursor: pointer;
+    padding: 1px;
+    margin: 0px;
     font-size: 12pt; font-family: Verdana; font-weight: bold;
-    text-align: center; margin: 0px; padding: 1px 0px 0px 0px;
+    z-index: 1000;
 }
 
-pot.main.controls {
-    font-size: 14pt;
-    font-family: Consolas;
-    color: #203040; background-color: #8090A0;
-    border: #8090A0 2px inset;
-    margin: 1px 4px;
+.main.submenu.titlebar {
+    background-color: #a0e0ff;
+    border: #c0e8ff 1px outset;
+    position: relative;
+    text-align: center;
 }
 
-div.group {
-    box-sizing: border-box;
-    display: inline-block;
-    padding: 2px 4px;
-    margin:0px;
-    border: groove 2px silver;
+.main.submenu.titlebar:hover {
+    background-color: #d0f0ff;
 }
+
+.main.submenu.item {
+    padding: 0.5em 0.5em 0.5em 1.5em;
+    background-color: #a0e0ff;
+    font-size: 10pt;
+    /* opacity: 0.0;
+    overflow: hidden; */
+}
+
+.main.item:hover {
+    background-color: #d0f0ff;
+    padding-left: 0.75em;
+}
+
+@keyframes menu-xfade-in {
+    0% { opacity: 0.0; }
+  100% { opacity: 1.0; }
+}
+
+@keyframes menu-xfade-out {
+    0% { opacity: 1.0; }
+  100% { opacity: 0.0; }
+}
+
+.xfade-in {
+    animation: menu-xfade-in 0.2s linear 0s 1 forwards;
+    /* overflow: visible; */
+}
+
+.xfade-out {
+    animation: menu-xfade-out 0.1s linear 0s 1 forwards;
+}
+
+.xfade-closed {
+    height: 0em; overflow: hidden;
+}
+
 
 #ui {
     width: 100%; height: 80vh;
 }
 
+.mainPanel.panel.content {
+    height: 100%;
+}
+
 #ui_modules {
-    border: #202050 2px groove;
-    min-width: 576px;
-    overflow-y: scroll;
+    min-width: 512px;
+    overflow-y: auto;
+    height: 100%;
+    border: black 1px solid;
+}
+
+synth {
+    margin-bottom: 1em;
+    border: black 2px solid;
+    z-index: 100;
 }
 
 .synth.selected {
@@ -54,11 +107,25 @@ div.group {
 }
 
 .synth01 {
-    background-color: #8090A0;
+    background-color: #c0a0b0;
+}
+
+.synth01.toolbar {
+    background-color: #e0c0d0;
 }
 
 .synth02 {
-    background-color: #80A090;
+    background-color: #a0b0c0;
+}
+.synth02.toolbar {
+    background-color: #c0d0e0;
+}
+
+.synth03 {
+    background-color: #a0c0b0;
+}
+.synth03.toolbar {
+    background-color: #c0e0d0;
 }
 
 
@@ -68,7 +135,7 @@ div.group {
 
 div.pattern {
     box-sizing: border-box;
-    display: inline-block;
+    /*display: inline-block;
     /* width: 640px;
     height: 360px; */
 }

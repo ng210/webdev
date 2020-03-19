@@ -5,6 +5,7 @@ include('/ui/ui-lib.js');
     function Synth(id, tmpl, parent) {
         Ui.Board.call(this, id, tmpl, parent);
         this.preset = 'default';
+        this.layout = Ui.Container.Layout.Vertical;
 
         var toolbarTemplate = {
             type: 'board',
@@ -193,16 +194,12 @@ include('/ui/ui-lib.js');
 
 
     Synth.renderOnOff = function(ctx) {
-        this.getValue() ? this.addClass('on', true) : this.removeClass('on', true);
+        this.getValue() ? this.addClass('on') : this.removeClass('on');
         Ui.Control.prototype.render.call(this, ctx);
     };
     Synth.onOnOffClick = function(e) {
         var toggle = this.getValue();
         this.setValue(!toggle);
-        e.control.render();
-        // var synth = e.control.parent.parent.dataSource.obj
-        // console.log(synth.isActive);
-        // console.log(e.control.cssText);
         return true;
     };
     Synth.onPresetChange = function(e) {

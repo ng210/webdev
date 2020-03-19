@@ -1,14 +1,9 @@
 synth {
-    display: block;
-    position: relative;
-    margin: 1em 2em;
-    border: #000000 4px solid;
-    width:488px; height:160px;
+    height: 161px;
+    width: 488px;
 }
-
 .synth {
-    position: relative;    
-    /* background-color:#8890a0 */
+    position: relative;
 }
 
 .synth.titlebar {
@@ -20,15 +15,19 @@ synth {
 }
 
 .synth.toolbar {
+    display: block;
     position:relative;
+    font-family: Consolas;
+    font-weight: 800;
     font-size: 10pt;
-    height: 1.8em;
+    height: 26px;
     border: 1px outset #8890a0;
 }
 
 .synth.toolbar.onOff {
-    position: absolute;
-    left: 4px; top:4px;
+    position: relative;
+    left:0px;
+    margin: 4px;
     border: 2px inset #8890a0;
     background-color: black;
     height:16px; width: 16px;
@@ -40,10 +39,9 @@ synth {
 
 .synth.toolbar.preset {
     position: relative;
-    left: 22px; top:1px;
+    left: 1px; top:1px;
     margin: 0px 2px;
-    border: 1px outset #c0c8d8;
-    width: 20em; height: 1.6em;
+    width: 16em; height: 1.6em;
 }
 
 .synth.toolbar.preset.save {
@@ -56,12 +54,19 @@ synth {
     width: 5em;
 }
 
-select.preset {
-    background-color: #ccd4e0;
-    border: 2px inset #8890a0;
+select.synth.toolbar {
+    border: 1px inset #e0e0e0;
 }
 
-.env {
+button.synth.toolbar {
+    border-color: #e0e0e0;
+}
+
+select.synth.toolbar, button.synth.toolbar {
+    background-color: #f0f0f0;
+}
+
+.synth.modules.env.content {
     position:absolute; left: 2px;
     width:180px; height:32px;
     border: outset 1px #c0c0e0;
@@ -70,7 +75,7 @@ select.preset {
     background-repeat: no-repeat;
 }
 
-.osc {
+.synth.modules.osc.content {
     position:absolute; left: 185px; 
     width:160px; height:32px;
     border: outset 1px #c0c0e0;
@@ -78,7 +83,7 @@ select.preset {
     background-image: url('/src/synth/res/osc.png');
     background-repeat: no-repeat;
 }
-.lfo {
+.synth.modules.lfo.content {
     position:absolute; left: 349px;
     width:136px; height:32px;
     border: outset 1px #c0c0e0;
@@ -87,7 +92,7 @@ select.preset {
     background-repeat: no-repeat;
 }
 
-.flt {
+.synth.modules.flt.content {
     position:absolute; left: 185px;
     width:160px; height:32px;
     border: outset 1px #c0c0e0;
@@ -115,9 +120,9 @@ input.synth.amp {
 }
 
 /******** Envelope ********/
-.env1.env { top:2px; }
-.env2.env { top:36px; }
-.env3.env { top:71px; }
+.env.env1.content { top:2px; }
+.env.env2.content { top:38px; }
+.env.env3.content { top:74px; }
 
 .pot.env.amp { left:  19px; top: 15px }
 .pot.env.dc  { left:  46px; top: 15px }
@@ -128,8 +133,8 @@ input.synth.amp {
 
 
 /******** Oscillator ********/
-.osc1.osc { top:2px; }
-.osc2.osc { top:36px; }
+.osc.osc1.content { top:2px; }
+.osc.osc2.content { top:38px; }
 
 .pot.osc.amp { left:  19px; top: 15px }
 .pot.osc.dc  { display: none }
@@ -163,8 +168,8 @@ input.synth.amp {
 
 
 /******** LFO ********/
-.lfo1.lfo { top:2px; }
-.lfo2.lfo { top:36px; }
+.lfo.lfo1.content { top:2px; }
+.lfo.lfo2.content { top:38px; }
 
 .pot.lfo.amp { left:  19px; top: 15px }
 .pot.lfo.dc  { left:  46px; top: 15px }
@@ -174,7 +179,7 @@ input.synth.amp {
 .pot.lfo.psw { display: none }
 
 /******** Filter ********/
-.flt1.flt { top:71px; }
+.flt.flt1.content { top:74px; }
 
 .pot.flt.amp { left: 19px; top: 15px }
 .pot.flt.cut  { left: 46px; top: 15px }
