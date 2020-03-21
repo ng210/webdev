@@ -18,7 +18,7 @@ function test(lbl, action) {
     var errors = action();
     var result = [lbl + '..' + (errors ? '<span style="color:#ff4040">Failed</span>' : '<span style="color:#40ff40">Ok</span>')];
     if (errors) {
-        result.push(errors);
+        result.push([errors]);
     }
     return result;
 }

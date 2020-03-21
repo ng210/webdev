@@ -49,25 +49,25 @@ include('/ui/ui-lib.js');
     function test_valueControls() {
         var results = ['Test ValueControls'];
 
-        var data = {
-            'id': 5,
-            'name': 'Test User',
-            'score': 12.8,
-            'level': { 'min': 1, 'max': 5, 'value': 2 }
-        };
         var data1 = {
             'id': 1,
-            'name': 'User Test',
-            'score': 12.1,
-            'level': { 'min': 1, 'max': 5, 'value': 5 }
+            'name': 'Test User 1',
+            'score': 11.1,
+            'level': { 'min': 1, 'max': 5, 'value': 1 }
         };
         var data2 = {
-            'id': 5,
-            'name': 'Test User',
-            'score': 12.8,
+            'id': 2,
+            'name': 'Test User 2',
+            'score': 12.2,
             'level': { 'min': 1, 'max': 5, 'value': 2 }
         };
-        var dataLink = new Ui.DataLink(data);
+        var data3 = {
+            'id': 3,
+            'name': 'Test User 3',
+            'score': 13.3,
+            'level': { 'min': 1, 'max': 5, 'value': 3 }
+        };
+        var dataLink = new Ui.DataLink(data1);
         var levelLink = null;
         var controls = {
             'Label1': new Ui.Label('testLabel1', { 'data-field':'name', 'label':'Name' }),
@@ -97,7 +97,7 @@ include('/ui/ui-lib.js');
                     if (control.dataField != 'level') {
                         control.dataBind(dataLink);
                     } else {
-                        levelLink = control.dataBind(data.level, 'value');
+                        levelLink = control.dataBind(data1.level, 'value');
                     }
                     var dataField = control.template['data-field'];
                     var value = dataField != 'level' ? dataLink[control.template['data-field']] : control.fromSource(levelLink['value']);
@@ -106,26 +106,50 @@ include('/ui/ui-lib.js');
                 test('Can be changed by its bound data', () => {
                     var error = false;
                     if (control.dataLink) {
+
+                        var value = null;
                         if (control.template['data-field'] != 'level') {
-                            dataLink[control.dataField] = data1[control.dataField];
-                            if (control.getValue() != data1[control.dataField]) error = ["Data write did not change control's value"];
+                            value = data2[control.dataField];
+                            dataLink[control.dataField] = value;
                         } else {
-                            levelLink.value = 3;
-                            if (control.getValue() != control.fromSource(3)) error = ["Data write did not change control's value"];
+                            value = data2.level[control.dataField];
+                            levelLink.value = value;
                         }
+                        if (control.getValue() != control.fromSource(value)) error = ["Data write did not change control's value"];
+
+                        // if (control.template['data-field'] != 'level') {
+                        //     dataLink[control.dataField] = data2[control.dataField];
+                        //     if (control.getValue() != data2[control.dataField]) error = ["Data write did not change control's value"];
+                        // } else {
+                        //     levelLink.value = data2.level[control.dataField];
+                        //     if (control.getValue() != control.fromSource(data2.level[control.dataField])) error = ["Data write did not change control's value"];
+                        // }
                     }
                     return error;
                 }),
                 test('Can change its bound data', () => {
                     var error = false;
                     if (control.dataLink) {
+
+                        var value = null;
+                        var link = null;
                         if (control.template['data-field'] != 'level') {
-                            control.setValue(data2[control.dataField]);
-                            if (dataLink[control.dataField] != data2[control.dataField]) error = ["Change of control's value did not write data"];
+                            value = data3[control.dataField];
+                            link = dataLink;
                         } else {
-                            control.setValue(75);
-                            if (levelLink.value != control.toSource(75)) error = ["Change of control's value did not write data"];
+                            value = data3.level[control.dataField];
+                            link = levelLink;
                         }
+                        control.setValue(value);
+                        if (link[control.dataField] != control.toSource(value)) error = ["Change of control's value did not write data"];
+
+                        // if (control.template['data-field'] != 'level') {
+                        //     control.setValue(data3[control.dataField]);
+                        //     if (dataLink[control.dataField] != data3[control.dataField]) error = ["Change of control's value did not write data"];
+                        // } else {
+                        //     control.setValue(data3[control.dataField].value);
+                        //     if (levelLink.value != control.toSource(data3[control.dataField].value)) error = ["Change of control's value did not write data"];
+                        // }
                     }
                     return error;
                 }),
@@ -135,7 +159,7 @@ include('/ui/ui-lib.js');
                     var element = document.getElementById(control.id);
                     if (element == null) errors.push('Control not found in the DOM');
                     var value = element.value || element.innerHTML;
-                    if (value != control.value) errors.push("Html element's value does not match control's value");
+                    if (value != control.value) errors.push(`Html element's value (${value}) does not match control's value (${control.value})`);
                     return errors.length > 0 ? errors : false;
                 })
             );

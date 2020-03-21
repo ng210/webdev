@@ -17,8 +17,8 @@ include('/ui/control.js');
 			this.addValidation('value', x => x > this.max, 'Value is greater than maximum!', x => this.max);
 		}
 		this.dataLink = null;
-		this.fromSource = null;
-		this.toSource = null;
+		this.fromSource = x => x;
+		this.toSource = x => x;
 		// this.offset = 0.0;
 		this.scale = 1.0;
 		this.value = this.template.value;
@@ -38,7 +38,7 @@ include('/ui/control.js');
 		template['data-field'] = null;
 		template['default'] = 0;
 		template['decimal-digits'] = -1;
-		template['digits'] = 1;
+		template['digits'] = 0;
         return template;
 	};
 	ValueControl.prototype.dataBind = function(dataSource, dataField) {

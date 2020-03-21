@@ -48,6 +48,8 @@ span.test {
 
 .panel.content {
     border: silver 0px solid;
+    height: 100%;
+    box-sizing: border-box;
 }
 
 .panel.handler {

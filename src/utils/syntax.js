@@ -214,7 +214,7 @@
         //for (var i=0; i<this.symbols.length; i++)//console.log(`${i} => '${this.symbols[i]}'`);
 
         // sort rules by priority and input
-        this.ruleMap = this.grammar.rules.sort( (a,b) => 100*(b.priority - a.priority) + b.input.localeCompare(a.input) );
+        this.ruleMap = this.grammar.rules.sort( (a,b) => 1000*(b.priority - a.priority) + b.input.localeCompare(a.input) );
 
         // transform rules to use indices in the symbols array instead of symbols
         for (var rk=0; rk<this.ruleMap.length; rk++) {
