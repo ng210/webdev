@@ -3,20 +3,48 @@ include('/base/dbg.js');
 //var _indentText = ['&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;'];
 var _indentText = '        ';
 var _bulletinSymbols = ['►', '▪', '∙'];
+var _pending = 0;
+
+function formatResult(value, indent) {
+    return `<pre>${_indentText.substr(0, indent)}</pre>${_bulletinSymbols[indent<_bulletinSymbols.length ? indent-1 : _bulletinSymbols.length-1]} ${value}`;
+}
 
 function print(node, indent) {
-    if (Array.isArray(node)) {
+    if (node instanceof Promise) {
+        var p = node;
+        var lbl = p.lbl;
+        p.then( value => {
+            var text = '' ;
+            if (Array.isArray(value) && value.length) {
+                text += '<span style="color:#ff4040">Failed</span><br/>'
+                text += formatResult(value, indent);
+            } else {
+                text += '<span style="color:#40ff40">Ok</span>';
+            }
+            Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..pending.`, `${lbl}..${text}`);
+            _pending--;
+        });
+
+    } else if (Array.isArray(node)) {
         for (var i=0; i<node.length; i++) {
             print(node[i], indent+1);
         }
     } else {
-        Dbg.prln(`<pre>${_indentText.substr(0, indent)}</pre>${_bulletinSymbols[indent<_bulletinSymbols.length ? indent-1 : _bulletinSymbols.length-1]} ${node}`);
+        Dbg.prln(formatResult(node, indent));
     }
 }
 
 function test(lbl, action) {
     var errors = action();
-    var result = [lbl + '..' + (errors ? '<span style="color:#ff4040">Failed</span>' : '<span style="color:#40ff40">Ok</span>')];
+    var result = '';
+    if (errors instanceof Promise) {
+        var p = errors;
+        p.lbl = lbl;
+        _pending++;
+        result = [`${lbl}..pending.`];
+    } else {
+        result = [lbl + '..' + (Array.isArray(errors) && errors.length ? '<span style="color:#ff4040">Failed</span>' : '<span style="color:#40ff40">Ok</span>')];
+    }
     if (errors) {
         result.push([errors]);
     }
@@ -39,7 +67,12 @@ async function onpageload(errors) {
         if (typeof test === 'function') {
             Dbg.prln(`<b>Running '<i>${testName}</i>'...</b>`);
             print(await test(), -1);
-            Dbg.prln('<b>Test finished</b>');
+            poll( () => {
+                if (_pending == 0) {
+                    Dbg.prln('<b>Test finished</b>');
+                    return true;
+                }
+            }, 100);            
         }
     } else {
         Dbg.prln(`Error loading ${module.error}`);
