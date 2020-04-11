@@ -1,7 +1,80 @@
 body {
-    background-color: #203040;
+    background-color: #000000;
+    padding: 0em;
+    margin: 0em;
+    overflow: hidden;
+}
+
+#overlay {
+    position: absolute; left: 0px; top: 0px;
+    width: 100vw; height: 100vw;
+    background-color: black;
+    opacity: 0.6;
+    z-index: 200;
+}
+
+#app {
+    padding: 6pt; margin: 8pt;
+    background-color: #406080;
     font-family: Verdana;
-    padding: 2em;
+    width: 95vw; height: 75vh;
+    box-sizing: border-box;
+    border: #80c0ff 3px ridge;
+}
+
+#app > .content {
+    height: 100%;
+}
+
+#mainMenu {
+    position: relative;
+    left: 0px; top: 0px;
+    background-image: url('res/menu-blue.png');
+    height: 1.6em;
+    margin: 0 0 6pt 0;
+}
+
+#app_ui {
+    position: relative;
+    display: block;
+    width: 100%; height: 100%;
+}
+
+#app_ui_content {
+    width: 100%; height: 100%;
+}
+
+#app_ui_content > .main.ui.panel {
+    border: #6090c0 2px inset;
+    background-color: #203040;    
+}
+
+#app_ui_devices {
+    /* position:relative; */
+    min-width: 512px;
+    margin-right: 6pt;
+    /* height: 40em; */
+    border: black 1px solid;
+    overflow: auto;
+}
+
+#app_ui_tracks {
+    overflow: auto;
+}
+
+#con {
+    position:relative;
+    width:100%; height: 24vh;
+    font-size:10pt;
+	font-family:Consolas;
+	text-align:left;
+	padding: 1em;
+	margin:0;
+	box-sizing: border-box;
+	background-color:#102030;
+	color:#208040;
+    opacity:0.5;
+	overflow:hidden auto
 }
 
 #controls {
@@ -13,43 +86,90 @@ body {
     color: #80c0ff
 }
 
-#mainMenu {
-    position: absolute;
+.disabled {
+    opacity: 0.90;
+    color: silver;
 }
 
+/**** MAIN MENU **************/
 menu.main {
-    width: 26em;
+    width: 20em;
     height: fit-content;
     display: block;
     cursor: pointer;
-    padding: 1px;
+    padding: 0px;
     margin: 0px;
     font-size: 12pt; font-family: Verdana; font-weight: bold;
-    z-index: 1000;
+    text-shadow: 2px 1px #406080;
+    z-index: 100;
 }
 
-.main.submenu.titlebar {
-    background-color: #a0e0ff;
-    border: #c0e8ff 1px outset;
-    position: relative;
+.main.menu.titlebar:hover,
+.main.menu.submenu1.menuitem:hover,
+.main.menu.submenu1.titlebar:hover,
+.main.menu.submenu1.submenu2.menuitem:hover,
+.main.menu.submenu1.submenu2.titlebar:hover {
+    background-color: #80c0ff;
+    text-shadow: 1px 1px #406080;
+    /*font-size: 14pt;
+    border: #80c0ff 2px outset; */
+}
+
+.main.menu.submenu1.titlebar.open,
+.main.menu.submenu1.submenu2.titlebar.open {
+    /* color: #fff0c0; */
+    background-color: #80c0ff;
+}
+
+/* level 1 */
+menu.main.menu.submenu1 {
+    width: 4em;
+    /* background-color: #8080e0; */
+    height: 1.4em;
+}
+.main.menu.submenu1.titlebar,
+.main.menu.submenu1.submenu2.titlebar {
+    /* width: 6em; */
+    box-sizing: border-box;
+    background-color: #6090c0;
+    border: #80c0ff 2px outset;
     text-align: center;
+    padding: 1px;
+}
+/* .main.menu.submenu1.content {
+    background-color: #808080;
+} */
+.main.menu.submenu1.menuitem {
+    width: 7em;
+    background-color: #6090c0;
+    padding-left: 1em;
+    min-height: 1.4em;
 }
 
-.main.submenu.titlebar:hover {
-    background-color: #d0f0ff;
+/* LEVEL #1 */
+menu.main.menu.submenu1.submenu2 {
+    width: 16em;
+    /* height: 1.2em; */
+}
+menu.main.menu.submenu1.submenu2:hover {
+    width: 16em;
+    /* height: 1.2em; */
 }
 
-.main.submenu.item {
-    padding: 0.5em 0.5em 0.5em 1.5em;
-    background-color: #a0e0ff;
-    font-size: 10pt;
-    /* opacity: 0.0;
-    overflow: hidden; */
+/* LEVEL #2 */
+.main.menu.submenu1.submenu2.titlebar {
+    width: 8em;
+    text-align: left;
+    border: none;
+    padding-left: 1em;
 }
-
-.main.item:hover {
-    background-color: #d0f0ff;
-    padding-left: 0.75em;
+/* .main.menu.submenu1.submenu2.content {
+    border: #80c0ff 2px outset;
+} */
+.main.menu.submenu1.submenu2.menuitem {
+    width: 7em;
+    background-color: #6090c0;
+    /* min-height: 1.4em; */
 }
 
 @keyframes menu-xfade-in {
@@ -63,38 +183,61 @@ menu.main {
 }
 
 .xfade-in {
-    animation: menu-xfade-in 0.2s linear 0s 1 forwards;
-    /* overflow: visible; */
+    animation: menu-xfade-in 0.1s linear 0s 1 forwards;
+    height: fit-content;
 }
 
 .xfade-out {
     animation: menu-xfade-out 0.1s linear 0s 1 forwards;
+    height: fit-content;
 }
 
 .xfade-closed {
     height: 0em; overflow: hidden;
 }
 
-
-#ui {
-    width: 100%; height: 80vh;
+/**** DIALOG *****************/
+dialog {
+    box-sizing: border-box;
+    background-color: #6090c0;
+    border: #80c0ff 2px groove;
+    padding: 1px;
+    z-index: 500;
+}
+.dialog.titlebar {
+    background-color: #406080;
+    color: #80c0ff;
+    border: none;
+}
+.dialog.content {
+    width: 100%;
+    height: 100%;
 }
 
+.dialog.grid.r0 {
+    background-color: #406080;
+}
+
+.dialog.grid.r1 {
+    background-color: #80c0ff;
+}
+
+pot.dialog {
+    background-color: #406080;
+    border: #6090c0 2px inset;
+    color: #80c0ff;
+    cursor: ns-resize;
+}
+
+/**** UI *********************/
 .mainPanel.panel.content {
     height: 100%;
-}
-
-#ui_modules {
-    min-width: 512px;
-    overflow-y: auto;
-    height: 100%;
-    border: black 1px solid;
 }
 
 synth {
     margin-bottom: 1em;
     border: black 2px solid;
-    z-index: 100;
+    z-index: 50;
 }
 
 .synth.selected {
@@ -148,22 +291,6 @@ canvas {
     position: relative;
     box-sizing: border-box;
     display: inline-block;
-}
-
-#con {
-	position:absolute;
-	font-size:10pt;
-	font-family:Consolas;
-	text-align:left;
-	padding:2 4;
-
-	box-sizing: border-box;
-	margin:0;
-	background-color:#102030;
-	color:#208040;
-	opacity:0.5;
-	height:25vh; width:100vw;
-	overflow:hidden auto
 }
 
 button {
