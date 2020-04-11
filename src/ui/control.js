@@ -23,6 +23,10 @@ include('/ui/datalink.js');
 		this.labelElem = null;
 		this.dataSource = this.template['data-source'] || null;
 		this.dataField = this.template['data-field'];
+		this.visible = false;
+		this.cssAttributes = {};
+		this.visible = true;
+		this.disabled = this.template.disabled;
 	}
 	Object.defineProperties(Control.prototype, {
 		'left': {
@@ -60,6 +64,7 @@ include('/ui/datalink.js');
 		return {
 			type: 'control',
 			label: false,
+			disabled: false,
 			'data-source': null,
 			'data-field': null,
 			css:'',
@@ -76,30 +81,19 @@ include('/ui/datalink.js');
 			}
 		}
 	};
-	Control.prototype.disable = function(v) {
-		this.element.disabled = v;
-		if (this.labelElem != null) {
-			this.labelElem.disable(v);
-		}
-	};
-	Control.prototype.addHandler = function(eventName, handler) {
-		if (this.element.addEventListener) {
-			//Dbg.prln(this.id + '.addEventListener ' + eventName);
-			this.element.removeEventListener(eventName, handler);
-			this.element.addEventListener(eventName, handler);
-		} else if (this.element.attachEvent) {
-			//Dbg.prln(this.id + '.attachEvent ' + eventName);
-			this.element.detachEvent(eventName, handler);
-			this.element.attachEvent(eventName, handler);
-		}
-	};
+	// Control.prototype.disable = function(v) {
+	// 	this.element.disabled = v;
+	// 	if (this.labelElem != null) {
+	// 		this.labelElem.disable(v);
+	// 	}
+	// };
 	Control.prototype.render = function(ctx) {
-
 		this.cssText = this.parent && this.parent.cssText ? this.parent.cssText : '';
 		if (this.css.length > 0) {
 			this.cssText += this.css.join(' ');
 			this.cssText += ' ';
 		}
+//console.log(`${this.id}: ${this.parent?.cssText} + [${this.css}] => ${this.cssText}`);
 
 		if (this.label /*!== undefined && this.label !== false*/) {
 			if (this.labelElem == null) {
@@ -109,6 +103,7 @@ include('/ui/datalink.js');
 			}
 			this.labelElem.className = this.cssText + 'label';
 			this.labelElem.innerHTML = this.label;
+			this.labelElem.disabled = this.disabled;
 		} else {
 			if (this.labelElem && this.labelElem.parentNode) {
 				this.labelElem.parentNode.removeChild(this.labelElem);
@@ -121,12 +116,19 @@ include('/ui/datalink.js');
 			this.element.id = this.id;
 			this.element.control = this;
 		}
+		if (this.disabled) {
+			this.element.disabled = true;
+			this.cssText += 'disabled ';
+		}
 		if (this.cssText) {
 			this.element.className = this.cssText;
 		}
 		if (this.labelElem && !this.labelElem.parentNode && ctx && ctx.element) {
 			ctx.element.appendChild(this.labelElem);
 		}
+
+		this.setCssAttribute('display', this.visible ? undefined : 'none');
+		if (this.labelElem) this.setCssAttribute('display', this.visible ? undefined : 'none', this.labelElem);
 
 		// add onfocus and onblur events
 		Control.registerHandler.call(this, 'focus', this);
@@ -140,7 +142,7 @@ include('/ui/datalink.js');
 			var parentElement = null;
 			if (ctx && ctx.element) parentElement = ctx.element;
 			else if (!(this.parent instanceof Ui.Container)) parentElement = this.parent.element;
-			else if (this == this.parent.content) parentElement = this.parent.element;
+			else if (this == this.parent.content || this == this.parent.titleBar) parentElement = this.parent.element;
 			else parentElement = this.parent.content.element;
 			if (parentNode != parentElement) {
 				if (this.element.parentNode != null) {
@@ -150,8 +152,30 @@ include('/ui/datalink.js');
 			}
 		}
 	};
+	Control.prototype.addHandler = function(eventName, handler) {
+		if (this.element.addEventListener) {
+			//Dbg.prln(this.id + '.addEventListener ' + eventName);
+			this.element.removeEventListener(eventName, handler);
+			this.element.addEventListener(eventName, handler);
+		} else if (this.element.attachEvent) {
+			//Dbg.prln(this.id + '.attachEvent ' + eventName);
+			this.element.detachEvent(eventName, handler);
+			this.element.attachEvent(eventName, handler);
+		}
+	};
 	Control.prototype.registerHandler = function(event) {
 		throw new Error('Not implemented!');
+	};
+	Control.prototype.callHandler = function(e, getArguments) {
+		var handlers = this.handlers[e.type];
+		if (handlers) {
+			for (var i=0; i<handlers.length; i++) {
+				var handler = handlers[i];
+				if (handler.fn.call(handler.obj, getArguments(handler.obj)) == true) {
+					return true;
+				}
+			}
+		}
 	};
 	Control.prototype.addClass = function(cssClass, repaint) {
 		var ix = this.css.findIndex(x => x == cssClass);
@@ -178,6 +202,37 @@ include('/ui/datalink.js');
 			this.dataField = dataField !== undefined ? dataField : this.dataField;
 			this.dataSource.add(this.dataField);
 		}
+	};
+	Control.prototype.setCssAttribute = function(attribute, value, element) {
+		element = element || this.element;
+		if (element) {
+			if (this.cssAttributes[element] == undefined) this.cssAttributes[element] = {};
+			if (this.cssAttributes[element][attribute] == undefined || value != undefined) {
+				var style = window.getComputedStyle(this.element);
+				this.cssAttributes[element][attribute] = style[attribute];
+			}
+			if (value == undefined) {
+				value = this.cssAttributes[element][attribute];
+			}
+			element.style[attribute] = value;
+		}
+	};
+	Control.prototype.setVisible = function(visible) {
+		this.visible = visible == true;
+		this.render();
+		// if (this.element) {
+		// 	visible = visible == true;
+		// 	if (this.visible != visible) {
+		// 		this.visible = visible;
+		// 		if (this.id == 'new-device_voices') {
+		// 			this.setCssAttribute('display', visible ? undefined : 'none');
+		// 			this.setCssAttribute('display', visible ? undefined : 'none', this.labelElem);
+		// 		}
+		// 	}
+		// }
+	};
+	Control.prototype.getDataSource = function() {
+		this.dataSource instanceof Ui.DataLink ? this.dataSource.obj : this.dataSource;
 	};
 
 	Control.registerHandler = function(eventName) {
@@ -239,6 +294,9 @@ include('/ui/datalink.js');
 		var event = e.type;
 		//console.log(`${event} for target=${e.target}, this=${this}, control=${this.control ? this.control : e.target.control ? e.target.control : 'none'}, Control.focused=${Control.focused}`);
 		var control = this.control || e.target.control;
+		if (control && control.disabled) {
+			return false;
+		}
 		// check focus moving events
 		if (event == 'mousedown') {
 			if (control != Control.focused) {
@@ -297,19 +355,10 @@ include('/ui/datalink.js');
 			control = Control.focused;
 		}
 		if (control) {
-			var handlers = control.handlers[event];
-			if (handlers != undefined) {
-				e.control = control;
-				for (var i=0; i<handlers.length; i++) {
-					var handler = handlers[i];
-					//console.log(`Calling ${event} for ${control.id}`);
-					if (handler.fn.call(handler.obj, e) == true) {
-						//console.log('break event handling')
-						e.stopPropagation();
-						e.preventDefault();
-						break;
-					}
-				}
+			e.control = control;
+			if (control.callHandler(e, context => e) === true) {
+				e.stopPropagation();
+				e.preventDefault();
 			}
 		}
 		//console.log(Control.focused ? Control.focused.id : 'none')

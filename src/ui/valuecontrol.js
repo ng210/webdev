@@ -63,7 +63,7 @@ include('/ui/control.js');
 			this.dataLink = new Ui.DataLink(this);
 			this.dataLink.link('value', this.dataSource, this.dataField, this.toSource, this.fromSource);
 			this.value = this.fromSource ? this.fromSource(value) : value;
-		}		
+		}
 		return this.dataSource;
 	};
 	ValueControl.prototype.getDataType = function() {
@@ -125,7 +125,7 @@ include('/ui/control.js');
 		this.dataType = dataType;
 	};
 	ValueControl.prototype.getValue = function() {
-		return this.value;
+		return this.dataSource ? this.fromSource(this.dataSource[this.dataField]) : this.value;
 	};
 	ValueControl.prototype.setValue = function(value) {
 		if (this.isNumeric) {

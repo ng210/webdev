@@ -7,6 +7,8 @@ include('/ui/valuecontrol.js');
         this.itemsChanged = true;
         this.itemKey = this.template['item-key'];
         this.itemValue = this.template['item-value'];
+        this.selectedItem = null;
+        this.value = -1;
     };
 	extend(Ui.ValueControl, DropDownList);
 
@@ -27,7 +29,7 @@ include('/ui/valuecontrol.js');
         this.itemsChanged = true;
     };
 
-    DropDownList.prototype.render = function(ctx) {
+    DropDownList.prototype.render = async function(ctx) {
         Ui.Control.prototype.render.call(this, ctx);
         if (this.itemsChanged || ctx.force) {
             // remove all options
@@ -57,12 +59,31 @@ include('/ui/valuecontrol.js');
 	};
 
     DropDownList.prototype.onchange = function(e) {
-        var selectedItem = this.element.options[this.element.selectedIndex];
-        this.setValue(selectedItem.value);
+        var selection = this.element.options[this.element.selectedIndex];
+        this.selectedItem = this.items[selection.value];
+        this.setValue(selection.value);
     };
 
     DropDownList.prototype.add = function(key, value) {
         this.items[key] = value;
+        this.itemsChanged = true;
+        if (this.element) {
+            this.render();
+        }
+    };
+
+    // DropDownList.prototype.setValue = function(value) {
+    //     this.element.selectedIndex = this.findIndex(value);
+    //     DropDownList.base.setValue.call(this, value);
+    // };
+
+    DropDownList.prototype.setItems = function(list) {
+        this.items = {};
+        for (var key in list) {
+            if (list.hasOwnProperty(key)) {
+                this.items[key] = list[key];
+            }
+        }
         this.itemsChanged = true;
         if (this.element) {
             this.render();
@@ -80,7 +101,7 @@ include('/ui/valuecontrol.js');
         var ix = 0;
         for (var key in this.items) {
             if (this.items.hasOwnProperty(key)) {
-                itemValue = DropDownList.resolveReference(this.itemValue, this.items[key], key, index);
+                itemValue = DropDownList.resolveReference(this.itemValue, this.items[key], key, ix);
                 if (value == itemValue) {
                     index = ix;
                     break;

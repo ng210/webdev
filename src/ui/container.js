@@ -4,7 +4,7 @@ include('/ui/control.js');
 (function() {
     function Container(id, template, parent) {
         Ui.Control.call(this, id, template, parent);
-        this.content = new Ui.Control(`${this.id}#content`, { css:'content' }, this);
+        this.content = new Ui.Control(`${this.id}_content`, { css:'content' }, this);
         this.titleBarText = null;
         if (this.template.titlebar != undefined && this.template.titlebar !== false && this.template.titlebar != '') {
             this.titleBarText = this.template.titlebar === true ? this.id : this.template.titlebar;
@@ -47,19 +47,28 @@ include('/ui/control.js');
 		Container.base.render.call(this, ctx);
         // eventually create titlebar
         if (this.titleBar == null && this.titleBarText) {
-            this.titleBar = new Ui.Label(this.id + '_title', {css:'titlebar', value:this.titleBarText, events:['click']}, this);
+            this.titleBar = new Ui.Label(this.id + '_title', {css:'titlebar', events:['click']}, this);
         }
         if (this.titleBar != null) {
+            this.titleBar.value = this.titleBarText;
             this.titleBar.render({element:this.element});
         }
+        var layout = this.layout == Ui.Container.Layout.Vertical ? 'column' : 'row';
         this.element.style.display = 'flex';
-        this.element.style['flex-direction'] = 'column';
+        this.element.style['flex-direction'] = 'column';    //layout;
         // create content element
         this.content.render({element:this.element});
-        this.content.element.style.display = 'flex';
-        this.content.element.style['flex-direction'] = this.layout == Ui.Container.Layout.Vertical ? 'column' : 'row';
+        if (this.layout != Ui.Container.Layout.Free) {
+            this.content.element.style.display = 'flex';
+            this.content.element.style['flex-direction'] = layout;
+        } else {
+            this.content.element.style.display = 'block';
+        }
         //this.content.element.style.height = '100%';
 
+        while (this.content.element.children.length > 0) {
+            this.content.element.removeChild(this.content.element.children[0]);
+        }
         this.renderItems({element:this.content.element});
     };
     Container.prototype.renderItems = async function(ctx) {
@@ -86,7 +95,14 @@ include('/ui/control.js');
 		var ctrl = Ui.Control.create(`${this.id}_${key}`, template, this);
 		this.add(key, ctrl, itemBefore);
 		return ctrl;
-	};
+    };
+    Container.prototype.remove = function(key) {
+        var ix = this.itemOrder.findIndex(x => x == key);
+        if (ix != -1) {
+            this.itemOrder.splice(ix, 1);
+            delete this.items[key];
+        }
+    };
 	Container.prototype.item = function(ix) {
 		return this.items[this.itemOrder[ix]];
     };
@@ -94,9 +110,21 @@ include('/ui/control.js');
         return this.itemOrder.length;
     }
 
+
+    // 1. vertical
+    //      title
+    //      item1
+    //      item2
+    // 2. horizontal
+    //      title item1 item2
+    // 3. submenu
+    //      title > item1
+    //              item2
     Container.Layout = {
+        Vertical: 'vertical',
         Horizontal: 'horizontal',
-        Vertical: 'vertical'
+        Submenu: 'submenu',
+        Free: 'free'
     };
 
     Ui.Container = Container;
