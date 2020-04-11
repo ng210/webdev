@@ -5,12 +5,12 @@ include('/ge/player/player-lib.js');
     const TestAdapter = {
 
     };
-    TestAdapter.__proto__ = Player.IAdapter;
+    TestAdapter.__proto__ = Ps.IAdapter;
     TestAdapter.info = {name: '_TestAdapter', id: 0};
     TestAdapter.getInfo = function() { return TestAdapter.info; };
     //TestAdapter.registerCommands = function(registry) { throw new Error('Not implemented!'); };
     TestAdapter.prepareContext = function(data) { Dbg.prln('Prepare context'); };
-    TestAdapter.createTargets = function(targets, data) {
+    TestAdapter.createDevice = function(data) {
         var el = document.createElement('div');
         el.id = 'testTarget';
         el.style.position = 'absolute';
@@ -21,9 +21,9 @@ include('/ge/player/player-lib.js');
         el.style.zIndex = 1000;
         el.style.backgroundColor = 'silver';
         document.body.appendChild(el);
-        targets.push(el);
+        return el;
     };
-    TestAdapter.processCommand = function(target, command, sequence, cursor) {
+    TestAdapter.processCommand = function(device, command, sequence, cursor) {
         var colors = [
             '#0000ff', '#4080ff', '#80ffff', '#c080ff', '#ff00ff'
         ];
@@ -31,16 +31,16 @@ include('/ge/player/player-lib.js');
             case TestAdapter.SETTEXT:
                 var text = '', c = null;
                 while ((c = String.fromCharCode(sequence.getUint8(cursor++))) != '\0') text += c;
-                target.innerHTML = text;
+                device.innerHTML = text;
                 break;
             case TestAdapter.SETINK:
                 var c = sequence.getUint8(cursor++);
-                target.style.color = colors[c % colors.length];
+                device.style.color = colors[c % colors.length];
                 break;
         }
         return cursor;
     };
-    TestAdapter.updateRefreshRate = function(target, command) { throw new Error('Not implemented!'); };
+    TestAdapter.updateRefreshRate = function(device, command) { throw new Error('Not implemented!'); };
     TestAdapter.getCommandSize = function(command, args) {
     };
     TestAdapter.makeCommand = function(command)  {
@@ -48,14 +48,14 @@ include('/ge/player/player-lib.js');
         stream.writeUint8(command);
         switch (command) {
             case TestAdapter.SETTEXT:
-                if (arguments[1] instanceof Player.Sequence) {
+                if (arguments[1] instanceof Ps.Sequence) {
                     stream.writeString(arguments[1].stream.readString(arguments[2]));
                 } else {
                     stream.writeString(arguments[1]);
                 }
                 break;
             case TestAdapter.SETINK:
-                if (arguments[1] instanceof Player.Sequence) {
+                if (arguments[1] instanceof Ps.Sequence) {
                     stream.writeUint8(arguments[1].stream.readUint8(arguments[2]));
                 } else {
                     stream.writeUint8(arguments[1]);
@@ -69,15 +69,15 @@ include('/ge/player/player-lib.js');
 
     function createPlayer() {
         //var testAdapter = new TestAdapter();
-        var player = new Player();
+        var player = new Ps.Player();
         player.addAdapter(TestAdapter);
-        TestAdapter.createTargets(player.targets, null);
+        player.devices.push(TestAdapter.createDevice(null));
         return player;
     }
 
     function createTestSequences() {
         var sequences = [];
-        var sequence = new Player.Sequence(TestAdapter);
+        var sequence = new Ps.Sequence(TestAdapter);
         sequence.writeHeader();
         // Frame #1
         sequence.writeDelta(16);
@@ -110,7 +110,7 @@ include('/ge/player/player-lib.js');
         sequence.writeEOS();
         sequences.push(sequence);
 
-        sequence = new Player.Sequence(TestAdapter);
+        sequence = new Ps.Sequence(TestAdapter);
         // Frame #1
         sequence.writeDelta(16);
         sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq2.1');
@@ -123,7 +123,7 @@ include('/ge/player/player-lib.js');
         sequence.writeEOS();
         sequences.push(sequence);
 
-        sequence = new Player.Sequence(TestAdapter);
+        sequence = new Ps.Sequence(TestAdapter);
         // Frame #1
         sequence.writeDelta(16);
         sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq3.1');
@@ -142,9 +142,9 @@ include('/ge/player/player-lib.js');
         function loop(resolve) {
             clearTimeout(timer);
             if (channel.run(1)) {
-                timer = setTimeout(loop, 40, resolve);
+                timer = setTimeout(loop, 20, resolve);
             } else {
-                var text = channel.player.targets[0].innerHTML == 'End' ? 'Test successful' : 'Test failed';
+                var text = channel.player.devices[0].innerHTML == 'End' ? false : ['Playback not correct'];
                 resolve(text);
             }
         }
@@ -157,87 +157,122 @@ include('/ge/player/player-lib.js');
     function setup() {
         var player = createPlayer();
         var sequence = createTestSequences()[0];
-        var channel = new Player.Channel('test01', player);
-        channel.assign(player.targets[0], sequence);
+        var channel = new Ps.Channel('test01', player);
+        channel.assign(player.devices[0], sequence);
         return channel;
     }
 
     async function test_channel_run() {
-        Dbg.prln('Test Channel.run');
         var channel = setup();
         channel.loopCount = 1;
         channel.isActive = true;
-        return startPlayBack(channel);
+        return [
+            'Test Channel.run',
+            test('Playback should run correctly', () => {
+                return startPlayBack(channel);
+            })
+        ];
     }
 
     function test_sequence_toFrames() {
-        var errors = [];
-        Dbg.prln('Test Sequence.toFrames');
-        var player = createPlayer();
         var sequence = createTestSequences()[0];
         var frames = sequence.toFrames();
         // check frames
-        if (frames.length != 6) errors.push('Frame count is not 5!');
-        var fi = 0;
-        for (; fi<5; fi++) {
-            var frame = frames[fi];
-            if (frame.delta != 16) errors.push(`Frame #${fi+1} delta is not 16!`);
-            if (frame.commands.length != 2) errors.push(`Frame #${fi+1} does not have exactly 2 commands!`);
-            if (frame.commands[0].readUint8(0) != TestAdapter.SETTEXT) errors.push(`Frame #${fi+1} command is not SETTEXT!`);
-        }
-        var frame = frames[fi];
-        if (frame.delta != 16) errors.push(`Frame #${fi+1} delta is not 16!`);
-        if (frame.commands.length != 1) errors.push(`Frame #${fi+1} does not have exactly 1 commands!`);
-        if (frame.commands[0].readUint8(0) != TestAdapter.SETINK) errors.push(`Frame #${fi+1} command is not SETINK!`);
-        return errors.length > 0 ? errors.join('\n') : 'Tests successful!';
+        // if (frames.length != 6) errors.push('Frame count is not 5!');
+        // var fi = 0;
+        // for (; fi<5; fi++) {
+        //     var frame = frames[fi];
+        //     if (frame.delta != 16) errors.push(`Frame #${fi+1} delta is not 16!`);
+        //     if (frame.commands.length != 2) errors.push(`Frame #${fi+1} does not have exactly 2 commands!`);
+        //     if (frame.commands[0].readUint8(0) != TestAdapter.SETTEXT) errors.push(`Frame #${fi+1} command is not SETTEXT!`);
+        // }
+        // var frame = frames[fi];
+        // if (frame.delta != 16) errors.push(`Frame #${fi+1} delta is not 16!`);
+        // if (frame.commands.length != 1) errors.push(`Frame #${fi+1} does not have exactly 1 commands!`);
+        // if (frame.commands[0].readUint8(0) != TestAdapter.SETINK) errors.push(`Frame #${fi+1} command is not SETINK!`);
+        // return errors.length > 0 ? errors.join('\n') : 'Tests successful!';
+
+        return [
+            'Test Sequence.toFrames',
+            test('Frame count should be 5', () => {
+                if (frames.length != 6) return ['Frame count is not 5!'];
+            }),
+            test('Sequence should be ok', () => {
+                var fi = 0;
+                var errors = [];
+                for (; fi<5; fi++) {
+                    var frame = frames[fi];
+                    if (frame.delta != 16) errors.push(`Frame #${fi+1} delta is not 16!`);
+                    if (frame.commands.length != 2) errors.push(`Frame #${fi+1} does not have exactly 2 commands!`);
+                    if (frame.commands[0].readUint8(0) != TestAdapter.SETTEXT) errors.push(`Frame #${fi+1} command is not SETTEXT!`);
+                }
+                return errors;
+            }),
+            test('Frame #6 should be ok', () => {
+                var errors = [];
+                var frame = frames[5];
+                if (frame.delta != 16) errors.push(`Frame #${fi+1} delta is not 16!`);
+                if (frame.commands.length != 1) errors.push(`Frame #${fi+1} does not have exactly 1 commands!`);
+                if (frame.commands[0].readUint8(0) != TestAdapter.SETINK) errors.push(`Frame #${fi+1} command is not SETINK!`);
+                return errors;
+            }),
+        ];
+
     }
 
     function test_channel_toFrames() {
-        var errors = [];
-        Dbg.prln('Test Channel.toFrames');
         var channel = setup();
         channel.toFrames();
-        // check frames
-        if (channel.frames.length != 6) errors.push('Frame count is not 5!');
-        var fi = 0;
-        for (; fi<5; fi++) {
-            var frame = channel.frames[fi];
-            if (frame.delta != 16) errors.push(`Frame #${fi+1} delta is not 16!`);
-            if (frame.commands.length != 2) errors.push(`Frame #${fi+1} does not have exactly 2 commands!`);
-            if (frame.commands[0].readUint8(0) != TestAdapter.SETTEXT) errors.push(`Frame #${fi+1} command is not SETTEXT!`);
-        }
-        var frame = channel.frames[fi];
-        if (frame.delta != 16) errors.push(`Frame #${fi+1} delta is not 16!`);
-        if (frame.commands.length != 1) errors.push(`Frame #${fi+1} does not have exactly 1 commands!`);
-        if (frame.commands[0].readUint8(0) != TestAdapter.SETINK) errors.push(`Frame #${fi+1} command is not SETINK!`);
-        return errors.length > 0 ? errors.join('\n') : 'Tests successful!';
+
+        return [
+            'Test Channel.toFrames',
+            test('Frame count should be 5', () => {
+                if (channel.frames.length != 6) return ['Frame count is not 5!'];
+            }),
+            test('Sequence should be ok', () => {
+                var errors = [];
+                for (var fi=0; fi<5; fi++) {
+                    var frame = channel.frames[fi];
+                    if (frame.delta != 16) errors.push(`Frame #${fi+1} delta is not 16!`);
+                    if (frame.commands.length != 2) errors.push(`Frame #${fi+1} does not have exactly 2 commands!`);
+                    if (frame.commands[0].readUint8(0) != TestAdapter.SETTEXT) errors.push(`Frame #${fi+1} command is not SETTEXT!`);
+                }
+                return errors;
+            }),
+            test('Frame #6 should be ok', () => {
+                var errors = [];
+                var frame = channel.frames[5];
+                if (frame.delta != 16) errors.push(`Frame #6 delta is not 16!`);
+                if (frame.commands.length != 1) errors.push(`Frame #6 does not have exactly 1 commands!`);
+                if (frame.commands[0].readUint8(0) != TestAdapter.SETINK) errors.push(`Frame #6 command is not SETINK!`);
+                return errors;
+            }),
+        ];
     }
 
     function test_channel_toSequence() {
-        Dbg.prln('Test Channel.toFrames');
         var channel = setup();
         channel.toFrames();
         var sequence = channel.sequence;
         channel.toSequence();
-        var pos = 0;
-        var hasError = false;
-        for (var i=0; i<channel.sequence.cursor; i++) {
-            if (sequence.cursor <= i || sequence.getUint8(i) != channel.sequence.getUint8(i)) {
-                hasError = true;
-                break;
-            }
-        }
-        return hasError ? 'Stream does not match at ' + pos : 'Tests successful!';
+        return [
+            'Test Channel.toSequence',
+            test('Converted stream should match input stream', () => {
+                var pos = 0;
+                for (var i=0; i<channel.sequence.cursor; i++) {
+                    if (sequence.cursor <= i || sequence.getUint8(i) != channel.sequence.getUint8(i)) {
+                        return [`Stream does not match at ${pos}`];
+                    }
+                }
+            })
+        ];
     }
 
     async function test_channel_insertFrame() {
-        var errors = [];
-        Dbg.prln('Test insert frame');
         var channel = setup();
         channel.toFrames();
         var adapter = channel.adapter;
-        // create new frame
-        var frame = new Player.Frame();
+        var frame = new Ps.Frame();
         frame.delta = 8;
         frame.commands.push(adapter.makeCommand(TestAdapter.SETTEXT, 'New'));
         frame.commands.push(adapter.makeCommand(TestAdapter.SETINK, 4));
@@ -246,7 +281,13 @@ include('/ge/player/player-lib.js');
         //channel.reset();
         channel.loopCount = 1;
         channel.isActive = true;
-        return startPlayBack(channel);
+
+        return [
+            'Test insert frame',
+            test('Playback should be correct', () => {
+                return startPlayBack(channel);
+            })
+        ];
     }
 
     function test_stream() {
@@ -276,13 +317,14 @@ include('/ge/player/player-lib.js');
     }
 
     var tests = async function() {
-        //Dbg.prln(await test_channel_run());
-        Dbg.prln(test_channel_toFrames());
-        Dbg.prln(test_sequence_toFrames());
-        Dbg.prln(test_channel_toSequence());
-        Dbg.prln(await test_channel_insertFrame());
-        //Dbg.prln(test_channel_deleteFrames());
-        return 0;
+        return [
+            await test_channel_run(),
+            test_channel_toFrames(),
+            test_sequence_toFrames(),
+            test_channel_toSequence(),
+            await test_channel_insertFrame()
+        ];
     };
+
     public(tests, 'Player tests');
 })();

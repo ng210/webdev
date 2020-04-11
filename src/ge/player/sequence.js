@@ -7,7 +7,7 @@ include('/data/stream.js');
     // - frames: delta, command-1, command-2, ..., command-n, 0
     // - sequence: header byte count, header, frame-1, frame-2, ..., frame-n, EOS frame
 
-    var Sequence = function(adapter) {
+    function Sequence(adapter) {
         this.stream = new Stream(256);
         this.headerSizeInBytes = 2;
         this.adapter = adapter;
@@ -27,8 +27,8 @@ include('/data/stream.js');
 
     Sequence.prototype.writeDelta = function(delta) { this.stream.writeUint16(delta); };
     Sequence.prototype.writeCommand = function(cmd) { this.stream.writeUint8(cmd); };
-    Sequence.prototype.writeEOF = function() { this.stream.writeUint8(Player.EOF); };
-    Sequence.prototype.writeEOS = function() { this.stream.writeUint8(Player.EOS); };
+    Sequence.prototype.writeEOF = function() { this.stream.writeUint8(Ps.Player.EOF); };
+    Sequence.prototype.writeEOS = function() { this.stream.writeUint8(Ps.Player.EOS); };
     Sequence.prototype.writeString = function(str) { this.stream.writeString(str); };
     Sequence.prototype.writeUint8 = function(value) { this.stream.writeUint8(value); };
     Sequence.prototype.writeUint16 = function(value) { this.stream.writeUint16(value); };
@@ -43,20 +43,20 @@ include('/data/stream.js');
         var frames = [];
         var cursor = this.headerSizeInBytes;
         while (true) {
-            var frame = new Player.Frame();
+            var frame = new Ps.Frame();
             frame.delta = this.getUint16(cursor); cursor += 2;
             var cmd = 0;
             while (true) {
                 // read command code, 1 byte
                 cmd = this.getUint8(cursor++);
-                if (cmd > Player.EOS) {
+                if (cmd > Ps.Player.EOS) {
                     // var oldCursor = cursor;
                     // cursor += this.adapter.getCommandSize(cmd-2, this.sequence, cursor+1);
                     // frame.commands.push(new DataView(this.sequence.stream.slice(oldCursor, cursor)));
                     var command = this.adapter.makeCommand(cmd, this, cursor);
                     frame.commands.push(command);
                     cursor += command.length - 1;
-                } else if (cmd == Player.EOF) {
+                } else if (cmd == Ps.Player.EOF) {
                     if (frame.commands.length == 0) {
                         cmd = new Stream(1);
                         cmd.writeUint8(0);
@@ -68,7 +68,7 @@ include('/data/stream.js');
                 }
             }
             frames.push(frame);
-            if (cmd === Player.EOS) {
+            if (cmd === Ps.Player.EOS) {
                 break;
             }
         }
@@ -105,5 +105,5 @@ include('/data/stream.js');
         }
     };
 
-    Player.Sequence = Sequence;
+    public(Sequence, 'Sequence', Ps);
 })();
