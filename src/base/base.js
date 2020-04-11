@@ -1,4 +1,4 @@
-var DEBUGGING = false;
+var DBGLVL = 0;
 
 /******************************************************************************
  * AJAX
@@ -89,8 +89,11 @@ var ajax = {
     }
 };
 
-function debug_(txt) {
-    if (DEBUGGING) console.log(txt);
+function debug_(txt, lvl) {
+    //if (txt.indexOf('player.') == -1) return;
+    if (DBGLVL >= lvl) {
+        console.log(txt);
+    }
 }
 
 function extend(b, e) {
@@ -257,7 +260,7 @@ Resource.load = async function(options) {
         resource.status = Resource.LOADING;
         Resource.cache[options.url] = resource;
         // load
-debug_('LOAD ' + resource.toString());
+debug_('LOAD ' + resource.toString(), 1);
         await ajax.send(options);
         resource.data = options.response;
         if (options.error != null) {
@@ -293,11 +296,12 @@ debug_('LOAD ' + resource.toString());
             });
         }
     }
-    debug_('Cached\n' + Object.values(Resource.cache).map(x=>'-'+x.toString()).join('\n'));
+    debug_('CACHED ' + resource.toString(), 1);
+    //debug_('Cached\n' + Object.values(Resource.cache).map(x=>'-'+x.toString()).join('\n'), 3);
     return resource;
 };
 Resource.prototype.processContent = async function(options) {
-debug_('PROCESS @' + this.url);
+debug_('PROCESS @' + this.url, 1);
     var data = options.response;
     switch (options.contentType) {
         case 'text/javascript':
@@ -305,7 +309,7 @@ debug_('PROCESS @' + this.url);
             var mdl = Module.fromResource(this);
             if (mdl.error == null) {
                 Resource.cache[this.url] = mdl;
-                debug_('CHANGED ' + mdl.toString());
+                debug_('CHANGED ' + mdl.toString(), 2);
                 return mdl.resolveIncludes();
             }
             break;
@@ -390,8 +394,8 @@ debug_('RESOLVE @' + this.url);
     });
     // load every includes
     var includes = await Promise.all(loads);
-debug_('DEPENDS @'+this.toString()+'\n' + includes.map(x=>`-${x.toString()}\n`).join(''));
-debug_('CACHE\n' + Object.values(Resource.cache).map(x=>`-${x.toString()}\n`).join(''));
+debug_('DEPENDS @'+this.toString()+'\n' + includes.map(x=>`-${x.toString()}\n`).join(''), 2);
+debug_('CACHE\n' + Object.values(Resource.cache).map(x=>`-${x.toString()}\n`).join(''), 3);
     this.includes = [];
     for (var i=0; i<includes.length; i++) {
         var im = includes[i];
@@ -406,7 +410,7 @@ debug_('CACHE\n' + Object.values(Resource.cache).map(x=>`-${x.toString()}\n`).jo
     // at this point every included module should be loaded and resolved
 
     this.status = Module.RESOLVED;
-debug_('ADD @' + this.toString() + '\n' + this.includes.map(x=>`-${x}\n`).join(''));
+debug_('ADD @' + this.toString() + '\n' + this.includes.map(x=>`-${x}\n`).join(''), 2);
 
     this.node = document.createElement('script');
     this.node.url = this.url;
@@ -517,7 +521,7 @@ function lock(token, action) {
             if (request == locks__[token][1]) {
                 locks__[token][0]++;
                 if (locks__[token][0] == request + 1) {
-                    debug_('locked: ' + locks__[token]);
+                    debug_('locked: ' + locks__[token], 1);
                     return true;
                 }
             }
@@ -526,7 +530,7 @@ function lock(token, action) {
             await action();
             locks__[token][1] = locks__[token][0];
             resolve();
-            debug_('unlocked: ' + locks__[token]);
+            debug_('unlocked: ' + locks__[token], 1);
         });
     });
 }
@@ -571,19 +575,21 @@ function load(obj) {
     }
 }
 
-function public(obj, name) {
+function public(obj, name, context) {
     var script = document.currentScript;
     var url = script.src || script.url;
     var mdl = Resource.cache[url];
     if (mdl === undefined) {
         throw new Error('Module \'' + url + '\' not found!');
     }
-    window[name] = mdl.symbols[name] = obj;            
+    context = context || window;
+    mdl.symbols[name] = obj;
+    context[name] = obj;
+    
 }
 
 async function include(path) {
-debug_('INCLUDE @' + path);
-//if (path == '/ui/valuecontrol.js') debugger;
+debug_('INCLUDE @' + path, 1);
     var mdl = null;
     var searchPath = null;
     if (path.startsWith('/')) {
@@ -600,7 +606,7 @@ debug_('INCLUDE @' + path);
             break;
         }
     }
-debug_('INCLUDED @' + mdl.toString());
+debug_('INCLUDED @' + mdl.toString()), 2;
     return mdl;
 }
 
