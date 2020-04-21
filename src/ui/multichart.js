@@ -19,7 +19,8 @@ include('/webgl/webgl.js');
             titlebar:false,
             items: {
                 'title': { type: 'label', css:'title', 'data-field': 'title' },
-            }
+            },
+            events: ['click']
         };
         this.canvas = null;
         this.state = {};
@@ -176,6 +177,7 @@ include('/webgl/webgl.js');
     Ui.MultiChart.prototype.createToolbar = async function() {
         if (this.toolbar == null) {
             this.toolbar = new Ui.Board(this.id+'_toolbar', this.toolbarTemplate, this);
+            this.toolbar.addClass('toolbar');
             this.toolbar.dataBind(this);
             await this.toolbar.render({element:this.element});
         }

@@ -130,7 +130,7 @@ include('/ui/valuecontrol.js');
         if (ref == '$Key') return key.charAt(0).toUpperCase() + key.substring(1);
         if (ref == '$index') return index;
         if (ref === false) return obj;
-        return obj[key];
+        return obj[ref];
     };
 
     Ui.DropDownList = DropDownList;

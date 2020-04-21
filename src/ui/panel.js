@@ -31,6 +31,7 @@ include('/ui/board.js');
 		Ui.Control.registerHandler.call(this, event);
     };
     Panel.prototype.renderItems = async function(ctx) {
+        ctx = ctx || {element: this.content.element };
         var cnt = ctx.element;
         cnt.style.display = 'flex';
         //cnt.style['box-sizing'] = 'border-box';
@@ -48,7 +49,7 @@ include('/ui/board.js');
         var restWidth = clientWidth;
         var clientHeight = cnt.clientHeight - (restCount-1)*this.template.handlerSize;
         var restHeight = clientHeight;
-        var restSize = 100;
+        var restSize = 1;
         for (var i=0; i<this.itemOrder.length; i++) {
             var lastButOneItem = i == this.itemOrder.length-1;
             var item = this.item(i);
@@ -57,13 +58,13 @@ include('/ui/board.js');
             //style.display = 'flex';
             style['box-sizing'] = 'border-box';
             var size = this.split[i] || restSize/restCount;
-            restSize -= size;
+            if (size < 1) restSize -= size;
             if (this.layout == Ui.Container.Layout.Horizontal) {
-                var width = !lastButOneItem ? Math.floor(clientWidth*size/100) : restWidth;
+                var width = !lastButOneItem ? (size < 1 ? Math.floor(clientWidth*size) : size) : restWidth;
                 style.width = width + 'px';
                 restWidth -= width;
             } else {
-                var height = !lastButOneItem ? Math.floor(clientHeight*size/100) : restHeight;
+                var height = !lastButOneItem ? (size < 1 ? Math.floor(clientHeight*size) : size) : restHeight;
                 style.height = height + 'px';
                 restHeight -= height;
             }
