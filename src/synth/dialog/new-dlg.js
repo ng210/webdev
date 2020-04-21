@@ -51,6 +51,15 @@
                 this.remove('details');
             }
             this.add('details', adapter.createDialog(this.mode));
+            if (this.mode == 'sequence') {
+                var ddList = this.items.details.items.device;
+                if (adapter.devices.length > 0) {
+                    ddList.disabled = false;
+                    ddList.setItems(adapter.devices);
+                } else {
+                    ddList.disabled = true;
+                }
+            }
             this.render();
         }
     };

@@ -23,7 +23,7 @@ var _app = {
     },
 
     "adapters": {},
-    "devices": [],
+    //"devices": [],
     "sequences": [],
     "dataBlocks": {},
 
@@ -41,20 +41,11 @@ var _app = {
         "sequences": null
     },
     "selection": {
-        "device": null
+        "device": null,
+        "sequence": null
     },
 
     initialize: async function() {
-        await this.loadAdapters();
-
-        // create player
-        this.player = new Ps.Player();
-        //this.adapters.player = this.player;
-        // create master sequence
-        this.masterSequence = new Ps.Sequence(this.player);
-        // create master channel
-        this.masterChannel = new Ps.Channel('master', this.player);
-
         // load and create dialogs
         var map = {};
         var urls = [];
@@ -73,6 +64,10 @@ var _app = {
                 Dbg.prln(`Dialog '${key}' loaded.`);
             }        
         }
+
+        await this.loadAdapters();
+
+        this.createNew();
     },
 
     loadAdapters: async function() {
@@ -97,13 +92,21 @@ var _app = {
                             if (!this.adapters[j]) {
                                 this.adapters[j] = Reflect.construct(symbol, []);
                                 Dbg.prln(`Adapter '${j}' loaded`);
-                                this.adapters[j].prepareContext( this.settings );
                             }
                         }
                     }                    
                 }
             }
         }
+    },
+
+    createNew: function() {
+        // create player
+        this.player = this.createDevice({adapter:'Player', id:'Master', type:Ps.Player.Device.PLAYER, data:null});
+        // create master sequence
+        this.masterSequence = this.createSequence({adapter:'Player', id:'Master'});
+        // create master channel
+        this.masterChannel = this.adapters.Player.createDevice(Ps.Player.Device.CHANNEL, null);
     },
 
     createUi: async function() {
@@ -116,10 +119,10 @@ var _app = {
 
         // create main panel
         this.ui.addNew('ui', {
-            type: 'panel', titlebar: false, layout:'horizontal', css: 'main', split: [20, 80], fixed: true,
+            type: 'panel', titlebar: false, layout:'horizontal', css: 'main', split: [512], fixed: true,
             items: {
                 'devices': { type: 'board', titlebar: false, layout: 'vertical' },
-                'sequences': { type: 'panel', css: 'tracks', titlebar: false, layout: 'vertical', /*split: [30, 50, 20]*/ }
+                'sequences': { type: 'board', titlebar: false, layout: 'vertical', /*split: [30, 50, 20]*/ }
             }
         });
         this.views.devices = this.ui.items.ui.items.devices;
@@ -132,8 +135,6 @@ var _app = {
         var adapter = this.adapters[info.adapter];
         var device = adapter.createDevice(parseInt(info.type), info.data);
         device.id = info.id;
-        this.devices.push(device);
-        var dataBlock = this.dataBlocks[adapter] || { devices:[]};
         // create Ui
         var ui = adapter.createDeviceUi(device);
         device.ui = ui;
@@ -142,24 +143,21 @@ var _app = {
         await this.views.devices.renderItems();
         ui.titleBar.onclick = e => this.onSelectDevice(e);
         ui.render();
+        return device;
     },
 
-        // var si = _synths.length;
-        // _synths.push(synth);
-        // // create synth ui
-        // var id = `synth${('0' + (si+1)).slice(-2)}`;
-        // var synthUi = new Ui.Synth(id);
-        // synthUi.addClass('synth');
-        // synthUi.dataBind(synth);
-        // _ui.items.modules.add(id, synthUi);
-        // synthUi.render();
-        // synthUi.changePreset(synthUi.preset);
-        // synthUi.titleBar.onclick = onSelectChannel;
-
-    createSequence: function(adapter) {
+    createSequence: async function(info) {
+        var adapter = this.adapters[info.adapter];
         var sequence = new Ps.Sequence(adapter);
+        sequence.id = info.id;
         var ui = adapter.createSequenceUi(sequence);
-        this.views.sequences.add(device.id, ui);
+        ui.title = info.id;
+        this.views.sequences.add(sequence.id, ui);
+        await this.views.sequences.renderItems();
+        ui.toolbar.onclick = e => this.onSelectSequence(e);
+        debugger
+        ui.render();
+        return sequence;
     },
     createChannel: function(device, sequence) {
         // create channel
@@ -179,8 +177,10 @@ var _app = {
                 case "NewDialog":
                     switch (result.mode) {
                         case 'device': this.createDevice(result); break;
+                        case 'sequence': this.createSequence(result); break;
+                        default: console.log(JSON.stringify(result)); break;
                     }
-                    console.log(JSON.stringify(result));
+                    
                     break;
             }
         }
@@ -190,7 +190,9 @@ var _app = {
             switch (path[1]) {
                 case 'file':
                     switch (path[2]) {
-                        case 'new': this.dialogs.new.open(this, path[3]); break;
+                        case 'new':
+                            this.dialogs.new.open(this, path[3]);
+                            break;
                         // ...
                         case 'settings': this.dialogs.settings.open(this); break;
                     }
@@ -213,7 +215,17 @@ var _app = {
         }
         this.selection.device = control;
         control.addClass('selected', true);
+    },
+    onSelectSequence: function(e) {
+debugger
+        var control = e.control.parent;
+        if (this.selection.sequence) {
+            this.selection.sequence.removeClass('selected', true);
+        }
+        this.selection.sequence = control;
+        control.addClass('selected', true);
     }
+
 };
 
 // var _ui = null;
@@ -305,7 +317,7 @@ function createPlaybackControls() {
 function createSynth(voiceCount, patternId) {
     // create synth
     //var synth = new psynth.Synth(_settings.samplingRate, 3);
-    psynth.SynthAdapter.addTargets(_player.targets, new Uint8Array([1, psynth.SynthAdapter.DEVICE_SYNTH, voiceCount]));
+    psynth.SynthAdapter.addTargets(_player.targets, new Uint8Array([1, psynth.SynthAdapter.Device.SYNTH, voiceCount]));
     var synth = _player.targets[_player.targets.length-1];
     var si = _synths.length;
 
@@ -461,10 +473,12 @@ async function onpageload(e) {
         return;
     }
 
-    Dbg.prln('Initializing');
-    await _app.initialize();
     Dbg.prln('Creating UI');
     await _app.createUi();
+
+    Dbg.prln('Initializing');
+    await _app.initialize();
+
     var con = document.getElementById('con');
     document.body.removeChild(con);
     document.body.appendChild(con);

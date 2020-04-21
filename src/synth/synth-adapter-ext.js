@@ -150,7 +150,14 @@ include('/ui/ui-lib.js');
         if (!ui) {
             throw new Error(`Invalid dialog type ${type}!`);
         }
-        ui.items.id.setValue(`device${('0' + (this.devices.length+1)).slice(-2)}`);
+        switch (type) {
+            case 'device':
+                ui.items.id.setValue(`device${('0' + (this.devices.length+1)).slice(-2)}`);
+                break;
+            case 'sequence':
+                break;
+        }
+        
         return ui;
     };
 
@@ -162,7 +169,18 @@ include('/ui/ui-lib.js');
     };
 
     psynth.SynthAdapter.prototype.createSequenceUi = function(sequence) {
-        throw new Error('Not implemented!');
+        var series = this.toDataSeries(sequence);
+        var template = {
+            'width': 1200,
+            'height': 600,
+            'unit': [32, 24],
+            'grid-color': [0.2, 0.4, 0.6],
+            'titlebar': '',
+            'line-width': 0.1,
+            'path': '/synth/ui',
+            'data-source': series
+        };
+        return new Ui.NoteChart(sequence.id, template, null);    // : new Ui.MultiChart(id, template, null);
     };
 
     /* Dialogs ***************************************************************/
@@ -200,16 +218,26 @@ include('/ui/ui-lib.js');
     function NewSequence() {
         Ui.Board.call(this, 'new-sequence', {
             "titlebar": false,
+            "layout": "free",
             "items": {
-                "type": { "label": "Type", "type": "ddlist", "item-key": false, "item-value": "$key" }
+                "type": { "label": "Type", "type": "ddlist", "item-key": false, "item-value": "$key" },
+                "id": { "label": "Id", "type": "textbox", "value": 'sequence', "events": ["change"] },
+                "device": { "label": "Device type", "type": "ddlist", "item-key": false, "item-value": "$key" }
             }
         });
         this.items.type.setItems( ['Notes', 'Controller'] );
+        this.items.device.setItems( ['Synth'] );
     }
     extend(Ui.Board, NewSequence);
-    NewDevice.prototype.onclick = function(e) {
-        console.log('Hello ' + e.control.id);
-    }
+
+    NewSequence.prototype.getData = function() {
+        var result = {
+            type: this.items.type.getValue(),
+            device: this.items.device.getValue(),
+        };
+        return result;
+    };
+
 
     psynth.SynthAdapter.dialogs = {
         'device': new NewDevice(),

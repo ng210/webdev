@@ -51,7 +51,7 @@ body {
 
 #app_ui_devices {
     /* position:relative; */
-    min-width: 512px;
+    width: 512px;
     margin-right: 6pt;
     /* height: 40em; */
     border: black 1px solid;
@@ -88,7 +88,7 @@ body {
 
 .disabled {
     opacity: 0.90;
-    color: silver;
+    color: #30485a;
 }
 
 /**** MAIN MENU **************/
@@ -230,7 +230,19 @@ pot.dialog {
 }
 
 /**** UI *********************/
-.mainPanel.panel.content {
+/*.mainPanel.panel.content {
+    height: 100%;
+}*/
+
+.main.ui.panel.sequences.content {
+    overflow: auto;
+}
+
+.main.ui.panel.sequences.toolbar {
+    height: 2em;
+}
+
+div.main.ui.panel.sequences {
     height: 100%;
 }
 

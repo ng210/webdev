@@ -19,20 +19,21 @@ include('/ge/sound.js');
 		var cursor = 0;
 		var device = null;
 		switch (deviceType) {
-			case psynth.SynthAdapter.DEVICE_SYNTH:
+			case psynth.SynthAdapter.Device.SYNTH:
 				var voiceCount = initData[cursor++];
 				if (voiceCount != 0) {
 					// todo: add sound bank
 					device = new psynth.Synth(sound.smpRate, voiceCount);
 				}
 				break;
-			case psynth.SynthAdapter.DEVICE_DELAY:
+			case psynth.SynthAdapter.Device.DELAY:
 				// todo: add presets
 				device = new psynth.Delay(sound.smpRate);
 				break;
 			default:
 				throw new Error(`Invalid device type: ${deviceType}`);
 		}
+		device.type = deviceType;
 		this.devices.push(device);
 		return device;
 	};
@@ -63,8 +64,10 @@ include('/ge/sound.js');
 	SynthAdapter.SETCTRLF = 5;
 	SynthAdapter.SETVELOCITY = 6;
 
-	SynthAdapter.DEVICE_SYNTH = 0;
-	SynthAdapter.DEVICE_DELAY = 1;
+	SynthAdapter.Device = {
+		SYNTH: 0,
+		DELAY: 1
+	};
 
 	SynthAdapter.info = {
 	    name: 'SynthAdapter',
