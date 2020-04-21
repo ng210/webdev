@@ -12,10 +12,10 @@ include('/ge/player/iadapter.js');
             var stream = sequence.stream;
             var cursor = sequence.headerSizeInBytes;
             var delta = 0;
-            while (true) {
+            while (cursor < stream.length) {
                 delta += stream.readUint16(cursor); cursor += 2;
                 var cmd = 0;
-                while (true) {
+                while (cursor < stream.length) {
                     // read command code, 1 byte
                     cmd = stream.readUint8(cursor++);
                     var seriesId = getSeriesId(cmd, stream, cursor);
@@ -109,6 +109,9 @@ include('/ge/player/iadapter.js');
                 f0++;
             } while (true);
             return sequence;
+        },
+        createInitData: function() {
+            return null;
         },
 
         // UI extensions

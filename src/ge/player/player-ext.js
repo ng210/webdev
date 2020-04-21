@@ -134,11 +134,25 @@ include('/ui/ui-lib.js');
     };
     
     Ps.Player.prototype.createDeviceUi = function(device) {
-        throw new Error('Not implemented!');
+        var template = {
+            'titlebar': 'Player',
+            'layout': Ui.Container.Layout.Free,
+            'items': {
+                'bpm': { type:'pot', value: 100 }
+            },
+            'data-source': device
+        };
+        var ui = new Ui.Board(device.id, template, null);
+        ui.addClass('player');
+        return ui;
     };
 
     Ps.Player.prototype.createSequenceUi = function(sequence) {
-        throw new Error('Not implemented!');
+        var template = {
+            'titlebar': 'Player',
+            'layout': Ui.Container.Layout.Free
+        };
+        return new Ui.Board(sequence.id, template, null);
     };
 
     /* Dialogs ***************************************************************/

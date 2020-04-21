@@ -22,14 +22,14 @@ include('/ge/player/sequence.js');
         this.cursor = 0;
     };
 
-    Channel.prototype.assign = function(device, sequence) {
+    Channel.prototype.assign = function(deviceId, sequence) {
         this.sequence = sequence;
         this.cursor = sequence.headerSizeInBytes;
-        this.device = device;
         this.adapter = sequence.adapter;
         if (!this.adapter) {
             throw new Error(`Missing adapter!`);
         }
+        this.device = this.adapter.getDevice(deviceId);
     };
 
     Channel.prototype.reset = function() {
