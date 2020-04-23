@@ -345,6 +345,7 @@ debug_('PROCESS @' + this.url, 1);
         case 'image/png':
             this.node = new Image();
             this.node.src = window.URL.createObjectURL(data);
+            await this.node.decode();
             break;
         default: this.node = data; break;
     }

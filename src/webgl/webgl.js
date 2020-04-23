@@ -137,8 +137,6 @@
 		return map;
 	})();
 
-
-
 	public(webGL, 'webGL');
 
 })();
