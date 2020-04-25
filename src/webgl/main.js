@@ -88,10 +88,10 @@ App.prototype.prepareScene = async function prepareScene() {
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
 	var resources = await load([
-		{ url: `/webGL/default.vs`, contentType: 'x-shader/x-vertex', shaderType: gl.VERTEX_SHADER },
-		{ url: `/webGL/fonts.fs`, contentType: 'x-shader/x-fragment', shaderType: gl.FRAGMENT_SHADER },
-		{ url: `/webGL/arial.json` },
-		{ url: `/webGL/arial.png` }
+		{ url: `/webgl/default.vs`, contentType: 'x-shader/x-vertex', shaderType: gl.VERTEX_SHADER },
+		{ url: `/webgl/fonts.fs`, contentType: 'x-shader/x-fragment', shaderType: gl.FRAGMENT_SHADER },
+		{ url: `/webgl/arial.json` },
+		{ url: `/webgl/arial.png` }
 	]);
 	if (resources.find(x => x.error != null) != null) {
 		throw new Error('Error loading shaders!');
