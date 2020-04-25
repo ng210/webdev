@@ -4,12 +4,13 @@ include('/base/dbg.js');
 var _indentText = '        ';
 var _bulletinSymbols = ['►', '▪', '∙'];
 var _pending = 0;
+var _indent = 0;
 
-function formatResult(value, indent) {
-    return `<pre>${_indentText.substr(0, indent)}</pre>${_bulletinSymbols[indent<_bulletinSymbols.length ? indent-1 : _bulletinSymbols.length-1]} ${value}`;
+function formatResult(value) {
+    return `<pre>${_indentText.substr(0, _indent)}</pre>${_bulletinSymbols[_indent<_bulletinSymbols.length-1 ? _indent : _bulletinSymbols.length-1]} ${value}`;
 }
 
-function print(node, indent) {
+function print(node) {
     if (node instanceof Promise) {
         var p = node;
         var lbl = p.lbl;
@@ -24,31 +25,44 @@ function print(node, indent) {
             Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..pending.`, `${lbl}..${text}`);
             _pending--;
         });
-
     } else if (Array.isArray(node)) {
         for (var i=0; i<node.length; i++) {
             print(node[i], indent+1);
         }
     } else {
-        Dbg.prln(formatResult(node, indent));
+        Dbg.pr(formatResult(node));
     }
 }
 
+function println(text) {
+    print(text+'<br/>');
+}
+
+function message(text) {
+    println(`<span style="color:#80a080">${text}</text>`);
+}
+
+function error(text) {
+    println(`<span style="color:#ff4040">${text}</text>`);
+}
+
 function test(lbl, action) {
-    var errors = action();
-    var result = '';
-    if (errors instanceof Promise) {
-        var p = errors;
-        p.lbl = lbl;
+    _indent = 1;
+    println(lbl + '..[result]');
+    _indent = 2;
+    var result = action();
+    if (result instanceof Promise) {
+        // var p = errors;
+        // p.lbl = lbl;
         _pending++;
-        result = [`${lbl}..pending.`];
+        print('..pending.');
     } else {
-        result = [lbl + '..' + (Array.isArray(errors) && errors.length ? '<span style="color:#ff4040">Failed</span>' : '<span style="color:#40ff40">Ok</span>')];
+        Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..[result]`, `${lbl}..${result ? '<span style="color:#ff4040">Failed</span>' : '<span style="color:#40ff40">Ok</span>'}`);
     }
-    if (errors) {
-        result.push([errors]);
-    }
-    return result;
+    // if (errors) {
+    //     result.push([errors]);
+    // }
+    // return result;
 }
 
 async function onpageload(errors) {
@@ -66,7 +80,7 @@ async function onpageload(errors) {
         var test = module.symbols[testName];
         if (typeof test === 'function') {
             Dbg.prln(`<b>Running '<i>${testName}</i>'...</b>`);
-            print(await test(), -1);
+            await test();
             poll( () => {
                 if (_pending == 0) {
                     Dbg.prln('<b>Test finished</b>');
