@@ -222,11 +222,11 @@ include('/ui/ui-lib.js');
             "items": {
                 "type": { "label": "Type", "type": "ddlist", "item-key": false, "item-value": "$key" },
                 "id": { "label": "Id", "type": "textbox", "value": 'sequence', "events": ["change"] },
-                "device": { "label": "Device type", "type": "ddlist", "item-key": false, "item-value": "$key" }
+                "device": { "label": "Device type", "type": "ddlist", "item-key": "$key", "item-value": false }
             }
         });
         this.items.type.setItems( ['Notes', 'Controller'] );
-        this.items.device.setItems( ['Synth'] );
+        this.items.device.setItems( psynth.SynthAdapter.Device );
     }
     extend(Ui.Board, NewSequence);
 

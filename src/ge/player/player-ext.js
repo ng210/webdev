@@ -176,7 +176,7 @@ include('/ui/ui-lib.js');
                 "type": { "label": "Type", "type": "ddlist" }
             }
         });
-        this.items.type.setItems();
+        this.items.type.setItems( Ps.Player.Device );
     }
     extend(Ui.Board, NewSequence);
     NewDevice.prototype.onclick = function(e) {
