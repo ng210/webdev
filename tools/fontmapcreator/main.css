@@ -1,0 +1,87 @@
+body {
+    background-color: #102040;
+    color: #60a080;
+    font-family: Consolas;
+}
+
+h1 {
+    text-align: center;
+}
+
+canvas {
+    background-color: black;
+}
+
+#main {
+    position: absolute;
+    text-align: center;
+    width: 50%;
+}
+
+.titlebar {
+    font-size: 14pt;
+    text-align: center;
+    background-color: #60a080;
+    color: #102040;
+}
+
+#settings {
+    position: relative;
+    width: 12em;
+    height: 12em;
+}
+
+.content {
+    position: relative;
+    border: #60a080 2px inset;
+}
+
+.label {
+    position: absolute;
+    left: 2em;
+    width: 4em;
+}
+
+.font {
+    top: 1em;
+}
+#settings_font {
+    position: absolute;
+    left: 7em;
+}
+
+.size {
+    top: 3em;
+}
+pot.size {
+    position: absolute;
+    left: 7em;
+    width: 2em;
+    background-color: black;
+    border: #60a080 2px inset;
+    font-family: Consolas Arial;
+    padding: 2px;
+}
+
+#settings_render {
+    position: absolute;
+    top: 5em;
+    left: 3em;
+    width: 6em;
+}
+
+#con {
+	position:absolute;
+	top:75vh;
+	font-size:10pt;
+	font-family:Consolas;
+	text-align:left;
+	padding:2 4;
+	box-sizing: border-box;
+	margin:0;
+	background-color:#102030;
+	color:#208040;
+	opacity:0.95;
+	height:25vh; width:100vw;
+	overflow:hidden auto
+}

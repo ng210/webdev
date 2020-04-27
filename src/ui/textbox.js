@@ -6,11 +6,11 @@ include('/ui/valuecontrol.js');
 	};
 	extend(Ui.ValueControl, Textbox);
 
-	Ui.Control.Types['Textbox'] = { ctor: Textbox, tag: 'INPUT' };
+	Ui.Control.Types['textbox'] = { ctor: Textbox, tag: 'INPUT' };
 
 	Textbox.prototype.getTemplate = function getTemplate() {
 		var template = Textbox.base.getTemplate();
-		template.type = 'Textbox';
+		template.type = 'textbox';
 		return template;
 	};
 
