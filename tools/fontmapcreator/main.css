@@ -12,10 +12,17 @@ canvas {
     background-color: black;
 }
 
-#main {
-    position: absolute;
+#cnt {
+    width: 80vw;
     text-align: center;
-    width: 50%;
+}
+
+#main {
+    position: relative;
+}
+
+tr {
+    vertical-align: top;
 }
 
 .titlebar {
@@ -31,11 +38,6 @@ canvas {
     height: 12em;
 }
 
-.content {
-    position: relative;
-    border: #60a080 2px inset;
-}
-
 .label {
     position: absolute;
     left: 2em;
@@ -43,31 +45,45 @@ canvas {
 }
 
 .font {
-    top: 1em;
+    position: absolute;
+    top: 2em;
 }
 #settings_font {
-    position: absolute;
     left: 7em;
+    margin-top:0.5em;
 }
 
 .size {
-    top: 3em;
+    position: absolute;
+    top: 4em;
 }
 pot.size {
-    position: absolute;
-    left: 7em;
     width: 2em;
     background-color: black;
-    border: #60a080 2px inset;
-    font-family: Consolas Arial;
-    padding: 2px;
+    border: #60a080 1px inset;
+    font-family: Terminal Courier Consolas Arial;
+    padding: 1px;
+    cursor: ns-resize
+}
+
+.stroke {
+    position: absolute;
+    top: 6em;
+}
+#settings_stroke {
+    left: 7em;
+    top: 7em;
+    margin-top:0.5em;
 }
 
 #settings_render {
     position: absolute;
-    top: 5em;
+    top: 9em;
     left: 3em;
     width: 6em;
+    font-weight: bold;
+    font-size:12pt;
+    border-width: 3px;
 }
 
 #con {
