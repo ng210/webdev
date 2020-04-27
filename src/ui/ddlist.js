@@ -42,15 +42,18 @@ include('/ui/valuecontrol.js');
                 if (this.items.hasOwnProperty(key)) {
                     var item = this.items[key];
                     var option = document.createElement("option");
-                    option.value = DropDownList.resolveReference(this.itemValue, item, key, ix);
-                    option.text = DropDownList.resolveReference(this.itemKey, item, key, ix);
+                    option.text = DropDownList.resolveReference(this.itemValue, item, key, ix);
+                    option.value = DropDownList.resolveReference(this.itemKey, item, key, ix);
                     this.element.add(option);
                     ix++;
                 }
             }
             this.itemsChanged = false;
         }
-        this.element.selectedIndex = this.findIndex(this.getValue());
+        var selected = this.find(this.getValue());
+        if (selected != null) {
+            this.element.selectedIndex = selected.index;
+        }
     };
 
 	DropDownList.prototype.registerHandler = function(event) {
@@ -91,25 +94,30 @@ include('/ui/valuecontrol.js');
     };
 
     DropDownList.prototype.select = function(value) {
-        this.element.selectedIndex = this.findIndex(value);
-        Ui.Control.onevent({type:'change', target:this.element});
-        //this.element.dispatchEvent(new Event('change'));
+        var result = this.find(value);
+        if (result != null) {
+            this.setValue(result.value);
+            if (this.element) {
+                this.element.selectedIndex = result.index;
+                Ui.Control.onevent({type:'change', target:this.element});
+            }        
+        }
     };
 
-    DropDownList.prototype.findIndex = function(value) {
-        var index = -1;
+    DropDownList.prototype.find = function(value) {
+        var result = null;
         var ix = 0;
         for (var key in this.items) {
             if (this.items.hasOwnProperty(key)) {
                 itemValue = DropDownList.resolveReference(this.itemValue, this.items[key], key, ix);
                 if (value == itemValue) {
-                    index = ix;
+                    result = { key: key, value: this.items[key], index:ix };
                     break;
                 }
                 ix++;
             }
         }
-        return index;
+        return result;
     };
 
     DropDownList.prototype.getSelected = function() {
@@ -122,7 +130,11 @@ include('/ui/valuecontrol.js');
                 break;
             }
         }
-        return {key: key, value: item};
+        return {key: key, value: item, index: ix};
+    };
+
+    DropDownList.prototype.getValue = function() {
+
     };
 
     DropDownList.resolveReference = function(ref, obj, key, index) {
