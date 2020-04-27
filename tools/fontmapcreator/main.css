@@ -1,0 +1,103 @@
+body {
+    background-color: #102040;
+    color: #60a080;
+    font-family: Consolas;
+}
+
+h1 {
+    text-align: center;
+}
+
+canvas {
+    background-color: black;
+}
+
+#cnt {
+    width: 80vw;
+    text-align: center;
+}
+
+#main {
+    position: relative;
+}
+
+tr {
+    vertical-align: top;
+}
+
+.titlebar {
+    font-size: 14pt;
+    text-align: center;
+    background-color: #60a080;
+    color: #102040;
+}
+
+#settings {
+    position: relative;
+    width: 12em;
+    height: 12em;
+}
+
+.label {
+    position: absolute;
+    left: 2em;
+    width: 4em;
+}
+
+.font {
+    position: absolute;
+    top: 2em;
+}
+#settings_font {
+    left: 7em;
+    margin-top:0.5em;
+}
+
+.size {
+    position: absolute;
+    top: 4em;
+}
+pot.size {
+    width: 2em;
+    background-color: black;
+    border: #60a080 1px inset;
+    font-family: Terminal Courier Consolas Arial;
+    padding: 1px;
+    cursor: ns-resize
+}
+
+.stroke {
+    position: absolute;
+    top: 6em;
+}
+#settings_stroke {
+    left: 7em;
+    top: 7em;
+    margin-top:0.5em;
+}
+
+#settings_render {
+    position: absolute;
+    top: 9em;
+    left: 3em;
+    width: 6em;
+    font-weight: bold;
+    font-size:12pt;
+    border-width: 3px;
+}
+
+#con {
+	position:absolute;
+	top:75vh;
+	font-size:10pt;
+	font-family:Consolas;
+	text-align:left;
+	padding:2 4;
+	box-sizing: border-box;
+	margin:0;
+	background-color:#102030;
+	color:#208040;
+	opacity:0.95;
+	height:25vh; width:100vw;
+	overflow:hidden auto
+}
