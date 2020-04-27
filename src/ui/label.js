@@ -18,6 +18,7 @@ include('/ui/valuecontrol.js');
 		if (['click', 'dragging', 'mouseover', 'mouseout', 'mousemove'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
 		Ui.Control.registerHandler.call(this, event);
 	};
+	
 	Label.prototype.render = function(ctx) {
     	Label.base.render.call(this, ctx);
 	};

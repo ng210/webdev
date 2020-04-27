@@ -446,10 +446,10 @@
     };
     psynth.Voice.prototype.isActive = function() {
         return this.envelopes[0].phase < 7;
-    }
+    };
     psynth.Voice.prototype.getTicks = function() {
         return this.envelopes[0].ticks;
-    }
+    };
     /*****************************************************************************/
     psynth.Synth.prototype.setup = function(values) {
         for (var i=0; i<values.length; i+=2) {

@@ -11,3 +11,4 @@ include('/ui/grid.js');
 include('/ui/select.js');
 include('/ui/menu.js');
 include('/ui/pot.js');
+include('/ui/dialog.js');

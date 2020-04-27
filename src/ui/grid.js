@@ -3,7 +3,7 @@ include('/ui/container.js');
 // templates for rows or for cells
 (function() {
 	function Grid(id, template, parent) {
-		Ui.Container.call(this, id, template, parent);
+		Ui.Control.call(this, id, template, parent);
 		this.table = null;
 		// set rows/columns array
 		this.rowKeys = null;
@@ -16,17 +16,19 @@ include('/ui/container.js');
 		this.rowTemplate = this.template['row-template'];
 		this.cellTemplate = this.template['cell-template'];
 	};
-	extend(Ui.Container, Grid);
+	extend(Ui.Control, Grid);
 	Ui.Control.Types['grid'] = { ctor: Grid, tag: 'DIV' };
 
 	Grid.prototype.getTemplate = function() {
 		var template = Grid.base.getTemplate.call(this);
+		template.titlebar = this.id;
 		template.rows = '0';
 		template.cols = '0';
+		template.header = true;
 		template['row-template'] = null;
 		template['cell-template'] = null;
 		return template;
-	}
+	};
 
 	Grid.prototype.buildRow = function(row, src, rowTmpl) {
 		// build a row from the given data source
@@ -123,8 +125,11 @@ include('/ui/container.js');
 	};
 	Grid.prototype.dataBind = function(obj, field) {
 		//var dataLink = Grid.base.dataBind.call(this, obj, field);
-		this.dataSource = field ? obj[field] : obj;
-		this.build();
+		var dataSource = field ? obj[field] : obj;
+		if (this.dataSource != dataSource) {
+			this.dataSource = dataSource;
+			this.build();
+		}
 		return this.dataSource;
 	};
 	Grid.prototype.getCell = function(ri, ci) {
@@ -137,22 +142,23 @@ include('/ui/container.js');
 		return row ? row.cells[ci] : null;
 	};
 	Grid.prototype.render = function(ctx) {
-		if (!this.element) {
-			Grid.base.render.call(this, ctx);
+		Grid.base.render.call(this, ctx);
+		if (!this.table) {
 			this.table = document.createElement('TABLE');
-			this.table.className = 'grid table';
+			this.table.className = this.parent.cssText + 'grid table';
 			this.table.setAttribute('cellpadding', 0);
 			this.table.setAttribute('cellspacing', 0);
 			this.element.appendChild(this.table);
 		}
 		// add new rows
 		var oldRowCount = this.table.rows.length;
+		if (!this.rowKeys) return;
 		for (var ri=oldRowCount; ri<this.rowKeys.length; ri++) {
 			var rowKey = this.rowKeys[ri];
 			var row = this.rows[rowKey];
 			var tr = document.createElement('TR');
-			// var rowClass = rowKey != '__head' ? ri % 2 ? 'r0' : 'r1' : 'head';
-			// tr.className = 'grid row ' + rowClass;
+			var rowClass = rowKey != '__head' ? ri % 2 ? 'r0' : 'r1' : 'head';
+			tr.className = this.parent.cssText + 'grid row ' + rowClass;
 			row.element = tr;
 			for (var ci=0; ci<this.columnKeys.length; ci++) {
 				var key = this.columnKeys[ci];
@@ -169,7 +175,6 @@ include('/ui/container.js');
 				/* else if (tmplLabel === true) {
 					label = cell.label;
 				}*/
-				cell.css.push('grid', 'cell');
 				cell.render({'element': td});
 				td.appendChild(cell.element);
 				tr.appendChild(td);
@@ -183,20 +188,22 @@ include('/ui/container.js');
 		this.refresh();
 	};
 	Grid.prototype.refresh = function() {
+		var src = this.dataField ? this.dataSource.obj[this.dataField] : this.dataSource;
+		this.rowKeys = Object.keys(src);
 		for (var ri=0; ri<this.rowKeys.length; ri++) {
 			// repaint every row
 			var rowKey = this.rowKeys[ri];
 			var row = this.rows[this.rowKeys[ri]];
 			var rowClass = rowKey != '__head' ? ri % 2 ? 'r0' : 'r1' : 'head';
 			row.element.className = 'grid row ' + rowClass;
-
+			var cssText = `${this.parent.cssText}grid cell`;
 			for (var ci=0; ci<this.columnKeys.length; ci++) {
 				// repaint every cell
 				var key = this.columnKeys[ci];
-				var cellClass = rowClass + ' ' + (ci % 2 ? 'c0' : 'c1');
+				var cellClass = `${cssText} ${rowClass} ${ci % 2 ? 'c0' : 'c1'} ${key}`;
 				var cell = row.cells[ci];
 				var td = cell.element.parentNode;
-				td.className = 'grid cell ' + cellClass;
+				td.className = cellClass;
 				// var tmplLabel = cell.template.label;
 				// cell.label = Grid.decodeText(tmplLabel, key);
 				// tmplLabel=true => cell.label = calculated value
@@ -217,7 +224,9 @@ include('/ui/container.js');
 				// 	label = cell.label;
 				// }*/
 				//cell.css.push('grid', 'cell');
+				//cell.css.push(...this.parent.css, 'grid', 'cell', cellClass);
 				cell.render({'element': td});
+				cell.element.className = cellClass;
 			}
 		}
 	};

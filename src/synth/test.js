@@ -8,8 +8,10 @@ include('/synth/grammar.js');
 
 (function(){
 
+    var synthAdapter = new psynth.SynthAdapter();
+
     function createSequence() {
-        var seq = new Player.Sequence(psynth.SynthAdapter);
+        var seq = new Ps.Sequence(synthAdapter);
         seq.writeHeader();
         // #00: frame(0, on(17, 127))
         seq.writeDelta(0); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(17); seq.writeUint8(127); seq.writeEOF();
@@ -46,7 +48,7 @@ include('/synth/grammar.js');
     }
 
     function test_synthAdapterToDataSeries() {
-        var series = psynth.SynthAdapter.toDataSeries(createSequence());
+        var series = synthAdapter.toDataSeries(createSequence());
         var channelCount = Object.keys(series);
         var notes = series[psynth.SynthAdapter.SETNOTE];
         //var velocity = series[psynth.SynthAdapter.SETVELOCITY];
@@ -76,9 +78,8 @@ include('/synth/grammar.js');
     function test_synthAdapterFromDataSeries() {
         var sequence = createSequence();
         var expected = new Uint8Array(sequence.stream.buffer);
-        var series = psynth.SynthAdapter.toDataSeries(sequence);
-        var received =  new Uint8Array(psynth.SynthAdapter.fromDataSeries(series).stream.buffer);
-
+        var series = synthAdapter.toDataSeries(sequence);
+        var received =  new Uint8Array(synthAdapter.fromDataSeries(series).stream.buffer);
         return [
             'SynthAdapter.fromDataSeries',
             test('Convert all channels', () => {

@@ -54,6 +54,6 @@ void main()
    	vec2 select = step(0.0, diff) * step(-uUnit, -diff);
    	col += vec3(0.1, 0.1, 0.14) * select.x;
    	col += vec3(0.1, 0.14, 0.1) * select.y;
-	col *= 0.8 + 0.5*rand(gl_FragCoord.xy)*vignette();
+	col *= 0.9 + 0.2*rand(gl_FragCoord.xy)*vignette();
     gl_FragColor.rgb = col;
 }

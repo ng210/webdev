@@ -106,7 +106,7 @@ select.synth.toolbar, button.synth.toolbar {
     font-size: 10px; font-family: Verdana; font-weight: bold; color: #ff4020;
     width: 24px; height: 15px; text-align: center; margin: 0px; padding: 1px 0px 0px 0px;
     background: transparent; border: none;
-    cursor: pointer;
+    cursor: ns-resize;
 }
 
 input.synth.amp {

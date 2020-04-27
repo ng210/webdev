@@ -1,7 +1,7 @@
 include('/ui/valuecontrol.js');
 
 (function() {
-	Textbox = function(id, template, parent) {
+	function Textbox(id, template, parent) {
 		Ui.ValueControl.call(this, id, template, parent);
 	};
 	extend(Ui.ValueControl, Textbox);
@@ -23,5 +23,9 @@ include('/ui/valuecontrol.js');
 	    this.element.setAttribute('type', 'text');
 		this.element.setAttribute('size', this.template.size || 4);
 	};
+    Textbox.prototype.onchange = function(e) {
+		this.setValue(this.element.value);
+	};
+
 	Ui.Textbox = Textbox;
 })();
