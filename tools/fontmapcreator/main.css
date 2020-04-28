@@ -38,7 +38,7 @@ tr {
 }
 
 #settings {
-    width: 12em;
+    width: 16em;
     height: 12em;
 }
 
@@ -50,6 +50,7 @@ tr {
 
 .font {
     position: absolute;
+    width: 12em;
     top: 2em;
 }
 #settings_font {
@@ -71,39 +72,50 @@ pot.size {
     cursor: ns-resize
 }
 
-.stroke {
+.range {
     position: absolute;
     top: 6em;
 }
+pot.range {
+    left: 6em;
+    width: 2em;
+    background-color: black;
+    border: #60a080 1px inset;
+    font-family: Terminal Courier Consolas Arial;
+    padding: 1px;
+    cursor: ns-resize
+}
+
+.stroke {
+    position: absolute;
+    top: 8em;
+}
 #settings_stroke {
     left: 7em;
-    top: 7em;
-    margin-top:0.5em;
+    top: 9.75em;
 }
 
 .texture {
     position: absolute;
-    top: 8em;
+    top: 10em;
 }
 #settings_texture {
     left: 7em;
-    top: 9em;
-    margin-top:0.5em;
+    top: 12em;
 }
 
 .box {
     position: absolute;
-    top: 10em;
+    top: 12em;
 }
 #settings_box {
     left: 7em;
-    top: 12em;
-    margin-top:0.5em;
+    top: 14.5em;
 }
 
 #settings_render {
     position: absolute;
-    top: 14em;
+    top: 15em;
     left: 3em;
     width: 6em;
     font-weight: bold;
