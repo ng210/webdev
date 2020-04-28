@@ -15,10 +15,10 @@ include('/ui/valuecontrol.js');
 	};
 
 	Textbox.prototype.registerHandler = function registerHandler(event) {
-		if (['change', 'key'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
+		if (['change', 'keyup', 'keydown'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
 		Ui.Control.registerHandler.call(this, event);
     };
-    Textbox.prototype.render = function render(ctx) {
+    Textbox.prototype.render = async function render(ctx) {
     	Textbox.base.render.call(this, ctx);
 	    this.element.setAttribute('type', 'text');
 		this.element.setAttribute('size', this.template.size || 4);

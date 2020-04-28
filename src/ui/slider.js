@@ -28,7 +28,7 @@ include('/ui/valuecontrol.js');
 		this.setValue(this.element.valueAsNumber);
 	};
 
-	Slider.prototype.render = function(ctx) {
+	Slider.prototype.render = async function(ctx) {
 		Slider.base.render.call(this, ctx);
 		this.element.setAttribute('type', 'range');
 		this.element.setAttribute('min', this.min);

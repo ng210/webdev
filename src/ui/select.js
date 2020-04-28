@@ -67,7 +67,7 @@ include('/ui/board.js');
     //     return this.value;
     // };
 
-	Select.prototype.render = function(ctx) {
+	Select.prototype.render = async function(ctx) {
         Ui.Control.prototype.render.call(this, ctx);
         var value = this.getValue();
         for (var i in this.options.items) {

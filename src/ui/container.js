@@ -73,7 +73,7 @@ include('/ui/control.js');
     };
     Container.prototype.renderItems = async function(ctx) {
         for (var i in this.items) {
-            await this.items[i].render(ctx);
+            this.items[i].render(ctx);
         }
     };
 	Container.prototype.add = function(key, ctrl, itemBefore) {

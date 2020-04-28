@@ -19,7 +19,7 @@ include('/ui/valuecontrol.js');
 		Ui.Control.registerHandler.call(this, event);
 	};
 	
-	Label.prototype.render = function(ctx) {
+	Label.prototype.render = async function(ctx) {
     	Label.base.render.call(this, ctx);
 	};
 

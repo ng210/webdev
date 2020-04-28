@@ -101,7 +101,7 @@ include('/ui/ui-lib.js');
 
     };
 
-    Synth.prototype.render = function(ctx) {
+    Synth.prototype.render = async function(ctx) {
         Synth.base.render.call(this, ctx);
         {
         // //var synth = new psynth.Synth(48000, voiceCount);

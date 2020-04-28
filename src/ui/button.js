@@ -21,7 +21,7 @@ include('/ui/valuecontrol.js');
 		if (['click', 'mousedown', 'mouseup'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
 		Ui.Control.registerHandler.call(this, event);
     };
-	Button.prototype.render = function(ctx) {
+	Button.prototype.render = async function(ctx) {
     	Button.base.render.call(this, ctx);
 	};
 	

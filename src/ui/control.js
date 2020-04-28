@@ -87,7 +87,8 @@ include('/ui/datalink.js');
 	// 		this.labelElem.disable(v);
 	// 	}
 	// };
-	Control.prototype.render = function(ctx) {
+	Control.prototype.render = async function(ctx) {
+		//console.log('rendering ' + this.id);
 		this.cssText = this.parent && this.parent.cssText ? this.parent.cssText : '';
 		if (this.css.length > 0) {
 			this.cssText += this.css.join(' ');
@@ -98,7 +99,7 @@ include('/ui/datalink.js');
 		if (this.label /*!== undefined && this.label !== false*/) {
 			if (this.labelElem == null) {
 				this.labelElem = document.createElement('SPAN');
-				this.labelElem.id = this.id + '#label';
+				this.labelElem.id = this.id + '_label';
 				this.labelElem.control = this;
 			}
 			this.labelElem.className = this.cssText + 'label';

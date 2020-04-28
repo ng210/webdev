@@ -141,7 +141,7 @@ include('/ui/container.js');
 		var row = this.rows[ri];
 		return row ? row.cells[ci] : null;
 	};
-	Grid.prototype.render = function(ctx) {
+	Grid.prototype.render = async function(ctx) {
 		Grid.base.render.call(this, ctx);
 		if (!this.table) {
 			this.table = document.createElement('TABLE');

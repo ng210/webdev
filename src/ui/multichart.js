@@ -577,7 +577,7 @@ include('/webgl/webgl.js');
     Ui.MultiChart.MinZoom = 0.5;
     Ui.MultiChart.MaxZoom = 2.0;
 
-    Ui.MultiChart.render = function(instance) {
+    Ui.MultiChart.render = async function(instance) {
         clearTimeout(instance.timer);
         if (instance.isRunning) {
             instance.paint();

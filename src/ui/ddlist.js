@@ -125,17 +125,16 @@ include('/ui/valuecontrol.js');
         var item = null;
         var key = null;
         for (key in this.items) {
-            if (ix == this.element.selectedIndex) {
+            if (this.items.hasOwnProperty(key) && ix == this.element.selectedIndex) {
                 item = this.items[key];
                 break;
             }
         }
-        return {key: key, value: item, index: ix};
+        return item ? {key: key, value: item, index: ix} : null;
     };
 
-    DropDownList.prototype.getValue = function() {
-
-    };
+    // DropDownList.prototype.getValue = function() {
+    // };
 
     DropDownList.resolveReference = function(ref, obj, key, index) {
         if (ref == '$key') return key;

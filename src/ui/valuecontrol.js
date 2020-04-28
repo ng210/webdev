@@ -165,7 +165,7 @@ include('/ui/control.js');
 		if (['change'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
 		Ui.Control.registerHandler.call(this, event);
 	};
-	ValueControl.prototype.render = function(ctx) {
+	ValueControl.prototype.render = async function(ctx) {
 		ValueControl.base.render.call(this, ctx);
 		value = this.getValue();
 		if (this.isNumeric) {

@@ -34,7 +34,7 @@ include('/ui/board.js');
 		Ui.Control.registerHandler.call(this, event);
 	};
 
-    Menu.prototype.render = function(ctx) {
+    Menu.prototype.render = async function(ctx) {
         this.addClass(this.level > 0 ? 'submenu' + this.level : 'menu');
         Ui.Menu.base.render.call(this, ctx);
         if (this.isSubmenu) {

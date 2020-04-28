@@ -14,7 +14,7 @@ include('/ui/valuecontrol.js');
 		return template;
 	};
 
-	Checkbox.prototype.render = function(ctx) {
+	Checkbox.prototype.render = async function(ctx) {
     	Checkbox.base.render.call(this, ctx);
 	    this.element.setAttribute('type', 'checkbox');
 		this.element.checked = this.value == true;
