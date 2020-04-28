@@ -13,13 +13,15 @@ canvas {
 }
 
 #cnt {
-    width: 80vw;
-    text-align: center;
+    position: relative;
+    width: 100%
 }
 
 #main {
     position: relative;
+    border: #60a080 2px solid;
 }
+
 
 tr {
     vertical-align: top;
@@ -33,7 +35,6 @@ tr {
 }
 
 #settings {
-    position: relative;
     width: 12em;
     height: 12em;
 }
@@ -58,6 +59,7 @@ tr {
     top: 4em;
 }
 pot.size {
+    left: 6em;
     width: 2em;
     background-color: black;
     border: #60a080 1px inset;

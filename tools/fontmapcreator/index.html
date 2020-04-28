@@ -1,21 +1,30 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <link rel="stylesheet" type="text/css" href="main.css" >
-    <script type="text/javascript" src="/src/base/base.js"></script>
-    <script type="text/javascript" src="main.js"></script>
-</head>
-<body>
-    <h1>Font map creator</h1>
-    <div id="cnt">
-        <table id="main">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <link rel="stylesheet" type="text/css" href="main.css" >
+        <script type="text/javascript" src="/src/base/base.js"></script>
+        <script type="text/javascript" src="main.js"></script>
+    </head>
+    <body>
+        <h1>Font map creator</h1>
+        <table style="width:100%">
             <tr>
-                <td id="sc"></td>
-                <td><canvas id="cvs" width="256px" height="256px"></canvas></td>
+                <td width="25%">&nbsp;</td>
+                <td width="50%">
+                    <div id="cnt">
+                        <table id="main">
+                            <tr>
+                                <td id="sc"></td>
+                                <td><canvas id="cvs"></canvas></td>
+                                <td><pre id="map"></pre></td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+                <td width="25%">&nbsp;</td>
             </tr>
         </table>
-    </div>
-    <div id="con"></div>
-</body>
+        <div id="con"></div>
+    </body>
 </html>
