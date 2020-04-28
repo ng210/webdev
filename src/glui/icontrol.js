@@ -2,7 +2,7 @@
 
     function IControl() {
     }
-    IControl.prototype.construct = function construct(node) {
+    IControl.prototype.fromNode = function fromNode(node) {
         throw new Error('Not implemented!');
     };
     IControl.prototype.getTemplate = function getTemplate() {

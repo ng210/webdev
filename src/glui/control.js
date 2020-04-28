@@ -7,14 +7,24 @@ include('/ui/datalink.js');
         this.id = id || 'ctrl';
         this.parent = parent || null;
         this.template = null;
+        this.style = {};
 
         this.applyTemplate(template);
 
         this.handlers = {};
+
+        // rendering
+        this.quad = [
+            this.style.left, this.style.top, this.style.zIndex,
+            this.style.left + this.style.width, this.style.top + this.style.height, this.style.zIndex
+        ];
+        this.uniforms = {
+            uFontSize: { type:webGL.FLOAT4V, value: new Float32Array(4) },
+        };
     }
     extend(glui.IControl, Control);
 
-    Control.prototype.construct = function construct(node) {
+    Control.prototype.fromNode = function fromNode(node) {
         var template = {};
         for (var i in node.attributes) {
             if (node.attributes.hasOwnProperty(i)) {
@@ -39,8 +49,18 @@ include('/ui/datalink.js');
             'disabled': false,
             'data-source': null,
             'data-field': null,
-            'style': null
+            // styling
+            'style': {
+                'left': 0, 'top': 0,
+                'width': '4em', 'height': '1.2em',
+                'z-index': 0,
+                'bg-color': '#c0c0c0',
+                'color': '#000000',
+                'font': 'Arial 12 normal',
+                'border': '#c0c0c0 2px solid'
+            }
         };
+
         var handlers = this.getHandlers();
         for (var i in handlers) {
             if (handlers.hasOwnProperty(i)) {
@@ -86,14 +106,29 @@ include('/ui/datalink.js');
             throw new Error(`${this.constructor.name} does not support ${event}!`);
         }
     };
-	Control.prototype.applyTemplate = function(tmpl) {
-		this.template = this.getTemplate();
-		for (var i in tmpl) {
-			if (this.template.hasOwnProperty(i) && tmpl[i] != undefined) {
-				this.template[i] = tmpl[i];
+    function copyFields(src, dst, path) {
+        var res = [];
+		for (var i in src) {
+			if (src[i] != undefined && dst.hasOwnProperty(i)) {
+                if (typeof src[i] !== 'object') {
+                    src[i] = dst[i];
+                } else {
+                    res = copyFields(src[i], dst[i]);
+                    if (res != null) {
+                        res.push(`${i}.${res}`);
+                    }
+                }
 			} else {
-				console.log(`${this.constructor.name}.template does not define '${i}'`);
+				res.push(i);
 			}
+        }
+        return res;
+    }
+	Control.prototype.applyTemplate = function(tmpl) {
+        this.template = this.getTemplate();
+        var res = copyFields(tmpl, this.template);
+        for (var i=0; i<res.length; i++) {
+            console.log(`${this.constructor.name}.template does not define '${res[i]}'`);
         }
 
         this.id = this.template.id;
