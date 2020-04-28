@@ -8,9 +8,9 @@
     </head>
     <body>
         <h1>Font map creator</h1>
-        <table style="width:100%">
+        <table id="main-table" style="width:100%">
             <tr>
-                <td width="25%">&nbsp;</td>
+                <td width="25%" rowspan="2">&nbsp;</td>
                 <td width="50%">
                     <div id="cnt">
                         <table id="main">
@@ -22,7 +22,17 @@
                         </table>
                     </div>
                 </td>
-                <td width="25%">&nbsp;</td>
+                <td width="25%" rowspan="2">&nbsp;</td>
+            </tr>
+            <tr>
+                <td>
+                    <table>
+                        <tr>
+                            <td id="text" width="25%"></td>
+                            <td width="75%"><canvas id="preview" width="640" height="128"></canvas></td>
+                        </tr>
+                    </table>
+                </td>
             </tr>
         </table>
         <div id="con"></div>

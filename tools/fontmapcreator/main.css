@@ -12,14 +12,17 @@ canvas {
     background-color: black;
 }
 
+#main-table {
+    border: #60a080 2px solid;
+}
+
 #cnt {
     position: relative;
-    width: 100%
+    width: 100%;
 }
 
 #main {
     position: relative;
-    border: #60a080 2px solid;
 }
 
 
@@ -41,7 +44,7 @@ tr {
 
 .label {
     position: absolute;
-    left: 2em;
+    left: 1em;
     width: 4em;
 }
 
@@ -78,11 +81,43 @@ pot.size {
     margin-top:0.5em;
 }
 
+.texture {
+    position: absolute;
+    top: 8em;
+}
+#settings_texture {
+    left: 7em;
+    top: 9em;
+    margin-top:0.5em;
+}
+
+.box {
+    position: absolute;
+    top: 10em;
+}
+#settings_box {
+    left: 7em;
+    top: 12em;
+    margin-top:0.5em;
+}
+
 #settings_render {
     position: absolute;
-    top: 9em;
+    top: 14em;
     left: 3em;
     width: 6em;
+    font-weight: bold;
+    font-size:12pt;
+    border-width: 3px;
+}
+
+#map {
+    height: 40em;
+    overflow: auto;
+}
+
+#preview_text {
+    width: 12em;
     font-weight: bold;
     font-size:12pt;
     border-width: 3px;
