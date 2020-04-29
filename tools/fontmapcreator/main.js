@@ -36,6 +36,8 @@ function App(canvasId) {
         'size': 44,
         'range': 255,
         'stroke': false,
+        'margin': 2,
+        'padding': 2,
         'texture': 'auto',
         'box': false
     };
@@ -47,6 +49,8 @@ function App(canvasId) {
             'size': { 'label':'Size', 'type': 'pot', 'min': 4, 'max':64, 'data-field': 'size' },
             'range': { 'label':'Range', 'type': 'pot', 'min': 128, 'max':512, 'data-field': 'range' },
             'stroke': { 'label':'Stroke', 'type': 'checkbox', 'data-field': 'stroke' },
+            'margin': { 'label':'Margin', 'type': 'pot', 'min': 0, 'max':16, 'data-field': 'margin' },
+            'padding': { 'label':'Padding', 'type': 'pot', 'min': 0, 'max':16, 'data-field': 'padding' },
             'texture': { 'label':'Texture', 'type': 'ddlist', 'item-key': false, 'data-field': 'texture' },
             'box': { 'label':'Box', 'type': 'checkbox', 'data-field': 'box' },
             'render': { 'label': false, 'type': 'button', 'value': 'Render', 'events': ['click']}
@@ -105,17 +109,21 @@ App.prototype.createFontMap = function createFontMap() {
     for (var i=32; i<this.settings.range; i++) {
         var char = String.fromCharCode(i);
         var metrics = this.ctx.measureText(char);
-        var width = (metrics.actualBoundingBoxRight + metrics.actualBoundingBoxLeft) || metrics.width;
-        var height = Math.abs(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent) || 1;
         var entry = {
-            left: metrics.actualBoundingBoxLeft, top: metrics.actualBoundingBoxAscent, right:metrics.actualBoundingBoxRight, bottom: metrics.actualBoundingBoxDescent,
-            width: Math.ceil(width),
-            height: Math.ceil(height),
-            offset: Math.ceil(Math.abs(metrics.actualBoundingBoxAscent))
+            'left': metrics.actualBoundingBoxLeft,
+            'top': metrics.actualBoundingBoxAscent,
+            'right': metrics.actualBoundingBoxRight,
+            'bottom': metrics.actualBoundingBoxDescent
         };
+        var width = (entry.right + entry.left) || metrics.width;
+        var height = (entry.bottom + entry.top) || 1;
+        entry.width = Math.ceil(width) + 2*this.settings.padding;
+        entry.height = Math.ceil(height) + 2*this.settings.padding;
+        entry.offset = Math.ceil(Math.abs(metrics.actualBoundingBoxAscent));
+
         this.map[char] = entry;
         this.totalWidth += entry.width;
-        this.totalSurface += entry.width*this.settings.size;   //entry.height;
+        this.totalSurface += (2*this.settings.margin + entry.width)*(2*this.settings.margin + this.settings.size);   //entry.height;
     }
     Dbg.prln('Total surface: ' + this.totalSurface);
     Dbg.prln('Total width: ' + this.totalWidth);
@@ -141,27 +149,27 @@ App.prototype.optimizeTextureSize = function optimizeTextureSize() {
 };
 App.prototype.drawFontMap = function drawFontMap() {
     this.ctx.lineWidth = 1;
-    this.ctx.fillStyle = '#101820';
+    this.ctx.fillStyle = '#000000';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.font = this.settings.size + 'px ' + this.settings.font;
     this.ctx.textAlign = 'left';
     this.ctx.textBaseline = 'top';
     this.ctx.fillStyle = 'white';
-    var x = 0, y = 0;
+    var x = this.settings.margin, y = this.settings.margin;
     var log = [];
     for (var i=32; i<this.settings.range; i++) {
         var char = String.fromCharCode(i);
         var metrics = this.map[char];
         if (x + metrics.width > this.canvas.width) {
             x = 0;
-            y += this.settings.size;
+            y += this.settings.size + 2*(this.settings.padding + this.settings.margin);
         }
         metrics.x = x, metrics.y = y;
         this.ctx.moveTo(x, y);
         this.ctx.strokeStyle = 'white';
-        this.settings.stroke ? this.ctx.strokeText(char, x+metrics.left, y+metrics.top) : this.ctx.fillText(char, x+metrics.left, y+metrics.top);
+        this.settings.stroke ? this.ctx.strokeText(char, x+metrics.left + this.settings.padding, y+metrics.top + this.settings.padding) : this.ctx.fillText(char, x+metrics.left + this.settings.padding, y+metrics.top + this.settings.padding);
 
-        this.ctx.strokeStyle = '#ffe080';
+        this.ctx.strokeStyle = '#00ff00';
         if (this.settings.box) {
             this.ctx.strokeRect(x, y, metrics.width, metrics.height);
         }
@@ -170,7 +178,7 @@ App.prototype.drawFontMap = function drawFontMap() {
         else char = '  "' + char;
         log.push(`${char}": {"x": ${x}, "y":${y}, "w":${metrics.width}, "h":${metrics.height}, "o":${metrics.offset}}`);
 
-        x += metrics.width;
+        x += metrics.width + 2*this.settings.margin;
     }
     document.getElementById('map').innerHTML = `{<br/>${log.join(',<br/>')}<br/>}`;
 };

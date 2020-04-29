@@ -48,6 +48,15 @@ tr {
     width: 4em;
 }
 
+pot {
+    width: 2em;
+    background-color: black;
+    border: #60a080 1px inset;
+    font-family: Terminal Courier Consolas Arial;
+    padding: 1px;
+    cursor: ns-resize
+}
+
 .font {
     position: absolute;
     width: 12em;
@@ -64,12 +73,6 @@ tr {
 }
 pot.size {
     left: 6em;
-    width: 2em;
-    background-color: black;
-    border: #60a080 1px inset;
-    font-family: Terminal Courier Consolas Arial;
-    padding: 1px;
-    cursor: ns-resize
 }
 
 .range {
@@ -95,27 +98,45 @@ pot.range {
     top: 9.75em;
 }
 
-.texture {
+.margin {
     position: absolute;
     top: 10em;
 }
+pot.margin {
+    left: 6em;
+    top: 10em;
+}
+
+.padding {
+    position: absolute;
+    top: 12em;
+}
+pot.padding {
+    left: 6em;
+    top: 12em;
+}
+
+.texture {
+    position: absolute;
+    top: 14em;
+}
 #settings_texture {
     left: 7em;
-    top: 12em;
+    top: 17em;
 }
 
 .box {
     position: absolute;
-    top: 12em;
+    top: 16em;
 }
 #settings_box {
     left: 7em;
-    top: 14.5em;
+    top: 19.5em;
 }
 
 #settings_render {
     position: absolute;
-    top: 15em;
+    top: 20em;
     left: 3em;
     width: 6em;
     font-weight: bold;
