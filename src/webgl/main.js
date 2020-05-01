@@ -22,17 +22,18 @@ function App() {
 
 		uFrame: { type:webGL.INT, value: 0 },
 		uSize: { type:webGL.FLOAT2V, value: new Float32Array([this.cvs.width, this.cvs.height]) },
+		uDuration: { type:webGL.FLOAT, value: 200.0 },
 
 		uMousePos: { type:webGL.FLOAT2V, value: new Float32Array([0.0, 0.0]) }
 	};
 	this.fontData = null;
-
-	this.texts = [
-		'The Hobbit',
-		'Szia Tilduska!',
-		'Szia kisfiacska!',
-		'Szia bundás!'
-	];
+	this.texts = [];
+	// [
+	// 	'The Hobbit',
+	// 	'Szia Tilduska!',
+	// 	'Szia kisfiacska!',
+	// 	'Szia bundás!'
+	// ];
 	this.currentText = 0;
 
 	GE.init('#cvs', GE.MODE_WEBGL);
@@ -45,7 +46,7 @@ App.prototype.processInputs = function processInputs() {
 
 };
 App.prototype.update = function update(f) {
-	if (f % 300 == 0) {
+	if (f % this.uniforms.uDuration.value == 0) {
 		var text = this.texts[this.currentText++];
 		this.setText(text);
 		if (this.currentText == this.texts.length) this.currentText = 0;
@@ -79,7 +80,7 @@ App.prototype.setText = function setText(text) {
 	var ix = 0;
 	for (var i=0; i<text.length; i++) {
 		var char = text.charAt(i);
-		var font = this.fontData.map[char];
+		var font = this.fontData.map[char] || this.fontData.map[''];
 		this.uniforms.uText.value[ix++] = font.x;
 		this.uniforms.uText.value[ix++] = font.y;
 		this.uniforms.uText.value[ix++]	= font.w;
@@ -109,6 +110,13 @@ App.prototype.prepareScene = async function prepareScene() {
 	if (resources.find(x => x.error != null) != null) {
 		throw new Error('Error loading shaders!');
 	}
+	var texts = resources[1].data.split('\n');
+	for (var i=0; i<texts.length; i++) {
+		if (texts[i].length != 0 && texts[i] != '\r') {
+			this.texts.push(texts[i]);
+		}
+	}
+
 	// create texure
 	var texture = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -121,7 +129,6 @@ App.prototype.prepareScene = async function prepareScene() {
 	this.uniforms.uFontSize.value[2] = resources[2].data.size;
 
 	this.fontData = resources[2].data;
-	//this.setText('Szia Tilduska!');
 
 	var shaders = {};
 	shaders[gl.VERTEX_SHADER] = resources[0].data;

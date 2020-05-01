@@ -5,6 +5,7 @@ precision mediump float;
 
 uniform int uFrame;
 uniform vec2 uSize;
+uniform float uDuration;
 
 uniform vec4 uText[MAXLENGTH];
 uniform int uTextLength;
@@ -62,26 +63,40 @@ vec4 drawText(vec2 uv, vec2 pos, vec2 size, vec4 color) {
     return col;
 }
 
+vec2 wave(vec2 uv, vec2 size, float t) {
+    return cos(2.0*PI*(2.1*t + vec2(1.9, 2.6)*uv.yx/size.yx));
+}
+
+vec2 rand(vec2 xy) {
+    return sin(137.0*xy*sin(479.0*xy.yx));
+}
+
+vec2 explode(vec2 uv, vec2 size, float t) {
+    return 0.5*uSize*t*rand(uv);
+}
+
 void main() {
     vec2 uv = vec2(gl_FragCoord.x, uSize.y - gl_FragCoord.y);
     vec4 finalColor = vec4(0.0);
     vec4 color;
     float frame = float(uFrame);
-
-    vec2 size = vec2(-1, 100.0);  //vec2(23.0, 22.0);
+    vec2 size = 2.0*getTextRect();
     vec2 pos = 0.5*(uSize - size);
-    float opacity = 1.0;
-    float d = mod(frame, 300.0);
-    float f = d/300.0;
-    pos -= d*vec2(1.2, 0.1);
-    float lum = 1.0, dist = 0.0;
-    if (d < 50.0) { opacity = d/50.0; dist = 2.0 + (50.0 - d)/2.0; }
-    else if (d < 150.0) { lum *= 1.0 + (d - 50.0)/75.0; dist = (150.0 - d)/50.0; }
-    else if (d < 250.0) { lum *= 1.0 + (250.0 - d)/75.0; dist = (d - 150.0)/50.0; }
-    else { opacity = (300.0 - d)/50.0; dist = 2.0 + (d - 250.0)/2.0; }
-    size *= 1.0 + f*f*vec2(0.8, 0.01);
-    vec2 xy = 20.0*uv.yx/uSize.yx;
-    color = drawText(uv + dist*cos(2.0*PI*(0.0*frame + xy)), pos, size, uColor) * lum;
+    float f = mod(frame, uDuration)/uDuration;
+    float gain = (1.0-step(0.3, f))*(1.0 - smoothstep(0.0, 0.3, f)) + step(0.7, f)*(smoothstep(0.7, 1.0, f));
+    // background
+    float unit = 160.0;
+    vec2 bxy = 0.05*sin(PI*f)*(uv + 4.0*unit*vec2(cos(2.0*PI*f), sin(2.0*PI*f)));
+    vec2 grid = 0.5 + 0.5*sin(4.0*PI*bxy/unit);
+    finalColor = length(grid)*vec4(0.04, 0.1, 0.2, 0.5);
+    size *= 1.0 + 1.5*gain;
+    pos = 0.5*(uSize - vec2(smoothstep(0.7, 1.0, f), 1.0)*size) + f*vec2(-uSize.x, -50.0);
+    float opacity = 1.0 - gain;
+    vec2 xy = mix(
+        18.0*(gain + 0.1)*wave(uv, size, f),
+        explode(uv, size, gain),
+        0.2);
+    color = drawText(uv + xy, pos, size, uColor);
     finalColor = mix(finalColor, color, color.a * opacity);
 
     gl_FragColor = finalColor;
