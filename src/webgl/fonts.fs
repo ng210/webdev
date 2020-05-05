@@ -67,8 +67,9 @@ vec2 wave(vec2 uv, vec2 size, float t) {
     return cos(2.0*PI*(2.1*t + vec2(1.9, 2.6)*uv.yx/size.yx));
 }
 
-vec2 rand(vec2 xy) {
-    return sin(137.0*xy*sin(479.0*xy.yx));
+vec2 rand(vec2 pos) {
+    vec2 seed = vec2(12.9898, 78.233);
+    return fract(vec2(cos(dot(pos.yx, seed)), sin(dot(pos.xy, seed))) * 43758.5453);
 }
 
 vec2 explode(vec2 uv, vec2 size, float t) {
