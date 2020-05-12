@@ -138,7 +138,38 @@ include('/glui/control.js');
 			this.value = this.fromSource ? this.fromSource(value) : value;
 		}
         return this.dataSource;
-    };
+	};
+	
+	ValueControl.prototype.setValue = function setValue(value) {
+		if (this.isNumeric) {
+			if (typeof value !== 'number') {
+				value = this.parse(value);
+				if (isNaN(value)) {
+					value = this.defaultValue;
+				}
+			}
+		} else {
+			value = value !== undefined && value != null ? value : '';
+		}
+		// var results = this.validate(value, true);
+		// if (results.length > 0) {
+		// 	results.forEach(x => {
+		// 		console.warn(x.message);
+		// 		value = x.value;
+		// 	});
+		// }
+		this.dataLink ? this.dataLink.value = value : this.value = value;
+
+		// update element
+		if (this.element)
+		{
+			this.render({element:this.element.parentNode});
+		}
+	};
+
+	ValueControl.prototype.getValue = function getValue() {
+		return this.dataSource ? this.fromSource(this.dataSource[this.dataField]) : this.value;
+	};
     
     ValueControl.prototype.addValidation = function(field, check, message, fix) {
 		if (this.validations[field] == undefined) this.validations[field] = [];

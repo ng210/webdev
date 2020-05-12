@@ -19,7 +19,7 @@ include('/ui/datalink.js');
             this.style.left + this.style.width, this.style.top + this.style.height, this.style.zIndex
         ];
         this.uniforms = {
-            uFontSize: { type:webGL.FLOAT4V, value: new Float32Array(4) },
+            uFontSize: { type:webGL.FLOAT4V, value: new Float32Array(4) }
         };
     }
     extend(glui.IControl, Control);
@@ -70,7 +70,6 @@ include('/ui/datalink.js');
 
         return template;
     };
-
     Control.prototype.dataBind = function dataBind(source, field) {
         source = source || this.dataSource;
         if (source) {
@@ -111,7 +110,7 @@ include('/ui/datalink.js');
 		for (var i in src) {
 			if (src[i] != undefined && dst.hasOwnProperty(i)) {
                 if (typeof src[i] !== 'object') {
-                    src[i] = dst[i];
+                    dst[i] = src[i];
                 } else {
                     res = copyFields(src[i], dst[i]);
                     if (res != null) {

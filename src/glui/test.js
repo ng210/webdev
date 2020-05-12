@@ -1,57 +1,64 @@
 include('/glui/glui.js');
 (function() {
 
-    function test_construct() {
-        var htmls = {
-            "label": '<label id="label" value="label_value" />'
-        };
-        var element = document.createElement('div');
+    var _controls = {
+        "label": {
+            "html": '<label id="label" value="label_value" />'
+        }
+    };
 
-        for (var type in htmls) {
-            if (htmls.hasOwnProperty(type)) {
-                element.innerHTML = htmls[type];
-                var control = glui.construct(element.getElementsByTagName(type)[0]);
-                test(`Can construct ${type} from DOM`, () => {
-                    var hasError = true;
-                    if (control == null) {
-                        error('Control is null');
-                    } else if (control.id != type) {
-                        error('Control.id invalid');
-                    } else if (control.value != type+'_value') {
-                        error('Control.value invalid');
-                    } else {
-                        hasError = false;
-                    }
-                    return hasError;
-                });
-            }
+    var _data1 = {
+        "id": "item1",
+        "value": 1
+    };
+
+    function test_construct() {
+        for (var type in _controls) {
+            var html = _controls[type].html;
+            var element = document.createElement('div');
+            element.innerHTML = html;
+            test(`Can construct ${type} from DOM node`, ctx => {
+                var control = glui.fromNode(element.getElementsByTagName(type)[0]);
+                ctx.assert(control, '!=', null);
+                ctx.assert(control.id, '=', type);
+                ctx.assert(control.value, '=', type+'_value');
+            });
+
+            delete element;
         }
     }
 
     function test_valueControls() {
-        var types = [ "Label" ];
-
-        var data1 = {
-            "id": "id",
-            "value": 0
-        };
-        var field1 = "id";
-
-        for (var i=0; i<types.length; i++) {
-            var type = types[i];
-            var control = Reflect.construct(glui[type], [`ctrl${i}`, null, null]);
-            test(`Can construct ${type} directly`, () => {
-                try {
-                    if (control == null) return 'Construct failed!';
-                    message(`Control ${control.id} created`);
-                } catch (err) {
-                    return err.message;
-                }
+        var i = 1;
+        for (var type in _controls) {
+            var info = _controls[type];
+            var id = `ctrl${i}`;
+            var control = null;
+            test(`Can construct ${type} directly`, ctx => {
+                control = Reflect.construct(glui[glui.getTypeName(type)], [id, null, null]);
+                ctx.assert(control, '!=', null);
+                ctx.assert(control.id, '=', id);
             });
+
             if (!control) return;
-            test('Can bind data', () => {
-                control.dataBind(data1, field1);
+            var link = null;
+            test('Can bind data', ctx => {
+                link = control.dataBind(_data1, 'value');
+                ctx.assert(link, '!=', null);
+                ctx.assert(control.getValue(), '=', _data1.value);
             });
+
+            if (!link) return;
+            test("Changing data source modifies control's value", ctx => {
+                link.value = 2;
+                ctx.assert(control.value, '=', 2);
+            });
+            test("Changing control's value modifies data source", ctx => {
+                control.setValue(4);
+                ctx.assert(_data1.value, '=', 4);
+            });
+
+            i++;
         }
     }
 
