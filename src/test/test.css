@@ -39,3 +39,18 @@ pre {
 	border: none;
 	display: inline;
 }
+
+.error-details {
+	background-color: #200000;
+	color: #ff8080;
+	padding: 1px;
+	display: inline-block;
+	position: absolute;
+	height: 1em; width: 3em;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+.error-details:hover {
+	height: fit-content; width: fit-content
+}

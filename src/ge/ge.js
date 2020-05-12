@@ -20,6 +20,7 @@
 		},
 		T: 50,
 		MODE_WEBGL: 'webgl',
+		MODE_WEBGL2: 'webgl2',
 
         // callbacks
 		inputHooks: [],
@@ -34,6 +35,9 @@
 			if (GE.canvas != null) {
 				if (mode == GE.MODE_WEBGL) {
 					GE.gl = GE.canvas.getContext('webgl');
+					window.gl = GE.gl;
+				} else if (mode == GE.MODE_WEBGL2) {
+					GE.gl = GE.canvas.getContext('webgl2');
 					window.gl = GE.gl;
 				} else {
 					GE.ctx = GE.canvas.getContext('2d');

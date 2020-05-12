@@ -11,26 +11,42 @@ function formatResult(value) {
 }
 
 function print(node) {
-    if (node instanceof Promise) {
-        var p = node;
-        var lbl = p.lbl;
-        p.then( value => {
-            var text = '' ;
-            if (Array.isArray(value) && value.length) {
-                text += '<span style="color:#ff4040">Failed</span><br/>'
-                text += formatResult(value, indent);
-            } else {
-                text += '<span style="color:#40ff40">Ok</span>';
-            }
-            Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..pending.`, `${lbl}..${text}`);
-            _pending--;
-        });
-    } else if (Array.isArray(node)) {
+    // if (node instanceof Promise) {
+    //     _pending++;
+    //     var p = node;
+    //     var lbl = p.lbl;
+    //     Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..[result]`, `${lbl}..<span style="color:#ffff40">...pending</span>'`);
+    //     p.then( value => {
+    //         var text = '' ;
+    //         if (Array.isArray(value) && value.length) {
+    //             text += '<span style="color:#ff4040">Failed</span><br/>'
+    //             text += formatResult(value, indent);
+    //         } else {
+    //             text += '<span style="color:#40ff40">Ok</span>';
+    //         }
+    //         Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..pending.`, `${lbl}..${text}`);
+    //         _pending--;
+    //     });
+    // } else
+    if (Array.isArray(node)) {
         for (var i=0; i<node.length; i++) {
             print(node[i], indent+1);
         }
     } else {
         Dbg.pr(formatResult(node));
+    }
+}
+
+function print_result(context, result) {
+    var lbl = context.lbl;
+    var errorText = 'Failed';
+    if (result instanceof Error) {
+        errorText += ' => <div class="error-details"><pre>ERROR: ' + result.stack.replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v])) + '</pre></div>';
+    };
+    if (context.errors == 0 && !result) {
+        Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..[result]`, `${lbl}..<span style="color:#40ff40">Ok</span>'`);
+    } else {
+        Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..[result]`, `${lbl}..<span style="color:#ff4040">${errorText}</span>'`);
     }
 }
 
@@ -50,20 +66,50 @@ function test(lbl, action) {
     _indent = 1;
     println(lbl + '..[result]');
     _indent = 2;
-    var result = action();
-    if (result instanceof Promise) {
-        // var p = errors;
-        // p.lbl = lbl;
-        _pending++;
-        print('..pending.');
-    } else {
-        Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..[result]`, `${lbl}..${result ? '<span style="color:#ff4040">Failed</span>' : '<span style="color:#40ff40">Ok</span>'}`);
+    var result = null;
+    var context = new test_context(lbl);
+    try {
+        result = action(context);
+    } catch (err) {
+        result = err;
     }
-    // if (errors) {
-    //     result.push([errors]);
-    // }
-    // return result;
+    if (result instanceof Promise) {
+        _pending++;
+        result.lbl = lbl;
+        result.then(
+            value => { _pending--; print_result(context, value); },
+            error => { _pending--; print_result(context, error); }
+        );
+    } else {
+        print_result(context, result);
+    }    
 }
+
+function test_context(lbl) {
+    this.lbl = lbl;
+    this.errors = 0;
+}
+
+var _assertion_operators = {
+    "=":  { "term": "equal", "action": (a, b) => a == b },
+    "!=": { "term": "not be", "action": (a, b) => a != b },
+    "<":  { "term": "be less", "action": (a, b) => a < b },
+    ">":  { "term": "be greater", "action": (a, b) => a > b },
+    "<":  { "term": "be less or equal", "action": (a, b) => a <= b },
+    ">":  { "term": "be greater or equal", "action": (a, b) => a >= b }
+};
+
+test_context.prototype.assert = function assert(value, operator, expected) {
+    var op = _assertion_operators[operator];
+    if (op) {
+        if (!op.action(value, expected)) {
+            var err = new Error();
+            var tokens = err.stack.split('\n');
+            error(`<b>${value}</b> should ${op.term} <b>${expected}</b>! ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);
+            this.errors++;
+        }
+    } else throw new Error(`Unknown assertion operator '${operator}'!`);
+};
 
 async function onpageload(errors) {
     Dbg.init('con');
