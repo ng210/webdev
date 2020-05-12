@@ -64,12 +64,7 @@ include('/utils/syntax.js');
         for (var r in tests) {
             var expr = syntax.parse(tests[r]);
             var result = expr.resolve().evaluate(obj);
-            var color = 'green';
-            if (result != parseInt(r)) {
-                errors.push(`${tests[r]} is not ${r}`);
-                color = 'red';
-            }
-            results.push(test(`${tests[r]} returns ${result}`, () => result != r ? `Result should be ${r}` : false));
+            test(`Should evaluate to ${r}`, context => context.assert(r, '=', result));
         }
 
         return results;

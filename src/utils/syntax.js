@@ -25,32 +25,29 @@
     // - rules with higher priority are matched and executed first
     // - rules with longer matching input sequence are executed first
     // To improve performance, a list of symbols defined by the prototypes and used by the rules is created.
-    // The indices into the list is used in the rules instead of the symbols. This also allows to use strings as symbols.
+    // The indices into the list is used in the rules instead of the symbols. This also allows to use strings with special characters as symbols.
 
     // 3. Parser
-    // The parser creates instances of the node prototypes by processing the input.
+    // The parser creates an Expression, that stores instances of node prototypes extracted from the input.
     // - identify the next term as the keyword of a node prototype
     // - unidentified sequences are interpreted as literal nodes
-    // - create a new instance of the prototype and store the term
-    // - store the instance
-    // The nodes are added to a set, later becoming a tree when links are defined during the resolution.
+    // - create a new instance of the prototype and store the term within it
+    // - store the instance in the Expression
+    // The nodes of the Expression are later used to construct the tree of dependency during the resolution.
 
-    // 4. Resolve
-    // The output of the parser is an Expression instance, which stores its terms as nodes and their dependecies as link of a tree.
-    // The term-nodes are created by the parser.
+    // 4. Resolution
     // The resolve method of the Expression accepts a 'context' argument and follows the steps below:
-    // - tries to apply the rules to the input starting with the rule of the highest priority with the longest input sequence
+    // - tries to apply the rules on the input starting with the rule of the highest priority and with the longest input sequence
     // - applying a rule means executing the rule's action if defined and merging the input nodes if possible
     //    - the merge works on 2 and only 2 nodes
     //    - a literal node is always merged into the other node
     //    - a node without action is never merged into the other node, as such nodes should represent syntax elements only
-    // - the merge adds a node to another node as a child node defining dependencies, the tree becoming a dependency tree
+    // - the merge adds a node to another node as a child node definingan edge in the tree that represents the dependency of the 2 nodes
 
     // 5. Evaluate
     // Last step is to evaluate the nodes of the tree in the proper order using a context passed by the user.
     // The nodes are visited by traversing the dependency tree using DFS and the operator/function actions are executed in post order.
     // The starting node of the DFS is the node processed as last during the rule application and merge phase.
-    // This 
 
     function Node(code, type, term) {
         // interpreted value (parsed or calculated)
@@ -77,35 +74,48 @@
         this.lastNode = null;
         var nodes = Array.from(this.tree.nodes);
         if (this.syntax.isDebug) console.log(`input: ${nodes.map(x => `${this.syntax.symbols[x.data.code]}['${x.data.term}']`)}`);
+        // try to apply rules as long as there are nodes
         while (nodes.length > 0) {
             for (var r=0; r<this.syntax.ruleMap.length;) {
                 var hasMatch = false;
                 var rule = this.syntax.ruleMap[r];
+                // apply the rule on the input as many times as possible
                 for (var n=0; n<nodes.length;) {
                     var i = 0;
+                    // rule's input is shorter than the rest of the input
                     if (rule.in.length <= nodes.length - n) {
                         while (i<rule.in.length && (rule.in[i] == nodes[n+i].data.code)) i++;
                     } else {
+                        // skip to next rule (iteration with r)
                         break;
                     }
                     if (i == rule.in.length) {
-                        if (this.syntax.isDebug) console.log(`match: ${rs(rule)}`);
                         // match found, replace input by output
+                        if (this.syntax.isDebug) console.log(`match: ${rs(rule)}`);
+                        // extract rule's input
                         var args = nodes.slice(n, n+i);
                         var output = null;
                         if (typeof rule.action === 'function') {
+                            // rule has an action, it can return the output
                             output = rule.action.apply(context, args);
                         }
                         if (rule.out && output) {
+                            // overwrite the output code returned by the rule's action with the output defined be the rule
                             output.data.code = rule.out;
+                            // replace the input by the output
                             nodes.splice(n, i, output);
                         } else if (rule.out && !output) {
+                            // merge nodes: parent node depends on child node
+                            // parent node returned as output
                             output = this.mergeNodes(args);
                             output.data.code = rule.out;
+                            // replace the input by the output
                             nodes.splice(n, i, output);
                         } else if (!rule.out && !output) {
+                            // remove the input (no output)
                             nodes.slice(n, i);
                         } else if (!rule.out && output) {
+                            // replace the input by the output returned by the rule's action
                             nodes.splice(n, i, output);
                         } else {
                             throw new Error('Error!');
@@ -126,12 +136,15 @@
     };
     Expression.prototype.evaluate = function(context) {
         this.tree.DFS(this.lastNode, null, n => {
+            // node handler calls action with the input nodes as arguments
             if (typeof n.data.type.action === 'function') {
                 var args = n.edges.map(x => x.to);
+                // action returns a (calculated) value of the node
                 n.data.value = n.data.type.action.apply(context, args);
             }
         });
         for (var i=0; i<this.tree.nodes.length; i++) {
+            // clear node flags for future DFS calls
             this.tree.nodes[i].flag = 0;
         }
         return this.lastNode.data.value;
