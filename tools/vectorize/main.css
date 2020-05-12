@@ -1,0 +1,145 @@
+body {
+    background-color: #102040;
+    color: #60a080;
+    font-family: Consolas;
+}
+
+h1 {
+    text-align: center;
+}
+
+canvas {
+    background-color: black;
+}
+
+#main-table {
+    border: #60a080 2px solid;
+}
+
+#cnt {
+    position: relative;
+    width: 100%;
+}
+
+#main {
+    position: relative;
+}
+
+
+tr {
+    vertical-align: top;
+}
+
+.titlebar {
+    font-size: 14pt;
+    text-align: center;
+    background-color: #60a080;
+    color: #102040;
+}
+
+#settings {
+    width: 16em;
+    height: 12em;
+}
+
+.label {
+    position: absolute;
+    left: 1em;
+    width: 4em;
+}
+
+pot {
+    width: 2em;
+    background-color: #204080;
+    border: #60a080 1px inset;
+    font-family: Terminal, Courier, Consolas, Arial;
+    padding: 1px;
+    cursor: ns-resize
+}
+
+.label {
+    left: 0em;
+    width: 10em;
+    font-family: Arial, Verdana;
+    font-size: 12pt;
+    padding-left: 1em;
+    padding-top: 0.2em;
+}
+
+.image {
+    position: absolute;
+    top: 2em;
+}
+
+#settings_image {
+    left: 11em;
+    border-width: 3px;
+    cursor: pointer;
+    font-size: 12pt;
+}
+
+.shades {
+    position: absolute;
+    top: 4em;
+}
+
+#settings_shades {    
+    left: 11em;
+}
+
+/*
+.rgb { position: absolute; top: 7em; }
+#settings_r { left: 2em;}
+.rgb.g.label { left: 4em; }
+#settings_g { left: 6em; }
+.rgb.b.label { left: 8em; }
+#settings_b { left: 10em; }
+*/
+
+.contrast {
+    position: absolute;
+    top: 6em;
+}
+
+#settings_contrast {    
+    left: 11em;
+}
+
+.medium, .average {
+    position: absolute;
+    top: 8em;
+}
+
+.medium.label {
+    left: 0em;
+}
+
+#settings_medium {   
+    top: 10em; 
+    left: 6em;
+}
+
+.average.label {
+    left: 7em;
+}
+
+#settings_average {    
+    top: 10em;
+    left: 14.5em;
+}
+
+#con {
+	position:absolute;
+	top:75vh;
+	font-size:10pt;
+	font-family:Consolas;
+	text-align:left;
+	padding:2 4;
+	box-sizing: border-box;
+	margin:0;
+	background-color:#102030;
+	color:#208040;
+	opacity:0.95;
+	height:25vh; width:100vw;
+	overflow:hidden auto
+}
