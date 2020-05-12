@@ -1,4 +1,21 @@
 (function () {
+	// ********************************************************************************************
+	//
+	// Program
+	//
+	// ********************************************************************************************
+	function Program() {
+		this.shaders = [];
+		this.program = null;
+		this.attributes = [];
+		this.parameters = [];
+	}
+
+
+
+
+
+
 	function GlProgram(gl, shaders, attributes, uniforms) {
 		this.gl = gl;
     	this.prg = gl.createProgram();
