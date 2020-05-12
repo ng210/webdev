@@ -64,16 +64,17 @@ vec4 drawText(vec2 uv, vec2 pos, vec2 size, vec4 color) {
 }
 
 vec2 wave(vec2 uv, vec2 size, float t) {
-    return cos(2.0*PI*(2.1*t + vec2(1.9, 2.6)*uv.yx/size.yx));
+    return cos(2.0*PI*(2.1*t + vec2(-0.96, 9.6)*uv.yx/size.yx));
 }
 
 vec2 rand(vec2 pos) {
     vec2 seed = vec2(12.9898, 78.233);
-    return fract(vec2(cos(dot(pos.yx, seed)), sin(dot(pos.xy, seed))) * 43758.5453);
+    float arg = dot(pos.xy, seed);
+    return fract(vec2(cos(arg), sin(arg)) * 43758.5453);
 }
 
 vec2 explode(vec2 uv, vec2 size, float t) {
-    return 0.5*uSize*t*rand(uv);
+    return 0.8*uSize*t*(rand(uv)-0.5);
 }
 
 void main() {
@@ -91,12 +92,13 @@ void main() {
     vec2 grid = 0.5 + 0.5*sin(4.0*PI*bxy/unit);
     finalColor = length(grid)*vec4(0.04, 0.1, 0.2, 0.5);
     size *= 1.0 + 1.5*gain;
-    pos = 0.5*(uSize - vec2(smoothstep(0.7, 1.0, f), 1.0)*size) + f*vec2(-uSize.x, -50.0);
+    //pos = 0.5*(uSize - vec2(smoothstep(0.7, 1.0, f), 1.0)*size) + f*vec2(-uSize.x, -50.0);
+    pos = 0.5*(uSize - size);
     float opacity = 1.0 - gain;
     vec2 xy = mix(
-        18.0*(gain + 0.1)*wave(uv, size, f),
+        23.0*(gain + 0.2)*wave(uv, size, f),
         explode(uv, size, gain),
-        0.2);
+        0.1);
     color = drawText(uv + xy, pos, size, uColor);
     finalColor = mix(finalColor, color, color.a * opacity);
 
