@@ -90,13 +90,53 @@ function test_context(lbl) {
     this.errors = 0;
 }
 
+function deepCompare(a, b) {
+    if (a != null && b != null) {
+        var result = typeof a === typeof b;
+        if (result) {
+            if (typeof a === 'object' ||Array.isArray(a)) {
+                for (var i in a) {
+                    if (result = deepCompare(a[i], b[i])) break;
+                }
+            } else {
+                result = a == b;
+            }
+        }
+    } else {
+        result = a == b;
+    }
+    return result;
+}
+
+function testDeepCompare() {
+    console.log(deepCompare('a', 'b'));
+    console.log(deepCompare('b', 'b'));
+    console.log(deepCompare(1, 2));
+    console.log(deepCompare(null, null));
+    var obj = {'a': 1, 'b':[1,2,3], 'c': { 'a': 2, 'b': 'B'}};
+    var obj2 = {'c': 3, 'o': obj };
+    console.log(deepCompare(obj, null));
+    console.log(deepCompare(obj, obj));
+    console.log(deepCompare(obj, obj2));
+    console.log(deepCompare(obj2, obj2));
+    console.log(deepCompare(obj2.o, obj2));
+    console.log(deepCompare(obj2.o, obj));
+}
+
+function isEmpty(a) {
+    return typeof a === 'object' && Object.keys(a).length == 0 || Array.isArray(a) && a.length == 0;
+}
+
 var _assertion_operators = {
-    "=":  { "term": "equal", "action": (a, b) => a == b },
-    "!=": { "term": "not be", "action": (a, b) => a != b },
-    "<":  { "term": "be less", "action": (a, b) => a < b },
-    ">":  { "term": "be greater", "action": (a, b) => a > b },
-    "<":  { "term": "be less or equal", "action": (a, b) => a <= b },
-    ">":  { "term": "be greater or equal", "action": (a, b) => a >= b }
+        "=": { "term": "equal", "action": (a, b) => a == b },
+       "!=": { "term": "not be", "action": (a, b) => a != b },
+        "<": { "term": "be less", "action": (a, b) => a < b },
+        ">": { "term": "be greater", "action": (a, b) => a > b },
+        "<": { "term": "be less or equal", "action": (a, b) => a <= b },
+        ">": { "term": "be greater or equal", "action": (a, b) => a >= b },
+       ":=": { "term": "match", "action": (a, b) => deepCompare(a, b) },
+    "empty": { "term": "be empty", "action": a => isEmpty(a) },
+   "!empty": { "term": "have an element", "action": a => !isEmpty(a) }
 };
 
 test_context.prototype.assert = function assert(value, operator, expected) {
@@ -105,7 +145,8 @@ test_context.prototype.assert = function assert(value, operator, expected) {
         if (!op.action(value, expected)) {
             var err = new Error();
             var tokens = err.stack.split('\n');
-            error(`<b>${value}</b> should ${op.term} <b>${expected}</b>! ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);
+            var expectedText = expected != undefined ? ` <b>${expected}</b>` : '';
+            error(`<b>${value}</b> should ${op.term}! ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);
             this.errors++;
         }
     } else throw new Error(`Unknown assertion operator '${operator}'!`);
@@ -115,6 +156,8 @@ async function onpageload(errors) {
     Dbg.init('con');
     Dbg.prln('Tests 0.1');
     Dbg.con.style.visibility = 'visible';
+
+    // test deepCompare();
 
     var url = new Url(location.href);
     var testUrl = new Url(`${url.fragment}/test.js`);
