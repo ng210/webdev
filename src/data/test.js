@@ -4,7 +4,7 @@ include('/data/dataseries.js');
 (function() {
 
     function test_Stream() {
-
+        message('Test Stream');
         test('Should create an empty Stream with capacity of 10', context => {
             var s = new Stream(10);
             context.assert(s.size, '=', 10);
@@ -46,6 +46,7 @@ include('/data/dataseries.js');
             arr[i] = [2*i,  Math.floor(5*i + (i%2)*20)];
         }
         var ds = new DataSeries(arr);
+        message('Test DataSeries');
 
         test('Should iterate through all items', function (context) {
             ds.iterate( (value, it, series) => {
@@ -91,89 +92,52 @@ include('/data/dataseries.js');
             context.assert(result, ':=', expected);
         });
 
-//         // set - update
-//         test('Set(update)..', () => {
-//             ds.isStrict = true;
-//             ds.set([2, 5]);
-//             ds.isStrict = false;
-//             if (ds.get([2, ]).length == 0 && ds.get([2, 5]).length != 0) {
-//                 return `Set: update of [2, 25] to [2,5] failed!`;
-//             }
-//         }, errors);
+        test('Should update an element', context => {
+            ds.isStrict = true;
+            ds.set([2, 5]);
+            ds.isStrict = false;
+            var expected = [ [2, 5] ];
+            context.assert(ds.get([2, ]), ':=', expected);
+        });
 
-//         // set - insert
-//         test('Set(insert)..', () => {
-//             ds.set([3, 2]);
-//             result = ds.get([3, 2]);
-//             if (result.length != 1) {
-//                 return `Set: update of [3, 2] failed!`;
-//             }
-//         }, errors);
+        test('Should insert an element', context => {
+            ds.set([3, 2]);
+            context.assert(ds.get([3, 2]), '!empty');
+        });
 
-//         // removeRange
-//         test('RemoveRange..', () => {
-//             ds.removeRange([2, 4], [15,30]);
-//             var expected =  [[0,0],[3,2],[6,35],[10,45],[14,55],[16,40],[18,65]];
-//             for (var i=0; i<expected.length; i++) {
-//                 if (!ds.data[i] || compare(expected[i], ds.data[i]) != 0) {
-//                     return `RemoveRange: remaining elements contains invalid entry at ${i} (${ds.data[i]})`;
-//                 }
-//             }
-//         }, errors);
-
-//         // // setRange
-//         // test('SetRange(not strict)..', () => {
-//         //     ds.set([3, 6]);
-//         //     result = ds.get([3, 6]);
-//         //     if (result.length != 0) {
-//         //         errors.push(`Set: update of [3, 6] failed!`);
-//         //     }
-//         // });
-
-//         // test('SetRange(strict)..', () => {
-//         //     ds.set([3, 6]);
-//         //     result = ds.get([3, 6]);
-//         //     if (result.length != 0) {
-//         //         errors.push(`Set: update of [3, 6] failed!`);
-//         //     }
-//         // });
+        test('Should remove a range', context => {
+            ds.removeRange([2, 4], [15,30]);
+            var expected =  [ [0,0], [3,2], [6,35], [10,45], [14,55], [16,40], [18,65] ];
+            context.assert(ds.data, ':=', expected);
+        });
     }
 
     function test_DataSeriesCompare() {
-        var errors = [];
+        message('Test DataSeries.compare');
         var ds = new DataSeries();
-        // test DataSeries.compare
-        Dbg.prln('DataSeries.Compare');
-        test('Compare(a.x < b.x, a.y < b.y)..', () => { if (!(ds.compare([0, 0], [1, 1]) < 0) ) return 'failed'; }, errors);
-        test('Compare(a.x < b.x, a.y = b.y)..', () => { if (!(ds.compare([0, 0], [1, 0]) < 0) ) return 'failed'; }, errors);
-        test('Compare(a.x < b.x, a.y > b.y)..', () => { if (!(ds.compare([0, 1], [1, 0]) < 0) ) return 'failed'; }, errors);
 
-        test('Compare(a.x = b.x, a.y < b.y)..', () => { if (!(ds.compare([1, 0], [1, 1]) < 0) ) return 'failed'; }, errors);
-        test('Compare(a.x = b.x, a.y = b.y)..', () => { if (!(ds.compare([1, 0], [1, 0]) == 0) ) return 'failed'; }, errors);
-        test('Compare(a.x = b.x, a.y > b.y)..', () => { if (!(ds.compare([1, 1], [1, 0]) > 0) ) return 'failed'; }, errors);
+        test('Compare([0, 0], [1, 1])', context => context.assert(ds.compare([0, 0], [1, 1]), '<', 0) );
+        test('Compare([0, 0], [1, 0])', context => context.assert(ds.compare([0, 0], [1, 0]), '<', 0) );
+        test('Compare([0, 1], [1, 0])', context => context.assert(ds.compare([0, 1], [1, 0]), '<', 0) );
 
-        test('Compare(a.x > b.x, a.y < b.y)..', () => { if (!(ds.compare([1, 0], [0, 1]) > 0) ) return 'failed'; }, errors);
-        test('Compare(a.x > b.x, a.y = b.y)..', () => { if (!(ds.compare([1, 0], [0, 0]) > 0) ) return 'failed'; }, errors);
-        test('Compare(a.x > b.x, a.y > b.y)..', () => { if (!(ds.compare([1, 1], [0, 0]) > 0) ) return 'failed'; }, errors);
+        test('Compare([1, 0], [1, 1])', context => context.assert(ds.compare([1, 0], [1, 1]), '<', 0) );
+        test('Compare([1, 0], [1, 0])', context => context.assert(ds.compare([1, 0], [1, 0]), '=', 0) );
+        test('Compare([1, 1], [1, 0])', context => context.assert(ds.compare([1, 1], [1, 0]), '>', 0) );
 
-        test('Compare(a.x < b.x)..', () => { if (!(ds.compare([0, ], [1, ]) < 0) ) return 'failed'; }, errors);
-        test('Compare(a.x = b.x)..', () => { if (!(ds.compare([1, ], [1, ]) == 0) ) return 'failed'; }, errors);
-        test('Compare(a.x > b.x)..', () => { if (!(ds.compare([1, ], [0, ]) > 0) ) return 'failed'; }, errors);
+        test('Compare([1, 0], [0, 1])', context => context.assert(ds.compare([1, 0], [0, 1]), '>', 0) );
+        test('Compare([1, 0], [0, 0])', context => context.assert(ds.compare([1, 0], [0, 0]), '>', 0) );
+        test('Compare([1, 1], [0, 0])', context => context.assert(ds.compare([1, 1], [0, 0]), '>', 0) );
 
-        test('Compare(a.y < b.y)..', () => { if (!(ds.compare([undefined, 0], [1, 1]) < 0) ) return 'failed'; }, errors);
-        test('Compare(a.y = b.y)..', () => { if (!(ds.compare([undefined, 0], [1, 0]) == 0) ) return 'failed'; }, errors);
-        test('Compare(a.y > b.y)..', () => { if (!(ds.compare([undefined, 1], [1, 0]) > 0) ) return 'failed'; }, errors);
+        test('Compare([0, ], [1, ])', context => context.assert(ds.compare([0, ], [1, ]), '<', 0) );
+        test('Compare([1, ], [1, ])', context => context.assert(ds.compare([1, ], [1, ]), '=', 0) );
+        test('Compare([1, ], [0, ])', context => context.assert(ds.compare([1, ], [0, ]), '>', 0) );
 
-        return errors.length > 0 ? errors.join('\n') : 'Tests successful!';   
+        test('Compare([, 0], [1, 1])', context => context.assert(ds.compare([0, ], [1, ]), '<', 0) );
+        test('Compare([, 0], [1, 0])', context => context.assert(ds.compare([1, ], [1, ]), '=', 0) );
+        test('Compare([, 1], [1, 0])', context => context.assert(ds.compare([1, ], [0, ]), '>', 0) );
     }
 
-    var tests = async function() {
-        return [
-            test_Stream(),
-
-            test_DataSeries()
-        ];
-    };
+    var tests = () => [ test_Stream, test_DataSeries, test_DataSeriesCompare ];
     
     public(tests, 'Data tests');
 })();

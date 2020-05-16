@@ -31,7 +31,6 @@ include('/glui/glui.js');
     function test_valueControls() {
         var i = 1;
         for (var type in _controls) {
-            var info = _controls[type];
             var id = `ctrl${i}`;
             var control = null;
             test(`Can construct ${type} directly`, ctx => {
@@ -62,9 +61,6 @@ include('/glui/glui.js');
         }
     }
 
-    var tests = async function() {
-        test_construct();
-        test_valueControls();
-    };
+    var tests = () => [ test_construct, test_valueControls ];
     public(tests, 'glUi tests');
 })();

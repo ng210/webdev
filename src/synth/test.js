@@ -48,31 +48,24 @@ include('/synth/grammar.js');
     }
 
     function test_synthAdapterToDataSeries() {
+        message('Test SynthAdapter.toDataSeries');
         var series = synthAdapter.toDataSeries(createSequence());
-        var channelCount = Object.keys(series);
+        var channelCount = Object.keys(series).length;
         var notes = series[psynth.SynthAdapter.SETNOTE];
-        //var velocity = series[psynth.SynthAdapter.SETVELOCITY];
-
-        return [
-            'SynthAdapter.toDataSeries',
-            test('Channel count', () => {
-                if (channelCount.length != 2) return [`Channel count: Expected 2 but received ${channelCount.length}!`];
-            }),
-            test('Note channel', () => !notes ? ['SetNote channel missing!'] : (notes.data.length != 5) ? [`expected to have 5 notes  but received ${notes.data.length}!`] : false),
-            //test('Velocity', () => !velocity ? ['SetVelocity channel missing!'] : (velocity.data.length != 5) ? [`expected to have 5 velocity commands  but received ${velocity.data.length}!`] : false),
-            test('Note commands', () => {
-                var testData = {
-                    0: [ 0, 17, 127, 2],
-                    4: [ 4, 29, 127, 2],
-                   10: [10, 17, 127, 1]
-                };
-                for (var fi in testData) {
-                    var data = notes.get(fi)[0];
-                    if (!Array.isArray(data)) return [`Command at ${fi} did not return an array!`];
-                    if (compare(data, testData[fi]) != 0) return [`Command at ${fi} expected to be [${testData[fi]}] but was [${data}]!`];
-                }
-            })
-        ];
+        var velocity = series[psynth.SynthAdapter.SETVELOCITY];
+        test('Should have 2 channels', context => context.assert(channelCount, '=', 2));
+        test('Should have a notes channel', context => context.assert(notes, '!=', undefined));
+        test('Should have 5 note commands', context => context.assert(notes.data.length, '=', 5));
+        // test('Should have a velocity channel', context => context.assert(velocity, '!=', undefined));
+        // test('Should have 5 velocity commands', context => context.assert(velocity.data.length, '=', 5));
+        test('Should have correct note commands', context => {
+            var expected = {
+                0: [ 0, 17, 127, 2],
+                4: [ 4, 29, 127, 2],
+                10: [10, 17, 127, 1]
+            };
+            context.assert(notes.getRange([0,], [10,]), ':=', expected);
+        });
     }
 
     function test_synthAdapterFromDataSeries() {
@@ -216,14 +209,7 @@ include('/synth/grammar.js');
         return results;
     }
 
-    var tests = async function() {
-        return [
-            test_synthAdapterToDataSeries(),
-            test_synthAdapterFromDataSeries(),
-            test_synth_Ui_binding(),
-            await test_synth_fromPreset()
+var tests = () => [ test_synthAdapterToDataSeries/*, test_synthAdapterFromDataSeries, test_synth_Ui_binding, test_synth_fromPreset*/ ];
 
-        ];
-    };
     public(tests, 'Synth tests');
 })();

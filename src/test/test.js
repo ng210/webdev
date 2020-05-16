@@ -44,9 +44,9 @@ function print_result(context, result) {
         errorText += ' => <div class="error-details"><pre>ERROR: ' + result.stack.replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v])) + '</pre></div>';
     };
     if (context.errors == 0 && !result) {
-        Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..[result]`, `${lbl}..<span style="color:#40ff40">Ok</span>'`);
+        Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..[result]`, `${lbl}..<span style="color:#40ff40">Ok</span>`);
     } else {
-        Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..[result]`, `${lbl}..<span style="color:#ff4040">${errorText}</span>'`);
+        Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..[result]`, `${lbl}..<span style="color:#ff4040">${errorText}</span>`);
     }
 }
 
@@ -146,7 +146,7 @@ test_context.prototype.assert = function assert(value, operator, expected) {
             var err = new Error();
             var tokens = err.stack.split('\n');
             var expectedText = expected != undefined ? ` <b>${expected}</b>` : '';
-            error(`<b>${value}</b> should ${op.term}! ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);
+            error(`<b>${value}</b> should ${op.term}${expectedText}! ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);
             this.errors++;
         }
     } else throw new Error(`Unknown assertion operator '${operator}'!`);
@@ -169,7 +169,13 @@ async function onpageload(errors) {
         var test = module.symbols[testName];
         if (typeof test === 'function') {
             Dbg.prln(`<b>Running '<i>${testName}</i>'...</b>`);
-            await test();
+            var tests = test();
+            for (var i=0; i<tests.length; i++) {
+                _indent = 0;
+                if (typeof tests[i] === 'function') {
+                    await tests[i]();
+                }
+            }
             poll( () => {
                 if (_pending == 0) {
                     Dbg.prln('<b>Test finished</b>');

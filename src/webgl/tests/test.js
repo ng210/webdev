@@ -50,12 +50,7 @@ include('/webgl/material.js');
         });
     }
 
-    var tests = async function() {
-        return [
-            test_registered_classes(),
-            await test_repository()
-        ];
-    };
+    var tests = () => [ test_registered_classes, test_repository ];
 
     public(tests, 'webGL tests');
 
