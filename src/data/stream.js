@@ -14,7 +14,6 @@
     function Stream(arg) {
         if (typeof arg === 'number') {
             this.buffer = new ArrayBuffer(arg);
-            this.length = 0;
         } else if (arg instanceof Stream) {
             this.buffer = new Uint8Array(arg.buffer).slice(0, arg.length).buffer;
         } else if (arg instanceof ArrayBuffer) {
@@ -24,7 +23,7 @@
         } else {
             throw new Error('Invalid argument!');
         }
-        this.length = this.buffer.length;
+        this.length = 0;
         this.readPosition = 0;
         this.writePosition = 0;
         this.view = new DataView(this.buffer);
