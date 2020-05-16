@@ -1,5 +1,5 @@
 include('/base/Dbg.js');
-include('/ui/ui-lib.js');
+include('/lib/ui/ui-lib.js');
 
 function App() {
     this.settings = {

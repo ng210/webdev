@@ -1,0 +1,14 @@
+include('/lib/ui/datalink.js')
+include('/lib/ui/label.js');
+include('/lib/ui/textbox.js');
+include('/lib/ui/slider.js');
+include('/lib/ui/ddlist.js');
+include('/lib/ui/checkbox.js');
+include('/lib/ui/button.js');
+include('/lib/ui/board.js');
+include('/lib/ui/panel.js');
+include('/lib/ui/grid.js');
+include('/lib/ui/select.js');
+include('/lib/ui/menu.js');
+include('/lib/ui/pot.js');
+include('/lib/ui/dialog.js');
