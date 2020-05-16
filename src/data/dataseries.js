@@ -1,9 +1,9 @@
  (function() {
 
 /******************************************************************************
- Data series are at least 2 dimensional, enumerable, sortable structures. It is
- a list of vectors (x, y[, ...]). The list is sorted by x to improve search performance.
- A value may not exist at the requested index.
+ Data series are at least 2 dimensional, enumerable, sortable structures. They
+ store lists of vectors (x, y[, ...]). The list is sorted by x to improve search
+ performance. A value may not exist at the requested index.
  Supported methods
  - info getInfo()
  - v get(x)
