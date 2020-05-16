@@ -28,10 +28,39 @@ include('/webgl/webgl.js');
         this.processing = {};
     }
 
-    Repository.registerClass = function registerClass(id, ctor) {
-        if (Repository.Types[id]) throw new Error(`Type '${id} already registered!`);
-        Repository.Types[id] = { id: id, ctor: ctor };
+    /**************************************************************************
+     * Repository of resources
+     * - partitioned by resource classes (Material, Mesh, Actor, ...)
+     * - stores constructor of the class to create new instances
+     * - stores indices of a class used to accelerate queries
+     * - the indices array in the type definition contains those attribute names
+     *   of the resource class that require indexing
+     * - thus, indices is an object with attribute names as keys
+     * - an index is a map between attribute value and list of resources
+     * Example
+     *  mat1['shader'] = 'wood', mat11['shader'] = 'wood'
+     *  Repository.Types['Material'].indices['shader']['wood'] returns ['Mat1', 'Mat11'];
+
+     **************************************************************************/
+    Repository.registerClass = function registerClass(type, ctor, indices) {
+        if (type == undefined || typeof ctor !== 'function') throw new Error(`Type and constructor must be valid!`);
+        if (Repository.Types[type]) throw new Error(`Type '${type} already registered!`);
+        Repository.Types[type] = { type: type, ctor: ctor, indices: {} };
+        for (var i=0; i<indices.length; i++) {
+            Repository.Types[type].indices[indices[i]] = {};
+        }
     }
+
+    Repository.prototype.updateIndices = function updateIndices(type, res) {
+        var indices = Repository.Types[type].indices;
+        var keys = Object.keys(indices);
+        for (var i=0; i<keys.length; i++) {
+            if (indices[keys[i]][res[i]] == undefined) {
+                indices[keys[i]][res[i]] = [];
+            }
+            indices[keys[i]][res[i]].push(res);
+        }
+    };
 
     Repository.prototype.addResource = async function addResource(type, id, source) {
         var typeInfo = Repository.Types[type];
@@ -45,7 +74,18 @@ include('/webgl/webgl.js');
             data = resource.data;
         }
 
-        return this[type][id] = Reflect.construct(typeInfo.ctor, [id, data]);
+        var res = Reflect.construct(typeInfo.ctor, [id, data]);
+        this[type][id] = res;
+
+        this.updateIndices(type, res);
+
+        return res;
+    };
+
+    Repository.prototype.queryResources = function queryResources(attributes, values) {
+        for (var i=0; i<attributes.length; i++) {
+
+        }
     };
 
     Repository.prototype.selectResources = function selectResources(type, ids) {

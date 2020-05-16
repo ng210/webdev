@@ -21,9 +21,11 @@ include('/webgl/repo-item.js');
 
 	Actor.prototype.onunload = function onunload() {
 		// unload resources
-	};
+    };
     
-    webGL.Repository.registerClass('actor', Actor);
+    Actor.Type = 'actor';
+    
+    webGL.Repository.registerClass(Actor.Type, Actor, ['meshes']);
 
     public(Actor, 'Actor', webGL);
 })();

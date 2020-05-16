@@ -23,9 +23,10 @@ include('/webgl/repo-item.js');
 	Mesh.prototype.onunload = function onunload() {
 		// unload resources
 	};
-    
+	
+	Mesh.Type = 'mesh';
 
-    webGL.Repository.registerClass('mesh', Mesh);
+    webGL.Repository.registerClass(Mesh.Type, Mesh, ['material']);
 
     public(Mesh, 'Mesh', webGL);
 })();

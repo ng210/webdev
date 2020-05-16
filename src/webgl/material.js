@@ -8,7 +8,9 @@ include('/webgl/pass.js');
 (function() {
 	function Material(id, data) {
 		Material.base.constructor.call(this, id);
+		// queryable attributes
 		this.type = webGL.Pass.Types.Opaque;
+
 		this.program = null;
 		this.textures = [];
 		this.parameters = {};
@@ -22,10 +24,11 @@ include('/webgl/pass.js');
 	Material.prototype.addProgram = function addProgram(shaders) {
 		// compile shaders
 		// and set program
-    }
-    
+	}
 
-    webGL.Repository.registerClass('material', Material);
+	Material.Type = 'material';
+
+    webGL.Repository.registerClass(Material.Type, Material, ['type']);
 
     public(Material, 'Material', webGL);
 })();

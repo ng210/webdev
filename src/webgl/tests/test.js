@@ -13,14 +13,20 @@ include('/webgl/material.js');
 
     function test_registered_classes() {
         test('Should have registered classes', context => {
-            context.assert(webGL.Repository.Types.actor, '!=', undefined);
-            context.assert(webGL.Repository.Types.mesh, '!=', undefined);
-            context.assert(webGL.Repository.Types.material, '!=', undefined);
+            context.assert(webGL.Actor.Type, '!=', undefined);
+            context.assert(webGL.Mesh.Type, '!=', undefined);
+            context.assert(webGL.Material.Type, '!=', undefined);
         });
     }
 
     function test_repository() {
         _repository = new webGL.Repository();
+
+        test("Should have an index on 'type' for material", async function(context) {
+            // load material to trigger index update
+            await _repository.addResource('material', 'flat', '/webgl/tests/res/flat.mat');
+            context.assert(Object.keys(webGL.Repository.Types[webGL.Material.Type].indices).includes('type'), '=', true);
+        });
 
         test('Should load 1 material', async function (context) {
             var material = await _repository.addResource('material', 'flat', '/webgl/tests/res/flat.mat');
@@ -42,7 +48,6 @@ include('/webgl/material.js');
             context.assert(actor.id, '=', 'cube');
             actor.unload();
         });
-
     }
 
     var tests = async function() {
