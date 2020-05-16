@@ -49,12 +49,12 @@ include('/ui/ui-lib.js');
     psynth.SynthAdapter.prototype.toDataSeries = function(sequence) {
         var noteMap = {};
         return Ps.IAdapterExt.toDataSeries.call(this, sequence,
-            (cmd, stream, cursor) => cmd == psynth.SynthAdapter.SETNOTE ? cmd : stream.readUint8(cursor+1),
-            (cmd, delta, stream, cursor, ds) => {
+            (cmd, stream) => cmd == psynth.SynthAdapter.SETNOTE ? cmd : stream.readUint8(),
+            (cmd, delta, stream, ds) => {
                 switch (cmd) {
                     case psynth.SynthAdapter.SETNOTE:
-                        var pitch = stream.readUint8(cursor++);
-                        var velocity = stream.readUint8(cursor++);
+                        var pitch = stream.readUint8();
+                        var velocity = stream.readUint8();
                         if (velocity != 0) {
                             // note on
                             noteMap[pitch] = ds.set([delta, pitch, velocity, delta]);
@@ -66,12 +66,11 @@ include('/ui/ui-lib.js');
                         }
                         break;
                     case psynth.SynthAdapter.SETCTRL8:
-                        ds.set(delta, stream.readUint8(cursor++));
+                        ds.set(delta, stream.readUint8());
                         break;
                     default:
                         throw new Error(`Unsupported command #${cmd}`);
                 }
-                return cursor;
             }
         );
     };

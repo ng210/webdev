@@ -10,21 +10,21 @@ include('/ge/player/iadapter.js');
         toDataSeries: function(sequence, getSeriesId, convertCommand) {
             var series = {};
             var stream = sequence.stream;
-            var cursor = sequence.headerSizeInBytes;
+            stream.readPosition = sequence.headerSizeInBytes;
             var delta = 0;
-            while (cursor < stream.length) {
-                delta += stream.readUint16(cursor); cursor += 2;
+            while (stream.readPosition < stream.length) {
+                delta += stream.readUint16();
                 var cmd = 0;
-                while (cursor < stream.length) {
+                while (stream.readPosition < stream.length) {
                     // read command code, 1 byte
-                    cmd = stream.readUint8(cursor++);
-                    var seriesId = getSeriesId(cmd, stream, cursor);
+                    cmd = stream.readUint8();
                     if (cmd == Ps.Player.EOF) break;
                     if (cmd == Ps.Player.EOS) {
                         series[cmd] = ds = new DataSeries();
                         ds.set([delta, 0]);
                         break;
                     }
+                    var seriesId = getSeriesId(cmd, stream);
                     var ds = series[seriesId];
                     if (!ds) {
                         ds = series[seriesId] = new DataSeries();
@@ -32,7 +32,7 @@ include('/ge/player/iadapter.js');
                         //     series[psynth.SynthAdapter.SETVELOCITY] = new DataSeries();
                         // }
                     }
-                    cursor = convertCommand(cmd, delta, stream, cursor, ds);
+                    convertCommand(cmd, delta, stream, ds);
                 }
                 if (cmd == Ps.Player.EOS) {
                     break;
