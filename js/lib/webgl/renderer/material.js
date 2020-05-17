@@ -1,5 +1,5 @@
-include('/lib/webgl/repo-item.js');
-include('/lib/webgl/pass.js');
+include('repo-item.js');
+include('pass.js');
 // ********************************************************************************************
 //
 // Material
