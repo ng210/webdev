@@ -1,4 +1,4 @@
-include('/lib/player/iadapter.js');
+include('iadapter.js');
 (function () {
     function Player() {
         this.sequences = [];

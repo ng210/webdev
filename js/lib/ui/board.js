@@ -1,4 +1,4 @@
-include('/lib/ui/container.js');
+include('container.js');
 
 // unstructured container of controls
 (function() {

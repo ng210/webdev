@@ -1,5 +1,5 @@
-include('/lib/webgl/webgl.js');
-include('/lib/glui/label.js');
+include('webgl/webgl.js');
+include('glui/label.js');
 
 (function() {
 

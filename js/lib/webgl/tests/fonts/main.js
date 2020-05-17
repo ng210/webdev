@@ -1,6 +1,6 @@
-include('/base/dbg.js');
-include('/ge/ge.js');
-include('/lib/webgl/webgl.js');
+include('base/dbg.js');
+include('ge/ge.js');
+include('webgl/webgl.js');
 
 function App() {
 	this.cvs = document.querySelector('#cvs');

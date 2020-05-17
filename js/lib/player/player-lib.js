@@ -1,3 +1,3 @@
-include('/lib/player/iadapter.js');
-include('/lib/player/channel.js');
-include('/lib/player/player.js');
+include('iadapter.js');
+include('channel.js');
+include('player.js');

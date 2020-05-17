@@ -1,4 +1,4 @@
-include('/lib/ui/valuecontrol.js');
+include('valuecontrol.js');
 
 (function() {
 	function Button(id, template, parent) {

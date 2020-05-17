@@ -1,4 +1,4 @@
-include('/lib/ge/ge.js');
+include('ge.js');
 
 (function() {
 

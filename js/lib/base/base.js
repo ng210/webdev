@@ -240,7 +240,8 @@ Url.prototype.toString = function() {
 
 function Resource(url) {
     this.url = url;
-    this.resolvedUrl = '';
+    //this.resolvedAddress = '';
+    this.resolvedUrl = null;
     // loaded data
     this.data = null;
     // created HTML node from the data
@@ -260,14 +261,15 @@ Resource.load = async function(options) {
         resource.status = Resource.LOADING;
         Resource.cache[options.url] = resource;
         // load
-debug_('LOAD ' + resource.toString(), 1);
+        debug_('LOAD ' + resource.toString(), 1);
         await ajax.send(options);
         resource.data = options.response;
         if (options.error != null) {
             resource.error = options.error;
             resource.status = Resource.ERROR;
         } else {
-            resource.resolvedUrl = options.resolvedUrl;
+            //resource.resolvedAddress = options.resolvedUrl;
+            resource.resolvedUrl = new Url(options.resolvedUrl);
             resource.status = Resource.LOADED;
             if (options.process) {
                 await resource.processContent(options);
@@ -377,26 +379,28 @@ function Module(url) {
 extend(Resource, Module);
 
 Module.prototype.resolveIncludes = async function() {
-debug_('RESOLVE @' + this.url);
+    debug_('RESOLVE @' + this.url);
     // replace #include '...' and trigger loading of the resource
     //var re = /include\('([^']+)'\)/g;
     var re = /\/\/.*include\('([^']+)'\)|include\('([^']+)'\)/g;
     var loads = [];
-//var mdl = this;
+    //var mdl = this;
+    var currentPath = this.resolvedUrl.toString();
+    currentPath = currentPath.substr(0, currentPath.lastIndexOf('/'));
     this.data = this.data.replace(re, (match, p1, p2) => {
         if (p1 != undefined) {
             return `${match} // skipped`;
         }
         if (p2 != undefined) {
-            loads.push(include(p2));
+            loads.push(include(p2, currentPath));
             return `// ${match} // included`;
         }
         return p2;
     });
     // load every includes
     var includes = await Promise.all(loads);
-debug_('DEPENDS @'+this.toString()+'\n' + includes.map(x=>`-${x.toString()}\n`).join(''), 2);
-debug_('CACHE\n' + Object.values(Resource.cache).map(x=>`-${x.toString()}\n`).join(''), 3);
+    debug_('DEPENDS @'+this.toString()+'\n' + includes.map(x=>`-${x.toString()}\n`).join(''), 2);
+    debug_('CACHE\n' + Object.values(Resource.cache).map(x=>`-${x.toString()}\n`).join(''), 3);
     this.includes = [];
     for (var i=0; i<includes.length; i++) {
         var im = includes[i];
@@ -411,7 +415,7 @@ debug_('CACHE\n' + Object.values(Resource.cache).map(x=>`-${x.toString()}\n`).jo
     // at this point every included module should be loaded and resolved
 
     this.status = Module.RESOLVED;
-debug_('ADD @' + this.toString() + '\n' + this.includes.map(x=>`-${x}\n`).join(''), 2);
+    debug_('ADD @' + this.toString() + '\n' + this.includes.map(x=>`-${x}\n`).join(''), 2);
 
     this.node = document.createElement('script');
     this.node.url = this.url;
@@ -600,15 +604,17 @@ function public(obj, name, context) {
     
 }
 
-async function include(path) {
-debug_('INCLUDE @' + path, 1);
+async function include(path, parentPath) {
+    debug_('INCLUDE @' + path, 1);
+    parentPath = parentPath || appUrl;
     var mdl = null;
     var searchPath = null;
+console.log(`parent-path: ${parentPath}`);
     if (path.startsWith('/')) {
-        searchPath = [rootUrl];
+        searchPath = [baseUrl];
         path = path.substr(1);
     } else {
-        searchPath = [baseUrl.toString()];
+        searchPath = [parentPath, baseUrl.toString()];
         searchPath.push(...Resource.searchPath);
     }
     for (var i=0; i<searchPath.length; i++) {
@@ -618,7 +624,7 @@ debug_('INCLUDE @' + path, 1);
             break;
         }
     }
-debug_('INCLUDED @' + mdl.toString()), 2;
+    debug_('INCLUDED @' + mdl.toString()), 2;
     return mdl;
 }
 

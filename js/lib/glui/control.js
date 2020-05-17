@@ -1,5 +1,5 @@
-include('/lib/glui/icontrol.js');
-include('/lib/ui/datalink.js');
+include('icontrol.js');
+include('ui/datalink.js');
 
 (function() {
 

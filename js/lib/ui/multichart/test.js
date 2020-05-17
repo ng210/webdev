@@ -1,5 +1,5 @@
-include('/lib/ui/multichart.js');
-include('/lib/data/dataseries.js');
+include('ui/multichart.js');
+include('data/dataseries.js');
 
 (function() {
 

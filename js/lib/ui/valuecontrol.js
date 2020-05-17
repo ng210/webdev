@@ -1,4 +1,4 @@
-include('/lib/ui/control.js');
+include('control.js');
 
 (function() {
 	var _digits = '0000000000000000';

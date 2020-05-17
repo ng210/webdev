@@ -1,4 +1,4 @@
-include('/lib/ui/board.js');
+include('board.js');
 
 (function() {
     var _supportedEvents = ['mousedown', 'mouseup', 'keydown', 'keyup', 'mouseover', 'mouseout', 'change'];

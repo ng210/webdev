@@ -1,4 +1,4 @@
-include('/lib/ui/board.js');
+include('board.js');
 
 (function() {
     var _overlay = document.createElement('div');

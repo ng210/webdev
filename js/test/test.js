@@ -1,4 +1,4 @@
-include('/lib/base/dbg.js');
+include('base/dbg.js');
 
 //var _indentText = ['&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;'];
 var _indentText = '        ';

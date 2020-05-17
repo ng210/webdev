@@ -2,7 +2,7 @@
  * Adapter interface prototype
  *  - should be singleton object
  ******************************************************************************/
-include('/lib/data/stream.js');
+include('data/stream.js');
 (function() {
     var Ps = window.Ps || {};
     function IAdapter() {

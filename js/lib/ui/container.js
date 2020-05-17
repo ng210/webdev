@@ -1,4 +1,4 @@
-include('/lib/ui/control.js');
+include('control.js');
 
 // Abstract base type for container controls
 (function() {

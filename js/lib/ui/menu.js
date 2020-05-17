@@ -1,4 +1,4 @@
-include('/lib/ui/board.js');
+include('board.js');
 
 (function() {
 	function Menu(id, template, parent) {

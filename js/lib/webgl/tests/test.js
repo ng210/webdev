@@ -1,10 +1,4 @@
-include('/lib/webgl/webgl.js');
-include('/lib/webgl/repository.js');
-include('/lib/webgl/scene.js');
-include('/lib/webgl/pass.js');
-include('/lib/webgl/actor.js');
-include('/lib/webgl/mesh.js');
-include('/lib/webgl/material.js');
+include('webgl/renderer.js');
 
 (function() {
 
@@ -13,6 +7,7 @@ include('/lib/webgl/material.js');
 
     function test_registered_classes() {
         test('Should have registered classes', context => {
+    //debugger
             context.assert(webGL.Actor.Type, '!=', undefined);
             context.assert(webGL.Mesh.Type, '!=', undefined);
             context.assert(webGL.Material.Type, '!=', undefined);

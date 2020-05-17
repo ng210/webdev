@@ -1,5 +1,5 @@
-include('/lib/ui/ui-lib.js');
-include('/lib/webgl/webgl.js');
+include('ui-lib.js');
+include('webgl/webgl.js');
 
 (function() {
     var _supportedEvents = ['click', 'mousemove', 'mouseover', 'mouseout', 'mousedown', 'mouseup', 'keydown', 'keyup'];
@@ -54,7 +54,7 @@ include('/lib/webgl/webgl.js');
             uSelectionLength: { type:webGL.INT, value: 0  }
         };
         this.the2triangles = null;
-        this.defaultPath = '/ui/multichart/shaders';
+        this.defaultPath = 'ui/multichart/shaders';
         this.path = this.template.path;
         this.editState = 0;
         this.editMode = 0;

@@ -1,5 +1,5 @@
-include('/base/dbg.js');
-include('/ge/bin-tree.js');
+include('base/dbg.js');
+include('ge/bin-tree.js');
 
 function App(canvasId) {
     GE.init('#cvs', GE.MODE_WEBGL2);

@@ -1,5 +1,5 @@
-include('/lib/player/player.js');
-include('/lib/data/stream.js');
+include('player.js');
+include('data/stream.js');
 
 (function() {
     // byte streams

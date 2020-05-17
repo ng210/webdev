@@ -1,4 +1,4 @@
-include('/lib/ui/container.js');
+include('container.js');
 // strict structure of controls based on rows and columns
 // templates for rows or for cells
 (function() {

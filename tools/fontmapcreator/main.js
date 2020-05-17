@@ -1,5 +1,5 @@
-include('/js/lib/base/dbg.js');
-include('/js/lib/ui/ui-lib.js');
+include('base/dbg.js');
+include('ui/ui-lib.js');
 
 function supportsFont(font) {
     var fonts = ['sans-serif', 'monospaced', 'serif'];

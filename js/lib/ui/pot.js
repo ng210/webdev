@@ -1,4 +1,4 @@
-include('/lib/ui/valuecontrol.js');
+include('valuecontrol.js');
 
 (function() {
     var _supportedEvents = ['mousemove', 'mousedown', 'mouseup', 'keydown', 'keyup', 'dragging'];

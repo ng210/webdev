@@ -1,5 +1,5 @@
-include('/lib/data/stream.js');
-include('/lib/data/dataseries.js');
+include('stream.js');
+include('dataseries.js');
 
 (function() {
 

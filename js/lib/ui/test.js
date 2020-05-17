@@ -1,4 +1,4 @@
-include('/lib/ui/ui-lib.js');
+include('ui-lib.js');
 (function() {
 
     function test_dataLink() {

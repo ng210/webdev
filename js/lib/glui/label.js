@@ -1,4 +1,4 @@
-include('/lib/glui/value-control.js');
+include('glui/value-control.js');
 
 (function() {
 

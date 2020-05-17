@@ -1,4 +1,4 @@
-include('/lib/ui/datalink.js');
+include('datalink.js');
 
 (function() {
 	var Ui = window.Ui || {};
