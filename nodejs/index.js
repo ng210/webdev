@@ -4,8 +4,9 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 const port = process.env.PORT || 3000;
-
-const documentPath = process.argv[2] || 'd:/code/git/webdev';
+var tokens = process.argv[1].split(path.sep);
+tokens.pop(); tokens.pop();
+const documentPath = process.argv[2] || tokens.join(path.sep);
 console.log(`documentPath=${documentPath}`);
 
 app.get('/*', function(req, resp) {
