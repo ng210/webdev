@@ -1,4 +1,4 @@
-include('webgl/renderer.js');
+include('webgl/renderer/renderer.js');
 
 (function() {
 

@@ -11,23 +11,6 @@ function formatResult(value) {
 }
 
 function print(node) {
-    // if (node instanceof Promise) {
-    //     _pending++;
-    //     var p = node;
-    //     var lbl = p.lbl;
-    //     Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..[result]`, `${lbl}..<span style="color:#ffff40">...pending</span>'`);
-    //     p.then( value => {
-    //         var text = '' ;
-    //         if (Array.isArray(value) && value.length) {
-    //             text += '<span style="color:#ff4040">Failed</span><br/>'
-    //             text += formatResult(value, indent);
-    //         } else {
-    //             text += '<span style="color:#40ff40">Ok</span>';
-    //         }
-    //         Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..pending.`, `${lbl}..${text}`);
-    //         _pending--;
-    //     });
-    // } else
     if (Array.isArray(node)) {
         for (var i=0; i<node.length; i++) {
             print(node[i], indent+1);
@@ -85,36 +68,70 @@ function test(lbl, action) {
     }    
 }
 
+async function measure(lbl, action, batchSize) {
+    batchSize = batchSize || 100;
+    var count = 0;
+    var duration = 0;
+    var lastTick = 0;
+    print(`<span style="color:#f0e080">Measuring ${lbl}</span>`);
+    await poll( () => {
+        if (duration < 1000) {
+            var start = new Date().getTime();
+            for (var i=0; i<batchSize; i++) action();
+            duration += new Date().getTime() - start;
+            count += batchSize;
+            var tick = Math.floor(duration/100);
+            if (tick > lastTick) {
+                Dbg.pr('.');
+                lastTick = tick;
+            }
+            return false;
+        } else {
+            Dbg.prln('done');
+            return true;
+        }
+    }, 5);  
+    
+    println(`<span style="color:#f0e080">${count} iterations took <b>${duration}ms</b> (avg: ${(duration/count).toPrecision(4)})</span>`);
+}
+
 function test_context(lbl) {
     this.lbl = lbl;
     this.errors = 0;
 }
 
 function deepCompare(a, b) {
+    var result = null;
     if (a != null && b != null) {
-        var result = typeof a === typeof b;
-        if (result) {
-            if (typeof a === 'object' ||Array.isArray(a)) {
+        if (typeof a === typeof b) {
+            if (typeof a === 'object' || Array.isArray(a)) {
                 for (var i in a) {
-                    if (result = deepCompare(a[i], b[i])) break;
+                    if (a.hasOwnProperty(i)) {
+                        var bi = a.constructor != Float32Array ? b[i] : new Float32Array([b[i]])[0];
+                        result = deepCompare(a[i], bi);
+                        if (result) {
+                            result = '.' + i + result;
+                            break;
+                        }
+                    }
                 }
             } else {
-                result = a == b;
+                result = equals(a, b) ? null : `(${a} ! ${b})`;
             }
         }
     } else {
-        result = a == b;
+        result = equals(a, b) ? null : ` ${a} ! ${b}`;
     }
     return result;
 }
 
 function testDeepCompare() {
+    var obj = {'a': 1, 'b':[1,2,3], 'c': { 'a': 2, 'b': 'B'}};
+    var obj2 = {'c': 3, 'o': obj };
     console.log(deepCompare('a', 'b'));
     console.log(deepCompare('b', 'b'));
     console.log(deepCompare(1, 2));
     console.log(deepCompare(null, null));
-    var obj = {'a': 1, 'b':[1,2,3], 'c': { 'a': 2, 'b': 'B'}};
-    var obj2 = {'c': 3, 'o': obj };
     console.log(deepCompare(obj, null));
     console.log(deepCompare(obj, obj));
     console.log(deepCompare(obj, obj2));
@@ -123,12 +140,22 @@ function testDeepCompare() {
     console.log(deepCompare(obj2.o, obj));
 }
 
+function equals(a, b) {
+    var result = false;
+    // cast b to the type of a
+    switch (typeof a) {
+        case 'number': result = Math.abs(a - b) <= Number.EPSILON; break;
+        default: result = a == b;
+    }
+    return result;
+}
+
 function isEmpty(a) {
     return typeof a === 'object' && Object.keys(a).length == 0 || Array.isArray(a) && a.length == 0;
 }
 
 var _assertion_operators = {
-        "=": { "term": "equal", "action": (a, b) => a == b },
+        "=": { "term": "equal", "action": (a, b) => equals(a,b) },
        "!=": { "term": "not be", "action": (a, b) => a != b },
         "<": { "term": "be less", "action": (a, b) => a < b },
         ">": { "term": "be greater", "action": (a, b) => a > b },
@@ -142,10 +169,18 @@ var _assertion_operators = {
 test_context.prototype.assert = function assert(value, operator, expected) {
     var op = _assertion_operators[operator];
     if (op) {
-        if (!op.action(value, expected)) {
+        var result = op.action(value, expected);
+        if (operator == ':=') {
+            if (result != null) {
+                var err = new Error();
+                var tokens = err.stack.split('\n');
+                error(`<b>${result}</b> should match! ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);
+                this.errors++;
+            }
+        } else if (!result) {
             var err = new Error();
             var tokens = err.stack.split('\n');
-            var expectedText = expected != undefined ? ` <b>${expected}</b>` : '';
+            var expectedText = expected !== undefined ? ` <b>${expected}</b>` : '';
             error(`<b>${value}</b> should ${op.term}${expectedText}! ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);
             this.errors++;
         }
@@ -157,7 +192,7 @@ async function onpageload(errors) {
     Dbg.prln('Tests 0.1');
     Dbg.con.style.visibility = 'visible';
 
-    // test deepCompare();
+    // testDeepCompare();
 
     var url = new Url(location.href);
     var testUrl = new Url(`${url.fragment}/test.js`);
