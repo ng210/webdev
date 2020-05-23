@@ -124,7 +124,7 @@ function Url(url) {
         Object.keys(baseUrl.query).forEach(k=>this.query[k]=baseUrl[k]);
         this.fragment = baseUrl.fragment;
     }
-    this.parse(url);
+    if (url) this.parse(url);
 };
 Url.prototype.parse = function(url) {
     // 1. full schema: https://max:muster@www.example.com:8080/directory/index.html?p1=A&p2=B#ressource
@@ -239,7 +239,7 @@ Url.prototype.toString = function() {
 //*****************************************************************************
 
 function Resource(url) {
-    this.url = url;
+    this.url = new Url(url).normalize();
     //this.resolvedAddress = '';
     this.resolvedUrl = null;
     // loaded data
@@ -609,7 +609,6 @@ async function include(path, parentPath) {
     parentPath = parentPath || appUrl;
     var mdl = null;
     var searchPath = null;
-console.log(`parent-path: ${parentPath}`);
     if (path.startsWith('/')) {
         searchPath = [baseUrl];
         path = path.substr(1);
