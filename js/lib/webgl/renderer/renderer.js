@@ -1,4 +1,4 @@
-include('webgl.js');
+include('webgl/webgl.js');
 include('repository.js');
 include('scene.js');
 include('pass.js');
