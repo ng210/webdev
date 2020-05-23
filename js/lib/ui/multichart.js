@@ -245,7 +245,7 @@ include('webgl/webgl.js');
                     var shaders = {};
                     shaders[this.gl.VERTEX_SHADER] = _vertexShader.data;
                     shaders[this.gl.FRAGMENT_SHADER] = Ui.MultiChart.resources[url].data;
-                    this.program = webGL.createProgram(this.gl, shaders, { position:{type:this.gl.FLOAT, size:4} }, this.uniforms);
+                    this.program = webGL.createProgram(shaders, { position:{type:gl.FLOAT, size:4} }, this.uniforms);
                     this.gl.useProgram(this.program.prg);
                 }
                 // inform shader about mode change
@@ -255,7 +255,7 @@ include('webgl/webgl.js');
         }
     };
     Ui.MultiChart.prototype.initializeWebGL = async function() {
-        this.gl = this.canvas.getContext('webgl'/*, { alpha: false }*/);
+        window.gl = this.gl = this.canvas.getContext('webgl'/*, { alpha: false }*/);
         await this.setMode();
         // create "canvas" of 2 triangles
         const positions = [-1.0,  1.0,  1.0,  1.0,  -1.0, -1.0,  1.0, -1.0];
@@ -264,7 +264,6 @@ include('webgl/webgl.js');
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
         this.gl.enableVertexAttribArray(0);
         this.gl.vertexAttribPointer(0, 2, this.gl.FLOAT, false, 0, 0);
-        //this.gl.useProgram(this.program.prg);
         // set initial uniforms
         this.program.setUniforms();
     };
@@ -272,9 +271,11 @@ include('webgl/webgl.js');
         if (this.program) {
             this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
             this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+            this.gl.useProgram(this.program.prg);
             this.uniforms.uFrame.value++;
             this.program.updateUniform('uFrame');
             this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+            this.gl.useProgram(null);
         }
     };
     Ui.MultiChart.prototype.resize = function(width, height) {

@@ -4,26 +4,13 @@
 	// Program
 	//
 	// ********************************************************************************************
-	function Program() {
-		this.shaders = [];
-		this.program = null;
-		this.attributes = [];
-		this.parameters = [];
-	}
-
-
-
-
-
-
-	function GlProgram(gl, shaders, attributes, uniforms) {
-		this.gl = gl;
+	function Program(shaders, attributes, uniforms) {
     	this.prg = gl.createProgram();
 		this.attributes = {};
 		this.uniforms = {};
 
 	    for (var type in shaders) {
-            var shader = webGL.createShader(gl, type, shaders[type]);
+            var shader = webGL.createShader(type, shaders[type]);
             gl.attachShader(this.prg, shader);
         }
         gl.linkProgram(this.prg);
@@ -39,7 +26,7 @@
 			sizem[gl.BYTE] = 1;
 			sizem[gl.SHORT] = 2;
 			sizem[gl.FLOAT] = 4;
-			var size = sizem[attrib.type]*attrib.size;
+			var size = sizem[attrib.type] * attrib.size;
         	this.attributes[ak] = {
 				'ref': ref,
 				'type': attrib.type,
@@ -51,35 +38,33 @@
         for (var uk in uniforms) {
 			var uniform = uniforms[uk];
 			uniform.ref = gl.getUniformLocation(this.prg, uk);
-			uniform.update = (uniform.ref) ? webGL.uniformUpdaters[uniform.type] : () => {};
+			uniform.update = uniform.ref ? webGL.uniformUpdaters[uniform.type] : () => {};
 			this.uniforms[uk] = uniform;
 		}
         
 	}
-	GlProgram.prototype.updateUniform = function(name) {
+	Program.prototype.updateUniform = function(name) {
 		var uniform = this.uniforms[name];
 		if (uniform) {
-			uniform.update(this.gl, uniform);
+			uniform.update(uniform);
 		}
 	};
-
-    GlProgram.prototype.setUniforms = function(uniforms) {
+    Program.prototype.setUniforms = function(uniforms) {
 		if (uniforms) {
 			for (var uk in uniforms) {
 				var uniform = this.uniforms[uk];
 				if (uniform !== undefined && uniform.ref) {
 					uniform.value = uniforms[uk];
-					uniform.update(this.gl, uniform);
+					uniform.update(uniform);
 				}
 			}
 		} else {
 			for (var uk in this.uniforms) {
 				var uniform = this.uniforms[uk];
-				uniform.update(this.gl, uniform);
+				uniform.update(uniform);
 			}
 		}
 	};
-
 
 
 	var webGL = {
@@ -100,7 +85,7 @@
 		VERTEX_ATTRIB_TEXTURE2:  0x10
 	};
 
-	webGL.createShader = function(gl, type, code) {
+	webGL.createShader = function(type, code) {
 		var shader = gl.createShader(type);
 		gl.shaderSource(shader, code);
 		gl.compileShader(shader);
@@ -125,10 +110,10 @@
 		// }
 		return shader;
 	};
-	webGL.createProgram = function(gl, shaders, attributes, uniforms) {
-		return new GlProgram(gl, shaders, attributes, uniforms);
+	webGL.createProgram = function(shaders, attributes, uniforms) {
+		return new Program(shaders, attributes, uniforms);
 	};
-	webGL.useProgram = function(gl, p, uniforms) {
+	webGL.useProgram = function(p, uniforms) {
 		gl.useProgram(p.prg);
 		for (var ai in p.attributes) {
 			var a = p.attributes[ai];
@@ -141,16 +126,16 @@
 	};
 	webGL.uniformUpdaters = (function() {
 		var map = {};
-		map[webGL.INT] = (gl, uniform) => gl.uniform1i(uniform.ref, uniform.value);
-		map[webGL.INTV] = (gl, uniform) => gl.uniform1iv(uniform.ref, uniform.value);
-		map[webGL.FLOAT] = (gl, uniform) => gl.uniform1f(uniform.ref, uniform.value);
-		map[webGL.FLOATV] = (gl, uniform) => gl.uniform1fv(uniform.ref, uniform.value);
-		map[webGL.FLOAT2V] = (gl, uniform) => gl.uniform2fv(uniform.ref, uniform.value);
-		map[webGL.FLOAT3V] = (gl, uniform) => gl.uniform3fv(uniform.ref, uniform.value);
-		map[webGL.FLOAT4V] = (gl, uniform) => gl.uniform4fv(uniform.ref, uniform.value);
-		map[webGL.FLOAT2x2M] = (gl, uniform) => gl.uniformMatrix2fv(uniform.ref, false, uniform.value);
-		map[webGL.FLOAT3x3M] = (gl, uniform) => gl.uniformMatrix3fv(uniform.ref, false, uniform.value);
-		map[webGL.FLOAT4x4M] = (gl, uniform) => gl.uniformMatrix4fv(uniform.ref, false, uniform.value);
+		map[webGL.INT] = uniform => gl.uniform1i(uniform.ref, uniform.value);
+		map[webGL.INTV] = uniform => gl.uniform1iv(uniform.ref, uniform.value);
+		map[webGL.FLOAT] = uniform => gl.uniform1f(uniform.ref, uniform.value);
+		map[webGL.FLOATV] = uniform => gl.uniform1fv(uniform.ref, uniform.value);
+		map[webGL.FLOAT2V] = uniform => gl.uniform2fv(uniform.ref, uniform.value);
+		map[webGL.FLOAT3V] = uniform => gl.uniform3fv(uniform.ref, uniform.value);
+		map[webGL.FLOAT4V] = uniform => gl.uniform4fv(uniform.ref, uniform.value);
+		map[webGL.FLOAT2x2M] = uniform => gl.uniformMatrix2fv(uniform.ref, false, uniform.value);
+		map[webGL.FLOAT3x3M] = uniform => gl.uniformMatrix3fv(uniform.ref, false, uniform.value);
+		map[webGL.FLOAT4x4M] = uniform => gl.uniformMatrix4fv(uniform.ref, false, uniform.value);
 		return map;
 	})();
 
