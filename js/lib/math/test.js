@@ -1,261 +1,112 @@
-include('/ge/math/v2.js');
-include('/ge/math/v3.js');
-include('/ge/math/v4.js');
-include('/ge/math/m33.js');
-include('/ge/math/m44.js');
+include('v2.js');
+include('v3.js');
+include('v4.js');
+//include('m33.js');
+include('m44.js');
 
 (function(){
 
     function test_v2() {
-        Dbg.prln('Test V2');
-        var errors = [];
-
+        message('Test V2');
         var u = new V2([4.0, 5.0]);
         var v = new V2(2.0, 3.0);
-        var n = new V2(.0);
-        var r = null;
-        if (u.x != 4.0 || u.y != 5.0 || v.x != 2.0 || v.y != 3.0 || n.x != 0.0 || n.y != 0.0) {
-            errors.push(' - Vector constructor sets wrong values!');
-        }
+        var s = new V2(8.0);
+        var r = new V2(u);
+        test('Should create V2 from array',    context => context.assert(u.data, ':=', [ 4,  5] ));
+        test('Should create V2 from x,y,z,w',  context => context.assert(v.data, ':=', [ 2,  3] ));
+        test('Should create V2 from constant', context => context.assert(s.data, ':=', [ 8,  8] ));
+        test('Should create V2 from V2',       context => context.assert(r.data, ':=', u.data ));
 
-        // fromPolar
-        r = V2.fromPolar(0, 10);
-        if (r.x != 10.0 || r.y != 0.0) {
-            errors.push(' - Vector fromPolar is incorrect!');
-        }
-        // add
-        r = u.add(v);
-        if (r.x != 6.0 || r.y != 8.0) {
-            errors.push(' - Vector add is incorrect!');
-        }
-        // dec
-        r = new V2(u);
-        r.dec(v);
-        if (r.x != 2.0 || r.y != 2.0) {
-            errors.push(' - Vector dec is incorrect!');
-        }
-        // dot
-        if (u.dot(v) != 2*4 + 3*5) {
-            errors.push(' - Vector dot is incorrect!');
-        }
-        // inc
-        r = new V2(u);
-        r.inc(v);
-        if (r.x != 6.0 || r.y != 8.0) {
-            errors.push(' - Vector inc is incorrect!');
-        }
-        // length
-        if (u.length() != Math.sqrt(4*4 + 5*5)) {
-            errors.push(' - Vector length is incorrect!');
-        }
-        // length2
-        if (u.length2() != 4*4 + 5*5) {
-            errors.push(' - Vector length2 is incorrect!');
-        }
-        // mul
-        r = u.mul(v);
-        if (r.x != 8.0 || r.y != 15.0) {
-            errors.push(' - Vector mul is incorrect!');
-        }
-        // mulC
-        r = u.mulC(4);
-        if (r.x != 16.0 || r.y != 20.0) {
-            errors.push(' - Vector mulC is incorrect!');
-        }
-        // norm
-        r = new V2(3, 4).norm();
-        if (r.x != .6 || r.y != .8) {
-            errors.push(' - Vector norm is incorrect!');
-        }
-        // scale
-        r = new V2(u).scale(4);
-        if (r.x != 16.0 || r.y != 20.0) {
-            errors.push(' - Vector scale is incorrect!');
-        }
-        // set
-        r = new V2().set(u);
-        if (r.x != u.x || r.y != u.y) {
-            errors.push(' - Vector set is incorrect!');
-        }
+        test('Should set V2 from vector', context => context.assert(r.set(v).data, ':=', [ 2,  3]));
 
-        // sub
-        r = u.sub(v);
-        if (r.x != 2.0 || r.y != 2.0) {
-            errors.push(' - Vector sub is incorrect!');
-        }
+        test('Should increase vector', context =>  context.assert((r = new V2(u).add(v)).data, ':=', [ 6,  8] ));
+        test('Should add 2 vectors', context => context.assert(u.sum(v).data, ':=', r.data ));
 
-        return errors.length > 0 ? errors.join('\n') : 'Tests successful!';
+        test('Should decrease vector', context =>  context.assert((r = new V2(u).sub(v)).data, ':=', [ 2,  2] ));
+        test('Should sub 2 vectors', context => context.assert(u.diff(v).data, ':=', r.data ));
+
+        test('Should multiply vector', context =>  context.assert((r = new V2(u)).mul(v).data, ':=', [ 8, 15] ));
+        test('Should return product of 2 vectors', context => context.assert(u.prod(v).data, ':=', r.data ));
+
+        test('Should scale vector by 2', context =>  context.assert((r = new V2(u)).scale(2).data, ':=', [ 8, 10] ));
+        test('Should return vector multiplied by 2', context => context.assert(u.prodC(2).data, ':=', r.data ));
+
+        test('Should return dot product', context =>  context.assert(u.dot(v), '=', 2*4 + 3*5));
+
+        test('Should return length', context =>  context.assert(u.length(), '=', Math.sqrt(4*4 + 5*5)));
+        test('Should return length squared', context =>  context.assert(u.length2(), '=', 4*4 + 5*5));
+
+        test('Should return normalized vector', context =>  context.assert((r = new V2(3, 4)).norm().data, ':=', [3/5, 4/5]));
     }
 
     function test_v3() {
-        Dbg.prln('Test V3');
-        var errors = [];
-
+        message('Test V3');
         var u = new V3([4.0, 5.0, 6.0]);
         var v = new V3(2.0, 3.0, 1.0);
-        var n = new V3(.0);
-        var r = null;
-        if (u.x != 4.0 || u.y != 5.0 || u.z != 6.0 ||
-            v.x != 2.0 || v.y != 3.0 || v.z != 1.0 ||
-            n.x != 0.0 || n.y != 0.0 || n.z != 0.0) {
-            errors.push(' - Vector constructor sets wrong values!');
-        }
+        var s = new V3(8.0);
+        var r = new V3(u);
+        test('Should create V3 from array',    context => context.assert(u.data, ':=', [ 4,  5,  6] ));
+        test('Should create V3 from x,y,z,w',  context => context.assert(v.data, ':=', [ 2,  3,  1] ));
+        test('Should create V3 from constant', context => context.assert(s.data, ':=', [ 8,  8,  8] ));
+        test('Should create V3 from V3',       context => context.assert(r.data, ':=', u.data ));
 
-        // fromPolar
-        r = V3.fromPolar(0, 0, 10);
-        if (r.x != 10.0 || r.y != 0.0 || r.z != 0.0) {
-            errors.push(' - Vector fromPolar is incorrect!');
-        }
-        // add
-        r = u.add(v);
-        if (r.x != 6.0 || r.y != 8.0 || r.z != 7.0) {
-            errors.push(' - Vector add is incorrect!');
-        }
-        // cross
-        r = u.cross(v);
-        if (r.x != 5*1 - 6*3 || r.y != 6*2 - 4*1 || r.z != 4*3 - 5*2) {
-            errors.push(' - Vector cross is incorrect!');
-        }
-        // dec
-        r = new V3(u);
-        r.dec(v);
-        if (r.x != 2.0 || r.y != 2.0 || r.z != 5.0) {
-            errors.push(' - Vector dec is incorrect!');
-        }
-        // dot
-        if (u.dot(v) != 2*4 + 3*5 + 6*1) {
-            errors.push(' - Vector dot is incorrect!');
-        }
-        // inc
-        r = new V3(u);
-        r.inc(v);
-        if (r.x != 6.0 || r.y != 8.0 || r.z != 7.0) {
-            errors.push(' - Vector inc is incorrect!');
-        }
-        // length
-        if (u.length() != Math.sqrt(4*4 + 5*5 + 6*6)) {
-            errors.push(' - Vector length is incorrect!');
-        }
-        // length2
-        if (u.length2() != 4*4 + 5*5 + 6*6) {
-            errors.push(' - Vector length2 is incorrect!');
-        }
-        // mul
-        r = u.mul(v);
-        if (r.x != 8.0 || r.y != 15.0 || r.z != 6.0) {
-            errors.push(' - Vector mul is incorrect!');
-        }
-        // mulC
-        r = u.mulC(4);
-        if (r.x != 16.0 || r.y != 20.0 || r.z != 24.0) {
-            errors.push(' - Vector mulC is incorrect!');
-        }
-        // norm
-        r = new V3(2, 3, 6).norm();
-        if (r.x != 2/7 || r.y != 3/7 || r.z != 6/7) {
-            errors.push(' - Vector norm is incorrect!');
-        }
-        // scale
-        r = new V3(u).scale(4);
-        if (r.x != 16.0 || r.y != 20.0) {
-            errors.push(' - Vector scale is incorrect!');
-        }
-        // set
-        r = new V3().set(u);
-        if (r.x != u.x || r.y != u.y || r.z != u.z) {
-            errors.push(' - Vector set is incorrect!');
-        }
+        test('Should set V3 from vector', context => context.assert(r.set(v).data, ':=', [ 2,  3,  1]));
 
-        // sub
-        r = u.sub(v);
-        if (r.x != 2.0 || r.y != 2.0 || r.z != 5.0) {
-            errors.push(' - Vector sub is incorrect!');
-        }
+        test('Should increase vector', context =>  context.assert((r = new V3(u).add(v)).data, ':=', [ 6,  8,  7] ));
+        test('Should add 2 vectors', context => context.assert(u.sum(v).data, ':=', r.data ));
 
-        return errors.length > 0 ? errors.join('\n') : 'Tests successful!';
+        test('Should decrease vector', context =>  context.assert((r = new V3(u).sub(v)).data, ':=', [ 2,  2,  5] ));
+        test('Should sub 2 vectors', context => context.assert(u.diff(v).data, ':=', r.data ));
+
+        test('Should multiply vector', context =>  context.assert((r = new V3(u)).mul(v).data, ':=', [ 8, 15,  6] ));
+        test('Should return product of 2 vectors', context => context.assert(u.prod(v).data, ':=', r.data ));
+
+        test('Should scale vector by 2', context =>  context.assert((r = new V3(u)).scale(2).data, ':=', [ 8, 10, 12] ));
+        test('Should return vector multiplied by 2', context => context.assert(u.prodC(2).data, ':=', r.data ));
+
+        test('Should return dot product', context =>  context.assert(u.dot(v), '=', 2*4 + 3*5 + 6*1));
+
+        test('Should return length', context =>  context.assert(u.length(), '=', Math.sqrt(4*4 + 5*5 + 6*6)));
+        test('Should return length squared', context =>  context.assert(u.length2(), '=', 4*4 + 5*5 + 6*6));
+
+        test('Should return normalized vector', context =>  context.assert((r = new V3(2, 6, 9)).norm().data, ':=', [2/11, 6/11, 9/11]));
     }
 
     function test_v4() {
-        Dbg.prln('Test V4');
-        var errors = [];
-
+        message('Test V4');
         var u = new V4([4.0, 5.0, 6.0, 7.0]);
         var v = new V4(2.0, 3.0, 1.0, -1.0);
-        var n = new V4(.0);
-        var r = null;
-        if (u.x != 4.0 || u.y != 5.0 || u.z != 6.0 || u.w != 7.0 ||
-            v.x != 2.0 || v.y != 3.0 || v.z != 1.0 || v.w != -1.0 ||
-            n.x != 0.0 || n.y != 0.0 || n.z != 0.0 || n.w != 0.0) {
-            errors.push(' - Vector constructor sets wrong values!');
-        }
+        var s = new V4(8.0);
+        var r = new V4(u);
+        test('Should create V4 from array',    context => context.assert(u.data, ':=', [ 4,  5,  6,  7] ));
+        test('Should create V4 from x,y,z,w',  context => context.assert(v.data, ':=', [ 2,  3,  1, -1] ));
+        test('Should create V4 from constant', context => context.assert(s.data, ':=', [ 8,  8,  8,  8] ));
+        test('Should create V4 from V4',       context => context.assert(r.data, ':=', u.data ));
 
-        // add
-        r = u.add(v);
-        if (r.x != 6.0 || r.y != 8.0 || r.z != 7.0 || r.w != 6.0) {
-            errors.push(' - Vector add is incorrect!');
-        }
+        test('Should set V4 from vector', context => context.assert(r.set(v).data, ':=', [ 2,  3,  1, -1]));
 
-        // dec
-        r = new V4(u);
-        r.dec(v);
-        if (r.x != 2.0 || r.y != 2.0 || r.z != 5.0 || r.w != 8.0) {
-            errors.push(' - Vector dec is incorrect!');
-        }
-        // dot
-        if (u.dot(v) != 2*4 + 3*5 + 6*1 + 7*-1) {
-            errors.push(' - Vector dot is incorrect!');
-        }
-        // inc
-        r = new V4(u);
-        r.inc(v);
-        if (r.x != 6.0 || r.y != 8.0 || r.z != 7.0 || r.w != 6.0) {
-            errors.push(' - Vector inc is incorrect!');
-        }
-        // length
-        if (u.length() != Math.sqrt(4*4 + 5*5 + 6*6 + 7*7)) {
-            errors.push(' - Vector length is incorrect!');
-        }
-        // length2
-        if (u.length2() != 4*4 + 5*5 + 6*6 + 7*7) {
-            errors.push(' - Vector length2 is incorrect!');
-        }
-        // mul
-        r = u.mul(v);
-        if (r.x != 8.0 || r.y != 15.0 || r.z != 6.0 || r.w != -7.0) {
-            errors.push(' - Vector mul is incorrect!');
-        }
-        // mulC
-        r = u.mulC(4);
-        if (r.x != 16.0 || r.y != 20.0 || r.z != 24.0 || r.w != 28.0) {
-            errors.push(' - Vector mulC is incorrect!');
-        }
-        // norm
-        // 4 9 16 25 36 49 64 81 100 121 144 169 196 225 256
-        r = new V4(2, 3, 4, 14).norm();
-        if (r.x != 2/15 || r.y != 3/15 || r.z != 4/15 || r.w != 14/15) {
-            errors.push(' - Vector norm is incorrect!');
-        }
-        // scale
-        r = new V4(u).scale(4);
-        if (r.x != 16.0 || r.y != 20.0 || r.z != 24.0 || r.w != 28.0) {
-            errors.push(' - Vector scale is incorrect!');
-        }
-        // set
-        r = new V4().set(u);
-        if (r.x != u.x || r.y != u.y || r.z != u.z || r.w != u.w) {
-            errors.push(' - Vector set is incorrect!');
-        }
+        test('Should increase vector', context =>  context.assert((r = new V4(u).add(v)).data, ':=', [ 6,  8,  7,  6] ));
+        test('Should add 2 vectors', context => context.assert(u.sum(v).data, ':=', r.data ));
 
-        // sub
-        r = u.sub(v);
-        if (r.x != 2.0 || r.y != 2.0 || r.z != 5.0 || r.w != 8.0) {
-            errors.push(' - Vector sub is incorrect!');
-        }
+        test('Should decrease vector', context =>  context.assert((r = new V4(u).sub(v)).data, ':=', [ 2,  2,  5,  8] ));
+        test('Should sub 2 vectors', context => context.assert(u.diff(v).data, ':=', r.data ));
 
-        return errors.length > 0 ? errors.join('\n') : 'Tests successful!';
+        test('Should multiply vector', context =>  context.assert((r = new V4(u)).mul(v).data, ':=', [ 8, 15,  6, -7] ));
+        test('Should return product of 2 vectors', context => context.assert(u.prod(v).data, ':=', r.data ));
+
+        test('Should scale vector by 2', context =>  context.assert((r = new V4(u)).scale(2).data, ':=', [ 8, 10, 12, 14] ));
+        test('Should return vector multiplied by 2', context => context.assert(u.prodC(2).data, ':=', r.data ));
+
+        test('Should return dot product', context =>  context.assert(u.dot(v), '=', 2*4 + 3*5 + 6*1 + 7*-1));
+
+        test('Should return length', context =>  context.assert(u.length(), '=', Math.sqrt(4*4 + 5*5 + 6*6 + 7*7)));
+        test('Should return length squared', context =>  context.assert(u.length2(), '=', 4*4 + 5*5 + 6*6 + 7*7));
+
+        test('Should return normalized vector', context =>  context.assert((r = new V4(2)).norm().data, ':=', [2/4, 2/4, 2/4, 2/4]));
     }
 
     function test_m33() {
+        return;
         Dbg.prln('Test M33');
         var errors = [];
         var skip = false;
@@ -304,58 +155,44 @@ include('/ge/math/m44.js');
     }
 
     function test_m44() {
-        Dbg.prln('Test M44');
-        var errors = [];
-        var skip = false;
-        var r = null;
+        message('Test M44');
+        var arr = [ 1,  2,  3,  4,    2,  4,  6,  8,    3,  6,  9, 12,    4,  8, 12, 16 ];
+        var m44 = new M44(arr);
+        var n44 = new M44(new Float32Array(arr));
+        var o44 = new M44(new Float64Array(arr));
+        var p44 = new M44();
+        var q44 = new M44(p44);
+        test('Should create M44 from array', context => context.assert(m44.data, ':=', arr));
+        test('Should create M44 from Float32Array', context => context.assert(n44.data, ':=', arr));
+        test('Should create M44 from Float64Array', context => context.assert(o44.data, ':=', arr));
+        test('Should create M44 from identity', context => context.assert(p44.data, ':=', [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]));
+        test('Should create M44 from M44', context => context.assert(q44.data, ':=', p44.data));
 
-        var m1 = new M44([1,2,3, 4,5,6, 7,8,9]);
-        var m2 = new M44([1,2,3, 4,5,6, 7,8,9], true);
-        var m3 = M33.identity();
-        for (var i=0; i<3 && skip == false; i++) {
-            for (var j=0; j<3 && skip == false; j++) {
-                if (m1[`m${i+1}${j+1}`] != 1 + 3*i + j) {
-                    skip = true;
-                }
-                if (m2[`m${j+1}${i+1}`] != 1 + 3*i + j) {
-                    skip = true;
-                }
-                if (m3[`m${j+1}${i+1}`] != (i == j ? 1 : 0)) {
-                    skip = true;
-                }
-            }
-        }
-        if (skip) {
-            errors.push(' - Matrix constructor sets wrong values!');
-        }
-        // mul
-        r = m1.mul(m3);
-        for (var i=0; i<3 && skip == false; i++) {
-            for (var j=0; j<3 && skip == false; j++) {
-                if (r[`m${i+1}${j+1}`] != m1[`m${i+1}${j+1}`]) {
-                    skip = true;
-                }
-            }
-        }
-        if (skip) {
-            errors.push(' - Matrix mul is incorrect!');
-        }
-        // mulV
-        var v = new V3(1, 2, 3);
-        r = m1.mulV(v);
-        if (r.x != 14 || r.y != 32 || r.z != 50) {
-            errors.push(' - Matrix mulV is incorrect!');
-        }
-        return errors.length > 0 ? errors.join('\n') : 'Tests successful!';
+        test('Should multiply by identity matrix', context => context.assert(m44.mul(p44).data, ':=', m44.data));
+        test('Should multiply by a matrix', context => context.assert(m44.mul(n44).data, ':=', [
+            1+ 4+ 9+16,  2+ 8+18+32,  3+12+ 27+ 48,  4+16+ 36+ 64,
+            2+ 8+18+32,  4+16+36+64,  6+24+ 54+ 96,  8+32+ 72+128,
+            3+12+27+48,  6+24+54+96,  9+36+ 81+144, 12+48+108+192,
+            4+16+36+64, 8+32+72+128, 12+48+108+192, 16+64+144+256
+        ]));
+        test('Should multiply by a vector', context => context.assert(n44.mulV(new V4(1, 1, 1, 1)).data, ':=', [1+2+3+4, 2+4+6+8, 3+6+9+12, 4+8+12+16]));
     }
 
-    var tests = async function() {
-        Dbg.prln(test_v2());
-        Dbg.prln(test_v3());
-        Dbg.prln(test_v4());
-        Dbg.prln(test_m33());
-        Dbg.prln(test_m44());
-        return 0;
-    };
+    async function test_performance() {
+        var m44 = new M44();
+        var n44 = new M44();
+        for (var i=0; i<16; i++) {
+            m44.data[i] = Math.random();
+            n44.data[i] = Math.random();
+        }
+        await measure('Matrix multiplication', () => m44.mul(n44), 10000);
+    }
+
+    var tests = () => [
+        test_v2, test_v3, test_v4,
+        test_m33, test_m44,
+        test_performance
+    ];
+
     public(tests, 'Math tests');
 })();

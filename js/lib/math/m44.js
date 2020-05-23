@@ -1,82 +1,126 @@
 (function() {
-    include('/ge/math/v4.js');
+    include('v4.js');
 
     function M44(data, isColumnMajor) {
-        // m23: element of row #2 and column #3
-        var i = 0;
-        if (isColumnMajor) {
-            this.m11 = data[i++]; this.m21 = data[i++]; this.m31 = data[i++]; this.m41 = data[i++];
-            this.m12 = data[i++]; this.m22 = data[i++]; this.m32 = data[i++]; this.m42 = data[i++];
-            this.m13 = data[i++]; this.m23 = data[i++]; this.m33 = data[i++]; this.m43 = data[i++];
-            this.m14 = data[i++]; this.m24 = data[i++]; this.m34 = data[i++]; this.m44 = data[i];
+        this.data = new Float32Array(16);
+        if (data instanceof M44) {
+            this.set(data);
+        } else if (data == undefined) {
+            this.set(M44.identity());
+        } else if (data.constructor == Float32Array || data.constructor == Float64Array || Array.isArray(data)) {
+            // m23: element of row #2 and column #3
+            var k = 0;
+            for (var j=0; j<4; j++) {
+                for (var i=0; i<4; i++) {
+                    var ix = !isColumnMajor ? 4*j+i : 4*i+j;
+                    this.data[ix] = data[k++];
+                }
+            }
+        } else if (typeof data == 'number') {
+            for (var i=0; i<16; i++) this.data[i] = data;
         } else {
-            this.m11 = data[i++]; this.m12 = data[i++]; this.m13 = data[i++]; this.m14 = data[i++];
-            this.m21 = data[i++]; this.m22 = data[i++]; this.m23 = data[i++]; this.m24 = data[i++];
-            this.m31 = data[i++]; this.m32 = data[i++]; this.m33 = data[i++]; this.m34 = data[i++];
-            this.m41 = data[i++]; this.m42 = data[i++]; this.m43 = data[i++]; this.m44 = data[i];    
+            throw new Error('Could not create M44 from these arguments!');
         }
-        
-        
     }
 
-    //                     n11 n12 n13 n14
-    //                     n21 n22 n23 n24
-    //                     n31 n32 n33 n34
-    //                     n41 n42 n43 n44
-    // m11 m12 m13 m14
-    // m21 m22 m23 m24
-    // m31 m32 m33 m34
-    // m41 m42 m43 m44
-
     M44.prototype.mul = function(m44) {
-        var data = [
-            this.m11 * m44.m11 + this.m12 * m44.m21 + this.m13 * m44.m31 + this.m14 * m44.m41,
-            this.m11 * m44.m12 + this.m12 * m44.m22 + this.m13 * m44.m32 + this.m14 * m44.m42,
-            this.m11 * m44.m13 + this.m12 * m44.m23 + this.m13 * m44.m33 + this.m14 * m44.m43,
-            this.m11 * m44.m14 + this.m12 * m44.m24 + this.m13 * m44.m34 + this.m14 * m44.m44,
+        var r44 = new M44(0);
+        for (var aj=0; aj<4; aj++) {
+            for (var bi=0; bi<4; bi++) {
+                for (var k=0; k<4; k++) {
+                    r44.data[4*aj+bi] += this.data[4*k+bi] * m44.data[4*aj+k];
+                }
+            }
+        }
+        return r44;
+    }
 
-            this.m21 * m44.m11 + this.m22 * m44.m21 + this.m23 * m44.m31 + this.m24 * m44.m41,
-            this.m21 * m44.m12 + this.m22 * m44.m22 + this.m23 * m44.m32 + this.m24 * m44.m42,
-            this.m21 * m44.m13 + this.m22 * m44.m23 + this.m23 * m44.m33 + this.m24 * m44.m43,
-            this.m21 * m44.m14 + this.m22 * m44.m24 + this.m23 * m44.m34 + this.m24 * m44.m44,
-
-            this.m31 * m44.m11 + this.m32 * m44.m21 + this.m33 * m44.m31 + this.m34 * m44.m41,
-            this.m31 * m44.m12 + this.m32 * m44.m22 + this.m33 * m44.m32 + this.m34 * m44.m42,
-            this.m31 * m44.m13 + this.m32 * m44.m23 + this.m33 * m44.m33 + this.m34 * m44.m43,
-            this.m31 * m44.m14 + this.m32 * m44.m24 + this.m33 * m44.m34 + this.m34 * m44.m44,
-
-            this.m41 * m44.m11 + this.m42 * m44.m21 + this.m43 * m44.m31 + this.m44 * m44.m41,
-            this.m41 * m44.m12 + this.m42 * m44.m22 + this.m43 * m44.m32 + this.m44 * m44.m42,
-            this.m41 * m44.m13 + this.m42 * m44.m23 + this.m43 * m44.m33 + this.m44 * m44.m43,
-            this.m41 * m44.m14 + this.m42 * m44.m24 + this.m43 * m44.m34 + this.m44 * m44.m44
-        ];
-
-        return new M44(data);
+    M44.prototype.mulV = function(v4) {
+        var k = 0;
+        var r4 = new V4();
+        for (var i=0; i<4; i++) {
+            for (var j=0; j<4; j++) {
+                r4.data[i] += this.data[k++] * v4.data[j];
+            }
+        }
+        r4.length();
+        return r4;
     };
 
-    //                     x
-    //                     y
-    //                     z
-    //                     w
-    // m11 m12 m13 m14
-    // m21 m22 m23 m24
-    // m31 m32 m33 m34
-    // m41 m42 m43 m44
-    M44.prototype.mulV = function(v4) {
-        return new V4(
-            this.m11 * v4.x + this.m12 * v4.y + this.m13 * v4.z + this.m14 * v4.w,
-            this.m21 * v4.x + this.m22 * v4.y + this.m23 * v4.z + this.m24 * v4.w,
-            this.m31 * v4.x + this.m32 * v4.y + this.m33 * v4.z + this.m34 * v4.w,
-            this.m41 * v4.x + this.m42 * v4.y + this.m43 * v4.z + this.m44 * v4.w
-        );
+    M44.prototype.set = function(m44) {
+        for (var i=0; i<16; i++) {
+            this.data[i] = m44.data[i];
+        }
+        return this;
     };
 
     M44.identity = function() {
-        var data = [];
-        for (var i=0; i<16; i++) {
-            data.push(i%5 == 0 ? 1.0 : .0);
-        }
-        return new M44(data);
+        return new M44([
+            1,  0,  0,  0,
+            0,  1,  0,  0,
+            0,  0,  1,  0,
+            0,  0,  0,  1
+        ]);
+    };
+
+    M44.translate = function(v4) {
+        return new M44([
+             1,    0,    0,  0,
+             0,    1,    0,  0,
+             0,    0,    1,  0,
+          v4.x, v4.y, v4.z,  1
+        ]);
+    };
+     
+    M44.rotateX = function(rad) {
+        var c = Math.cos(rad);
+        var s = Math.sin(rad);
+        return new M44([
+            1,  0,  0,  0,
+            0,  c,  s,  0,
+            0, -s,  c,  0,
+            0,  0,  0,  1
+        ]);
+    };
+     
+    M44.rotateY = function(rad) {
+        var c = Math.cos(rad);
+        var s = Math.sin(rad);
+        return new M44([
+            c,  0, -s,  0,
+            0,  1,  0,  0,
+            s,  0,  c,  0,
+            0,  0,  0,  1
+        ]);
+    };
+     
+    M44.rotateZ = function(rad) {
+        var c = Math.cos(rad);
+        var s = Math.sin(rad);
+        return new M44([
+            c,  s,  0,  0,
+           -s,  c,  0,  0,
+            0,  0,  1,  0,
+            0,  0,  0,  1
+        ]);
+    };
+     
+    M44.scale = function(v4) {
+        return new M44([
+          v4.x,    0,    0,  0,
+             0, v4.y,    0,  0,
+             0,    0, v4.z,  0,
+             0,    0,    0,  1
+        ]);
+    };
+
+    M44.projection = function(w, h, d) {
+        return new M44([
+         2/w,    0,   0,  0,
+           0, -2/h,   0,  0,
+           0,    0, 2/d,  0,
+          -1,    1,   0,  1
+        ]);
     };
 
     public(M44, 'M44');

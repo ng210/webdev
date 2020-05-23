@@ -1,44 +1,41 @@
 (function() {
-    // return
-    // (x, y) or
-    // (x[0], x[1])
+
     function V2(x, y) {
+        this.data = new Float32Array(2);
         if (x === undefined || typeof x === 'number') {
-            this.x = x || .0;
-            this.y = y || .0;
+            if (arguments.length < 2) y = x;
+            this.data[0] = x || .0;
+            this.data[1] = y || .0;
         } else if (Array.isArray(x)) {
-            this.x = x[0];
-            this.y = x[1];
+            this.data[0] = x[0] || .0;
+            this.data[1] = x[1] || .0;
+        } else if (x instanceof V2) {
+            this.data[0] = x.data[0];
+            this.data[1] = x.data[1];
         } else {
-            this.x = x.x || 0.0;
-            this.y = x.y || 0.0;
+            throw new Error('Could not create V2 from these arguments!');
         }
         this.length();
-        
     }
-    // return length*(cos(arg), sin(arg))
-    V2.fromPolar = function (arg, length) {
-        return new V2(Math.cos(arg), Math.sin(arg)).scale(length);
+    V2.prototype = {
+        get x()  { return this.data[0]; },
+        get y()  { return this.data[1]; },
+        set x(v) { return this.data[0] = v; },
+        set y(v) { return this.data[1] = v; }
     };
-    // return u = this + v
+    // return this += v
     V2.prototype.add = function (v) {
-        return new V2(this.x + v.x, this.y + v.y);
-    };
-    // return this -= v
-    V2.prototype.dec = function (v) {
-        this.x -= v.x;
-        this.y -= v.y;
+        this.x += v.x;
+        this.y += v.y;
         return this;
+    };
+    // return u = this - v
+    V2.prototype.diff = function (v) {
+        return new V2(this.x - v.x, this.y - v.y);
     };
     // return this · v
     V2.prototype.dot = function (v) {
         return this.x * v.x + this.y * v.y;
-    };
-    // return this += v
-    V2.prototype.inc = function (v) {
-        this.x += v.x;
-        this.y += v.y;
-        return this;
     };
     // return length(this), also set length(this)^2
     V2.prototype.length = function () {
@@ -50,21 +47,27 @@
     V2.prototype.length2 = function () {
         return this.len2 = this.x * this.x + this.y * this.y;
     };
-    // return u = (this.x*v.x, this.y*v.y)
+    // return this*v
     V2.prototype.mul = function (v) {
-        return new V2(this.x*v.x, this.y*v.y);
-    };
-    // return u = this*c
-    V2.prototype.mulC = function (c) {
-        var v = new V2(this.x, this.y);
-        return v.scale(c);
+        this.x *= v.x;
+        this.y *= v.y;
+        return this;
     };
     // return normalize(this)
     V2.prototype.norm = function () {
         this.length();
-        this.x /= this.len;
-        this.y /= this.len;
+        this.x = this.x/this.len;
+        this.y = this.y/this.len;
         return this;
+    };
+    // return u = (this.x*v.x, this.y*v.y, this.z*v.z)
+    V2.prototype.prod = function (v) {
+        return new V2(this.x*v.x, this.y*v.y);
+    };
+    // return u = this*c
+    V2.prototype.prodC = function (c) {
+        var r = new V2(this.x, this.y);
+        return r.scale(c);
     };
     // return this*c;
     V2.prototype.scale = function (c) {
@@ -72,17 +75,24 @@
         this.y *= c;
         return this;
     };
-    // return this = (v.x, v.y)
+    // return this = (v.x, v.y, v.z)
     V2.prototype.set = function (v) {
         this.x = v.x;
         this.y = v.y;
         return this;
     };
-    // return u = this - v
+    // return this -= v
     V2.prototype.sub = function (v) {
-        return new V2(this.x - v.x, this.y - v.y);
+        this.x -= v.x;
+        this.y -= v.y;
+        return this;
     };
-    // return "({this.x},{this.y})"
+    // return u = this + v
+    V2.prototype.sum = function (v) {
+        return new V2(this.x + v.x, this.y + v.y);
+    };
+
+    // return "({this.x},{this.y},{this.z})"
     V2.prototype.toString = function () {
         return `(${this.x},${this.y})`;
     };

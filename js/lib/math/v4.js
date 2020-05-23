@@ -1,51 +1,53 @@
 (function() {
-    // return
-    // (x, y, x) or
-    // (x[0], x[1], x[2])
+
     function V4(x, y, z, w) {
+        this.data = new Float32Array(4);
         if (x === undefined || typeof x === 'number') {
-            this.x = x || .0;
-            this.y = y || .0;
-            this.z = z || .0;
-            this.w = w || .0;
+            if (arguments.length < 2) y = x, z = x, w = x;
+            this.data[0] = x || .0;
+            this.data[1] = y || .0;
+            this.data[2] = z || .0;
+            this.data[3] = w || .0;
         } else if (Array.isArray(x)) {
-            this.x = x[0];
-            this.y = x[1];
-            this.z = x[2];
-            this.w = x[3];
+            this.data[0] = x[0] || .0;
+            this.data[1] = x[1] || .0;
+            this.data[2] = x[2] || .0;
+            this.data[3] = x[3] || .0;
+        } else if (x instanceof V4) {
+            this.data[0] = x.data[0];
+            this.data[1] = x.data[1];
+            this.data[2] = x.data[2];
+            this.data[3] = x.data[3];
         } else {
-            this.x = x.x || .0;
-            this.y = x.y || .0;
-            this.z = x.z || .0;
-            this.w = x.w || .0;
+            throw new Error('Could not create V4 from these arguments!');
         }
-            
         this.length();
-        
     }
-    // return u = this + v
-    V4.prototype.add = function (v) {
-        return new V4(this.x + v.x, this.y + v.y, this.z + v.z, this.w + v.w);
-    };
-    // return this -= v
-    V4.prototype.dec = function (v) {
-        this.x -= v.x;
-        this.y -= v.y;
-        this.z -= v.z;
-        this.w -= v.w;
-        return this;
-    };
-    // return this · v
-    V4.prototype.dot = function (v) {
-        return this.x * v.x + this.y * v.y + this.z * v.z + this.w * v.w;
+    V4.prototype = {
+        get x()  { return this.data[0]; },
+        get y()  { return this.data[1]; },
+        get z()  { return this.data[2]; },
+        get w()  { return this.data[3]; },
+        set x(v) { return this.data[0] = v; },
+        set y(v) { return this.data[1] = v; },
+        set z(v) { return this.data[2] = v; },
+        set w(v) { return this.data[3] = v; }
     };
     // return this += v
-    V4.prototype.inc = function (v) {
+    V4.prototype.add = function (v) {
         this.x += v.x;
         this.y += v.y;
         this.z += v.z;
         this.w += v.w;
         return this;
+    };
+    // return u = this - v
+    V4.prototype.diff = function (v) {
+        return new V4(this.x - v.x, this.y - v.y, this.z - v.z, this.w - v.w);
+    };
+    // return this · v
+    V4.prototype.dot = function (v) {
+        return this.x * v.x + this.y * v.y + this.z * v.z + this.w * v.w;
     };
     // return length(this), also set length(this)^2
     V4.prototype.length = function () {
@@ -57,14 +59,13 @@
     V4.prototype.length2 = function () {
         return this.len2 = this.x * this.x + this.y * this.y + this.z*this.z + this.w*this.w;
     };
-    // return u = (this.x*v.x, this.y*v.y, this.z*v.z)
+    // return this*v
     V4.prototype.mul = function (v) {
-        return new V4(this.x*v.x, this.y*v.y, this.z*v.z, this.w*v.w);
-    };
-    // return u = this*c
-    V4.prototype.mulC = function (c) {
-        var r = new V4(this.x, this.y, this.z, this.w);
-        return r.scale(c);
+        this.x *= v.x;
+        this.y *= v.y;
+        this.z *= v.z;
+        this.w *= v.w;
+        return this;
     };
     // return normalize(this)
     V4.prototype.norm = function () {
@@ -74,6 +75,15 @@
         this.z /= this.len;
         this.w /= this.len;
         return this;
+    };
+    // return u = (this.x*v.x, this.y*v.y, this.z*v.z)
+    V4.prototype.prod = function (v) {
+        return new V4(this.x*v.x, this.y*v.y, this.z*v.z, this.w*v.w);
+    };
+    // return u = this*c
+    V4.prototype.prodC = function (c) {
+        var r = new V4(this.x, this.y, this.z, this.w);
+        return r.scale(c);
     };
     // return this*c;
     V4.prototype.scale = function (c) {
@@ -87,14 +97,23 @@
     V4.prototype.set = function (v) {
         this.x = v.x;
         this.y = v.y;
-        this.z = v.z || .0;
-        this.w = v.w || .0;
+        this.z = v.z;
+        this.w = v.w;
         return this;
     };
-    // return u = this - v
+    // return this -= v
     V4.prototype.sub = function (v) {
-        return new V4(this.x - v.x, this.y - v.y, this.z - v.z, this.w - v.w);
+        this.x -= v.x;
+        this.y -= v.y;
+        this.z -= v.z;
+        this.w -= v.w;
+        return this;
     };
+    // return u = this + v
+    V4.prototype.sum = function (v) {
+        return new V4(this.x + v.x, this.y + v.y, this.z + v.z, this.w + v.w);
+    };
+
     // return "({this.x},{this.y},{this.z})"
     V4.prototype.toString = function () {
         return `(${this.x},${this.y},${this.z},${this.w})`;
