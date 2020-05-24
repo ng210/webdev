@@ -13,11 +13,11 @@
             this.data[1] = x[1] || .0;
             this.data[2] = x[2] || .0;
             this.data[3] = x[3] || .0;
-        } else if (x instanceof V4) {
+        } else if (x.data instanceof Float32Array) {
             this.data[0] = x.data[0];
             this.data[1] = x.data[1];
-            this.data[2] = x.data[2];
-            this.data[3] = x.data[3];
+            this.data[2] = x.data[2] || 0;
+            this.data[3] = x.data[3] || 0;
         } else {
             throw new Error('Could not create V4 from these arguments!');
         }
@@ -97,8 +97,8 @@
     V4.prototype.set = function (v) {
         this.x = v.x;
         this.y = v.y;
-        this.z = v.z;
-        this.w = v.w;
+        this.z = v.z || 0;
+        this.w = v.w || 1;
         return this;
     };
     // return this -= v

@@ -105,11 +105,11 @@
         ]);
     };
      
-    M44.scale = function(v4) {
+    M44.scale = function(s4) {
         return new M44([
-          v4.x,    0,    0,  0,
-             0, v4.y,    0,  0,
-             0,    0, v4.z,  0,
+          s4.x,    0,    0,  0,
+             0, s4.y,    0,  0,
+             0,    0, s4.z,  0,
              0,    0,    0,  1
         ]);
     };
@@ -120,6 +120,17 @@
            0, -2/h,   0,  0,
            0,    0, 2/d,  0,
           -1,    1,   0,  1
+        ]);
+    };
+
+    M44.perspective = function(fov, aspect, near, far) {
+        var f = Math.tan(0.5 * (Math.PI - fov));
+        var d = near - far;
+        return new M44([
+            f / aspect, 0, 0, 0,
+            0, f, 0, 0,
+            0, 0, (near + far) / d -1,
+            0, 0, 2 * near * far / d, 0
         ]);
     };
 

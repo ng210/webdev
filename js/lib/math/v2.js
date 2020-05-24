@@ -9,7 +9,7 @@
         } else if (Array.isArray(x)) {
             this.data[0] = x[0] || .0;
             this.data[1] = x[1] || .0;
-        } else if (x instanceof V2) {
+        } else if (x.data instanceof Float32Array) {
             this.data[0] = x.data[0];
             this.data[1] = x.data[1];
         } else {

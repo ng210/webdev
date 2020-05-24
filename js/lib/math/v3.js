@@ -11,10 +11,10 @@
             this.data[0] = x[0] || .0;
             this.data[1] = x[1] || .0;
             this.data[2] = x[2] || .0;
-        } else if (x instanceof V3) {
+        } else if (x.data instanceof Float32Array) {
             this.data[0] = x.data[0];
             this.data[1] = x.data[1];
-            this.data[2] = x.data[2];
+            this.data[2] = x.data[2] || 0;
         } else {
             throw new Error('Could not create V3 from these arguments!');
         }
@@ -88,7 +88,7 @@
     V3.prototype.set = function (v) {
         this.x = v.x;
         this.y = v.y;
-        this.z = v.z;
+        this.z = v.z || 0;
         return this;
     };
     // return this -= v
