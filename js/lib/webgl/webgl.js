@@ -122,7 +122,9 @@
 				gl.vertexAttribPointer(a.ref, a.size, a.type, false, p.size, a.offset);
 			}
 		}
-		p.setUniforms(uniforms);
+		if (uniforms) {
+			p.setUniforms(uniforms);
+		}
 	};
 	webGL.uniformUpdaters = (function() {
 		var map = {};
