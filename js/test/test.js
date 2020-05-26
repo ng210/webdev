@@ -107,7 +107,7 @@ function deepCompare(a, b) {
             if (typeof a === 'object' || Array.isArray(a)) {
                 for (var i in a) {
                     if (a.hasOwnProperty(i)) {
-                        var bi = a.constructor != Float32Array ? b[i] : new Float32Array([b[i]])[0];
+                        var bi = b[i];
                         result = deepCompare(a[i], bi);
                         if (result) {
                             result = '.' + i + result;

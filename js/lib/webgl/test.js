@@ -17,9 +17,9 @@
         this.position = new V2(Math.random(), Math.random());
         this.velocity = new V2(Math.random(), Math.random()).sub(new V2(0.5)).scale(0.6).add(new V2(0.2));
         this.rotation = Math.random();
-        this.scale = new V2(0.5+Math.random(), 0.5+Math.random());
-        this.color = new V4(Math.random(), Math.random(), Math.random(), 1.0);
-        this.matrix = null;
+        this.scale = new Float32Array([0.5+Math.random(), 0.5+Math.random(), 0]);
+        this.color = new Float32Array([Math.random(), Math.random(), Math.random(), 1.0]);
+        this.matrix = new Float32Array(16);
     }
 
     Instance.prototype.adjustPosition = function() {
@@ -30,7 +30,7 @@
     }
 
     function setGeometry() {
-        var vertices = new Float32Array([0, 0, 0,  20, 0, 0,  0, 20, 0,  20, 20, 0]);
+        var vertices = new Float32Array([0, 0, 0,  10, 0, 0,  0, 10, 0,  10, 10, 0]);
         _vbo = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, _vbo);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
@@ -49,12 +49,18 @@
         _render(dt);
         _lastTick = t;
         
-        _timer = setTimeout(animate, 40);
+        _timer = setTimeout(animate, 100);
     }
 
-    function start(update, render) {
+    function start(update, render, shader) {
         _update = update;
-        _render = render;
+        _render = dt => {
+            gl.viewport(0, 0, gl.canvas.clientWidth, gl.canvas.clientHeight);
+            gl.clearColor(0.02, 0.1, 0.2, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            webGL.useProgram(shader);
+            render(dt);
+        };
         _lastTick = new Date().getTime();
         animate();
     }
@@ -74,7 +80,7 @@
     }
 
     function test_simple_rendering() {
-        const count = 10;
+        const count = 40;
         setup(count);
 
         // create program
@@ -94,19 +100,59 @@
                     var instance = _instances[i];
                     instance.position.add(instance.velocity.prodC(dt));
                     instance.adjustPosition();
+                    instance.rotation += 40*instance.velocity.x*dt;
+                    instance.scale.x = 1.5 + Math.cos(instance.velocity.x);
+                    instance.scale.y = 1.5 + Math.sin(instance.velocity.y);
+                    var matrix = M44.projection(gl.canvas.clientWidth, gl.canvas.clientHeight, 400);
+                    var pos = new V4(instance.position.prod(_size));    //.diff([instance.scale.x*5, instance.scale.y*5]);
+                    var center = new V4([-5, -5, 0, 0]);
+                    //matrix.mul(M44.translate(pos)).mul(M44.rotateZ(instance.rotation)).mul(M44.scale(instance.scale), instance.matrix);
+                    matrix.mul(M44.translate(pos)).mul(M44.rotateZ(instance.rotation)).mul(M44.scale(instance.scale)).mul(M44.translate(center), instance.matrix);
+                }
+            },
+            dt => {
+                for (var i=0; i<count; i++) {
+                    var instance = _instances[i];
+                    shader.uniforms.u_color.value = instance.color;
+                    shader.updateUniform('u_color');
+                    shader.uniforms.u_matrix.value = instance.matrix;
+                    shader.updateUniform('u_matrix');
+                    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+                }
+            },
+            shader
+        );
+    }
+
+    function test_instanced_rendering() {
+        const count = 10;
+        setup(count);
+
+        // create program
+        var shaders = {};
+        shaders[gl.VERTEX_SHADER] = 'attribute vec4 a_position; attribute vec4 a_color; attribute mat4 a_matrix; varying vec4 v_color; void main() { gl_Position = a_matrix*a_position; v_color = a_color; }';
+        shaders[gl.FRAGMENT_SHADER] = 'precision mediump float; varying vec4 v_color; void main() { gl_FragColor = v_color;}';
+        var shader = webGL.createProgram(shaders, {
+            a_position: { type:gl.FLOAT, size:3 },
+            a_matrix: { type:gl.FLOAT, size:4 },
+            a_color: { type:gl.FLOAT, size:3 }
+        }, null);
+        const matrices = new Float32Array(count * 16);
+        start(
+            dt => {
+                for (var i=0; i<count; i++) {
+                    var instance = _instances[i];
+                    instance.position.add(instance.velocity.prodC(dt));
+                    instance.adjustPosition();
                     instance.rotation += 10*instance.velocity.x*dt;
                     instance.scale.x = 1.5 + Math.cos(instance.velocity.x);
                     instance.scale.y = 1.5 + Math.sin(instance.velocity.y);
                     var matrix = M44.projection(gl.canvas.clientWidth, gl.canvas.clientHeight, 400);
                     var pos = new V4(instance.position.prod(_size));
-                    instance.matrix =  matrix.mul(M44.translate(pos)).mul(M44.rotateZ(instance.rotation)).mul(M44.scale(new V4(instance.scale)));
+                    matrix.mul(M44.translate(pos)).mul(M44.rotateZ(instance.rotation)).mul(M44.scale(new V4(instance.scale)));
                 }
             },
             dt => {
-                gl.viewport(0, 0, gl.canvas.clientWidth, gl.canvas.clientHeight);
-                gl.clearColor(0.02, 0.1, 0.2, 1.0);
-                gl.clear(gl.COLOR_BUFFER_BIT);
-                webGL.useProgram(shader);
                 for (var i=0; i<count; i++) {
                     var instance = _instances[i];
                     shader.uniforms.u_color.value = instance.color.data;
@@ -115,7 +161,8 @@
                     shader.updateUniform('u_matrix');
                     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
                 }
-            }
+            },
+            shader
         );
     }
 
