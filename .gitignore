@@ -1,8 +1,5 @@
 *.out.js
-src/frmwrk/tmp/*
-src/sidjs/*
 temp
-.vscode/**
+.vscode
 node_modules
 nodejs/recover/deleted_files.txt
-nodejs/package-lock.json
