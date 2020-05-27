@@ -10,6 +10,8 @@
     var _update = null;
     var _render = null;
     var _lastTick = 0;
+    var _frames = 0;
+    var _elapsedTime = 0;
 
     var _instances = [];
 
@@ -42,14 +44,18 @@
 
     function animate() {
         clearTimeout(_timer);
-
+        _frames++;
+        _elapsedTime = new Date().getTime() - _startTime;
+        if (_frames % 20 == 0) {
+            _fps.innerHTML = (''+_frames*1000/_elapsedTime).slice(0, 4);
+        }
         var t = new Date().getTime();
         var dt = 0.0005*(t - _lastTick);
         _update(dt);
         _render(dt);
         _lastTick = t;
         
-        _timer = setTimeout(animate, 100);
+        _timer = setTimeout(animate, 40);
     }
 
     function start(update, render, shader) {
@@ -62,6 +68,7 @@
             render(dt);
         };
         _lastTick = new Date().getTime();
+        _startTime = _lastTick;
         animate();
     }
 
@@ -70,6 +77,11 @@
         canvas.id = 'canvas';
         canvas.width = 640; canvas.height = 480;
         document.body.appendChild(canvas);
+        _fps = document.createElement('div');
+        _fps.style.position = 'absolute';
+        _fps.style.left = '600px'; _fps.style.top = '0px'; _fps.style.width = '40px';
+        _fps.style.color = '#80ffa0'; _fps.style.fontSize = '12pt';
+        document.body.appendChild(_fps);
         window.gl = canvas.getContext('webgl');
         _size = new V2(canvas.clientWidth, canvas.clientHeight);
         setGeometry();
