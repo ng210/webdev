@@ -130,52 +130,34 @@ include('m44.js');
     }
 
     function test_m33() {
-        return;
-        Dbg.prln('Test M33');
-        var errors = [];
-        var skip = false;
-        var r = null;
-
-        var m1 = new M33([1,2,3, 4,5,6, 7,8,9]);
-        var m2 = new M33([1,2,3, 4,5,6, 7,8,9], true);
-        var m3 = M33.identity();
-        for (var i=0; i<3 && skip == false; i++) {
-            for (var j=0; j<3 && skip == false; j++) {
-                if (m1[`m${i+1}${j+1}`] != 1 + 3*i + j) {
-                    skip = true;
-                }
-                if (m2[`m${j+1}${i+1}`] != 1 + 3*i + j) {
-                    skip = true;
-                }
-                if (m3[`m${j+1}${i+1}`] != (i == j ? 1 : 0)) {
-                    skip = true;
-                }
-            }
-        }
-        if (skip) {
-            errors.push(' - Matrix constructor sets wrong values!');
-        }
-        // mul
-        r = m1.mul(m3);
-        for (var i=0; i<3 && skip == false; i++) {
-            for (var j=0; j<3 && skip == false; j++) {
-                if (r[`m${i+1}${j+1}`] != m1[`m${i+1}${j+1}`]) {
-                    skip = true;
-                }
-            }
-        }
-        if (skip) {
-            errors.push(' - Matrix mul is incorrect!');
-        }
-        // mulV
-        var v = new V3(1, 2, 3);
-        r = m1.mulV(v);
-        if (r.x != 14 || r.y != 32 || r.z != 50) {
-            errors.push(' - Matrix mulV is incorrect!');
-        }
-        
-
-        return errors.length > 0 ? errors.join('\n') : 'Tests successful!';
+        message('Test M33');
+        var arr = [ 1,  2,  3,    2,  4,  6,    3,  6,  9 ];
+        var m33 = new M33(arr);
+        var n33 = new M33(new Float32Array(arr));
+        var o33 = new M33(new Float64Array(arr));
+        var p33 = M33.identity();
+        var q33 = new M33(p33);
+        test('Should create M33 from array', context => context.assert(m33, ':=', arr));
+        test('Should create M33 from Float32Array', context => context.assert(n33, ':=', arr));
+        test('Should create M33 from Float64Array', context => context.assert(o33, ':=', arr));
+        test('Should create M33 from identity', context => context.assert(p33, ':=', [1,0,0, 0,1,0, 0,0,1]));
+        test('Should create M33 from M33', context => context.assert(q33, ':=', p33));
+        test('Should multiply by identity matrix', context => context.assert(m33.mul(p33), ':=', m33));
+        test('Should multiply by a matrix', context => context.assert(m33.mul(n33), ':=', [
+            1+ 4+ 9,  2+ 8+18,  3+12+27,
+            2+ 8+18,  4+16+36,  6+24+54,
+            3+12+27,  6+24+54,  9+36+81
+        ]));
+        test('Should multiply by a vector', context => context.assert(n33.mulV(new V3(1, 2, 3)), ':=', [1+4+9, 2+8+18, 3+12+27]));
+        var buffer = new Float32Array(9);
+        test('Should multiply by a matrix into a buffer', context => {
+            m33.mul(n33, buffer);
+            context.assert(buffer, ':=', [
+                1+ 4+ 9,  2+ 8+18,  3+12+27,
+                2+ 8+18,  4+16+36,  6+24+54,
+                3+12+27,  6+24+54,  9+36+81
+            ]);
+        });
     }
 
     function test_m44() {
@@ -184,7 +166,7 @@ include('m44.js');
         var m44 = new M44(arr);
         var n44 = new M44(new Float32Array(arr));
         var o44 = new M44(new Float64Array(arr));
-        var p44 = new M44();
+        var p44 = M44.identity();
         var q44 = new M44(p44);
         test('Should create M44 from array', context => context.assert(m44, ':=', arr));
         test('Should create M44 from Float32Array', context => context.assert(n44, ':=', arr));
@@ -199,7 +181,7 @@ include('m44.js');
             3+12+27+48,  6+24+54+96,  9+36+ 81+144, 12+48+108+192,
             4+16+36+64, 8+32+72+128, 12+48+108+192, 16+64+144+256
         ]));
-        test('Should multiply by a vector', context => context.assert(n44.mulV(new V4(1, 1, 1, 1)), ':=', [1+2+3+4, 2+4+6+8, 3+6+9+12, 4+8+12+16]));
+        test('Should multiply by a vector', context => context.assert(n44.mulV(new V4(1, 2, 3, 4)), ':=', [1+4+9+16, 2+8+18+32, 3+12+27+48, 4+16+36+64]));
         var buffer = new Float32Array(16);
         test('Should multiply by a matrix into a buffer', context => {
             m44.mul(n44, buffer);
@@ -223,10 +205,8 @@ include('m44.js');
     }
 
     var tests = () => [
-        test_v2, test_v3,
-        test_v4,
-        test_m33,
-        test_m44,
+        test_v2, test_v3, test_v4,
+        test_m33, test_m44,
         test_performance
     ];
 

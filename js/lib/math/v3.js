@@ -37,11 +37,12 @@
         return this;
     };
     // return u = this - v
-    V3.prototype.diff = function (v, r) {
+    V3.prototype.diff = function (v, r, o) {
         r = r || new V3(this);
-        r[0] = this[0] - v[0];
-        r[1] = this[1] - v[1];
-        r[2] = this[2] - v[2];
+        o = o || 0;
+        r[o+0] = this[0] - v[0];
+        r[o+1] = this[1] - v[1];
+        r[o+2] = this[2] - v[2];
         return r;
     };
     // return this · v
@@ -64,19 +65,21 @@
         return this;
     };
     // return u = (this.x*v.x, this.y*v.y, this.z*v.z)
-    V3.prototype.prod = function (v, r) {
+    V3.prototype.prod = function (v, r, o) {
         r = r || new V3(0);
-        r[0] = this[0] * v[0];
-        r[1] = this[1] * v[1];
-        r[2] = this[2] * v[2];
+        o = o || 0;
+        r[o+0] = this[0] * v[0];
+        r[o+1] = this[1] * v[1];
+        r[o+2] = this[2] * v[2];
         return r;
     };
     // return u = this*c
-    V3.prototype.prodC = function (c, r) {
+    V3.prototype.prodC = function (c, r, o) {
         r = r || new V3(0);
-        r[0] = this[0] * c;
-        r[1] = this[1] * c;
-        r[2] = this[2] * c;
+        o = o || 0;
+        r[o+0] = this[0] * c;
+        r[o+1] = this[1] * c;
+        r[o+2] = this[2] * c;
         return r;
     };
     // return this*c;
@@ -101,11 +104,12 @@
         return this;
     };
     // return u = this + v
-    V3.prototype.sum = function (v, r) {
+    V3.prototype.sum = function (v, r, o) {
         r = r || new V3(0);
-        r[0] = this[0] + v[0];
-        r[1] = this[1] + v[1];
-        r[2] = this[2] + v[2];
+        o = o || 0;
+        r[o+0] = this[0] + v[0];
+        r[o+1] = this[1] + v[1];
+        r[o+2] = this[2] + v[2];
         return r;
     };
 
