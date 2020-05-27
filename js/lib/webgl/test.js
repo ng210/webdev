@@ -6,7 +6,6 @@
     var _vbo = null;
     var _ibo = null;
 
-    var _timer = null;
     var _update = null;
     var _render = null;
     var _lastTick = 0;
@@ -43,7 +42,6 @@
     }
 
     function animate() {
-        clearTimeout(_timer);
         _frames++;
         _elapsedTime = new Date().getTime() - _startTime;
         if (_frames % 20 == 0) {
@@ -55,7 +53,7 @@
         _render(dt);
         _lastTick = t;
         
-        _timer = setTimeout(animate, 40);
+        requestAnimationFrame(animate);
     }
 
     function start(update, render, shader) {
@@ -69,7 +67,7 @@
         };
         _lastTick = new Date().getTime();
         _startTime = _lastTick;
-        animate();
+        requestAnimationFrame(animate);
     }
 
     function setup(count) {
