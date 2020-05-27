@@ -164,6 +164,10 @@
     };
 
     M44.perspective = function(fov, aspect, near, far, r44, o) {
+        // f/a,   0,   0,            0,
+        //   0,   f,   0,            0,
+        //   0,   0,   (n+f)/(n-f), -1,
+        //   0,   0,   2*n*f/(n-f),  0
         o = o || 0;
         r44 = M44.identity(r44, o);
         var f = Math.tan(0.5 * (Math.PI - fov));
@@ -174,6 +178,7 @@
         r44[o+11] = -1;
         r44[o+14] = 2 * near * far / d;
         r44[o+15] = 0;
+        return r44;
     };
 
     public(M44, 'M44');
