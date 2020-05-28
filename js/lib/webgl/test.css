@@ -2,8 +2,40 @@ body {
     background-color: #182630;
 }
 
+#controls {
+    position: absolute;
+    width: 7em;
+    background: silver;
+    opacity: 0.5;
+    font-family: sans-serif;
+    font-weight: bold;
+}
+
+th {
+    background-color: gray;
+    border-bottom: lightgray 3px groove;
+}
+
+#fps {
+    width: 2em;
+}
+
+#count {
+    font-size:12pt;
+    padding: 0px;
+    width: 2em;
+}
+
+#start {
+    width: 5em;
+    height: 1.5em;
+    font-size: 12pt;
+    border-width: 2px;
+}
+
 canvas {
     position:absolute;
+    background-color: #101820;
     left:0px; top:0px; z-index:-1;
-    /*width:50vw; height:50vh;*/
+    width:100vw; height:100vh;
 }
