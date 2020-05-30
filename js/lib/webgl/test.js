@@ -14,33 +14,35 @@
     var _elapsedTime = 0;
 
     var _instances = [];
-    var BOX = { min: new V3(-20), max: new V3(20) };
 
-    var _controls = null;
+    var _size = new V3();
+    var _world = new V3(100, 100, 500);
+    var BOX = { min: new V3(), max: new V3() };
+
+    var _controls = {
+        fps: { value: 0, control: null },
+        count: { value: 100, control: null },
+        mode: { value: false, control: null },
+        start: { value: true, control: null }
+    };
+
     var _controlsElem = null;
+
+    var _projection = null;
 
     function Instance() {
         this.time = 0;
-        this.position = new V3(0.0);
-        var arg1 = 2*Math.PI*Math.random();
-        var arg2 = 2*Math.PI*Math.random();
-        var length = 10*(0.6*Math.random() + 0.4);
-        this.velocity = new V3(
-            Math.cos(arg1),
-            Math.sin(arg1),
-            Math.cos(arg1)*Math.sin(arg2)
-        ).scale(length);
-        this.rotation = new V3();
+        this.velocity = V3.fromPolar(2*Math.PI*Math.random(), 2*Math.PI*Math.random(), 20*(0.4*Math.random() + 0.6));
+        this.position = new V3(0, 0, -1000).add(this.velocity).scale(0.1);
+        this.rotation = new V3(0, 0, 0);
         this.scale = new V3();
         for (var i=0; i<3; i++) {
             var r = Math.random();
             this.rotation[i] = 20*(r < 0.5 ? r-1 : r);
-            this.scale[i] = 1.0 + 0.1*Math.random();
+            this.scale[i] = 1.0;    //*(0.6 + 0.4*Math.random());
         }
-        
         this.color = new Float32Array([Math.random(), Math.random(), Math.random(), 1.0]);
         this.matrix = new Float32Array(16);
-
     }
 
     Instance.prototype.setMode = function setMode(is3D) {
@@ -55,70 +57,84 @@
 
     Instance.prototype.update2D = function update2D(dt) {
         this.time += dt;
-        // this.position.add([dt*this.velocity.x, dt*this.velocity.y, 0]);
-        // // adjustPosition
-        // var min = this.position.diff(BOX.min);
-        // var max = this.position.diff(BOX.max);
-        // if (min.x < 0) {
-        //     this.velocity.x = -this.velocity.x;
-        // } else if (max.x > 0) {
-        //     this.velocity.x = -this.velocity.x;
+        this.position.add(this.velocity.prodC(dt));
+        // adjustPosition
+        var min = this.position.diff(BOX.min);
+        var max = this.position.diff(BOX.max);
+        if (min.x < 0) {
+            this.velocity.x = -this.velocity.x;
+            this.position.x = BOX.min.x;
+        } else if (max.x > 0) {
+            this.velocity.x = -this.velocity.x;
+            this.position.x = BOX.max.x;
+        }
+        if (min.y < 0) {
+            this.velocity.y = -this.velocity.y;
+            this.position.y = BOX.min.y;
+        } else if (max.y > 0) {
+            this.velocity.y = -this.velocity.y;
+            this.position.y = BOX.max.y;
+        }
+        // if (min.z < 0) {
+        //     this.velocity.z = -this.velocity.z;
+        //     this.position.z = BOX.min.z;
+        // } else if (max.z > 0) {
+        //     this.velocity.z = -this.velocity.z;
+        //     this.position.z = BOX.max.z;
         // }
-        // if (min.y < 0) {
-        //     this.velocity.y = -this.velocity.y;
-        // } else if (max.y > 0) {
-        //     this.velocity.y = -this.velocity.y;
-        // }
 
-        // this.scale.x = 1.0 + 0.01*Math.cos(this.rotation.x + 10*this.time);
-        // this.scale.y = 1.0 + 0.01*Math.sin(this.rotation.y + 11*this.time);
-
-        var matrix = M44.projection(2*_size.x, 2*_size.y, 2*_size.z);
-        M44.identity(this.matrix);
-
-        var pos = this.position.prod(_size).add(_size);
-        console.log(pos);
-
-        matrix = matrix.mul(M44.translate(pos), this.matrix);
-        //// matrix = matrix.mul(M44.scale(this.scale));
-        // matrix = matrix.mul(M44.rotateZ(this.rotation.z*this.time));
-        // var center = [-5, -5, -5];
-        // matrix.mul(M44.translate(center), this.matrix);
+        var matrix = _projection.mul(M44.translate(this.position));
+        matrix = matrix.mul(M44.scale(this.scale));
+        matrix = matrix.mul(M44.rotateZ(this.rotation.z*this.time));
+        var center = [-0.5, -0.5, -0.5];
+        matrix.mul(M44.translate(center), this.matrix);
 
         this.rotation.scale(0.998);
-        this.velocity.scale(0.9998);
+        this.velocity.scale(0.998);
     };
 
     Instance.prototype.update3D = function update3D(dt) {
         this.time += dt;
         this.position.add(this.velocity.prodC(dt));
-        //this.velocity.scale(0.998);
-        this.adjustPosition();
-        // this.scale.x = 1.0 + 0.01*Math.cos(this.rotation.x + 10*this.time);
-        // this.scale.y = 1.0 + 0.01*Math.sin(this.rotation.y + 11*this.time);
-        // this.scale.z = 1.0 + 0.01*Math.sin(this.rotation.z + 13*this.time);
-
-        var matrix = null;
-        var pos = null;
-        if (0) {
-            matrix = M44.projection(gl.canvas.width, gl.canvas.height, _size.z);
-            pos = this.position;
-        } else {
-            var fov = Math.PI*60/180;
-            var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-            var zNear = 1;
-            var zFar = _size.z;
-            matrix = M44.perspective(fov, aspect, zNear, zFar);
-            pos = [this.position.x-0.5*_size.x, this.position.y-0.5*_size.y, -this.position.z];
+        // adjustPosition
+        var min = this.position.diff(BOX.min);
+        var max = this.position.diff(BOX.max);
+        if (min.x < 0) {
+            this.velocity.x = -this.velocity.x;
+            this.position.x = BOX.min.x;
+        } else if (max.x > 0) {
+            this.velocity.x = -this.velocity.x;
+            this.position.x = BOX.max.x;
         }
-        var center = [-5, -5, -5];
-        matrix = matrix.mul(M44.translate(pos));
-        //matrix = matrix.mul(M44.scale(this.scale));
+        if (min.y < 0) {
+            this.velocity.y = -this.velocity.y;
+            this.position.y = BOX.min.y;
+        } else if (max.y > 0) {
+            this.velocity.y = -this.velocity.y;
+            this.position.y = BOX.max.y;
+        }
+        if (min.z > 0) {
+            this.velocity.z = -this.velocity.z;
+            this.position.z = BOX.min.z;
+        } else if (max.z < 0) {
+            this.velocity.z = -this.velocity.z;
+            this.position.z = BOX.max.z;
+        }
+
+        var fov = Math.PI*72/180;
+        var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+        var zNear = 1;
+        var zFar = -_world.z;
+        var matrix = M44.perspective(fov, aspect, zNear, zFar).mul(M44.translate(this.position));
         matrix = matrix.mul(M44.rotateX(this.rotation.x*this.time));
         matrix = matrix.mul(M44.rotateY(this.rotation.y*this.time));
-        //matrix = matrix.mul(M44.rotateZ(this.rotation.z*this.time));
-        this.rotation.scale(0.998);
+        matrix = matrix.mul(M44.rotateZ(this.rotation.z*this.time));
+        //matrix = matrix.mul(M44.scale(this.scale));
+        var center = [-0.5, -0.5, -0.5];
         matrix.mul(M44.translate(center), this.matrix);
+
+        this.rotation.scale(0.998);
+        this.velocity.scale(0.998);
     };
 
     Instance.prototype.render2D = function render2D() {
@@ -126,7 +142,7 @@
         _program.updateUniform('u_color');
         _program.uniforms.u_matrix.value = this.matrix;
         _program.updateUniform('u_matrix');
-        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
     };
 
     Instance.prototype.render3D = function render3D() {
@@ -134,7 +150,7 @@
         _program.updateUniform('u_color');
         _program.uniforms.u_matrix.value = this.matrix;
         _program.updateUniform('u_matrix');
-        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_BYTE, 0);
     };
 
     // function setGeometry2D() {
@@ -153,7 +169,7 @@
         _vbo = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, _vbo);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-        var indices = new Uint16Array([0,2,3, 0,3,1, 1,3,7, 1,7,5, 5,7,6, 5,6,4, 4,6,2, 4,2,0, 2,6,7, 2,7,3, 4,0,1, 4,1,5]);
+        var indices = new Uint8Array([0,3,2, 0,1,3, 5,6,7, 5,4,6, 1,7,3, 1,5,7, 4,2,6, 4,0,2, 2,7,6, 2,3,7, 4,1,0, 4,5,1]);
         _ibo = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, _ibo);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
@@ -179,6 +195,8 @@
         gl.clearColor(0.02, 0.1, 0.2, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.enable(gl.DEPTH_TEST);
+        gl.frontFace(gl.CCW);
+        gl.cullFace(gl.BACK);
         gl.enable(gl.CULL_FACE);
         webGL.useProgram(_program);
         for (var i=0; i<_controls.count.value; i++) {
@@ -257,13 +275,6 @@
     }
 
     function createUI() {
-        _controls = {
-            fps: { value: 0, control: null },
-            count: { value: 1, control: null },
-            mode: { value: false, control: null },
-            start: { value: false, control: null }
-        };
-
         _controlsElem = document.createElement('div');
         _controlsElem.id = "controls";
         _controlsElem.innerHTML =
@@ -282,6 +293,9 @@
         _controls.count.control.onchange = setCount;
         _controls.mode.control.onclick = setMode;
         _controls.start.control.onclick = startStop;
+        if (_controls.start.value == true) {
+            start();
+        }
     }
 
     function setup() {
@@ -312,8 +326,19 @@
     }
 
     function onResize() {
-        _size = new V3(canvas.width, canvas.height, 1000).scale(0.5);
+        _size.set([canvas.width, canvas.height, 200]).scale(0.5);
         _controlsElem.style.left = (window.innerWidth - _controlsElem.clientWidth - 10) + 'px';
+        var aspect = _size.x/_size.y;
+        _projection = new M44([
+            1/_world.x, 0.0, 0.0, 0.0,
+            0.0, aspect/_world.y, 0.0, 0.0,
+            0, 0, 1/_world.z, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        ]);
+        BOX.min.set([-_world.x, -_world.y/aspect, -10]);
+        BOX.max.set([_world.x, _world.y/aspect, -210]);
+        console.log(BOX.min)
+        console.log(BOX.max)
     }
 
     function setCount(e) {
@@ -334,14 +359,14 @@
     function setMode() {
         var mode = this.checked != undefined ? this.checked : _controls.mode.value;
         _controls.mode.value = mode;
-        for (var i=0; i<count; i++) {
-            _instances.setMode(mode);
+        for (var i=0; i<_controls.count.value; i++) {
+            _instances[i].setMode(mode);
         }
         _program = mode ? _programs['3D'] : _programs['2D'];
         Dbg.prln(`Mode set to ${mode ? '3D' : '2D'}.`);
     }
 
-    function startStop(e) {
+    function startStop() {
         if (_controls.start.value) {
             this.innerHTML = 'Start';
             _controls.start.value = false;

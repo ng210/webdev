@@ -25,6 +25,10 @@
         }
     );
 
+    V2.fromPolar = function fromPolar(angle, length) {
+        return new V2(Math.cos(angle), Math.sin(angle)).scale(length);
+    }
+
     // return this += v
     V2.prototype.add = function (v) {
         this[0] += v[0];

@@ -28,6 +28,14 @@
             len2: { get: function() { return this[0]*this[0] + this[1]*this[1] + this[2]*this[2]; } }
         }
     );
+    V3.fromPolar = function fromPolar(polar, azimuth, length) {
+        r = length*Math.sin(polar);
+        return new V3(
+            r*Math.cos(azimuth),
+            length*Math.cos(polar),
+            r*Math.sin(azimuth)
+        );
+    }
 
     // return this += v
     V3.prototype.add = function (v) {
