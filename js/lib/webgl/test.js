@@ -1,7 +1,7 @@
 (function() {
     include('math/v2.js');
     include('math/v3.js');
-    include('math/m44.js');
+    include('math/quaternion.js');
     include('webgl/webgl.js');
 
     var _vbo = null;
@@ -16,33 +16,40 @@
     var _instances = [];
 
     var _size = new V3();
-    var _world = new V3(100, 100, 500);
+    var _world = new V3(500, 500, 1000);
     var BOX = { min: new V3(), max: new V3() };
 
     var _controls = {
         fps: { value: 0, control: null },
-        count: { value: 100, control: null },
-        mode: { value: false, control: null },
+        count: { value: 300, control: null },
+        mode: { value: true, control: null },
         start: { value: true, control: null }
     };
 
-    var _controlsElem = null;
+    var _viewProjection2D = new Float32Array(16);
+    var _viewProjection3D = new Float32Array(16);
 
-    var _projection = null;
+    var _controlsElem = null;
 
     function Instance() {
         this.time = 0;
         this.velocity = V3.fromPolar(2*Math.PI*Math.random(), 2*Math.PI*Math.random(), 20*(0.4*Math.random() + 0.6));
-        this.position = new V3(0, 0, -1000).add(this.velocity).scale(0.1);
-        this.rotation = new V3(0, 0, 0);
-        this.scale = new V3();
+        this.position = new V3(0, 0, -450).add(this.velocity.prodC(0.1));
+        this.scale = new V3(Math.random()+0.5);
+        var rot = [0, 0, 0];
         for (var i=0; i<3; i++) {
-            var r = Math.random();
-            this.rotation[i] = 20*(r < 0.5 ? r-1 : r);
-            this.scale[i] = 1.0;    //*(0.6 + 0.4*Math.random());
+            var r = 0.3*(Math.random() - 0.5);
+            rot[i] = r < 0 ? -1-r : 1-r;
         }
+        this.rot = [
+            Quaternion.fromAxisAngle([1, 0, 0, 0], 2*Math.PI*rot[0]),
+            Quaternion.fromAxisAngle([0, 1, 0, 0], 2*Math.PI*rot[1]),
+            Quaternion.fromAxisAngle([0, 0, 1, 0], 2*Math.PI*rot[2]),
+            new Quaternion(0, 0, 0, 1)
+        ];
         this.color = new Float32Array([Math.random(), Math.random(), Math.random(), 1.0]);
-        this.matrix = new Float32Array(16);
+        
+        this.model = new Float32Array(16);
     }
 
     Instance.prototype.setMode = function setMode(is3D) {
@@ -75,22 +82,16 @@
             this.velocity.y = -this.velocity.y;
             this.position.y = BOX.max.y;
         }
-        // if (min.z < 0) {
-        //     this.velocity.z = -this.velocity.z;
-        //     this.position.z = BOX.min.z;
-        // } else if (max.z > 0) {
-        //     this.velocity.z = -this.velocity.z;
-        //     this.position.z = BOX.max.z;
-        // }
 
-        var matrix = _projection.mul(M44.translate(this.position));
-        matrix = matrix.mul(M44.scale(this.scale));
-        matrix = matrix.mul(M44.rotateZ(this.rotation.z*this.time));
-        var center = [-0.5, -0.5, -0.5];
-        matrix.mul(M44.translate(center), this.matrix);
+        var dRot = this.rot[2].prodC(dt);
+        dRot[3] /= dt;
+        this.rot[3] = this.rot[3].mul(dRot);
+        M44.translate(this.position)
+            .mul(M44.scale(this.scale))
+            .mul(this.rot[3].norm().toMatrix(), this.model);
 
-        this.rotation.scale(0.998);
-        this.velocity.scale(0.998);
+        this.rot[2].w *= 1.001;
+        //this.velocity.scale(0.998);
     };
 
     Instance.prototype.update3D = function update3D(dt) {
@@ -121,58 +122,85 @@
             this.position.z = BOX.max.z;
         }
 
-        var fov = Math.PI*72/180;
-        var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-        var zNear = 1;
-        var zFar = -_world.z;
-        var matrix = M44.perspective(fov, aspect, zNear, zFar).mul(M44.translate(this.position));
-        matrix = matrix.mul(M44.rotateX(this.rotation.x*this.time));
-        matrix = matrix.mul(M44.rotateY(this.rotation.y*this.time));
-        matrix = matrix.mul(M44.rotateZ(this.rotation.z*this.time));
-        //matrix = matrix.mul(M44.scale(this.scale));
-        var center = [-0.5, -0.5, -0.5];
-        matrix.mul(M44.translate(center), this.matrix);
+        var matrix = M44.translate(this.position).mul(M44.scale(this.scale));
+        var dRot = this.rot[0].mul(this.rot[1]).mul(this.rot[2]);
+        dRot[3] /= dt;
+        this.rot[3] = this.rot[3].mul(dRot).norm();
+        matrix.mul(this.rot[3].toMatrix(), this.model);
 
-        this.rotation.scale(0.998);
-        this.velocity.scale(0.998);
+        this.rot[0].w *= 1.001;
+        this.rot[1].w *= 1.001;
+        this.rot[2].w *= 1.001;
+        //this.velocity.scale(0.998);
     };
 
     Instance.prototype.render2D = function render2D() {
         _program.uniforms.u_color.value = this.color;
         _program.updateUniform('u_color');
-        _program.uniforms.u_matrix.value = this.matrix;
-        _program.updateUniform('u_matrix');
+        _program.uniforms.u_model.value = this.model;
+        _program.updateUniform('u_model');
         gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
     };
 
     Instance.prototype.render3D = function render3D() {
         _program.uniforms.u_color.value = this.color;
         _program.updateUniform('u_color');
-        _program.uniforms.u_matrix.value = this.matrix;
-        _program.updateUniform('u_matrix');
+        _program.uniforms.u_translationScale.value = this.model;
+        _program.updateUniform('u_translationScale');
+        // _program.uniforms.u_rotation.value = this.rotation;
+        // _program.updateUniform('u_rotation');
         gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_BYTE, 0);
     };
 
-    // function setGeometry2D() {
-    //     var vertices = new Float32Array([0, 0, 0,  1, 0, 0,  0, 1, 0,  1, 1, 0]);
-    //     _vbo = gl.createBuffer();
-    //     gl.bindBuffer(gl.ARRAY_BUFFER, _vbo);
-    //     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-    //     var indices = new Uint16Array([0, 2, 3,  0, 3, 1]);
-    //     _ibo = gl.createBuffer();
-    //     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, _ibo);
-    //     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
-    // }
-
     function setGeometry3D() {
-        var vertices = new Float32Array([0, 0, 0,  1, 0, 0,  0, 1, 0,  1, 1, 0,  0, 0, 1,  1, 0, 1,  0, 1, 1,  1, 1, 1]);
+        var vb = new Float32Array(6*4*2*3);
+        var p = new V4(-1, -1, 1, 0);
+        var n = new V4(0, 0, 1, 0);
+        var rotX = Quaternion.fromAxisAngle([1, 0, 0], Math.PI/2);
+        var rotY = Quaternion.fromAxisAngle([0, 1, 0], Math.PI/2);
+        var rotZ = Quaternion.fromAxisAngle([0, 0, 1], Math.PI/2);
+        var rot = new Quaternion([0, 0, 0, 1]);
+        var ix = 0;
+        for (var j=0; j<6; j++) {
+            for (var i=0; i<4; i++) {
+                p.x = Math.round(p.x); p.y = Math.round(p.y); p.z = Math.round(p.z);
+                vb[ix++] = p.x; vb[ix++] = p.y; vb[ix++] = p.z;
+                vb[ix++] = n.x; vb[ix++] = n.y; vb[ix++] = n.z;
+                rot = rot.mul(rotZ);
+                p = rot.rotate([-1,-1,1,0]);
+            }
+            if (j % 2 == 1) {
+                rot = rot.mul(rotX);
+            } else {
+                rot = rot.mul(rotY);
+            }
+            p = rot.rotate([-1,-1,1,0]);
+            n = rot.rotate([0,0,1,0]);
+            n.x = Math.round(n.x); n.y = Math.round(n.y); n.z = Math.round(n.z);
+        }
         _vbo = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, _vbo);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-        var indices = new Uint8Array([0,3,2, 0,1,3, 5,6,7, 5,4,6, 1,7,3, 1,5,7, 4,2,6, 4,0,2, 2,7,6, 2,3,7, 4,1,0, 4,5,1]);
+        gl.bufferData(gl.ARRAY_BUFFER, vb, gl.STATIC_DRAW);
         _ibo = gl.createBuffer();
+        var ib = new Uint8Array(36);
+        ix = 0;
+        for (var i=0; i<6; i++) {
+            ib[ix++] = i*4; ib[ix++] = i*4+1; ib[ix++] = i*4+2;
+            ib[ix++] = i*4; ib[ix++] = i*4+2; ib[ix++] = i*4+3;
+        }
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, _ibo);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, ib, gl.STATIC_DRAW);
+
+        var ix = 0;
+        for (var i=0; i<6; i++) {
+            console.log(`Side #${i}`);
+            for (var j=0; j<6; j++) {
+                var ix = ib[6*i+j];
+                var p = new V3(vb, 6*ix);
+                var n = new V3(vb, 6*ix+3);
+                console.log(` ${ix}: p=${p.toString()}, n=${n}`);
+            }
+        }
     }
 
     function run() {
@@ -199,6 +227,18 @@
         gl.cullFace(gl.BACK);
         gl.enable(gl.CULL_FACE);
         webGL.useProgram(_program);
+        //update projection*view
+        if (_controls.mode.value) {
+            _program.uniforms.u_viewProjection.value = _viewProjection3D;
+            // _program.uniforms.u_lightPos.value[0] = 100;
+            // _program.uniforms.u_lightPos.value[1] = Math.sin(0.03*_frames)*_world.y;
+            // _program.uniforms.u_lightPos.value[2] = Math.cos(0.03*_frames)*_world.z;
+            _program.updateUniform('u_lightPos');
+        } else {
+            _program.uniforms.u_viewProjection.value = _viewProjection2D;    
+        }
+        _program.updateUniform('u_viewProjection');
+
         for (var i=0; i<_controls.count.value; i++) {
             _instances[i].render();
         }
@@ -222,56 +262,90 @@
         var shaders = {};
         shaders[gl.FRAGMENT_SHADER] =
            `precision mediump float;
-            varying vec4 v_color;
+            uniform vec4 u_color;
             void main() {
-                gl_FragColor = v_color;
+                gl_FragColor = u_color;
             }`;
         shaders[gl.VERTEX_SHADER] = 
            `attribute vec4 a_position;
-            uniform vec4 u_color;
-            uniform mat4 u_matrix;
-            varying vec4 v_color;
+
+            uniform mat4 u_viewProjection;
+            uniform mat4 u_model;
 
             void main() {
-                gl_Position = u_matrix*a_position;
-                v_color = u_color;
+                gl_Position = u_viewProjection*u_model*a_position;
             }`;
 
         _programs['2D'] = webGL.createProgram(shaders, {
-            a_position: { type:gl.FLOAT, size:3 }
+            a_position: { type:gl.FLOAT, size:3 },
+            a_normal: { type:gl.FLOAT, size:3 }
         }, {
-            u_matrix: { type: webGL.FLOAT4x4M },
+            u_viewProjection: { type: webGL.FLOAT4x4M },
+            u_model: { type: webGL.FLOAT4x4M },
             u_color: { type: webGL.FLOAT4V }
         });
     
         shaders[gl.VERTEX_SHADER] = 
            `attribute vec4 a_position;
+            attribute vec4 a_normal;
+
             uniform vec4 u_color;
-            uniform mat4 u_matrix;
-            varying vec4 v_color;
-            varying vec4 v_pos;
+            uniform mat4 u_viewProjection;
+            uniform mat4 u_translationScale;
+            uniform mat4 u_rotation;
+
+            varying vec3 v_pos;
+            varying vec3 v_normal;
+            varying vec3 v_color;            
+
+            mat3 extract3x3(mat4 m) {
+                return mat3(m[0].xyz, m[1].xyz, m[2].xyz);
+            }
 
             void main() {
-                gl_Position = u_matrix*a_position;
-                v_color = u_color;
-                v_pos = gl_Position;
+                // mat4 model = u_translationScale*u_rotation;
+                // vec4 worldPos = model*a_position;
+                // v_normal = (u_rotation*a_normal).xyz;
+                vec4 worldPos = u_translationScale*a_position;
+                v_normal = extract3x3(u_translationScale)*a_normal.xyz;
+                v_pos = worldPos.xyz;
+                gl_Position = u_viewProjection*worldPos;
+                v_color = u_color.rgb;
             }`;
 
         shaders[gl.FRAGMENT_SHADER] =
            `precision mediump float;
-            varying vec4 v_color;
-            varying vec4 v_pos;
+
+            uniform vec3 u_lightPos;
+
+            varying vec3 v_pos;
+            varying vec3 v_color;
+            varying vec3 v_normal;
+
             void main() {
-                float z = 1.0 - (v_pos.z - 150.0)/(500.0 - 150.0);
-                gl_FragColor = vec4(mix(vec3(0.02, 0.1, 0.2), v_color.rgb, z), 1.0);
+                vec3 ambient = vec3(0.1, 0.2, 0.4);
+                float z = 1.0 - (v_pos.z - 10.0)/1000.0;
+                vec3 norm = normalize(v_normal);
+                vec3 lightDir = normalize(u_lightPos - v_pos);
+                float diff = max(dot(norm, lightDir), 0.0);
+                vec3 diffuse = diff*vec3(1.0)*(1.0 - distance(u_lightPos, v_pos)/1000.0);
+                vec3 color = (ambient + diffuse)*v_color;
+                gl_FragColor = vec4(mix(vec3(0.02, 0.1, 0.2), color, z), 1.0);
             }`;
 
         _programs['3D'] = webGL.createProgram(shaders, {
-            a_position: { type:gl.FLOAT, size:3 }
+            a_position: { type:gl.FLOAT, size:3 },
+            a_normal: { type:gl.FLOAT, size:3 }
         }, {
-            u_matrix: { type: webGL.FLOAT4x4M },
-            u_color: { type: webGL.FLOAT4V }
+            u_viewProjection: { type: webGL.FLOAT4x4M },
+            u_translationScale: { type: webGL.FLOAT4x4M },
+            u_rotation: { type: webGL.FLOAT4x4M },
+            u_color: { type: webGL.FLOAT4V },
+            u_lightPos: { type: webGL.FLOAT3V }
         });
+        _programs['3D'].uniforms.u_lightPos.value = new Float32Array([0, 0, 1]);
+        _programs['3D'].uniforms.u_translationScale.value = new Float32Array(16);
+        _programs['3D'].uniforms.u_rotation.value = new Float32Array(16);
     }
 
     function createUI() {
@@ -306,6 +380,11 @@
         document.body.appendChild(canvas);
         window.gl = canvas.getContext('webgl2');
 
+        canvas.onmousemove = function(e) {
+            // _program.uniforms.u_lightPos.value[0] = _world.x*(2*e.clientX/gl.canvas.clientWidth - 1);
+            // _program.uniforms.u_lightPos.value[1] = -_world.y*(2*e.clientY/gl.canvas.clientHeight - 1);
+        };
+
         createUI();
 
         createShaders();
@@ -328,17 +407,24 @@
     function onResize() {
         _size.set([canvas.width, canvas.height, 200]).scale(0.5);
         _controlsElem.style.left = (window.innerWidth - _controlsElem.clientWidth - 10) + 'px';
-        var aspect = _size.x/_size.y;
-        _projection = new M44([
-            1/_world.x, 0.0, 0.0, 0.0,
-            0.0, aspect/_world.y, 0.0, 0.0,
-            0, 0, 1/_world.z, 0.0,
-            0.0, 0.0, 0.0, 1.0
-        ]);
+        //var aspect = _size.x/_size.y;
+        // _viewProjection2D = new M44([
+        //     1/_world.x, 0.0, 0.0, 0.0,
+        //     0.0, aspect/_world.y, 0.0, 0.0,
+        //     0, 0, 1/_world.z, 0.0,
+        //     0.0, 0.0, 0.0, 1.0
+        // ]);
+        M44.projection(_world.x, _size.y*_world.y/_size.x, _world.z, _viewProjection2D);
+
+        var fov = Math.PI*60/180;
+        var aspect = _size.x/_size.y;   //gl.canvas.clientWidth/gl.canvas.clientHeight;
+        var zNear = 1;
+        var zFar = 2000;    //_world.z;
+        M44.perspective(fov, aspect, zNear, zFar, _viewProjection3D);
+        //M44.perspective(_size.x, _size.x, zNear, zFar, _viewProjection3D);
+
         BOX.min.set([-_world.x, -_world.y/aspect, -10]);
-        BOX.max.set([_world.x, _world.y/aspect, -210]);
-        console.log(BOX.min)
-        console.log(BOX.max)
+        BOX.max.set([_world.x, _world.y/aspect, -_world.z]);
     }
 
     function setCount(e) {
