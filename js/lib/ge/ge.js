@@ -192,7 +192,7 @@
 	GE.Buffer.prototype = {
 	    get width() { return this.canvas.width; },
 	    get height() { return this.canvas.height; }
-        };
+	};
 	GE.Buffer.prototype.blit = function(target) {
 		target = target || GE.frontBuffer;
 		target.ctx.putImageData(this.imgData, 0, 0);
