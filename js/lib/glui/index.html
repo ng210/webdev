@@ -4,13 +4,38 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <link rel="stylesheet" type="text/css" href="base.css" >
         <script type="text/javascript" src="/js/lib/base/base.js"></script>
-        <script type="text/javascript" src="main.js"></script>
         <title>GLUI Test</title>
+        <script type="text/javascript">
+        include('base/dbg.js');
+        include('glui/glui-lib.js');
+
+        var App = {
+            onmousedown: function() {
+                ;
+            }
+        };
+
+        async function onpageload(e) {
+            if (e.length) {
+                alert(e.join('\n'));
+            }
+            Dbg.init('con');
+            Dbg.prln('glUI test');
+            await glui.buildUI(App);
+            var canvas = document.getElementById('cvs');
+            canvas.width = window.innerWidth/2;
+            canvas.height = window.innerHeight/2;
+            glui.render(canvas);
+        }
+        </script>
     </head>
     <body>
-        <div id="content">
-            <h1>GLUI Test</h1>
-        </div>
+        <gl-label id="title" style="top:10px;left:10px;width:10em;align:center middle;height:2.0em;border:#3e60c0 2px outset;background:#6080e0">glUI Test</gl-label>
+        <gl-label id="text1" style="top:40px;left:10px;width:10em;align:left top;height:2.0em;border:#40e0ff 6px solid;background:#6080e0">Text1</gl-label>
+        <gl-label id="text2" style="top:70px;left:10px;width:10em;align:right bottom;height:2.0em;border:#3e60c0 3px inset;background:#6080e0">Text2</gl-label>
+        <gl-label id="titl3" style="top:10px;left:100px;width:20em;align:right middle;height:2.0em;border:#3e60c0 1px inset;background:#6080e0">Text3</gl-label>
+        <gl-label id="text4" style="top:40px;left:100px;width:20em;align:center top;height:2.0em;border:#a0e0b0 2px solid;background:#6080e0">Text4</gl-label>
+        <gl-label id="text5" style="top:70px;left:100px;width:20em;align:center bottom;height:2.0em;border:#3e60c0 1px outset;background:#6080e0">Text5</gl-label>
         <canvas id="cvs"></canvas>
         <div id="con"></div>
     </body>

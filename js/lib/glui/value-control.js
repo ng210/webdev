@@ -9,7 +9,7 @@ include('glui/control.js');
 
     ValueControl.prototype.getHandlers = function getHandlers() {
         var handlers = ValueControl.base.getHandlers.call(this);
-        handlers.change = null;
+        handlers.push('change');
         return handlers;
     };
     ValueControl.prototype.getTemplate = function getTemplate() {
@@ -30,6 +30,10 @@ include('glui/control.js');
 
         return template;
     };
+	ValueControl.prototype.fromNode = function fromNode(node) {
+		ValueControl.base.fromNode.call(this, node);
+		this.setValue(node.innerText);
+	}
 
 	ValueControl.prototype.getDataType = function() {
 		/**************************************
@@ -91,14 +95,14 @@ include('glui/control.js');
 	};
 
 	ValueControl.prototype.applyTemplate = function(tmpl) {
-        ValueControl.base.applyTemplate.call(this, tmpl);
+        var template = ValueControl.base.applyTemplate.call(this, tmpl);
         this.parse = this.dataType == glui.ValueControl.DataTypes.Float ? parseFloat : parseInt;
         this.validations = {};
         this.defaultValue = this.template.default || 0;
         if (this.isNumeric && this.dataType != Ui.Control.DataTypes.Bool) {
-            this.min = this.parse(this.template.min); if (isNaN(this.min)) this.min = 0;
-            this.max = this.parse(this.template.max); if (isNaN(this.max)) this.max = 100;
-            this.step = this.parse(this.template.step); if (isNaN(this.step)) this.step = 1;
+            this.min = this.parse(template.min); if (isNaN(this.min)) this.min = 0;
+            this.max = this.parse(template.max); if (isNaN(this.max)) this.max = 100;
+            this.step = this.parse(template.step); if (isNaN(this.step)) this.step = 1;
             // default min/max validations
             this.addValidation('value', x => x < this.min, 'Value is less than minimum!', x => this.min);
             this.addValidation('value', x => x > this.max, 'Value is greater than maximum!', x => this.max);
@@ -109,9 +113,10 @@ include('glui/control.js');
         this.fromSource = x => x;
         this.toSource = x => x;
         this.scale = 1.0;
-        this.value = this.template.value;
-        this.decimalDigits = this.template['decimal-digits'];
-        this.dataBind();    
+        this.value = template.value;
+        this.decimalDigits = template['decimal-digits'];
+		this.dataBind();
+		return template;
     };
 
 	ValueControl.prototype.dataBind = function(source, field) {

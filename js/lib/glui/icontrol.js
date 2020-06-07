@@ -1,3 +1,4 @@
+include('glui.js');
 (function() {
 
     function IControl() {
@@ -17,9 +18,9 @@
     IControl.prototype.addHandler = function addHandler(event, handler) {
         throw new Error('Not implemented!');
     };
-    IControl.prototype.render = function render(gl) {
+    IControl.prototype.render = function render(ctx, is2d) {
         throw new Error('Not implemented!');
     };
 
-    public({IControl:IControl}, 'glui');
+    public(IControl, 'IControl', glui);
 })();

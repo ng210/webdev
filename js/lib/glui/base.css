@@ -16,14 +16,15 @@ h1 {
 	color: #80a0ff;
 }
 
-#cvs {
-	position: absolute;
-	left: 0px; top: 0px; z-index: 0;
-	background-color:black
+canvas {
+	position: absolute; left: 0px; top: 0px;
+	width: 100vw; height: 100vh;
+	background-color: #101820;
 }
 
 #con {
 	position:absolute;
+	top:75vh;
 	font-size:10pt;
 	font-family:Consolas;
 	text-align:left;
