@@ -1,4 +1,4 @@
-include('glui.js');
+include('glui/glui.js');
 (function() {
 
     function IControl() {

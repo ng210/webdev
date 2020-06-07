@@ -118,7 +118,7 @@
         else if (value.endsWith('px')) res = parseFloat(value);
         else if (value.endsWith('%')) res = this.control.parent.width * parseFloat(value);
         else if (value.endsWith('em')) res = this.font.em * parseFloat(value);
-        return res;
+        return Math.round(res);
     };
     Draw2d.prototype.convertToPixelV = function convertToPixel(value) {
         var res = 0;
@@ -126,7 +126,7 @@
         else if (value.endsWith('px')) res = parseFloat(value);
         else if (value.endsWith('%')) res = this.control.parent.height * parseFloat(value);
         else if (value.endsWith('em')) res = this.font.size * parseFloat(value);
-        return res;
+        return Math.round(res);
     };
     Draw2d.prototype.drawBorder = function drawBorder(x, y, w, h) {
         var ctx = this.context;

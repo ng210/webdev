@@ -1,4 +1,4 @@
-include('glui/value-control.js');
+include('value-control.js');
 
 (function() {
     function Label(id, template, parent) {

@@ -1,5 +1,3 @@
-include('ge.js');
-
 (function() {
 
     function BinaryNode(left, top, width, height) {
@@ -61,5 +59,5 @@ include('ge.js');
         // remove from quad
     };
 
-    public(BinaryTree, 'BinaryTree', GE);
+    public(BinaryTree, 'BinaryTree');
 })();
