@@ -23,7 +23,7 @@
     }
     M44.prototype = new Float32Array(16);
 
-    M44.prototype.mul = function(m44, r44, o) {
+    M44.prototype.mul = function mul(m44, r44, o) {
         r44 = r44 || new M44();
         o = o || 0;
         for (var aj=0; aj<4; aj++) {
@@ -35,9 +35,9 @@
             }
         }
         return r44;
-    }
+    };
 
-    M44.prototype.mulV = function(v4, r4, o) {
+    M44.prototype.mulV = function mulV(v4, r4, o) {
         var k = 0;
         r4 = r4 || new V4();
         o = o || 0;
@@ -49,15 +49,21 @@
         }
         return r4;
     };
-
-    M44.prototype.set = function(m44) {
+    M44.prototype.set = function set(m44) {
         for (var i=0; i<16; i++) {
             this[i] = m44[i];
         }
         return this;
     };
-
-    M44.identity = function(r44, o) {
+    M44.prototype.put = function put(r, o) {
+        o = o || 0;
+        for (var i=0; i<16; i++) {
+            r[o+i] = this[i];
+        }
+        return r;
+    }
+    
+    M44.identity = function identity(r44, o) {
         // 1, 0, 0, 0
         // 0, 1, 0, 0
         // 0, 0, 1, 0
@@ -74,7 +80,7 @@
         return r44;
     };
 
-    M44.translate = function(t, r44, o) {
+    M44.translate = function translate(t, r44, o) {
         //  1,  0,  0,  0
         //  0,  1,  0,  0
         //  0,  0,  1,  0
@@ -87,7 +93,7 @@
         return r44;
     };
      
-    M44.rotateX = function(rad, r44, o) {
+    M44.rotateX = function rotateX(rad, r44, o) {
         // 1,  0,  0,  0,
         // 0,  c,  s,  0,
         // 0, -s,  c,  0,
@@ -103,7 +109,7 @@
         return r44;
     };
      
-    M44.rotateY = function(rad, r44, o) {
+    M44.rotateY = function rotateY(rad, r44, o) {
         // c,  0, -s,  0,
         // 0,  1,  0,  0,
         // s,  0,  c,  0,
@@ -119,7 +125,7 @@
         return r44;
     };
      
-    M44.rotateZ = function(rad, r44, o) {
+    M44.rotateZ = function rotateZ(rad, r44, o) {
         //  c,  s,  0,  0,
         // -s,  c,  0,  0,
         //  0,  0,  1,  0,
@@ -135,7 +141,7 @@
         return r44;
     };
      
-    M44.scale = function(s, r44, o) {
+    M44.scale = function scale(s, r44, o) {
         // sx,  0,  0,  0,
         //  0, sy,  0,  0,
         //  0,  0, sz,  0,
@@ -144,33 +150,33 @@
         r44 = M44.identity(r44, o);
         r44[o+0] = s[0];
         r44[o+5] = s[1];
-        r44[o+9] = s[2];
+        r44[o+10] = s[2];
         return r44;
     };
 
-    M44.projection = function(width, height, depth, r44, o) {
+    M44.projection = function projection(width, height, depth, r44, o) {
         // 2/w,   0,   0,   0,
         //   0,-2/h,   0,   0,
         //   0,   0, 2/d,   0,
         //  -1,   1,   0,   1
         o = o || 0;
         r44 = M44.identity(r44, o);
-        r44[o+0] = 2/width;
-        r44[o+5] = -2/height;
-        r44[o+10] = 2/depth;
-        r44[o+12] = -1;
-        r44[o+13] = 1;
+        r44[o+0] = 1/width;
+        r44[o+5] = 1/height;
+        r44[o+10] = 1/depth;
+        r44[o+12] = 0;
+        r44[o+13] = 0;
         return r44;
     };
 
-    M44.perspective = function(fov, aspect, near, far, r44, o) {
+    M44.perspective = function perspective(fov, aspect, near, far, r44, o) {
         // f/a,   0,   0,            0,
         //   0,   f,   0,            0,
         //   0,   0,   (n+f)/(n-f), -1,
         //   0,   0,   2*n*f/(n-f),  0
         o = o || 0;
         r44 = M44.identity(r44, o);
-        var f = Math.tan(0.5 * (Math.PI - fov));
+        var f = Math.tan(0.5*Math.PI - 0.5*fov);
         var d = near - far;
         r44[o+0] = f / aspect;
         r44[o+5] = f;
@@ -182,5 +188,4 @@
     };
 
     public(M44, 'M44');
-
 })();
