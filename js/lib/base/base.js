@@ -364,6 +364,7 @@ Resource.LOADING = 'loading';
 Resource.LOADED = 'loading';
 Resource.COMPLETE = 'complete';
 Resource.ERROR = 'error';
+Resource.ALIAS = 'alias';
 
 Resource.searchPath = [];
 
@@ -616,11 +617,18 @@ async function include(path, parentPath) {
         searchPath = [parentPath, baseUrl.toString()];
         searchPath.push(...Resource.searchPath);
     }
+    var attempts = [];
     for (var i=0; i<searchPath.length; i++) {
         var url = searchPath[i] + '/' + path;
         mdl = await load(url);
         if (!mdl.error) {
+            for (var j=0; j<attempts.length; j++) {
+                attempts[j].status = Resource.ALIAS;
+                attempts[j].alias = mdl;
+            }
             break;
+        } else {
+            attempts.push(mdl);
         }
     }
     debug_('INCLUDED @' + mdl.toString()), 2;
@@ -649,13 +657,13 @@ Array.prototype.binSearch = function(item, cmp, min, max) {
 	return -max;
 };
 
-window.onload = e => poll(function() {
+window.onload = e => poll(async function() {
     var errors = [];
     for (var i in Resource.cache) {
         var res = Resource.cache[i];
         if (res.status == Resource.ERROR) {
             errors.push(res.error);
-        } else if (res.status != Resource.COMPLETE && res.status != Resource.ERROR && res.status != Module.RESOLVED) {
+        } else if (res.status != Resource.COMPLETE && res.status != Resource.ERROR && res.status != Module.RESOLVED && res.status != Resource.ALIAS) {
             return false;
         }
     }
