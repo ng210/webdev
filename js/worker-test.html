@@ -88,7 +88,7 @@ var _worker = null;
 var _con = null;
 
 async function onpageload() {
-    await include('/lib/base/dbg.js');
+    await include('base/dbg.js');
     Dbg.init('con');
     _worker = new MyWorker(appUrl+'/worker-test.js');
     var result = await _worker.getMessage('id', 0);
