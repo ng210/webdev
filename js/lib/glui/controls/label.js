@@ -1,28 +1,43 @@
 include('value-control.js');
+include('renderer2d.js');
 
 (function() {
+    function LabelRenderer2d(control, context) {
+        LabelRenderer2d.base.constructor.call(this, control, context);
+    }
+    extend(glui.Renderer2d, LabelRenderer2d);
+
+    LabelRenderer2d.prototype.renderControl = function renderControl() {
+        var value = this.control.getValue();
+        var lines = value ? value.split('\\n') : [];
+        var boxes = this.getTextBoundingBoxes(lines);
+        for (var i=0; i<lines.length; i++) {
+            this.drawText(lines[i], boxes[i][0]-1, boxes[i][1]-1, boxes[i][2], this.calculateColor(this.backgroundColor, 1.4));
+            this.drawText(lines[i], boxes[i][0]+1, boxes[i][1]+1, boxes[i][2], this.calculateColor(this.backgroundColor, 0.6));
+            this.drawText(lines[i], boxes[i][0], boxes[i][1], boxes[i][2], this.color);
+        }
+    };
+
+
     function Label(id, template, parent) {
         Label.base.constructor.call(this, id, template, parent);
+        //this.renderer3d = new LabelRenderer3d()
     }
     extend(glui.ValueControl, Label);
 
-    Label.prototype.render = function render(ctx, is2d) {
-        Label.base.render.call(this, ctx, is2d);
-        var draw = this.draw2d;
-        draw.context.save();
-        draw.drawRect(this.left, this.top, this.width, this.height, this.style.background);
-        draw.drawText(this.getValue(), this.left-1, this.top-1, this.width, this.height, glui.calculateColor(this.style.background, 1.4), this.style.align);
-        draw.drawText(this.getValue(), this.left+1, this.top+1, this.width, this.height, glui.calculateColor(this.style.background, 0.6), this.style.align);
-        draw.drawText(this.getValue(), this.left, this.top, this.width, this.height, this.style.color, this.style.align);
-
-        draw.drawBorder(this.left, this.top, this.width, this.height);
-
-        draw.context.restore();
+    Label.prototype.setRenderer = function(mode, context) {
+        if (mode == glui.Render2d) {
+            if (this.renderer2d == null) {
+                this.renderer2d = new LabelRenderer2d(this, context);
+            }
+            this.renderer = this.renderer2d;
+        } else if (mode == glui.Render3d) {
+            if (this.renderer3d == null) {
+                this.renderer3d = new LabelRenderer3d(this, context);
+            }
+            this.renderer = this.renderer3d;
+        }
     };
-
-    // Label.prototype.render3d = function render3d(gl) {
-
-    // };
 
     public(Label, 'Label', glui);
 })();

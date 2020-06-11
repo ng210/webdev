@@ -17,10 +17,11 @@ include('control.js');
 		template.min = 0;
 		template.max = 100;
 		template.step = 1;
-		template.numeric = null;
-		template.value = 0;
-		template['default'] = 0;
-        template['data-type'] = null;
+		template.numeric = false;
+		template.value = '';
+		template.blank = '';
+		template.default = '';
+        template['data-type'] = glui.ValueControl.DataTypes.None;
 		template['decimal-digits'] = -1;
         template['digits'] = 0;
         template['true-value'] = 0;
@@ -32,43 +33,18 @@ include('control.js');
     };
 	ValueControl.prototype.fromNode = function fromNode(node) {
 		ValueControl.base.fromNode.call(this, node);
-		this.setValue(node.innerText);
-	}
+		var value = node.getAttribute('value')  || node.innerText || this.defaultValue;
+		this.setValue(value);
+	};
 
 	ValueControl.prototype.getDataType = function() {
-		/**************************************
-		numeric = (true|false|null)
-		data-type = (string|int|bool|float|null)
-		 1. n=true,  d=string	=> n=false, d=string +warn
-		 2. n=true,  d=int		=> n=true,  d=int
-		 3. n=true,  d=float	=> n=true,  d=float
-		 4. n=true,  d=null		=> n=true,  d=int
-		 5. n=false, d=string	=> n=false, d=string
-		 6. n=false, d=int		=> n=true,  d=int    +warn
-		 7. n=false, d=float	=> n=true,  d=float  +warn
-		 8. n=false, d=null		=> n=false, d=string
-		 9. n=null,  d=string	=> n=false, d=string
-		10. n=null,  d=int		=> n=true,  d=int
-		11. n=null,  d=float	=> n=true,  d=float
-		12. n=null,  d=null		=> n=false, d=string
-		13. n=true,	 d=bool		=> n=true,	d=bool
-		14. n=false, d=bool		=> n=true,	d=bool	+warn
-		15. n=null,	 d=bool		=> n=true,	d=bool
-		***************************************/
-
-		//  1. n=true,  d=string	=> n=false, d=string +warn
-		//  2. n=false, d=string	=> n=false, d=string
-		//  3. n=false, d=null		=> n=false, d=string
-		//  4. n=null,  d=string	=> n=false, d=string
-		//  5. n=null,  d=null		=> n=false, d=string
-		var isNumeric = this.template.numeric;
-		var dataType = this.template['data-type'] || (isNumeric ? glui.ValueControl.DataTypes.Int : glui.ValueControl.DataTypes.String);
+		var dataType = this.template['data-type'] || (this.isNumeric ? glui.ValueControl.DataTypes.Int : glui.ValueControl.DataTypes.String);
 		switch (dataType) {
 			case glui.ValueControl.DataTypes.String:
-				this.isNumeric = false;
-				if (isNumeric === true) {
+				if (this.isNumeric === true) {
 					console.warn('Inconsistency between numeric=true and data-type=string');
 				}
+				this.isNumeric = false;
 				break;
 			case glui.ValueControl.DataTypes.Bool:
 				break;
@@ -83,10 +59,12 @@ include('control.js');
 				//  3. n=true,	d=false		=> n=true,	d=false
 				//     n=false,	d=false		=> n=true,	d=false	+warn
 				//     n=null,	d=false		=> n=true,	d=false
-				this.isNumeric = true;
-				if (isNumeric === false) {
+				if (this.isNumeric === false) {
 					console.warn(`Inconsistency between numeric=false and data-type=${dataType}`);
 				}
+				this.isNumeric = true;
+				break;
+			case glui.ValueControl.DataTypes.None:
 				break;
 			default:
 				throw new Error(`Invalid data type ${dataType}`);
@@ -98,8 +76,11 @@ include('control.js');
         var template = ValueControl.base.applyTemplate.call(this, tmpl);
         this.parse = this.dataType == glui.ValueControl.DataTypes.Float ? parseFloat : parseInt;
         this.validations = {};
-        this.defaultValue = this.template.default || 0;
-        if (this.isNumeric && this.dataType != Ui.Control.DataTypes.Bool) {
+		this.defaultValue = template.default || null;
+		this.blankValue = template.blank || null;
+		this.isNumeric = tmpl.numeric != undefined && tmpl.numeric != 'false' && tmpl.numeric != '0';
+		this.dataType = template['data-type'];
+        if (this.isNumeric && this.dataType != glui.ValueControl.DataTypes.Bool) {
             this.min = this.parse(template.min); if (isNaN(this.min)) this.min = 0;
             this.max = this.parse(template.max); if (isNaN(this.max)) this.max = 100;
             this.step = this.parse(template.step); if (isNaN(this.step)) this.step = 1;
@@ -107,8 +88,7 @@ include('control.js');
             this.addValidation('value', x => x < this.min, 'Value is less than minimum!', x => this.min);
             this.addValidation('value', x => x > this.max, 'Value is greater than maximum!', x => this.max);
         }
-        this.getDataType();
-
+		this.getDataType();
         this.dataLink = null;
         this.fromSource = x => x;
         this.toSource = x => x;
@@ -154,7 +134,7 @@ include('control.js');
 				}
 			}
 		} else {
-			value = value !== undefined && value != null ? value : '';
+			value = value !== undefined && value != null ? value : this.defaultValue;
 		}
 		// var results = this.validate(value, true);
 		// if (results.length > 0) {
@@ -196,6 +176,15 @@ include('control.js');
 		return results;
 	};
 
+	ValueControl.prototype.validateKey = function validateKey(key) {
+		var result = true;
+		if (key >= ' ') {
+			if (this.isNumeric) {
+				result = key >= '0' && key <= '9' || key == '.' || key == '-';
+			}
+		 }
+		 return result;
+	};
 
 	ValueControl.DataTypes = {
 		Int:	'int',
@@ -209,6 +198,14 @@ include('control.js');
 		this.message = message;
 		this.fix = fix;
 	};
+
+	ValueControl.DataTypes = {
+		None:	'',
+		Int:	'int',
+		Float:  'float',
+		String: 'string',
+		Bool:	'bool'
+    };
 
     public(ValueControl, 'ValueControl', glui);
 })();

@@ -8,7 +8,9 @@ include('ui/datalink.js');
         this.parent = parent || null;
         this.template = null;
         this.style = {};
-        this.is2d = true;
+        this.renderer = null;
+        this.renderer2d = null;
+        this.renderer3d = null;
 
         this.handlers = {};
         if (template) this.applyTemplate(template);
@@ -18,8 +20,7 @@ include('ui/datalink.js');
         this.width = 0;
         this.height = 0;
 
-        this.draw2d = null;
-        this.draw3d = null;
+        this.render = null;
     }
     extend(glui.IControl, Control);
 
@@ -45,7 +46,7 @@ include('ui/datalink.js');
         this.addHandlers(template);
     };
     Control.prototype.getHandlers = function getHandlers() {
-        return [ 'focus', 'blur', 'mousedown' ]; //'mouseover', 'mouseout',
+        return [ 'mouseover', 'mouseout' ];
     };
     Control.prototype.getTemplate = function getTemplate() {
         var template = {
@@ -64,7 +65,7 @@ include('ui/datalink.js');
                 'z-index': 0,
                 'background': '#c0c0c0',
                 'color': '#000000',
-                'font': 'Arial 12 normal',
+                'font': 'Arial 20 normal',
                 'align': 'center middle',
                 'border': '#c0c0c0 2px solid'
             }
@@ -149,41 +150,28 @@ include('ui/datalink.js');
 
         return merged;
 	};
-    Control.prototype.render = function render(ctx, is2d) {
-        this.is2d = is2d || this.is2d;
-        if (is2d) {
-            if (!this.draw2d) this.draw2d = new glui.Draw2d(this, ctx);
-            var draw = this.draw2d;
-            this.left = draw.convertToPixel(this.style.left);
-            this.top = draw.convertToPixelV(this.style.top);
-            this.width = draw.convertToPixel(this.style.width);
-            this.height = draw.convertToPixelV(this.style.height);
+    Control.prototype.onmouseover = function onmouseover(e) {
+        this.renderer.backgroundColor_ = this.renderer.backgroundColor;
+        this.renderer.backgroundColor = this.renderer.calculateColor(this.renderer.backgroundColor, 1.2);
+        this.renderer.render();
+    };
+    Control.prototype.onmouseout = function onmouseout(e) {
+        if (Control.focused != this) {
+            this.renderer.backgroundColor = this.renderer.backgroundColor_;
+            this.renderer.render();
         }
     };
-
-    Control.prototype.onfocus = function onfocus(e) {
-        this.style.background_ = this.style.background;
-        this.style.background = glui.calculateColor(this.style.background, 1.2);
-        this.render();
-    };
-
-    Control.prototype.onblur = function onblur(e) {
-        this.style.background = this.style.background_;
-        this.render();
-    };
-
-	Control.prototype.callHandler = function(event) {
-		var handlers = this.handlers[event];
+	Control.prototype.callHandler = function(eventName, event) {
+		var handlers = this.handlers[eventName];
 		if (handlers) {
 			for (var i=0; i<handlers.length; i++) {
 				var handler = handlers[i];
-				if (handler.fn.call(handler.obj) == true) {
+				if (handler.fn.call(handler.obj, event) == true) {
 					return true;
 				}
 			}
 		}
 	};
-
 	Control.onevent = function(e) {
         // get control by coordinates
 		var event = e.type;
@@ -192,15 +180,28 @@ include('ui/datalink.js');
 		if (control && control.disabled) {
 			return false;
         }
-        if (event == 'mousemove') {
+        if (event == 'mousedown') {
             // check onfocus/onblur
             if (control != Control.focused) {
                 if (Control.focused) {
-                    Control.focused.callHandler('blur');
+                    var ctrl = Control.focused;
+                    Control.focused = control;
+                    ctrl.callHandler('blur');
                 }
-                Control.focused = control;
                 if (control) {
-                    control.callHandler('focus');   //, x:e.x, y:e.y, originalEvent: e}
+                    control.callHandler('focus');
+                    Control.focused = control;
+                }
+            }
+        }
+        else if (event == 'mousemove') {
+            if (control != Control.atCursor) {
+                if (Control.atCursor) {
+                    Control.atCursor.callHandler('mouseout');
+                }
+                Control.atCursor = control;
+                if (control) {
+                    control.callHandler('mouseover');
                 }
             }
         }
@@ -244,7 +245,7 @@ include('ui/datalink.js');
 
         if (control) {
 			e.control = control;
-			if (control.callHandler(e.type) === true) {
+			if (control.callHandler(e.type, e) === true) {
 				e.stopPropagation();
 				e.preventDefault();
 			}
@@ -253,6 +254,7 @@ include('ui/datalink.js');
     };
 
     Control.focused = null;
+    Control.atCursor = null;
 
     document.addEventListener('keydown', Control.onevent);
 	document.addEventListener('keyup', Control.onevent);

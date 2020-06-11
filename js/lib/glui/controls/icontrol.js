@@ -18,7 +18,7 @@ include('glui/glui.js');
     IControl.prototype.addHandler = function addHandler(event, handler) {
         throw new Error('Not implemented!');
     };
-    IControl.prototype.render = function render(ctx, is2d) {
+    IControl.prototype.setRenderer = function setRenderer(mode, context) {
         throw new Error('Not implemented!');
     };
 

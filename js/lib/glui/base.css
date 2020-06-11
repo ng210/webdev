@@ -3,6 +3,7 @@ body {
 	background-color:black;
 	font-family:Arial;
 	font-size:10pt;
+	display: none;
 }
 
 #content {
@@ -16,7 +17,7 @@ h1 {
 	color: #80a0ff;
 }
 
-canvas {
+#gl-canvas {
 	position: absolute; left: 0px; top: 0px;
 	width: 100vw; height: 100vh;
 	background-color: #101820;
