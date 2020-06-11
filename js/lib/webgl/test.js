@@ -324,7 +324,7 @@
 
             void main() {
                 vec3 ambient = vec3(0.1, 0.2, 0.4);
-                float z = 1.0 - (v_pos.z - 10.0)/1000.0;
+                float z = 1.0 - (v_pos.z - 10.0)/500.0;
                 vec3 norm = normalize(v_normal);
                 vec3 lightDir = normalize(u_lightPos - v_pos);
                 float diff = max(dot(norm, lightDir), 0.0);
