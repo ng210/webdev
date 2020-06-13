@@ -1,0 +1,59 @@
+<html>
+    <head>
+        <style>
+            canvas {
+                position: absolute;
+                left: 0px; top: 0px;
+                background-color: black;
+                width: 100vw; height: 100vh;
+        </style>
+        <script>
+
+var N = 2000;
+var T = 2.0;
+var DT = 0.1;
+var ctx = null;
+var r = 0.0;
+var R = 0.2;
+var cx = 0, cy = 0;
+
+function main() {
+    var cvs = document.getElementById('cvs');
+    cvs.width = window.innerWidth;
+    cvs.height = window.innerHeight;
+    ctx = cvs.getContext('2d');
+    r = R*Math.min(cvs.width, cvs.height);
+    cx = 0.5*cvs.width, cy = 0.5*cvs.height;
+
+    render();
+}
+
+function render() {
+    ctx.fillStyle = '#203040';
+    ctx.fillRect(0,0, cvs.width, cvs.height);
+
+    ctx.strokeStyle = '#408060';
+    ctx.fillStyle = '#408060';
+    ctx.font = '20px serif';
+    ctx.fillText(T.toPrecision(4), 50, 50);
+    for (var i=0; i<N; i++) {
+        var j = (T*i) % N;
+        ctx.strokeStyle = `rgb(${Math.floor(255*i/N)}, ${Math.floor(255*j/N)}, ${Math.floor(255*j*i/N/N)})`;
+        var a = 2*Math.PI/N*i;
+        var x = cx + r*Math.cos(a), y = cy + r*Math.sin(a);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        a = 2*Math.PI/N*j;
+        x = cx + r*Math.cos(a); y = cy + r*Math.sin(a);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+    }
+    T += DT;
+    requestAnimationFrame(render);
+}
+        </script>
+    </head>
+    <body onload="main()">
+        <canvas id="cvs"></canvas>
+    </body>
+</html>
