@@ -15,6 +15,19 @@ include('lib/glui/glui-lib.js');
 var min = 0;
 var cx = 0, cy = 0;
 var isRunning = true;
+var frame = 0;
+
+function getColor(frame) {
+    var ix = frame % 768;
+    var r = 255, g = 255, b = 255;
+    if (ix < 128) r = 255 - ix;
+    else if (ix < 256) { r = 128; g = 384 - ix; }
+    else if (ix < 384) { r = 128; g = ix - 128; }
+    else if (ix < 512) { r = 128; g = 255; b = 768 - ix; }
+    else if (ix < 640) { r = ix - 384; g = 255; b = 128; }
+    else if (ix < 768) { r = 255; g = 255; b = ix - 512; }
+    return [r, g, b];
+}
 
 var App = {
     settings: {
@@ -22,7 +35,7 @@ var App = {
         times: { label: 'Times (T)', value: 2, type: 'int', link: null },
         radius: { label: 'Radius', value: 0.3, min:0.1, max:0.5, step: 0.01, type: 'float', link: null },
         delta: { label: 'Delta', value: 0.01, min:0.001, max:0.1, step: 0.001, type: 'float', link: null },
-        gradient: { label: 'Gradient', value: 0.2, min:0.01, max:0.9, step: 0.01, type: 'float', link: null },
+        gradient: { label: 'Gradient', value: 0.2, min:0.01, max:2.0, step: 0.01, type: 'float', link: null },
         range: { label: 'Range', value: 0.01, min:0.01, max:1.0, step: 0.01, type: 'float', link: null }
     },
 
@@ -87,7 +100,7 @@ var App = {
     render: function render() {
         var ctx = glui.context;
         ctx.fillStyle = '#203040';
-        ctx.globalAlpha = 0.5;
+        ctx.globalAlpha = 0.2;
         ctx.fillRect(0,0, glui.canvas.width, glui.canvas.height);
         ctx.globalAlpha = 1;
         glui.render();
@@ -101,7 +114,6 @@ var App = {
         if (grad1 < 0) grad1 = 0;
         var grad2 = grad + App.settings.range.value;
         if (grad2 > 1) grad2 = 1;
-        var col = '#ffffff';
         for (var i=0; i<N; i++) {
             var j = (T*i) % N;
             var a = 2*Math.PI/N*i;
@@ -112,6 +124,7 @@ var App = {
             x2 = cx + r*Math.cos(a); y2 = cy + r*Math.sin(a);
             var gradient = ctx.createLinearGradient(x1, y1, x2, y2);
             gradient.addColorStop(grad1, '#203040');
+            var col = `rgb(${getColor(frame)})`;
             gradient.addColorStop(grad, col);
             gradient.addColorStop(grad2, '#203040');
             ctx.strokeStyle = gradient;
@@ -119,10 +132,11 @@ var App = {
             ctx.stroke();
         }
         if (isRunning) {
-            App.settings.gradient.value += App.settings.delta.value;
-            if (App.settings.gradient.value > 2) App.settings.gradient.value -= 2;
-            App.settings.times.link.value += App.settings.delta.value;
+            App.settings.gradient.link.value += App.settings.delta.value;
+            if (App.settings.gradient.link.value > 2) App.settings.gradient.link.value -= 2;
+            App.settings.times.value += App.settings.delta.value;
             requestAnimationFrame(App.render);
+            frame++;
         }
     }
 };
