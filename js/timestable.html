@@ -7,53 +7,148 @@
                 background-color: black;
                 width: 100vw; height: 100vh;
         </style>
+        <script src="lib/base/base.js"></script>
         <script>
 
-var N = 2000;
-var T = 2.0;
-var DT = 0.1;
-var ctx = null;
-var r = 0.0;
-var R = 0.2;
+include('lib/glui/glui-lib.js');
+
+var min = 0;
 var cx = 0, cy = 0;
+var isRunning = true;
 
-function main() {
-    var cvs = document.getElementById('cvs');
-    cvs.width = window.innerWidth;
-    cvs.height = window.innerHeight;
-    ctx = cvs.getContext('2d');
-    r = R*Math.min(cvs.width, cvs.height);
-    cx = 0.5*cvs.width, cy = 0.5*cvs.height;
+var App = {
+    settings: {
+        count: { label: 'Count (N)', value: 1000, min:10, max:5000, step: 10, type: 'int', link: null },
+        times: { label: 'Times (T)', value: 2, type: 'int', link: null },
+        radius: { label: 'Radius', value: 0.3, min:0.1, max:0.5, step: 0.01, type: 'float', link: null },
+        delta: { label: 'Delta', value: 0.01, min:0.001, max:0.1, step: 0.001, type: 'float', link: null },
+        gradient: { label: 'Gradient', value: 0.2, min:0.01, max:0.9, step: 0.01, type: 'float', link: null },
+        range: { label: 'Range', value: 0.01, min:0.01, max:1.0, step: 0.01, type: 'float', link: null }
+    },
 
-    render();
-}
+    resize: function resize(e) {
+        min = Math.min(glui.canvas.width, glui.canvas.height);
+        cx = 0.5*glui.canvas.width, cy = 0.5*glui.canvas.height;
+    },
+    onclick: function onclick(e, ctrl) {
+        if (ctrl.id == 'start') {
+            isRunning = !isRunning;
+            ctrl.value = isRunning ? 'Stop' : 'Start';
+            ctrl.render();
+            if (isRunning) App.render();
+        }
+    },
+    onchange: function onchange(e, ctrl) {
+        if (!isRunning) App.render();
+    },
+    buildUI: function buildUI() {
+        glui.buildUI(App);
+        var top = 4.2;
+        dataSource = new DataLink(App.settings);
+        for (var i in App.settings) {
+            var lbl = new glui.Label('lbl'+i, {
+                'style': {
+                    'font': 'Arial 10',
+                    'left':'2em', 'top': top+'em',
+                    'width':'9em', 'height':'1.8em',
+                    'align':'center middle',
+                    'border':'#406080 1px outset',
+                    'background': '#406080'
+                },
+            }, App);
+            App.settings[i].link = lbl.dataBind(App.settings[i], 'label');
 
-function render() {
-    ctx.fillStyle = '#203040';
-    ctx.fillRect(0,0, cvs.width, cvs.height);
+            var look = App.settings[i].min !== undefined ? glui.Textbox.Look.Potmeter : glui.Textbox.Look.Textbox;
+            var ctrl = new glui.Textbox(i, {
+                'style': {
+                    'font': 'Arial 10',
+                    'left':'12em', 'top': top+'em',
+                    'width':'8em', 'height':'1.7em',
+                    'align':'right middle',
+                    'border':'#406080 1px inset',
+                    'background': '#c0e0ff'
+                },
+                'look': look,
+                'data-type': App.settings[i].type,
+                'decimal-digits': 2
+            }, App);
+            ctrl.dataBind(App.settings[i].link, 'value');
 
-    ctx.strokeStyle = '#408060';
-    ctx.fillStyle = '#408060';
-    ctx.font = '20px serif';
-    ctx.fillText(T.toPrecision(4), 50, 50);
-    for (var i=0; i<N; i++) {
-        var j = (T*i) % N;
-        ctx.strokeStyle = `rgb(${Math.floor(255*i/N)}, ${Math.floor(255*j/N)}, ${Math.floor(255*j*i/N/N)})`;
-        var a = 2*Math.PI/N*i;
-        var x = cx + r*Math.cos(a), y = cy + r*Math.sin(a);
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        a = 2*Math.PI/N*j;
-        x = cx + r*Math.cos(a); y = cy + r*Math.sin(a);
-        ctx.lineTo(x, y);
-        ctx.stroke();
+            top += 2;
+            lbl.addHandlers();
+            glui.controls.push(lbl);
+            ctrl.addHandlers();
+            glui.controls.push(ctrl);
+        }
+        var button = glui.controls.find(x => x.id == 'start');
+        button.style.top = 14/20*top + 'em';
+        button.style.left = '4em';
+    },
+    render: function render() {
+        var ctx = glui.context;
+        ctx.fillStyle = '#203040';
+        ctx.globalAlpha = 0.5;
+        ctx.fillRect(0,0, glui.canvas.width, glui.canvas.height);
+        ctx.globalAlpha = 1;
+        glui.render();
+        ctx.strokeStyle = '#408060';
+        var N = App.settings.count.value;
+        var T = App.settings.times.value;
+        var r = App.settings.radius.value*min;
+        var grad = App.settings.gradient.value;
+        if (grad > 1) grad = 2 - grad;
+        var grad1 = grad - App.settings.range.value;
+        if (grad1 < 0) grad1 = 0;
+        var grad2 = grad + App.settings.range.value;
+        if (grad2 > 1) grad2 = 1;
+        var col = '#ffffff';
+        for (var i=0; i<N; i++) {
+            var j = (T*i) % N;
+            var a = 2*Math.PI/N*i;
+            var x1 = cx + r*Math.cos(a), y1 = cy + r*Math.sin(a);
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            a = 2*Math.PI/N*j;
+            x2 = cx + r*Math.cos(a); y2 = cy + r*Math.sin(a);
+            var gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+            gradient.addColorStop(grad1, '#203040');
+            gradient.addColorStop(grad, col);
+            gradient.addColorStop(grad2, '#203040');
+            ctx.strokeStyle = gradient;
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
+        if (isRunning) {
+            App.settings.gradient.value += App.settings.delta.value;
+            if (App.settings.gradient.value > 2) App.settings.gradient.value -= 2;
+            App.settings.times.link.value += App.settings.delta.value;
+            requestAnimationFrame(App.render);
+        }
     }
-    T += DT;
-    requestAnimationFrame(render);
+};
+
+async function onpageload(e) {
+    if (e.length) {
+        alert(e.join('\n'));
+    }
+    await App.buildUI();
+    glui.scale.x = 0.8;
+    glui.scale.y = 0.8;
+    glui.setRenderingMode(glui.Render2d);
+    var cvs = glui.canvas;
+    cvs.style.backgroundColor = '203040';
+    App.resize();
+    window.addEventListener('resize', App.resize);
+
+    glui.render();
+    App.render();
 }
+
+
         </script>
     </head>
-    <body onload="main()">
-        <canvas id="cvs"></canvas>
+    <body>
+        <gl-label id="title" style="left:0.5em;top:0.5em;width:10em;height:1.5em;font:Arial 20;align:center middle;border:#406080 2px outset;background:#406080">Times-table</gl-label>
+        <gl-button id="start" style="left:0.5em;width:6em;height:1.5em;font:Arial 15;align:center middle;border:#406080 2px;background:#406080">Stop</gl-button>
     </body>
 </html>
