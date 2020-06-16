@@ -1,5 +1,6 @@
 include('stream.js');
 include('dataseries.js');
+include('datalink.js');
 
 (function() {
 
@@ -137,7 +138,73 @@ include('dataseries.js');
         test('Compare([, 1], [1, 0])', context => context.assert(ds.compare([1, ], [0, ]), '>', 0) );
     }
 
-    var tests = () => [ test_Stream, test_DataSeries, test_DataSeriesCompare ];
+    function test_datalink() {
+        message('Test DataLink');
+        var obj1 = {
+            name: 'Joe',
+            id: 1,
+            age: 32
+        };
+        var obj2 = {
+            name: 'Jane',
+            id: 2,
+            age: 30
+        };
+        var obj3 = {
+            name: 'Ryu',
+            id: 3,
+            age: 26,
+            addName: function addName(name, args) {
+                return `${this.name}-${name}-${args}`;
+            }
+        };
+        var transform = (value, oldValue, args) => `${oldValue} => ${value.charAt(0).toUpperCase() + value.substr(1)} (${args})`;
+
+        test("Should add link to the field 'name' without transform", context => {
+            obj1.name = 'Joe';
+            var dl1 = new DataLink(obj1);
+            dl1.add('name');
+            dl1.name = 'Charlie';
+            context.assert(obj1.name, '=', 'Charlie');
+        });
+
+        test("Should add link to the field 'name' with transform", context => {
+            obj1.name = 'Joe';
+            var dl1 = new DataLink(obj1);
+            dl1.add('name', transform, null, [1,2,3]);
+            dl1.name = 'charlie';
+            context.assert(obj1.name, '=', 'Joe => Charlie (1,2,3)');
+        });
+        test("Should add link to the field 'name' with transform and handler", context => {
+            obj1.name = 'Joe';
+            var dl1 = new DataLink(obj1);
+            dl1.add( 'name', transform, null, [1,2,3]);
+            dl1.addHandler('name', function(value, oldValue, args) { name = this.addName(value, args); }, obj3, [1,2,3]);
+            var name = null;
+            dl1.name = 'charlie';
+            context.assert(obj1.name, '=', 'Joe => Charlie (1,2,3)');
+            context.assert(name, '=', 'Ryu-charlie-1,2,3');
+        });
+
+        test("Should link 2 objects", context => {
+            obj1.name = 'Joe';
+            var dl1 = new DataLink(obj1);
+            var dl2 = dl1.link('name', obj2, 'name');
+            dl1.name = 'Charlie';
+            context.assert(obj1.name, '=', 'Charlie');
+            context.assert(obj2.name, '=', 'Charlie');
+            dl2.name = 'Joe';
+            context.assert(obj1.name, '=', 'Joe');
+            context.assert(obj2.name, '=', 'Joe');
+        });
+    }
+
+    var tests = () => [
+        test_Stream,
+        test_DataSeries,
+        test_DataSeriesCompare,
+        test_datalink
+    ];
     
     public(tests, 'Data tests');
 })();
