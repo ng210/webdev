@@ -10,16 +10,7 @@ include('renderer2d.js');
     }
     extend(glui.Renderer2d, TextboxRenderer2d);
 
-    TextboxRenderer2d.prototype.renderControl = function renderControl() {
-        var lines = this.control.getLines();
-        var boxes = this.getTextBoundingBoxes(lines);
-        var color = this.control.isBlank ? this.color : this.mixColors(this.color, this.backgroundColor, 0.5);
-        if (lines.length > 0) {
-            for (var i=0; i<lines.length; i++) {
-                this.drawText(lines[i], boxes[i][0], boxes[i][1], boxes[i][2], color);
-            }
-        }
-
+    TextboxRenderer2d.prototype.renderCursor = function renderCursor(lines, boxes) {
         if (this.cursorVisible) {
             var cursor = this.control.cursorPos;
             var text = null;
@@ -35,10 +26,36 @@ include('renderer2d.js');
                 y = boxes[0][1];
             }
             var x = this.context.measureText(text).width + dx;
-            this.drawRect(x, y, this.font.size/2, this.font.size, this.color);
+            this.drawRect(x, y, 2, this.font.size, this.color);
         }
     };
+    TextboxRenderer2d.prototype.renderTextbox = function renderTextbox() {
+        var lines = this.control.getLines();
+        var boxes = this.getTextBoundingBoxes(lines);
+        var color = !this.control.isBlank ? this.color : this.mixColors(this.color, this.backgroundColor, 0.5);
+        if (lines.length > 0) {
+            for (var i=0; i<lines.length; i++) {
+                this.drawText(lines[i], boxes[i][0], boxes[i][1], boxes[i][2], color);
+            }
+        }
 
+        this.renderCursor(lines, boxes);
+    };
+    TextboxRenderer2d.prototype.renderSlider = function renderSlider() {
+
+    };
+    TextboxRenderer2d.prototype.renderPotmeter = function renderPotmeter() {
+        var color = !this.control.isBlank ? this.color : this.mixColors(this.color, this.backgroundColor, 0.5);
+        var bgColor = this.mixColors(this.color, this.backgroundColor, 0.5);
+        var width = (this.control.getValue() - this.control.min)*this.control.width/(this.control.max - this.control.min);
+        this.drawRect(this.control.left, this.control.top, width, this.control.height, bgColor);
+        var lines = this.control.getLines();
+        var line = lines[0];
+        var boxes = this.getTextBoundingBoxes(lines);
+        var box = boxes[0];
+        this.drawText(line, box[0], box[1], box[2], color);
+        this.renderCursor(lines, boxes);
+    };
     TextboxRenderer2d.prototype.animateCursor = function animateCursor() {
         this.cursorVisible = !this.cursorVisible;
         this.render();
@@ -56,6 +73,8 @@ include('renderer2d.js');
         return [x, y];
     };
     TextboxRenderer2d.prototype.xyToCursor = function cursorToXY(xy) {
+        var lines = this.control.getLines();
+        var boxes = this.getTextBoundingBoxes(lines);
         var cx = x - this.control.left;
         var cy = y - this.control.top;
     };
@@ -64,6 +83,7 @@ include('renderer2d.js');
         Textbox.base.constructor.call(this, id, template, parent);
         this.cursorPos = [0, 0];
         this.isFocused = false;
+        this.lines = [];
         //this.renderer3d = new TextboxRenderer3d()
     }
     extend(glui.ValueControl, Textbox);
@@ -71,12 +91,23 @@ include('renderer2d.js');
     Textbox.prototype.getTemplate = function getTemplate() {
         var template = Textbox.base.getTemplate.call(this);
         template.value = '';
+        template.look = Textbox.Look.Textbox;
         return template;
     };
 
-    Textbox.prototype.setValue = function setValue(v) {
-        //Textbox.base.setValue.call(this, v);
-        //var value = this.getValue();
+    Textbox.prototype.applyTemplate = function applyTemplate(tmpl) {
+        var template = Textbox.base.applyTemplate.call(this, tmpl);
+        this.look = template.look;
+        return template;
+    };    
+
+    Textbox.prototype.setValue = function setValue(value) {
+        var results = this.validate('value', value);
+        if (results.length > 0) {
+            value = results[0].value;
+        }
+        Textbox.base.setValue.call(this, value);
+        var v = !this.isNumeric ? value.toString() : value.toFixed(this.decimalDigits);
         if (v != undefined && v != null && v != '') {
             this.lines = v.split('\\n');
         } else {
@@ -90,12 +121,16 @@ include('renderer2d.js');
     };
 
     Textbox.prototype.getLines = function getLines() {
-        return !this.isEmpty() ? this.lines : (this.isFocused ? [''] : [this.blankValue]);
+        var lines = this.lines;
+        if (this.isEmpty()) {
+            lines = this.isFocused ? [''] : [this.blankValue];
+        }
+        return lines;
     };
 
     Textbox.prototype.getHandlers = function getHandlers() {
         var handlers = Textbox.base.getHandlers.call(this);
-        handlers.push('focus', 'blur', 'mousedown', 'mouseup', 'keydown', 'keyup');
+        handlers.push('focus', 'blur', 'mousedown', 'mouseup', 'keydown', 'keyup', 'dragging');
         return handlers;
     };
     
@@ -114,10 +149,66 @@ include('renderer2d.js');
         glui.removeAnimation(this.cursorAnimation);
         this.renderer.cursorVisible = false;
         this.isFocused = false;
-        this.renderer.render();
         // save value into datasource
+        Textbox.base.setValue.call(this, this.isNumeric ? parseFloat(this.lines[0]) : this.lines.join('\n'))
+        if (this.value === '') {
+            if (this.lines.length > 0) this.lines.splice(0, this.lines.length);
+        }
+        this.renderer.render();
+        this.callHandler('change');
+    };
+    Textbox.prototype.ondragging = function ondragging(e) {
+        var delta = this.step * e.deltaX;
+        var value = this.getValue() + delta;
+        // validate and adjust value
+        this.setValue(value);
+        this.callHandler('change');
     };
 
+    var _separators = [' ', ',', ';', ':', '-', '_', '!', '?', '.', '\0', '#'];
+    function skipCharactes(line, cursor, toLeft) {
+        if (toLeft) {
+            if (cursor > 0) {
+                var i = cursor-1;
+                var char = line.charAt(i);
+                var skipSeparators = _separators.includes(char);
+                var delta = -1;
+                while (true) {
+                    var char = line.charAt(i);
+                    var includes = _separators.includes(char);
+                    if (skipSeparators && !includes || !skipSeparators && includes) {
+                        i -= delta;
+                        break;
+                    }
+                    i += delta;
+                    if (i == -1) {
+                        i = 0;
+                        break;
+                    }
+                }
+            }
+        } else {
+            if (cursor < line.length) {
+                var i = cursor;
+                var char = line.charAt(i);
+                var skipSeparators = _separators.includes(char);
+                var delta = 1;
+                while (true) {
+                    var char = line.charAt(i);
+                    var includes = _separators.includes(char);
+                    if (skipSeparators && !includes || !skipSeparators && includes) {
+                        //i -= delta;
+                        break;
+                    }
+                    i += delta;
+                    if (i == line.length) {
+                        break;
+                    }
+                }
+            }
+        }
+        return i;
+    }
     Textbox.prototype.onkeydown = function onkeydown(e) {
         var char = e.which;
         var col = this.cursorPos[0];
@@ -140,6 +231,9 @@ include('renderer2d.js');
                     }
                     this.cursorPos[0] = 0;
                     isChanged = true;
+                } else {
+                    Textbox.base.setValue.call(this, parseFloat(this.lines[0]));
+                    this.callHandler('change');
                 }
                 break;
             case  8:    // BACKSPACE
@@ -171,15 +265,25 @@ include('renderer2d.js');
                 break;
             case 35:    // END
                 this.cursorPos[0] = this.lines[row].length;
+                if (e.ctrlKey) {
+                    this.cursorPos[1] = this.lines.length-1;
+                }
                 isChanged = true;
                 break;
             case 36:    // HOME
                 this.cursorPos[0] = 0;
+                if (e.ctrlKey) {
+                    this.cursorPos[1] = 0;
+                }
                 isChanged = true;
                 break;
             case 37:    // ARROW LEFT
                 if (col > 0) {
-                    this.cursorPos[0]--;
+                    if (!e.ctrlKey) {
+                        this.cursorPos[0]--;
+                    } else {
+                        this.cursorPos[0] = skipCharactes(this.lines[this.cursorPos[1]], this.cursorPos[0], true);
+                    }
                 } else if (row > 0) {
                     this.cursorPos[0] = this.lines[row-1].length;
                     this.cursorPos[1]--;
@@ -196,11 +300,15 @@ include('renderer2d.js');
                 isChanged = true;
                 break;
             case 39:    // ARROW RIGHT
-                if (col == this.lines[row].length && row < this.lines.length-1) {
+                if (col < this.lines[row].length) {
+                    if (!e.ctrlKey) {
+                        this.cursorPos[0]++;
+                    } else {
+                        this.cursorPos[0] = skipCharactes(this.lines[this.cursorPos[1]], this.cursorPos[0], false);
+                    }
+                } else if (row < this.lines.length-1) {
                     this.cursorPos[0] = 0;
                     this.cursorPos[1]++;
-                } else {
-                    this.cursorPos[0]++;
                 }
                 isChanged = true;
                 break;
@@ -216,6 +324,10 @@ include('renderer2d.js');
             case 46:    // DELETE
                 var line = this.lines[row];
                 if (col < line.length) this.lines[row] = line.substr(0, col) + line.substr(col+1);
+                else if (this.lines.length-1 > row) {
+                    this.lines[row] += this.lines[row+1];
+                    this.lines.splice(row+1, 1);
+                }
                 isChanged = true;
                 break;
             case 220:
@@ -264,13 +376,43 @@ include('renderer2d.js');
                 this.renderer2d = new TextboxRenderer2d(this, context);
             }
             this.renderer = this.renderer2d;
+            this.setLook();
         } else if (mode == glui.Render3d) {
             if (this.renderer3d == null) {
                 this.renderer3d = new TextboxRenderer3d(this, context);
             }
             this.renderer = this.renderer3d;
+            this.setLook();
         }
     };
 
+    Textbox.prototype.setLook = function setLook(look) {
+        look = look || this.look;
+        switch (look) {
+            case Textbox.Look.Slider:
+                if (this.isNumeric) {
+                    this.renderer.renderControl = TextboxRenderer2d.prototype.renderSlider;
+                }
+                break;
+            case Textbox.Look.Potmeter:
+                if (this.isNumeric) {
+                    this.renderer.renderControl = TextboxRenderer2d.prototype.renderPotmeter;
+                }
+                break;
+            default:
+                console.warn(`Invalid look '${look}' for textbox '${this.id}'!`);
+            case Textbox.Look.Textbox:
+                this.renderer.renderControl = TextboxRenderer2d.prototype.renderTextbox;
+                break;
+        }
+    };
+
+    Textbox.Look = {
+        Textbox: 'textbox',
+        Slider: 'slider',
+        Potmeter: 'potmeter'
+    };
+
     public(Textbox, 'Textbox', glui);
+    public(TextboxRenderer2d, 'TextboxRenderer2d', glui);
 })();

@@ -1,5 +1,5 @@
 include('icontrol.js');
-include('ui/datalink.js');
+include('data/datalink.js');
 
 (function() {
 
@@ -19,8 +19,6 @@ include('ui/datalink.js');
         this.top = 0;
         this.width = 0;
         this.height = 0;
-
-        this.render = null;
     }
     extend(glui.IControl, Control);
 
@@ -54,8 +52,8 @@ include('ui/datalink.js');
             'type': 'control',
             'label': false,
             'disabled': false,
-            'data-source': null,
-            'data-field': null,
+            'data-source': '',
+            'data-field': '',
             // styling
             'style': {
                 'left': 0,
@@ -81,7 +79,7 @@ include('ui/datalink.js');
     Control.prototype.dataBind = function dataBind(source, field) {
         source = source || this.dataSource;
         if (source) {
-            this.dataSource = source instanceof Ui.DataLink ? source : new Ui.DataLink(source);
+            this.dataSource = source instanceof DataLink ? source : new DataLink(source);
             this.dataField = field !== undefined ? field : this.dataField;
             this.dataSource.add(this.dataField);
         }
@@ -109,12 +107,24 @@ include('ui/datalink.js');
         }
     };
     Control.prototype.addHandlers = function addHandlers(template) {
-        for (var i in template) {
-            if (i.startsWith('on') && template.hasOwnProperty(i)) {
-                var name = i.substr(2);
-                // todo: template function calls
-                this.addHandler(name);
+        if (template) {
+            for (var i in template) {
+                if (i.startsWith('on') && template.hasOwnProperty(i)) {
+                    var name = i.substr(2);
+                    // todo: templated function calls
+                    this.addHandler(name);
+                }
             }
+        } else {
+            var handlers = this.getHandlers();
+            for (var i in handlers) {
+                this.addHandler(handlers[i]);
+            }
+        }
+    };
+    Control.prototype.render = function render() {
+        if (this.renderer) {
+            this.renderer.render();
         }
     };
     function mergeFields(src, dst, path) {
@@ -139,9 +149,12 @@ include('ui/datalink.js');
         this.id = merged.id;
         this.type = merged.type;
         this.disabled = merged.disabled;
-        this.dataSource = merged['data-source'];
+        var glControl = glui.controls.find(x => x.id == merged['data-source']);
+        if (glControl) {
+            this.dataSource = glControl;
+        }
+        this.dataSource = glui.controls.find(x => x.id == merged['data-source']) || window[merged['data-source']];
         this.dataField = merged['data-field'];
-
         this.style = {};
         for (var i in merged.style) {
             this.style[i] = merged.style[i];
@@ -151,9 +164,11 @@ include('ui/datalink.js');
         return merged;
 	};
     Control.prototype.onmouseover = function onmouseover(e) {
-        this.renderer.backgroundColor_ = this.renderer.backgroundColor;
-        this.renderer.backgroundColor = this.renderer.calculateColor(this.renderer.backgroundColor, 1.2);
-        this.renderer.render();
+        if (Control.focused != this) {
+            this.renderer.backgroundColor_ = this.renderer.backgroundColor;
+            this.renderer.backgroundColor = this.renderer.calculateColor(this.renderer.backgroundColor, 1.2);
+            this.renderer.render();
+        }
     };
     Control.prototype.onmouseout = function onmouseout(e) {
         if (Control.focused != this) {
@@ -161,16 +176,22 @@ include('ui/datalink.js');
             this.renderer.render();
         }
     };
-	Control.prototype.callHandler = function(eventName, event) {
-		var handlers = this.handlers[eventName];
-		if (handlers) {
-			for (var i=0; i<handlers.length; i++) {
-				var handler = handlers[i];
-				if (handler.fn.call(handler.obj, event) == true) {
-					return true;
-				}
-			}
-		}
+    // Control.prototype.onmouseup = function onmouseup(e) {
+    //     console.log(1)
+    //     Control.focused = this;
+    // };
+	Control.prototype.callHandler = async function(eventName, event) {
+        setTimeout( () => {
+            var handlers = this.handlers[eventName];
+            if (handlers) {
+                for (var i=0; i<handlers.length; i++) {
+                    var handler = handlers[i];
+                    if (handler.fn.call(handler.obj, event, this) == true) {
+                        return true;
+                    }
+                }
+            }
+        }, 10);
 	};
 	Control.onevent = function(e) {
         // get control by coordinates
@@ -186,6 +207,7 @@ include('ui/datalink.js');
                 if (Control.focused) {
                     var ctrl = Control.focused;
                     Control.focused = control;
+                    ctrl.callHandler('mouseout');
                     ctrl.callHandler('blur');
                 }
                 if (control) {
@@ -193,8 +215,12 @@ include('ui/datalink.js');
                     Control.focused = control;
                 }
             }
-        }
-        else if (event == 'mousemove') {
+			if (Control.focused) {
+				Control.dragging = Control.focused;
+				Control.dragStart[0] = e.screenX;
+                Control.dragStart[1] = e.screenY;
+			}
+        } else if (event == 'mousemove') {
             if (control != Control.atCursor) {
                 if (Control.atCursor) {
                     Control.atCursor.callHandler('mouseout');
@@ -204,57 +230,47 @@ include('ui/datalink.js');
                     control.callHandler('mouseover');
                 }
             }
+			if (Control.dragging) {
+				var draggingEvent = {
+                    type: "dragging",
+                    x: e.screenX,
+                    y: e.screenY,
+                    screenX: e.screenX,
+                    screenY: e.screenY,
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    deltaX: e.screenX - Control.dragStart[0],
+                    deltaY: e.screenY - Control.dragStart[1]
+                };
+
+                Control.dragging.callHandler('dragging', draggingEvent);
+				Control.dragStart[0] = e.screenX;
+				Control.dragStart[1] = e.screenY;
+			}
+        } else if (event == 'mouseup') {
+            Control.dragging = null;
+            if (control) {
+                control.callHandler('click', e);
+            }
         }
 
-		// 	if (Control.focused) {
-		// 		Control.isDragging = true;
-		// 		Control.dragStart[0] = e.screenX;
-		// 		Control.dragStart[1] = e.screenY;
-		// 	}
-
-		// } else if (event == 'mousemove') {
-		// 	if (Control.isDragging) {
-		// 		var draggingEvent = new CustomEvent("dragging", {
-		// 			bubbles: false,
-		// 			cancelable: false
-		// 		});
-		// 		control = Control.focused;
-		// 		draggingEvent.screenX = e.screenX;
-		// 		draggingEvent.screenY = e.screenY;
-		// 		draggingEvent.clientX = e.clientX;
-		// 		draggingEvent.clientY = e.clientY;
-		// 		draggingEvent.deltaX = e.screenX - Control.dragStart[0];
-		// 		draggingEvent.deltaY = e.screenY - Control.dragStart[1];
-		// 		//draggingEvent.control = Control.focused;
-
-		// 		if (control && control.handlers.dragging && control.handlers.dragging.length) {
-		// 			control.element.dispatchEvent(draggingEvent);
-		// 			if (!(control instanceof Ui.Slider)) {
-		// 				e.preventDefault();
-		// 			}
-		// 		}
-		// 		Control.dragStart[0] = e.screenX;
-		// 		Control.dragStart[1] = e.screenY;
-		// 	}
-		// } else if (event == 'mouseup') {
-		// 	Control.isDragging = false;
-		// }
 		if (!control && (event == 'keydown' || event == 'keyup')) {
 			control = Control.focused;
 		}
 
         if (control) {
 			e.control = control;
-			if (control.callHandler(e.type, e) === true) {
-				e.stopPropagation();
-				e.preventDefault();
-			}
+            control.callHandler(e.type, e);
+            // e.stopPropagation();
+            // e.preventDefault();
 		}
 		//console.log(Control.focused ? Control.focused.id : 'none')
     };
 
     Control.focused = null;
     Control.atCursor = null;
+    Control.dragging = null;
+    Control.dragStart = [0, 0];
 
     document.addEventListener('keydown', Control.onevent);
 	document.addEventListener('keyup', Control.onevent);

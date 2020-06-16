@@ -40,4 +40,5 @@ include('renderer2d.js');
     };
 
     public(Label, 'Label', glui);
+    public(LabelRenderer2d, 'LabelRenderer2d', glui);
 })();

@@ -11,7 +11,7 @@ include('renderer.js');
         this.font.face = tokens[0];
         this.font.size = parseFloat(tokens[1]);
         this.font.weight = tokens[2];
-        this.context.font = `${this.font.weight} ${this.font.size}px ${this.font.face}`;
+        this.context.font = `${this.font.weight || ''} ${this.font.size}px ${this.font.face}`;
         var metrics = this.context.measureText('@(Q.');
         this.font.em = metrics.width/4;
     };
@@ -77,12 +77,13 @@ include('renderer.js');
 
     Renderer2d.prototype.render = function render() {
         // set clipping area
+        this.context.save();
         var region = new Path2D();
         region.rect(this.control.left, this.control.top, this.control.width, this.control.height);
-        this.context.save();
         this.context.clip(region);
         if (this.backgroundColor) this.drawRect(this.control.left, this.control.top, this.control.width, this.control.height, this.backgroundColor);
         // render control
+        if (this.control.style.font) this.setFont(this.control.style.font);
         this.renderControl();
         if (this.border.style) this.drawBorder(this.control.left, this.control.top, this.control.width, this.control.height);
         this.context.restore();

@@ -2,7 +2,7 @@
 
     var glui = {
         controls: [],
-        scale: [1, 1],
+        scale: { x:1, y:1 },
         mode: null,
         canvas: null,
         context: null,
@@ -75,12 +75,12 @@
             // glui.resize();
             // var is2d = glui.mode == '2d';
             for (var i=0; i<glui.controls.length; i++) {
-                glui.controls[i].renderer.render();
+                glui.controls[i].render();
             }
         },
         resize: function resize(repaint) {
-            glui.width = Math.floor(glui.scale[0] * glui.canvas.clientWidth);
-            glui.height = Math.floor(glui.scale[1] * glui.canvas.clientHeight);
+            glui.width = Math.floor(glui.scale.x * glui.canvas.clientWidth);
+            glui.height = Math.floor(glui.scale.y * glui.canvas.clientHeight);
             glui.canvas.width = glui.width;
             glui.canvas.height = glui.height;
             for (var i=0; i<glui.controls.length; i++) {
@@ -89,7 +89,7 @@
             }
         },
         getControlAt: function getControlAt(x, y) {
-            var cx = x*glui.scale[0], cy = y*glui.scale[1];
+            var cx = x*glui.scale.x, cy = y*glui.scale.y;
             var res = null;
             for (var i=0; i<glui.controls.length; i++) {
                 var ctrl = glui.controls[i];
@@ -138,12 +138,14 @@
         Render2d: 1,
         Render3d: 2,
     };
-    
-    window.onresize = e => {
-        // glui.scale[0] = glui.canvas.width / glui.canvas.clientWidth;
-        // glui.scale[1] = glui.canvas.height / glui.canvas.clientHeight;
-        glui.resize(true);
-    };
+
+    window.addEventListener('resize', glui.resize);
+
+    // window.addEventListener('resize', e => {
+    //     // glui.scale.x = glui.canvas.width / glui.canvas.clientWidth;
+    //     // glui.scale.y = glui.canvas.height / glui.canvas.clientHeight;
+    //     glui.resize(true);
+    // });
 
     public(glui, 'glui');
 })();
