@@ -2,8 +2,8 @@ include('control.js');
 
 (function() {
 
-    function ValueControl(id, template, parent) {
-        ValueControl.base.constructor.call(this, id, template, parent);
+    function ValueControl(id, template, parent, context) {
+        ValueControl.base.constructor.call(this, id, template, parent, context);
     }
     extend(glui.Control, ValueControl);
 
@@ -22,7 +22,7 @@ include('control.js');
 		template.blank = '';
 		template.default = '';
         template['data-type'] = glui.ValueControl.DataTypes.None;
-		template['decimal-digits'] = -1;
+		template['decimal-digits'] = 0;
         template['digits'] = 0;
         template['true-value'] = 0;
         // from-source
@@ -92,13 +92,15 @@ include('control.js');
         this.dataLink = null;
         this.fromSource = x => x;
         this.toSource = x => x;
-        this.scale = 1.0;
-        this.value = template.value;
+		this.scale = 1.0;
+		this.value = '';
+		if (template.value) {
+			this.setValue(template.value);
+		}
         this.decimalDigits = template['decimal-digits'];
         if (this.dataSource && this.dataField) {
             this.dataBind();
         }
-
 		return template;
     };
 	ValueControl.prototype.dataBind = function(source, field) {
@@ -132,6 +134,7 @@ include('control.js');
         return this.dataSource;
 	};
 	ValueControl.prototype.setValue = function setValue(value) {
+		var oldValue = this.value;
 		this.isBlank = false;
 		if (this.isNumeric) {
 			if (typeof value !== 'number') {
@@ -161,6 +164,7 @@ include('control.js');
 		// {
 		// 	this.render({element:this.element.parentNode});
 		// }
+		return oldValue;
 	};
 	ValueControl.prototype.getValue = function getValue() {
 		return this.dataSource ? this.fromSource(this.dataSource[this.dataField]) : this.value;

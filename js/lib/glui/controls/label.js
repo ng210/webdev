@@ -8,8 +8,17 @@ include('renderer2d.js');
     extend(glui.Renderer2d, LabelRenderer2d);
 
     LabelRenderer2d.prototype.renderControl = function renderControl() {
+        var lines = null;
         var value = this.control.getValue();
-        var lines = value ? value.split('\\n') : [];
+        if (value) {
+            if (this.control.isNumeric) {
+                lines = [value.toFixed(this.control.decimalDigits)];
+            } else {
+                lines = value.split('\\n');
+            }
+        } else {
+            lines = [];
+        }
         var boxes = this.getTextBoundingBoxes(lines);
         for (var i=0; i<lines.length; i++) {
             this.drawText(lines[i], boxes[i][0]-1, boxes[i][1]-1, boxes[i][2], this.calculateColor(this.backgroundColor, 1.4));
@@ -19,8 +28,8 @@ include('renderer2d.js');
     };
 
 
-    function Label(id, template, parent) {
-        Label.base.constructor.call(this, id, template, parent);
+    function Label(id, template, parent, context) {
+        Label.base.constructor.call(this, id, template, parent, context);
         //this.renderer3d = new LabelRenderer3d()
     }
     extend(glui.ValueControl, Label);

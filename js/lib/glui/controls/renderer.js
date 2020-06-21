@@ -12,15 +12,30 @@ include('glui/glui.js');
             this.initialize();
         }
     }
+    Renderer.prototype.accumulate = function accumulate(property, isVertical) {
+        var node = this.control;
+        var value = 0;
+        while (node) {
+            if (node[property] != undefined) {
+                value += isVertical ? this.convertToPixelV(node[property]) : this.convertToPixel(node[property]);
+            }
+            node = node.parent;
+        }
+        return value;
+    };
     Renderer.prototype.initialize = function initialize() {
-        this.control.left = this.convertToPixel(this.control.style.left);
-        this.control.top = this.convertToPixelV(this.control.style.top);
-        this.control.width = this.convertToPixel(this.control.style.width);
-        this.control.height = this.convertToPixelV(this.control.style.height);
-        this.setFont(this.control.style.font);
-        this.setBorder(this.control.style.border);
-        this.color = this.toColor(this.control.style.color) || this.color;
-        this.backgroundColor = this.toColor(this.control.style.background) || this.backgroundColor;
+        if (this.control) {
+            this.setFont(this.control.style.font);
+            this.setBorder(this.control.style.border);
+            this.control.width = this.convertToPixel(this.control.style.width);
+            this.control.height = this.convertToPixelV(this.control.style.height);
+            this.control.offsetLeft = this.convertToPixelV(this.control.style.left);
+            this.control.left = this.accumulate('offsetLeft');
+            this.control.offsetTop = this.convertToPixelV(this.control.style.top);
+            this.control.top = this.accumulate('offsetTop', true);
+            this.color = this.toColor(this.control.style.color) || this.color;
+            this.backgroundColor = this.toColor(this.control.style.background) || this.backgroundColor;
+        }
     };
     Renderer.prototype.setBorder = function setBorder(border) {
         var tokens = border.split(' ');
@@ -46,16 +61,23 @@ include('glui/glui.js');
         var res = 0;
         if (typeof value === 'number') res = value;
         else if (value.endsWith('px')) res = parseFloat(value);
-        else if (value.endsWith('%')) res = this.control.parent.width * parseFloat(value)/100;
-        else if (value.endsWith('em')) res = this.font.em * parseFloat(value);
-        return Math.round(res);
+        else if (value.endsWith('%')) {
+            var parent = this.control && this.control.parent ? this.control.parent : window;
+            var width = parent.renderer ? parent.width - 2*parent.renderer.border.width : (parent.width || parent.innerWidth);
+            res = width * parseFloat(value)/100;
+        } else if (value.endsWith('em')) res = this.font.em * parseFloat(value);
+        return Math.floor(res);
     };
     Renderer.prototype.convertToPixelV = function convertToPixel(value) {
         var res = 0;
+        var parent = this.control && this.control.parent ? this.control.parent : window;
         if (typeof value === 'number') res = value;
         else if (value.endsWith('px')) res = parseFloat(value);
-        else if (value.endsWith('%')) res = this.control.parent.height * parseFloat(value)/100;
-        else if (value.endsWith('em')) res = this.font.size * parseFloat(value);
+        else if (value.endsWith('%')) {
+            var parent = this.control && this.control.parent ? this.control.parent : window;
+            var height = parent.renderer ? parent.height - 2*parent.renderer.border.width : (parent.width || parent.innerHeight);
+            res = height * parseFloat(value)/100;
+        } else if (value.endsWith('em')) res = this.font.size * parseFloat(value);
         return Math.round(res);
     };
     Renderer.prototype.toColor = function toColor(cssColor) {

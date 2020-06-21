@@ -41,14 +41,11 @@ include('renderer2d.js');
 
         this.renderCursor(lines, boxes);
     };
-    TextboxRenderer2d.prototype.renderSlider = function renderSlider() {
-
-    };
     TextboxRenderer2d.prototype.renderPotmeter = function renderPotmeter() {
         var color = !this.control.isBlank ? this.color : this.mixColors(this.color, this.backgroundColor, 0.5);
         var bgColor = this.mixColors(this.color, this.backgroundColor, 0.5);
         var width = (this.control.getValue() - this.control.min)*this.control.width/(this.control.max - this.control.min);
-        this.drawRect(this.control.left, this.control.top, width, this.control.height, bgColor);
+        this.drawRect(0, 0, width, this.control.height, bgColor);
         var lines = this.control.getLines();
         var line = lines[0];
         var boxes = this.getTextBoundingBoxes(lines);
@@ -79,11 +76,11 @@ include('renderer2d.js');
         var cy = y - this.control.top;
     };
 
-    function Textbox(id, template, parent) {
-        Textbox.base.constructor.call(this, id, template, parent);
+    function Textbox(id, template, parent, context) {
+        this.lines = [];
+        Textbox.base.constructor.call(this, id, template, parent, context);
         this.cursorPos = [0, 0];
         this.isFocused = false;
-        this.lines = [];
         //this.renderer3d = new TextboxRenderer3d()
     }
     extend(glui.ValueControl, Textbox);
@@ -106,7 +103,7 @@ include('renderer2d.js');
         if (results.length > 0) {
             value = results[0].value;
         }
-        Textbox.base.setValue.call(this, value);
+        var oldValue = Textbox.base.setValue.call(this, value);
         var v = !this.isNumeric ? value.toString() : value.toFixed(this.decimalDigits);
         if (v != undefined && v != null && v != '') {
             this.lines = v.split('\\n');
@@ -114,7 +111,7 @@ include('renderer2d.js');
             this.lines = [];
             v = '';
         }
-        this.value = v;
+        return oldValue;
     };
     Textbox.prototype.isEmpty = function isEmpty() {
         return this.lines.length == 0;
@@ -150,19 +147,24 @@ include('renderer2d.js');
         this.renderer.cursorVisible = false;
         this.isFocused = false;
         // save value into datasource
-        Textbox.base.setValue.call(this, this.isNumeric ? parseFloat(this.lines[0]) : this.lines.join('\n'))
+        var value = this.isNumeric ? parseFloat(this.lines[0]) : this.lines.join('\n');
+        var oldValue = Textbox.base.setValue.call(this, value)
         if (this.value === '') {
             if (this.lines.length > 0) this.lines.splice(0, this.lines.length);
         }
         this.renderer.render();
-        this.callHandler('change');
+        if (this.value != oldValue) {
+            this.callHandler('change', {'type':'change','oldValue': oldValue, 'value':value, 'control':this});
+        }
     };
     Textbox.prototype.ondragging = function ondragging(e) {
-        var delta = this.step * e.deltaX;
-        var value = this.getValue() + delta;
-        // validate and adjust value
-        this.setValue(value);
-        this.callHandler('change');
+        if (this.isNumeric && this.look == glui.Textbox.Look.Potmeter) {
+            var delta = this.step * e.deltaX;
+            var value = this.getValue() + delta;
+            // validate and adjust value
+            this.setValue(value);
+            this.callHandler('change');
+        }
     };
 
     var _separators = [' ', ',', ';', ':', '-', '_', '!', '?', '.', '\0', '#'];
@@ -389,15 +391,9 @@ include('renderer2d.js');
     Textbox.prototype.setLook = function setLook(look) {
         look = look || this.look;
         switch (look) {
-            case Textbox.Look.Slider:
-                if (this.isNumeric) {
-                    this.renderer.renderControl = TextboxRenderer2d.prototype.renderSlider;
-                }
-                break;
             case Textbox.Look.Potmeter:
-                if (this.isNumeric) {
-                    this.renderer.renderControl = TextboxRenderer2d.prototype.renderPotmeter;
-                }
+                this.isNumeric = true;
+                this.renderer.renderControl = TextboxRenderer2d.prototype.renderPotmeter;
                 break;
             default:
                 console.warn(`Invalid look '${look}' for textbox '${this.id}'!`);
@@ -409,7 +405,6 @@ include('renderer2d.js');
 
     Textbox.Look = {
         Textbox: 'textbox',
-        Slider: 'slider',
         Potmeter: 'potmeter'
     };
 

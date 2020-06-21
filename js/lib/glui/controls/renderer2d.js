@@ -56,7 +56,7 @@ include('renderer.js');
     Renderer2d.prototype.getTextBoundingBoxes = function getBoundingBoxes(lines) {
         var boxes = [];
         var bw = this.border.width;
-        var y = this.control.top + bw, w = 0;
+        var y = bw, w = 0;
         var h = lines.length * this.font.size;
         var alignment = this.getAlignment(this.control.style.align);
         var dy = this.control.height - 2*bw - h; if (dy < 0) dy = 2*bw;
@@ -69,7 +69,7 @@ include('renderer.js');
             var x = bw;
             if (alignment & glui.Alignment.CENTER) x += Math.floor(dx/2);
             else if (alignment & glui.Alignment.RIGHT) x += dx;
-            boxes.push([this.control.left+x, y, w]);
+            boxes.push([x, y, w]);
             y += this.font.size;
         }
         return boxes;
@@ -79,13 +79,15 @@ include('renderer.js');
         // set clipping area
         this.context.save();
         var region = new Path2D();
-        region.rect(this.control.left, this.control.top, this.control.width, this.control.height);
+        var borderWidth = this.control.parent && this.control.parent.renderer ? this.control.parent.renderer.border.width : 0;
+        this.context.setTransform(1, 0, 0, 1, this.control.left + borderWidth, this.control.top + borderWidth);
+        region.rect(0, 0, this.control.width, this.control.height);
         this.context.clip(region);
-        if (this.backgroundColor) this.drawRect(this.control.left, this.control.top, this.control.width, this.control.height, this.backgroundColor);
+        if (this.backgroundColor) this.drawRect(0, 0, this.control.width, this.control.height, this.backgroundColor);
         // render control
         if (this.control.style.font) this.setFont(this.control.style.font);
         this.renderControl();
-        if (this.border.style) this.drawBorder(this.control.left, this.control.top, this.control.width, this.control.height);
+        if (this.border.style) this.drawBorder(0, 0, this.control.width, this.control.height);
         this.context.restore();
     };
 

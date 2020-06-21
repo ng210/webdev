@@ -3,9 +3,10 @@ include('data/datalink.js');
 
 (function() {
 
-    function Control(id, template, parent) {
+    function Control(id, template, parent, context) {
         this.id = id || 'ctrl';
         this.parent = parent || null;
+        this.context = context || this.parent;
         this.template = null;
         this.style = {};
         this.renderer = null;
@@ -17,6 +18,8 @@ include('data/datalink.js');
 
         this.left = 0;
         this.top = 0;
+        this.offsetLeft = 0;
+        this.offsetTop = 0;
         this.width = 0;
         this.height = 0;
     }
@@ -54,19 +57,9 @@ include('data/datalink.js');
             'disabled': false,
             'data-source': '',
             'data-field': '',
+            'z-index': '',
             // styling
-            'style': {
-                'left': 0,
-                'top': 0,
-                'width': '4em',
-                'height': '1.2em',
-                'z-index': 0,
-                'background': '#c0c0c0',
-                'color': '#000000',
-                'font': 'Arial 20 normal',
-                'align': 'center middle',
-                'border': '#c0c0c0 2px solid'
-            }
+            'style': Control.getStyleTemplate()
         };
 
         var handlers = this.getHandlers();
@@ -89,7 +82,7 @@ include('data/datalink.js');
         var node = this;
         while (node) {
             nodes.push(node);
-            node = node.parent;
+            node = node.context;
         }
         for (var i=0; i<nodes.length; i++) {
             node = nodes[i];
@@ -117,9 +110,20 @@ include('data/datalink.js');
             }
         } else {
             var handlers = this.getHandlers();
-            for (var i in handlers) {
+            for (var i=0; i<handlers.length; i++) {
                 this.addHandler(handlers[i]);
             }
+        }
+    };
+    Control.prototype.getBoundingBox = function getBoundingBox() {
+        return [this.left, this.top, this.width, this.height];
+    };
+    Control.prototype.move = function move(dx, dy) {
+        this.offsetLeft = dx;
+        this.offsetTop = dy;
+        if (this.renderer) {
+            this.left = this.renderer.accumulate('offsetLeft');
+            this.top = this.renderer.accumulate('offsetTop', true);
         }
     };
     Control.prototype.render = function render() {
@@ -127,53 +131,33 @@ include('data/datalink.js');
             this.renderer.render();
         }
     };
-    function mergeFields(src, dst, path) {
-        var res = {};
-        dst = dst || {};
-		for (var i in src) {
-            if (!dst.hasOwnProperty(i)) {
-                res[i] = src[i];
-            } else {
-                if (typeof src[i] === 'object') {
-                    res[i] = mergeFields(src[i], dst[i]);
-                } else {
-                    res[i] = dst[i];
-                }
-            }
-        }
-        return res;
-    }
 	Control.prototype.applyTemplate = function(tmpl) {
         this.template = this.getTemplate();
-        var merged = mergeFields(this.template, tmpl);
+        var merged = Control.mergeFields(this.template, tmpl);
         this.id = merged.id;
         this.type = merged.type;
         this.disabled = merged.disabled;
-        var glControl = glui.controls.find(x => x.id == merged['data-source']);
-        if (glControl) {
-            this.dataSource = glControl;
-        }
         this.dataSource = glui.controls.find(x => x.id == merged['data-source']) || window[merged['data-source']];
         this.dataField = merged['data-field'];
+        this.zIndex = parseInt(merged['z-index']) || 0;
         this.style = {};
         for (var i in merged.style) {
             this.style[i] = merged.style[i];
         }
         this.label = null;
-
         return merged;
 	};
     Control.prototype.onmouseover = function onmouseover(e) {
         if (Control.focused != this) {
             this.renderer.backgroundColor_ = this.renderer.backgroundColor;
             this.renderer.backgroundColor = this.renderer.calculateColor(this.renderer.backgroundColor, 1.2);
-            this.renderer.render();
+            this.render();
         }
     };
     Control.prototype.onmouseout = function onmouseout(e) {
         if (Control.focused != this) {
             this.renderer.backgroundColor = this.renderer.backgroundColor_;
-            this.renderer.render();
+            this.render();
         }
     };
     // Control.prototype.onmouseup = function onmouseup(e) {
@@ -265,6 +249,47 @@ include('data/datalink.js');
             // e.preventDefault();
 		}
 		//console.log(Control.focused ? Control.focused.id : 'none')
+    };
+
+    Control.create = function create(id, template, parent, context) {
+        var type = template.type;
+        if (typeof glui[type] === 'function') {
+            var ctrl = Reflect.construct(glui[type], [id, template, parent, context]);
+            if (ctrl instanceof glui.Control) {
+                return ctrl;
+            }
+        }
+        throw new Error(`Unknown control type ${type}`);
+    };
+    Control.getStyleTemplate = function getStyleTemplate() {
+        return {
+            'left': 0,
+            'top': 0,
+            'width': '4em',
+            'height': '1.2em',
+            'z-index': 0,
+            'background': '#c0c0c0',
+            'color': '#000000',
+            'font': 'Arial 20 normal',
+            'align': 'center middle',
+            'border': '#c0c0c0 2px solid'
+        };
+    };
+    Control.mergeFields = function mergeFields(src, dst) {
+        var res = {};
+        dst = dst || {};
+		for (var i in src) {
+            if (!dst.hasOwnProperty(i)) {
+                res[i] = src[i];
+            } else {
+                if (typeof src[i] === 'object') {
+                    res[i] = mergeFields(src[i], dst[i]);
+                } else {
+                    res[i] = dst[i];
+                }
+            }
+        }
+        return res;
     };
 
     Control.focused = null;

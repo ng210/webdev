@@ -31,8 +31,8 @@ include('renderer2d.js');
     };
 
 
-    function Button(id, template, parent) {
-        Button.base.constructor.call(this, id, template, parent);
+    function Button(id, template, parent, context) {
+        Button.base.constructor.call(this, id, template, parent, context);
         this.state = false;
         //this.renderer3d = new ButtonRenderer3d()
     }
