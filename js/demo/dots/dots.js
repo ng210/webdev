@@ -1,100 +1,209 @@
-include('/ge/math/v3.js');
-include('/ge/noise.js');
-
+include('math/v3.js');
+include('ge/noise.js');
+include('glui/glui-lib.js');
 (function() {
-	
-	function Dots(canvas) {
-		Demo.call(this, 'dots', canvas);
-		this.aspect = 0;
-		this.fbmSize = 50;
-		this.PlatformCount = 4;
-		this.WheelSegmentCount = 100;
-		this.WheelRadius = 0.05
-		this.GapCount = 10;
-		this.GapSize = 0.1;
-		this.segmentOffset = 0;
-		this.segments = [];
-		this.dots = [];
-		this.topLeft = null;
-		this.bottomRight = null;
-		this.center = new V3(.0, .0, .0);
-		//this.pSize = 0.01;
-		this.colors = [
+	include('dot.js');
+	include('segment.js');
+
+    // internal variables and functions
+
+    var Dots = {
+        // Member variables
+        // required by the framework
+        name: 'Dots',
+        settings: {
+			count: { label: 'Count', value: 500, min:1, max:2000, step: 1, type: 'int', link: null },
+			gravity: { label: 'Gravity', value: 1, min:0, max:5, step: 0.01, type: 'float', link: null },
+			force: { label: 'Force', value: 0, min:0, max:5, step: 0.01, type: 'float', link: null },
+			elasticity: { label: 'Elasticity', value: 0.9, min:0, max:1, step: 0.01, type: 'float', link: null },
+			time: { label: 'Time', value: 0, min:0, max:1, step: 0.01, type: 'float', link: null }
+		},
+
+		// custom variables
+		aspect: 0,
+		fbmSize: 50,
+		platformCount: 4,
+		wheelSegmentCount: 100,
+		wheelRadius: 0.05,
+		gapCount = 10,
+		gapSize: 0.1,
+		segmentOffset: 0,
+		segments: [],
+		dots: [],
+		topLeft: null,
+		bottomRight: null,
+		center: new V3(.0, .0, .0),
+		colors: [
 			[0xff,0x80,0x80], [0x80,0xff,0x80], [0x80,0x80,0xff], [0xff,0xff,0x80],
 			[0x80,0xff,0xff], [0x80,0x80,0x80], [0xff,0x80,0xff], [0xff,0xff,0xff]
-		];
-		this.noise = new Noise();
-		this.lastMousePosition = new V3();
-		this.mode = 0;
+		],
+		noise: new Noise(),
+		lastMousePosition: new V3(),
+		mode: 0,
+    
+        // Member functions
+		// required by the framework
+		initialize: function initialize() {
+			this.createSegmentsFromFbm();
+			this.createPlatforms();
+			this.segmentOffset = this.segments.length;
+			this.createSegmentWheel();
+	
+			for (var i=0; i<this.settings.count; i++) {
+				this.dots[i] = new Dot();
+				this.dots[i].setMass(5.0*Math.random()+5.0);
+				this.respawn(this.dots[i]);
+				// add callbacks
+				this.dots[i].addForce(this, this.gravity);
+				this.dots[i].addForce(this, this.attraction);
+				this.dots[i].addForce(this, this.friction);
+				this.dots[i].addConstraint(this, this.checkVectors);
+				this.dots[i].addConstraint(this, this.checkBox);
+			}
+			//GE.ctx.globalCompositeOperation = ...
+        },
+        resize: function resize(e) {
+        },
+        update: function update(frame, dt) {
+			for (var i=0; i<this.settings.count; i++) {
+				this.dots[i].update(this.settings.time*dt);
+			}
+        },
+        render: function render(frame, dt) {
+			// erase background
+			GE.ctx.fillStyle = '#0e1028';
+			GE.ctx.fillRect(-this.aspect, -1.0, 2*this.aspect, 2);
+			// paint segments
+			GE.ctx.strokeStyle = '#60c080';
+			GE.ctx.beginPath();
+			for (var i=0; i<this.segments.length; i++) {
+				var v = this.segments[i];
+				GE.ctx.moveTo(v.a.x, v.a.y);
+				GE.ctx.lineTo(v.b.x, v.b.y);
+			}
+			GE.ctx.stroke();
+
+			// paint dots
+			//var ps = this.pSize/2;
+			for (var i=0; i<this.settings.count; i++) {
+				this.dots[i].render(GE.ctx);
+			}
+
+			GE.ctx.globalAlpha = 0.3;
+			var lineHeigth = 0.05;
+			GE.ctx.font = lineHeigth.toPrecision(4) + "px Consolas";
+			GE.ctx.fillStyle = "#ffe080";
+			GE.ctx.textAlign = "left";
+			var ty = 1.0 - lineHeigth;
+			GE.ctx.fillText("mode:" + this.mode, -this.aspect, ty.toPrecision(2));
+			//GE.ctx.fillText("mpos:" + GE.inputs.mpos + ' buttons: ' + GE.inputs.mbuttons.toString(2), -this.aspect, ty.toPrecision(2));
+			GE.ctx.globalAlpha = 1.0;
+		},
 		
-	}
-	extend(Demo, Dots);
+		// event handlers
+		onchange: function onchange(e, ctrl) {
+			switch (ctrl.id) {
+				// case 'resolution':
+				// 	this.onresize();
+				// 	break;
+				case 'count':
+					var n = e.control.getValue();
+					for (var i=this.settings.count; i<n; i++) {
+						this.dots[i] = new Dot();
+						this.dots[i].setMass(5.0*Math.random()+5.0);
+						this.respawn(this.dots[i]);
+						// add callbacks
+						this.dots[i].addForce(this, this.gravity);
+						this.dots[i].addForce(this, this.attraction);
+						this.dots[i].addForce(this, this.friction);
+						this.dots[i].addConstraint(this, this.checkVectors);
+						this.dots[i].addConstraint(this, this.checkBox);
+					}
+					break;
+			}
+		},
 
-	Dots.prototype.prepare = async function() {
-		await load('/demo/dots/dot.js');
-	};
-	Dots.prototype.initialize = function() {
-		settings_.style.width = '16em';
-		this.onresize();
-		this.createSegmentsFromFbm();
-		this.createPlatforms();
-		this.segmentOffset = this.segments.length;
-		this.createSegmentWheel();
-
-		for (var i=0; i<this.data.count; i++) {
-			this.dots[i] = new Dots.Dot();
-			this.dots[i].setMass(5.0*Math.random()+5.0);
-			this.respawn(this.dots[i]);
-			// add callbacks
-			this.dots[i].addForce(this, this.gravity);
-			this.dots[i].addForce(this, this.attraction);
-			this.dots[i].addForce(this, this.friction);
-			this.dots[i].addConstraint(this, this.checkVectors);
-			this.dots[i].addConstraint(this, this.checkBox);
-		}
-		//GE.ctx.globalCompositeOperation = ...
-	};
-	Dots.prototype.processInputs = function(e) {
-		if ((GE.inputs.mbuttons & 2) != 0) {
-			this.getMouseCoors(this.lastMousePosition);
-			var mode = this.mode & 0x01;
-			this.mode &= 0xfe;
-			this.mode |= 1 - mode;
-			GE.inputs.mbuttons &= 253;
-		}
-		this.mode &= 0xfd;
-		if (GE.inputs.keys[16] != 0) {
-			this.mode |= 0x02;
-		}
-	};
-	Dots.prototype.onchange = function(e) {
-		switch (e.control.dataField) {
-			case 'resolution':
-				this.onresize();
-				break;
-			case 'count':
-				var n = e.control.getValue();
-				for (var i=this.data.count; i<n; i++) {
-					this.dots[i] = new Dots.Dot();
-					this.dots[i].setMass(5.0*Math.random()+5.0);
-					this.respawn(this.dots[i]);
-					// add callbacks
-					this.dots[i].addForce(this, this.gravity);
-					this.dots[i].addForce(this, this.attraction);
-					this.dots[i].addForce(this, this.friction);
-					this.dots[i].addConstraint(this, this.checkVectors);
-					this.dots[i].addConstraint(this, this.checkBox);
+		// custom functions
+		gravity: function gravity(dot, force) {
+			force.y += this.settings.gravity;
+		},
+		attraction: function attraction(dot, force) {
+			var v = this.center.sub(dot.position).norm();
+			var d = v.len2;
+			if (d < 0.001) d = 0.001;
+			force.inc(v.scale(this.settings.force/d));
+		},
+		friction: function friction(dot, force) {
+			force.scale(0.15);
+		},
+		checkVectors: function checkVectors(dot, dp, dpOut) {
+			var u = new Segment(dot.position, dot.position.add(dp));
+			for (var i=0; i<this.segments.length; i++) {
+				var v = this.segments[i];
+				var p = v.intersect(u);
+				if (p != null) {
+					// calculate reflection direction: norm(up-2*dot(up, vn)*vn)
+					var up = p.sub(u.a);
+					var vn = new V3(-v.d.y, v.d.x, 0).norm();
+					var dir = up.sub(vn.scale(2*up.dot(vn))).norm();
+					dot.velocity = dir.scale(dot.velocity.length() * this.settings.elasticity);
+					var s = u.b.sub(p).length();
+					//var dt = (u.b.x - p.x)/dot.velocity.x
+					// dpOut = up + dir*s
+					dpOut.set(up.inc(dir.mulC(0.1*s)));
+					//dpOut.x = 0, dpOut.y = 0;
+					//dot.velocity = dir*dot.velocity.length;
+					//dot.velocity.x = 0, dot.velocity.y = 0;
+					break;
 				}
-				break;
-		}
-	};
+			}
+		},
+		checkBox: function checkBox(dot, dp, dpOut) {
+			var pos = dot.position.add(dp);
+			var d1 = pos.sub(this.topLeft);
+			var d2 = this.bottomRight.sub(pos);
+			var checkX = false, checkY = false;
+			if (d1.x < 0) {
+				dpOut.x -= d1.x;
+				checkX = true;
+			} else if (d2.x < 0) {
+				dpOut.x += d2.x;
+				checkX = true;
+			}
+			if (d1.y < 0) {
+				dpOut.y -= d1.y;
+				checkY = true;
+			} else if (d2.y < 0) {
+				checkY = true;
+				dpOut.y += d2.y;
+			}
+			//this.rebound(dot, checkX, checkY);
+			this.respawn(dot, checkX, checkY);
+		}	
 
+    };
+
+    public(Dots, 'Dots');
+})();
+	// Dots.prototype.processInputs = function(e) {
+	// 	if ((GE.inputs.mbuttons & 2) != 0) {
+	// 		this.getMouseCoors(this.lastMousePosition);
+	// 		var mode = this.mode & 0x01;
+	// 		this.mode &= 0xfe;
+	// 		this.mode |= 1 - mode;
+	// 		GE.inputs.mbuttons &= 253;
+	// 	}
+	// 	this.mode &= 0xfd;
+	// 	if (GE.inputs.keys[16] != 0) {
+	// 		this.mode |= 0x02;
+	// 	}
+	// };
 	var rotation_ = 2.0*Math.PI/40;
 	var delta_ = 0;
 	Dots.prototype.update = function(frame, dt) {
 		// update wheel rotation
 		delta_ += rotation_*dt;
-		var dr = 0.01*this.data.time*Math.sin(delta_);
+		var dr = 0.01*this.settings.time*Math.sin(delta_);
 		var cosdr = Math.cos(dr);
 		var sindr = Math.sin(dr);
 	
@@ -110,8 +219,8 @@ include('/ge/noise.js');
 			s.d = s.b.sub(s.a);
 		}
 
-		for (var i=0; i<this.data.count; i++) {
-			this.dots[i].update(this.data.time*dt);
+		for (var i=0; i<this.settings.count; i++) {
+			this.dots[i].update(this.settings.time*dt);
 		}
 	};
 	Dots.prototype.render = function(frame) {
@@ -130,7 +239,7 @@ include('/ge/noise.js');
 
 		// paint dots
 		//var ps = this.pSize/2;
-		for (var i=0; i<this.data.count; i++) {
+		for (var i=0; i<this.settings.count; i++) {
 			this.dots[i].render(GE.ctx);
 		}
 
@@ -146,28 +255,28 @@ include('/ge/noise.js');
 	};
 	Dots.prototype.onresize = function(e) {
 		// handler of window resize
-		GE.resizeCanvas(1/this.data.resolution);
+		GE.resizeCanvas(1/this.settings.resolution);
 		var he = GE.canvas.height;
-		this.aspect = GE.canvas.width/he;
+		aspect: GE.canvas.width/he,
 		GE.ctx.setTransform(he/2, 0, 0, he/2, GE.canvas.width/2, he/2);
 		Dots.Dot.pSize = 2/he;
 		GE.ctx.lineWidth = Dots.Dot.pSize;
 
-		this.topLeft = new V3(-this.aspect + .05, -0.95, 0);
-		this.bottomRight = new V3(this.aspect - .05, .95, 0);
+		topLeft: new V3(-this.aspect + .05, -0.95, 0),
+		bottomRight: new V3(this.aspect - .05, .95, 0),
 
 		// if (typeof window.webGL !== 'undefined')
 		// 	webGL.resize(gl, width, height);
 	
 	};
 	Dots.prototype.gravity = function(dot, force) {
-		force.y += this.data.gravity;
+		force.y += this.settings.gravity;
 	};
 	Dots.prototype.attraction = function(dot, force) {
 		var v = this.center.sub(dot.position).norm();
 		var d = v.len2;
 		if (d < 0.001) d = 0.001;
-		force.inc(v.scale(this.data.force/d));
+		force.inc(v.scale(this.settings.force/d));
 	};
 	Dots.prototype.friction = function(dot, force) {
 		force.scale(0.15);
@@ -224,50 +333,7 @@ include('/ge/noise.js');
 		// 	p1 = p2;
 		// }
 	};
-	Dots.prototype.checkVectors = function(dot, dp, dpOut) {
-		var u = new Segment(dot.position, dot.position.add(dp));
-		for (var i=0; i<this.segments.length; i++) {
-			var v = this.segments[i];
-			var p = v.intersect(u);
-			if (p != null) {
-				// calculate reflection direction: norm(up-2*dot(up, vn)*vn)
-				var up = p.sub(u.a);
-				var vn = new V3(-v.d.y, v.d.x, 0).norm();
-				var dir = up.sub(vn.scale(2*up.dot(vn))).norm();
-				dot.velocity = dir.scale(dot.velocity.length() * this.data.elasticity);
-				var s = u.b.sub(p).length();
-				//var dt = (u.b.x - p.x)/dot.velocity.x
-				// dpOut = up + dir*s
-				dpOut.set(up.inc(dir.mulC(0.1*s)));
-				//dpOut.x = 0, dpOut.y = 0;
-				//dot.velocity = dir*dot.velocity.length;
-				//dot.velocity.x = 0, dot.velocity.y = 0;
-				break;
-			}
-		}
-	};	
-	Dots.prototype.checkBox = function(dot, dp, dpOut) {
-		var pos = dot.position.add(dp);
-		var d1 = pos.sub(this.topLeft);
-		var d2 = this.bottomRight.sub(pos);
-		var checkX = false, checkY = false;
-		if (d1.x < 0) {
-			dpOut.x -= d1.x;
-			checkX = true;
-		} else if (d2.x < 0) {
-			dpOut.x += d2.x;
-			checkX = true;
-		}
-		if (d1.y < 0) {
-			dpOut.y -= d1.y;
-			checkY = true;
-		} else if (d2.y < 0) {
-			checkY = true;
-			dpOut.y += d2.y;
-		}
-		//this.rebound(dot, checkX, checkY);
-		this.respawn(dot, checkX, checkY);
-	};
+
 	Dots.prototype.respawn = function(dot, checkX, checkY) {
 		if (checkX !== false || checkY !== false) {
 			switch (this.mode) {
@@ -291,13 +357,13 @@ include('/ge/noise.js');
 	};
 	Dots.prototype.rebound = function(dot, checkX, checkY) {
 		if (checkX)
-			dot.velocity.x *= -this.data.elasticity;
+			dot.velocity.x *= -this.settings.elasticity;
 		if (checkY)
-			dot.velocity.y *= -this.data.elasticity;
+			dot.velocity.y *= -this.settings.elasticity;
 	};
 	Dots.prototype.getMouseCoors = function(v) {
-		v.x = 2*GE.inputs.mpos[0]/this.data.resolution/GE.canvas.height - this.aspect;
-		v.y = 2*GE.inputs.mpos[1]/this.data.resolution/GE.canvas.height - 1.0;
+		v.x = 2*GE.inputs.mpos[0]/this.settings.resolution/GE.canvas.height - this.aspect;
+		v.y = 2*GE.inputs.mpos[1]/this.settings.resolution/GE.canvas.height - 1.0;
 	};
 
 	public(Dots, 'Dots');
