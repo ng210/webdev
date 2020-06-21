@@ -160,10 +160,11 @@ include('renderer2d.js');
     Textbox.prototype.ondragging = function ondragging(e) {
         if (this.isNumeric && this.look == glui.Textbox.Look.Potmeter) {
             var delta = this.step * e.deltaX;
-            var value = this.getValue() + delta;
+            var oldValue = this.getValue();
+            var value = oldValue + delta;
             // validate and adjust value
             this.setValue(value);
-            this.callHandler('change');
+            this.callHandler('change', {'type':'change','oldValue': oldValue, 'value':value, 'control':this});
         }
     };
 

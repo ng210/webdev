@@ -123,9 +123,7 @@ include('label.js');
         if (source) {
             //this.dataSource = source instanceof DataLink ? source : new DataLink(source);
 			this.dataField = field !== undefined ? field : this.dataField;
-			if (this.dataField) {
-				source = source[this.dataField];
-			}
+
 			this.dataSource = source;
 		}
 		this.build();

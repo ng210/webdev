@@ -171,7 +171,7 @@ include('glui/glui-lib.js');
 
     function createControls() {
         for (var i=0; i<controls.length; i++) {
-            var control = glui.create(`ctrl${i}`, controls[i], null, App);
+            glui.create(`ctrl${i}`, controls[i], null, App);
         }
     }
 
@@ -187,6 +187,7 @@ include('glui/glui-lib.js');
             if (ctrl.parent == null) {
                 ctrl.move(left, top);
                 width = Math.max(width, parseFloat(ctrl.width));
+                ctrl.getBoundingBox();
                 top += 8 + parseFloat(ctrl.height);
                 if (top > screen.height/2) {
                     top = 10;

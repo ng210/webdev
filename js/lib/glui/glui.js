@@ -37,8 +37,14 @@
             context = context || this.context;
             var ctrl = glui.Control.create(id, tmpl, parent, context);
             ctrl.addHandlers();
-            var ix = this.controls.findIndex(x => x.zIndex < ctrl.zIndex);
-            this.controls.splice(ix, 0, ctrl);
+            //if (parent == null) {
+                var ix = this.controls.findIndex(x => x.zIndex < ctrl.zIndex);
+                if (ix != -1) {
+                    this.controls.splice(ix, 0, ctrl);
+                } else {
+                    this.controls.push(ctrl);
+                }
+            //}
             return ctrl;
         },
         remove: function remove(control) {
@@ -128,7 +134,7 @@
                     ctrl.renderer.initialize();
                     ctrl.move(left, top);
                     if (repaint) ctrl.render();
-                }                
+                }
             }
         },
         getControlAt: function getControlAt(x, y) {
@@ -138,6 +144,7 @@
                 var ctrl = glui.controls[i];
                 if (ctrl.left < cx  && cx < ctrl.left + ctrl.width && ctrl.top < cy  && cy < ctrl.top + ctrl.height) {
                     res = ctrl;
+                    //ctrl.getControlAt(x, y);
                     break;
                 }
             }
