@@ -1,0 +1,4 @@
+[
+    { "label": "Plasma", "path": "plasma/plasma.js" },
+    { "label": "Times-table", "path": "timestable/timestable.js" }
+]
