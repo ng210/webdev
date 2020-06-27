@@ -62,7 +62,7 @@ include('ge/fn.js');
 				}
 			}
 			this.context.putImageData(this.buffer, 0, 0);
-			glui.context.drawImage(this.context.canvas, 0, 0, this.buffer.width, this.buffer.height, 0, 0, glui.width, glui.height);
+			glui.renderingContext2d.drawImage(this.context.canvas, 0, 0, this.buffer.width, this.buffer.height, 0, 0, glui.width, glui.height);
 		},
 		updateVelocity: function updateVelocity() {
 			this.vx = this.settings.shape.value;

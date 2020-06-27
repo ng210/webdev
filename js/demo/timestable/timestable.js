@@ -16,8 +16,8 @@ include('glui/glui-lib.js');
     var Timestable = {
         name: 'Times-table',
         settings: {
-            count: { label: 'Count (N)', value: 200, min:10, max:5000, step: 10, type: 'int' },
-            times: { label: 'Times (T)', value: 2, type: 'int' },
+            count: { label: 'Count (N)', value: 200, min:10, max:5000, step: 1, type: 'int' },
+            times: { label: 'Times (T)', value: 2, min:0, max:199, type: 'int' },
             radius: { label: 'Radius', value: 0.4, min:0.1, max:0.5, step: 0.01, type: 'float' },
             delta: { label: 'Delta', value: 0.01, min:0.001, max:0.1, step: 0.001, type: 'float' },
             gradient: { label: 'Gradient', value: 0.2, min:0.01, max:2.0, step: 0.01, type: 'float' },
@@ -72,6 +72,14 @@ include('glui/glui-lib.js');
                 ctx.strokeStyle = gradient;
                 ctx.lineTo(x2, y2);
                 ctx.stroke();
+            }
+        },
+        onchange: function onchange(e, ctrl) {
+            switch (ctrl.row.name) {
+                case 'count':
+                    this.settings.times.control.max = ctrl.getValue()-1;
+                    this.settings.times.control.setValue(this.settings.times.value);
+                    break;
             }
         }
     };
