@@ -34,6 +34,7 @@ include('control.js');
 	ValueControl.prototype.fromNode = function fromNode(node) {
 		ValueControl.base.fromNode.call(this, node);
 		var value = node.getAttribute('value')  || node.innerText || this.defaultValue || this.dataSource[this.dataField];
+		if (this.isNumeric) value = this.parse(value);
 		this.setValue(value);
 	};
 	ValueControl.prototype.getDataType = function() {
@@ -126,9 +127,9 @@ include('control.js');
 			this.dataLink = new DataLink(this);
 			this.dataLink.link('value', this.dataSource, this.dataField, this.toSource, this.fromSource);
 			this.dataLink.addHandler('value', glui.Control.prototype.render, this);
-			// if (this.dataSource.obj instanceof glui.Control) {
-			// 	this.dataLink.addHandler('value', this.render, this.dataSource.obj);
-			// }
+			if (this.dataSource.obj instanceof glui.Control) {
+				this.dataLink.addHandler('value', this.render, this.dataSource.obj);
+			}
 			this.setValue(this.fromSource ? this.fromSource(value) : value);
 		}
         return this.dataSource;
@@ -174,6 +175,7 @@ include('control.js');
 		this.validations[field].push(new ValueControl.Validation(message || `Validation error for '{field}'`, check, fix));
 	}
 	ValueControl.prototype.validate = function(field, value) {
+		if (value == undefined) value = this[field];
 		var results = [];
 		if (this.validations[field]) {
 			for (var i=0; i<this.validations[field].length; i++) {

@@ -57,25 +57,39 @@ include('glui/glui.js');
         }
         return alignment;
     };
-    Renderer.prototype.convertToPixel = function convertToPixel(value) {
+    Renderer.prototype.convertToPixel = function convertToPixel(value, parentWidth) {
         var res = 0;
         if (typeof value === 'number') res = value;
         else if (value.endsWith('px')) res = parseFloat(value);
         else if (value.endsWith('%')) {
-            var parent = this.control && this.control.parent ? this.control.parent : window;
-            var width = parent.renderer ? parent.width - 2*parent.renderer.border.width : (parent.width || parent.innerWidth);
+            var width = parentWidth;
+            if (width == undefined) {
+                var parent = this.control && this.control.parent ? this.control.parent : window;
+                if (parent.renderer) {
+                    width = parent.width - 2*parent.renderer.border.width;
+                } else {
+                    width = parent.width != undefined ? parent.width : parent.innerWidth;
+                }
+            }
             res = width * parseFloat(value)/100;
         } else if (value.endsWith('em')) res = this.font.em * parseFloat(value);
         return Math.floor(res);
     };
-    Renderer.prototype.convertToPixelV = function convertToPixel(value) {
+    Renderer.prototype.convertToPixelV = function convertToPixel(value, parentHeight) {
         var res = 0;
         var parent = this.control && this.control.parent ? this.control.parent : window;
         if (typeof value === 'number') res = value;
         else if (value.endsWith('px')) res = parseFloat(value);
         else if (value.endsWith('%')) {
-            var parent = this.control && this.control.parent ? this.control.parent : window;
-            var height = parent.renderer ? parent.height - 2*parent.renderer.border.width : (parent.width || parent.innerHeight);
+            var height = parentHeight;
+            if (height == undefined) {
+                var parent = this.control && this.control.parent ? this.control.parent : window;
+                if (parent.renderer) {
+                    height = parent.height - 2*parent.renderer.border.width;
+                } else {
+                    height = parent.height != undefined ? parent.height : parent.innerHeight;
+                }
+            }
             res = height * parseFloat(value)/100;
         } else if (value.endsWith('em')) res = this.font.size * parseFloat(value);
         return Math.round(res);

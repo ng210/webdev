@@ -3,6 +3,10 @@ include('glui/glui.js');
 
     function IControl() {
     }
+
+    IControl.prototype.destroy = function destroy() {
+        throw new Error('Not implemented!');
+    };
     IControl.prototype.fromNode = function fromNode(node) {
         throw new Error('Not implemented!');
     };

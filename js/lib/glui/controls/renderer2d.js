@@ -74,7 +74,16 @@ include('renderer.js');
         }
         return boxes;
     };
-
+    Renderer2d.prototype.drawImage = function drawImage(image, dx, dy, dw, dh, sx, sy, sw, sh) {
+        var ctx = this.context;
+        sw = sw || image.width;
+        sh = sh || image.height;
+        dw = dw || this.control.width;
+        dh = dh || this.control.height;
+        sx = sx || 0;
+        sy = sy || 0;
+        ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
+    };
     Renderer2d.prototype.render = function render() {
         // set clipping area
         this.context.save();

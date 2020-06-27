@@ -11,7 +11,7 @@ include('glui/glui-lib.js');
         'background': '#c0e0ff'
     };
     var buttonStyle = {
-        'font': 'Arial 14',
+        'font': 'Arial 12',
         'width':'14em', 'height':'2em',
         'align':'center middle',
         'border':'#808090 2px',
@@ -101,6 +101,16 @@ include('glui/glui-lib.js');
         },
 
         {
+            'type': 'Image',
+            'style': {
+                'width':'128px', 'height':'96px',
+                'border':'#805020 2px inset',
+                'background': '#102040'
+            },
+            'source': 'glui/res/test.png'
+        },
+
+        {
             'type': 'Grid',
             'style': gridStyle,
             'title': 'Characters',
@@ -150,18 +160,11 @@ include('glui/glui-lib.js');
     };
 
     function setup() {
-        glui.scale.x = 0.6;
-        glui.scale.y = 0.6;
-        glui.initialize(App);
-        glui.canvas.width = screen.width/4;
-        glui.canvas.height = screen.height/4;
+        glui.scale.x = 0.5;
+        glui.scale.y = 0.5;
+        glui.initialize(App, true);
+        glui.setRenderingMode(glui.Render2d);
         glui.buildUI(App);
-        glui.canvas.style.position = 'absolute';
-        glui.canvas.style.top = '0px';
-        glui.canvas.style.left = '0px';
-        glui.canvas.style.zIndex = '10';
-        glui.canvas.style.width = '100vw';
-        glui.canvas.style.height = '100vh';
     }
 
     function teardown() {
@@ -169,9 +172,12 @@ include('glui/glui-lib.js');
         renderer = null;
     }
 
-    function createControls() {
+    async function createControls() {
         for (var i=0; i<controls.length; i++) {
-            glui.create(`ctrl${i}`, controls[i], null, App);
+            var ctrl = glui.create(`ctrl${i}`, controls[i], null, App);
+            if (ctrl instanceof glui.Image) {
+                await ctrl.load();
+            }
         }
     }
 
@@ -179,7 +185,7 @@ include('glui/glui-lib.js');
         var ctx = glui.setRenderingMode(glui.Render2d);
         renderer = new glui.Renderer2d(null, ctx);
         renderer.setFont('Arial 12 normal');
-
+        
         var top = renderer.convertToPixelV('5em'), left = 10;
         var width = 0;
         for (var i=0; i<glui.controls.length; i++) {
@@ -196,19 +202,18 @@ include('glui/glui-lib.js');
                 }
             }
         }
-        glui.render();
+        glui.resize(true);
+        glui.animate();
     }
 
-    function test_construct() {
+    async function test_construct() {
         setup();
-
-        createControls();
-        
+        await createControls();
         for (var i=0; i<glui.controls.length; i++) {
             var control = glui.controls[i];
-            if (control instanceof glui.ValueControl && control.parent == null) {
-                test('Should create from template', ctx => {                
-                    ctx.assert(control, '!=', null);
+            test(`Should create <b><i>${control.type}</i></b> from template`, ctx => {                
+                ctx.assert(control, '!=', null);
+                if (control instanceof glui.ValueControl) {
                     ctx.assert(control.id, '=', `ctrl${i}`);
                     ctx.assert(control instanceof glui[controls[i].type], '=', true);
                     if (control.dataSource != null) {
@@ -216,17 +221,16 @@ include('glui/glui-lib.js');
                     } else {
                         ctx.assert(control.value, '=', controls[i].value);
                     }
-                });
-            }
+                }
+            });
         }
 
         teardown();
     }
+
     async function test_render() {
         setup();
-
-        createControls();
-
+        await createControls();
         renderUI();
         await poll( () => isComplete, 100);
         glui.renderingContext2d.fillRect(0, 0, glui.canvas.width, glui.canvas.height);
@@ -234,9 +238,49 @@ include('glui/glui-lib.js');
         teardown();
     }
 
+    function test_mergeFields() {
+        var person = {
+            "id": 12,
+            "name": "James",
+        };
+        var itemList = {
+            "id": 113,
+            "items": [
+                { "name": "knife", "value": 10 },
+                { "name": "bottle", "value": 5 }            
+            ]
+        };
+
+        test('should merge 2 objects', ctx => {
+            var merged = glui.Control.mergeFields(itemList, person);
+            var expected = {
+                "id": 12,
+                "name": "James",
+                "items": [
+                    { "name": "knife", "value": 10 },
+                    { "name": "bottle", "value": 5 }            
+                ]
+            };
+            ctx.assert(merged, ':=', expected);
+            merged.id = 1;
+            ctx.assert(merged.id, '!=', expected.id);
+        });
+
+        test('should clone an object', ctx => {
+            var expected = {
+                "id": 12,
+                "name": "James"
+            };
+            var merged = glui.Control.mergeFields(person);
+            ctx.assert(merged, ':=', person);
+            merged.id = 1;
+            ctx.assert(merged.id, '!=', expected.id);
+        });
+    }
+
     function test_valueControls() {
         var i = 1;
-        for (var type in _controls) {
+        for (var type in controls) {
             var id = `ctrl${i}`;
             var control = null;
             test(`Can construct ${type} directly`, ctx => {
@@ -268,8 +312,9 @@ include('glui/glui-lib.js');
     }
 
     var tests = () => [
+        test_mergeFields,
         test_construct,
-        //test_valueControls
+        //test_valueControls,
         test_render
     ];
     public(tests, 'glUi tests');

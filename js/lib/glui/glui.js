@@ -5,6 +5,7 @@
         scale: { x:1, y:1 },
         mode: null,
         canvas: null,
+        context: null,
         renderingContext2d: null,
         renderingContext3d: null,
         left: 0,
@@ -13,6 +14,7 @@
         height: 0,
 
         animations: [],
+        animateId: 0,
 
         getType: function getType(tagName) {
             var type = null;
@@ -23,12 +25,12 @@
             }
             return type;
         },
-        fromNode: function fromNode(node, parent) {
+        fromNode: function fromNode(node, context) {
             var control = null;
             var type = this.getType(node.tagName);
             if (type) {
                 var control = Reflect.construct(type, []);
-                control.parent = parent || this;
+                control.context = context || this.context;
                 control.fromNode(node);
             }            
             return control;
@@ -37,29 +39,41 @@
             context = context || this.context;
             var ctrl = glui.Control.create(id, tmpl, parent, context);
             ctrl.addHandlers();
-            //if (parent == null) {
+            if (parent == null) {
                 var ix = this.controls.findIndex(x => x.zIndex < ctrl.zIndex);
                 if (ix != -1) {
                     this.controls.splice(ix, 0, ctrl);
                 } else {
                     this.controls.push(ctrl);
                 }
-            //}
+            }
+            //ctrl.setRenderer(this.mode, this.mode == glui.Render2d ? this.renderingContext2d : this.renderingContext3d);
             return ctrl;
         },
         remove: function remove(control) {
             for (var i=0; i<this.controls.length; i++) {
                 if (this.controls[i] == control) {
                     this.controls.splice(i, 1);
+                    control.destroy();
+                    delete control;
                 }
             }
-            return control;
         },
-        initialize: function initialize(app) {
+        initialize: function initialize(app, isFullscreen) {
+            document.body.style.display = 'block';
             this.context = app;
             this.canvas = document.createElement('canvas');
             this.canvas.id = 'gl-canvas';
             document.body.appendChild(this.canvas);
+            if (isFullscreen) {
+                this.canvas.style.position = 'absolute';
+                this.canvas.style.top = '0px';
+                this.canvas.style.left = '0px';
+                this.canvas.style.zIndex = '10';
+                this.canvas.style.width = '100vw';
+                this.canvas.style.height = '100vh';
+            }
+            this.setRenderingMode(glui.Render2d);
         },
         shutdown: function shutdown() {
             // remove controls
@@ -75,32 +89,28 @@
             // }
             glui.animations.splice(0, glui.animations.length);
         },
-        buildUI: async function buildUI(parent) {
+        buildUI: async function buildUI(context) {
             var nodes = document.body.querySelectorAll('*');
             for (var i=0; i<nodes.length; i++) {
                 if (nodes[i].tagName.toLowerCase().startsWith('gl-')) {
-                    var control = this.fromNode(nodes[i], parent || this.parent);
+                    var control = this.fromNode(nodes[i], context || this.context);
                     if (control) {
                         this.controls.push(control);
                     }
                     document.body.removeChild(nodes[i]);
                 }
             }
-            document.body.style.display = 'block';
-            this.animate();
         },
         setRenderingMode: function setRenderingMode(mode) {
             var ctx = null;
-            glui.mode = mode || glui.Render2d;
+            this.mode = mode || glui.Render2d;
             if (mode == glui.Render2d) {
-                ctx = glui.renderingContext2d = glui.renderingContext2d || glui.canvas.getContext('2d');
+                ctx = this.renderingContext2d = this.renderingContext2d || glui.canvas.getContext('2d');
             } else if (mode == glui.Render3d) {
-                ctx = glui.renderingContext3d = glui.renderingContext3d || glui.canvas.getContext('webgl');
+                ctx = this.renderingContext3d = this.renderingContext3d || glui.canvas.getContext('webgl');
             }
-            for (var i=0; i<glui.controls.length; i++) {
-                if (!glui.controls[i].parent) {
-                    glui.controls[i].setRenderer(mode, mode == glui.Render2d ? glui.renderingContext2d : glui.renderingContext3d);
-                }
+            for (var i=0; i<this.controls.length; i++) {
+                this.controls[i].setRenderer(mode, mode == glui.Render2d ? this.renderingContext2d : this.renderingContext3d);
             }
             glui.resize(false);
             return ctx;
@@ -121,6 +131,7 @@
                     glui.controls[i].render();
                 }
             }
+            //this.animate();
         },
         resize: function resize(repaint) {
             glui.width = Math.floor(glui.scale.x * glui.canvas.clientWidth);
@@ -143,8 +154,7 @@
             for (var i=0; i<glui.controls.length; i++) {
                 var ctrl = glui.controls[i];
                 if (ctrl.left < cx  && cx < ctrl.left + ctrl.width && ctrl.top < cy  && cy < ctrl.top + ctrl.height) {
-                    res = ctrl;
-                    //ctrl.getControlAt(x, y);
+                    res = !ctrl.items ? ctrl : ctrl.getControlAt(cx, cy);
                     break;
                 }
             }
@@ -173,7 +183,8 @@
                     anim.fn.call(anim.obj, anim.args);
                 }
             }
-            requestAnimationFrame(glui.animate);
+            if (this.animateId) cancelAnimationFrame(this.animateId);
+            this.animateId = requestAnimationFrame(glui.animate);
         },
 
         Alignment: {

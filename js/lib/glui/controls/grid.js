@@ -1,4 +1,4 @@
-include('control.js');
+include('container.js');
 include('renderer2d.js');
 include('label.js');
 
@@ -31,6 +31,7 @@ include('label.js');
 			for (var ci=0; ci<ctrl.columnKeys.length; ci++) {
 				var cell = row.cells[ctrl.columnKeys[ci]];
 				cell.move(left, top);
+				cell.width = cell.column.width;
 				cell.render();
 				left += cell.width;
 				height = Math.max(height, cell.height);
@@ -43,7 +44,7 @@ include('label.js');
 	function Grid(id, template, parent, context) {
 		Grid.base.constructor.call(this, id, template, parent, context);
 	};
-	extend(glui.Control, Grid);
+	extend(glui.Container, Grid);
 
 	Grid.prototype.getTemplate = function getTemplate() {
 		var template = Grid.base.getTemplate.call(this);
@@ -66,6 +67,7 @@ include('label.js');
 		this.cellStyle = glui.Control.mergeFields(tmpl.style);
 		this.cellStyle.width = 0;
 		this.cellStyle.height = '1.5em';
+		delete this.cellStyle.visible;
 		if (tmpl['row-template']) {
 			var rowTemplate = { };
 			for (var i in tmpl['row-template']) {
@@ -90,32 +92,18 @@ include('label.js');
 		this.rowTemplate = template['row-template'];
 		this.cellTemplate = template['cell-template'];
 		this.title = template.title;
-		if (this.title) {
-			if (!this.titlebar) {
-				this.titlebar = glui.create(`${this.id}#title`,
-				{
-					'type': 'Label',
-					'style': this.style.title || this.style,
-					'z-index': this.zIndex + 1
-				}, this, this.context);
-			}
-			this.titlebar.style.height = '2.0em';
-			this.titlebar.setValue(this.title);
-		} else {
-			if (this.titlebar) {
-				glui.remove(this.titlebar);
-				this.titlebar = null;
-			}
-		}
+
 		// set rows/columns array
 		this.rowKeys = null;
 		this.rows = null;
 		this.columnKeys = null;
 		this.columns = null;
+
+		this.showHeader = !!template.header;
+
         if (this.dataSource && this.dataField) {
             this.dataBind();
-		}
-		this.showHeader = !!template.header;
+        }
 		return template;
 	};
 	Grid.prototype.dataBind = function(source, field) {
@@ -123,7 +111,6 @@ include('label.js');
         if (source) {
             //this.dataSource = source instanceof DataLink ? source : new DataLink(source);
 			this.dataField = field !== undefined ? field : this.dataField;
-
 			this.dataSource = source;
 		}
 		this.build();
@@ -131,7 +118,7 @@ include('label.js');
 	};
     Grid.prototype.getHandlers = function getHandlers() {
         var handlers = Grid.base.getHandlers.call(this);
-        //handlers.push('focus', 'blur', 'mousedown', 'mouseup', 'keydown', 'keyup', 'dragging');
+        handlers.push('mousedown', 'mouseup', 'click');
         return handlers;
 	};
     Grid.prototype.setRenderer = function(mode, context) {
@@ -149,20 +136,35 @@ include('label.js');
 		if (this.titlebar) {
 			this.titlebar.setRenderer(mode, context);
 		}
-		for (var ri=0; ri<this.rowKeys.length; ri++) {
-			var row = this.rows[this.rowKeys[ri]];
-			for (var ci=0; ci<this.columnKeys.length; ci++) {
-				row.cells[this.columnKeys[ci]].setRenderer(mode, context);
+		if (this.rowKeys) {
+			var width = this.width;
+			var count = 0;
+			for (var i in this.rowTemplate) {
+				var colWidth = this.renderer.convertToPixel(this.rowTemplate[i].style.width, this.width);
+				if (colWidth) {
+					this.columns[i].width = colWidth;
+					width -= colWidth;
+				} else count++;
+			}
+			var colWidth = Math.floor(width/count);
+			for (var ri=0; ri<this.rowKeys.length; ri++) {
+				var row = this.rows[this.rowKeys[ri]];
+				for (var ci=0; ci<this.columnKeys.length; ci++) {
+					var cell = row.cells[this.columnKeys[ci]];
+					if (!cell.column.width) {
+						cell.column.width = width > colWidth ? colWidth : width;
+					}
+					cell.setRenderer(mode, context);
+				}
 			}
 		}
-
 	};
-	Grid.prototype.render = function() {
-        if (this.renderer) {
-			this.getBoundingBox();
-			this.renderer.render();
-        }
-	};
+	// Grid.prototype.render = function() {
+    //     if (this.renderer) {
+	// 		this.getBoundingBox();
+	// 		this.renderer.render();
+    //     }
+	// };
 	Grid.prototype.getBoundingBox = function getBoundingBox() {
 		if (this.height == 0) {
 			var rowCount = this.rowKeys.length;
@@ -189,7 +191,7 @@ include('label.js');
     };
     Grid.prototype.move = function move(dx, dy) {
 		Grid.base.move.call(this, dx, dy);
-		this.titlebar.move(0, 0);
+		if (this.titlebar) this.titlebar.move(0, 0);
 		for (var ri=0; ri<this.rowKeys.length; ri++) {
 			var row = this.rows[this.rowKeys[ri]];
 			for (var ci=0; ci<this.columnKeys.length; ci++) {
@@ -207,7 +209,8 @@ include('label.js');
 			var tmpl = rowTmpl[key];
 			var dataField = tmpl['data-field'] || key;
 			tmpl['z-index'] = this.zIndex + 1;
-			var cell = glui.create(this.id + '#' + ri + '#' + ci, tmpl, row, this.context);
+			var cell = glui.create(this.id + '#' + ri + '#' + ci, tmpl, this, this);
+			this.add(cell);
 			// if (tmpl.label === true) {
 			// 	cell.label = row.name + '.' + key;
 			// }
@@ -234,6 +237,25 @@ include('label.js');
 		}
 	};
 	Grid.prototype.build = function() {
+		if (this.title) {
+			if (!this.titlebar) {
+				this.titlebar = glui.create(`${this.id}#title`,
+				{
+					'type': 'Label',
+					'style': this.style.title || this.style,
+					'z-index': this.zIndex + 1
+				}, this, this.context);
+			}
+			this.titlebar.style.height = '2.0em';
+			this.titlebar.setValue(this.title);
+			this.add(this.titlebar);
+		} else {
+			if (this.titlebar) {
+				this.remove(this.titlebar);
+				this.titlebar = null;
+			}
+		}
+
 		var src = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
 		// get or create row template
 		var rowTemplate = this.rowTemplate;
@@ -253,21 +275,21 @@ include('label.js');
 				// column keys are the ordinals
 				this.columnKeys[ci] = ci+'';
 				rowTemplate[ci] = this.cellTemplate;
-				this.columns[ci] = {id:ci, name:ci, cells:[], parent:this};
+				this.columns[ci] = new Grid.Column(ci, ci, this);
 			}
 		} else {
 			// create columns, the keys of columns are defined by the first row in the data source
 			this.columnKeys = Object.keys(rowTemplate);
 			for (var ci=0; ci<this.columnKeys.length; ci++) {
 				var key = this.columnKeys[ci]
-				this.columns[key] = this.columns[ci] = {id:ci, name:key, cells:[], parent:this};
+				this.columns[key] = this.columns[ci] = new Grid.Column(ci, key, this);
 			}
 			this.columnCount = this.columnKeys.length;
 		}
 		// create rows and cells
 		if (this.template.header) {
 			this.rowKeys.unshift(headKey);
-			var row = new Grid.Row('00', headKey, this);
+			var row = new Grid.Row(-1, headKey, this);
 			for (var ci=0; ci<this.columnKeys.length; ci++) {
 				var key = this.columnKeys[ci];
 				var column = this.columns[key];
@@ -276,6 +298,7 @@ include('label.js');
 				cell.setValue(Grid.resolveReference(rowTemplate[key].column, key));
 				cell.row = row; cell.column = column;
 				row.cells[ci] = row.cells[key] = cell;
+				this.add(cell);
 				//column.cells.push(cell);
 			}
 			this.rows[headKey] = row;
@@ -284,7 +307,7 @@ include('label.js');
 			var rowKey = this.rowKeys[ri];
 			if (rowKey == headKey) continue;
 			var srcRow = src[rowKey];
-			var row = new Grid.Row(ri+1, rowKey, this);
+			var row = new Grid.Row(ri, rowKey, this);
 			this.buildRow(row, srcRow, rowTemplate);
 			this.rows[rowKey] = row;
 		}
@@ -311,109 +334,24 @@ include('label.js');
 		return result;
 	};
 
-	// Grid.prototype.render = async function(ctx) {
-	// 	Grid.base.render.call(this, ctx);
-	// 	if (!this.table) {
-	// 		this.table = document.createElement('TABLE');
-	// 		this.table.className = this.parent.cssText + 'grid table';
-	// 		this.table.setAttribute('cellpadding', 0);
-	// 		this.table.setAttribute('cellspacing', 0);
-	// 		this.element.appendChild(this.table);
-	// 	}
-	// 	// add new rows
-	// 	var oldRowCount = this.table.rows.length;
-	// 	if (!this.rowKeys) return;
-	// 	for (var ri=oldRowCount; ri<this.rowKeys.length; ri++) {
-	// 		var rowKey = this.rowKeys[ri];
-	// 		var row = this.rows[rowKey];
-	// 		var tr = document.createElement('TR');
-	// 		var rowClass = rowKey != '__head' ? ri % 2 ? 'r0' : 'r1' : 'head';
-	// 		tr.className = this.parent.cssText + 'grid row ' + rowClass;
-	// 		row.element = tr;
-	// 		for (var ci=0; ci<this.columnKeys.length; ci++) {
-	// 			var key = this.columnKeys[ci];
-	// 			var td = document.createElement('TD');
-	// 			// var cellClass = rowClass + ' ' + (ci % 2 ? 'c0' : 'c1');
-	// 			// td.className = 'grid cell ' + cellClass;
-	// 			var cell = row.cells[ci];
-	// 			td.control = cell;
-	// 			var tmplLabel = cell.template.label;
-	// 			// tmplLabel=true => cell.label = calculated value
-	// 			// tmplLabel=string => cell.label = tmplLabel
-	// 			// tmplLabel="$key" => cell.label = key
-	// 			cell.label = Grid.decodeText(tmplLabel, key);
-	// 			/* else if (tmplLabel === true) {
-	// 				label = cell.label;
-	// 			}*/
-	// 			cell.render({'element': td});
-	// 			td.appendChild(cell.element);
-	// 			tr.appendChild(td);
-	// 		}
-	// 		this.table.appendChild(tr);
-	// 	}
-	// 	// remove rows
-	// 	for (var ri=this.rows.length; ri<oldRowCount; ri++) {
-	// 		// remove rows[ri];
-	// 	}
-	// 	this.refresh();
-	// };
-	// Grid.prototype.refresh = function() {
-	// 	var src = this.dataField ? this.dataSource.obj[this.dataField] : this.dataSource;
-	// 	this.rowKeys = Object.keys(src);
-	// 	for (var ri=0; ri<this.rowKeys.length; ri++) {
-	// 		// repaint every row
-	// 		var rowKey = this.rowKeys[ri];
-	// 		var row = this.rows[this.rowKeys[ri]];
-	// 		var rowClass = rowKey != '__head' ? ri % 2 ? 'r0' : 'r1' : 'head';
-	// 		row.element.className = 'grid row ' + rowClass;
-	// 		var cssText = `${this.parent.cssText}grid cell`;
-	// 		for (var ci=0; ci<this.columnKeys.length; ci++) {
-	// 			// repaint every cell
-	// 			var key = this.columnKeys[ci];
-	// 			var cellClass = `${cssText} ${rowClass} ${ci % 2 ? 'c0' : 'c1'} ${key}`;
-	// 			var cell = row.cells[ci];
-	// 			var td = cell.element.parentNode;
-	// 			td.className = cellClass;
-	// 			// var tmplLabel = cell.template.label;
-	// 			// cell.label = Grid.decodeText(tmplLabel, key);
-	// 			// tmplLabel=true => cell.label = calculated value
-	// 			// tmplLabel=string => cell.label = tmplLabel
-	// 			// tmplLabel="$key" => cell.label = key
-
-	// 			// if (typeof tmplLabel === 'string') {
-	// 			// 	if (tmplLabel == '$key') {
-	// 			// 		cell.label = key;
-	// 			// 	} else if (tmplLabel === '$Key') {
-	// 			// 		cell.label = key.charAt(0).toUpperCase() + key.substring(1);
-	// 			// 	} else {
-	// 			// 		cell.label = tmplLabel;
-	// 			// 	}
-	// 			// } else if (tmplLabel === false) {
-	// 			// 	label = '';
-	// 			// }/* else if (tmplLabel === true) {
-	// 			// 	label = cell.label;
-	// 			// }*/
-	// 			//cell.css.push('grid', 'cell');
-	// 			//cell.css.push(...this.parent.css, 'grid', 'cell', cellClass);
-	// 			cell.render({'element': td});
-	// 			cell.element.className = cellClass;
-	// 		}
-	// 	}
-	// };
-	// // Grid.prototype.registerHandler = function(event) {
-	// // 	if (['click', 'mouseover', 'mouseout'].indexOf(event) == -1) throw new Error('Event \''+ event +'\' not supported!');
-	// // 	Ui.Control.registerHandler.call(this, event);
-	// // };
+	Grid.Column = function Column(id, name, parent) {
+		this.id = id;
+		this.name = name;
+		this.parent = parent;
+		this.cells = [];
+	};
 
 	Grid.Row = function Row(id, name, parent) {
 		this.id = id;
 		this.name = name;
 		this.parent = parent;
 		this.cells = {};
+		this.handlers = {};
 	};
 	Grid.Row.prototype = {
 		get width() { return this.parent.width; },
 		get renderer() { return this.parent.renderer; },
+		get handlers() { return this.parent.handlers; }
 	};
 
 	public(Grid, 'Grid', glui);
