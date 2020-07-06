@@ -421,6 +421,7 @@ Module.prototype.resolveIncludes = async function() {
     this.node = document.createElement('script');
     this.node.url = this.url;
     this.node.innerHTML = this.data;
+    debug_('ADD INCLUDE ' + this.url, 1);
     document.head.appendChild(this.node);
 };
 
@@ -656,6 +657,93 @@ Array.prototype.binSearch = function(item, cmp, min, max) {
 	}
 	return -max;
 };
+
+function mergeObjects(src, dst, sourceOnly) {
+    var res = {};
+    if (src == undefined || src == null) {
+        src = {};
+    }
+    var srcKeys = Object.keys(src);
+    if (dst == undefined || dst == null) {
+        dst = {};
+    }
+    var dstKeys = Object.keys(dst);
+    // add src
+    for (var i=0; i<srcKeys.length; i++) {
+        var key = srcKeys[i];
+        var s = src[key];
+        var d = dst[key];
+        if (d != undefined) {
+            var ix = dstKeys.findIndex(x => x == key);
+            dstKeys.splice(ix, 1);
+        }
+        var ts = s != null && typeof s === 'object';
+        var td = d != null && typeof d === 'object';
+        if (ts && td) {
+            res[key] = mergeObjects(s, d);
+        } else if (ts && !td) {
+            res[key] = d != undefined ? d : mergeObjects(s, null);
+        } else if (!ts && td) {
+            res[key] = mergeObjects(d, null);
+        } else {
+            res[key] = d != undefined ? d : s;
+        }
+    }
+    if (!sourceOnly) {
+        // add dst
+        for (var i=0; i<dstKeys.length; i++) {
+            var key = dstKeys[i];
+            var d = dst[key];
+            if (typeof d === 'object') {
+                res[key] = mergeObjects(d, null);
+            } else {
+                res[key] = d;
+            }
+        }
+    }
+    return res;
+}
+function getCommonParent(obj1, obj2, parentAttributeName) {
+    var p1 = obj1;
+    var p2 = obj2;
+    var path1 = [];
+    var res = null;
+    while (p1 != null) {
+        path1.push(p1);
+        p1 = p1[parentAttributeName];
+    }
+    while (p2 != null) {
+        if (path1.includes(p2)) {
+            res = p2;
+            break;
+        }
+        p2 = p2[parentAttributeName];
+    }
+    return res;
+}
+function getObjectPath(obj, parentAttributeName, ancestor) {
+    var res = [];
+    ancestor = ancestor ||window;
+    while (obj!= null) {
+        res.unshift(obj);
+        if (obj == ancestor) break;
+        obj = obj[parentAttributeName];
+    }
+    return res;
+}
+
+function getObjectAt(path, obj) {
+    obj = obj || window;
+    var tokens = path.split('.');
+    for (var i=0; i<tokens.length; i++) {
+        obj = obj[tokens[i]];
+        if (typeof obj !== 'object' || obj == null) {
+            if (i != tokens.length-1) obj = null;
+            break;
+        }
+    }
+    return obj;
+}
 
 window.onload = e => poll(async function() {
     var errors = [];
