@@ -42,14 +42,15 @@ include('renderer2d.js');
         this.renderCursor(lines, boxes);
     };
     TextboxRenderer2d.prototype.renderPotmeter = function renderPotmeter() {
-        var color = !this.control.isBlank ? this.color : this.mixColors(this.color, this.backgroundColor, 0.5);
         var bgColor = this.mixColors(this.color, this.backgroundColor, 0.5);
-        var width = (this.control.getValue() - this.control.min)*this.control.width/(this.control.max - this.control.min);
-        this.drawRect(0, 0, width, this.control.height, bgColor);
+        var bw = this.border.width;
+        var width = (this.control.value - this.control.min)*(this.control.width - 2*bw)/(this.control.max - this.control.min);
+        this.drawRect(bw, bw, width, this.control.height-2*bw, bgColor);
         var lines = this.control.getLines();
         var line = lines[0];
         var boxes = this.getTextBoundingBoxes(lines);
         var box = boxes[0];
+        var color = !this.control.isBlank ? this.color : this.mixColors(this.color, this.backgroundColor, 0.5);
         this.drawText(line, box[0], box[1], box[2], color);
         this.renderCursor(lines, boxes);
     };
@@ -94,13 +95,16 @@ include('renderer2d.js');
 
     Textbox.prototype.applyTemplate = function applyTemplate(tmpl) {
         var template = Textbox.base.applyTemplate.call(this, tmpl);
+        if (template.normalize) {
+            this.normalize();
+        }
         this.look = template.look;
         return template;
     };
 
     Textbox.prototype.advanceValue = function advanceValue(n) {
         var delta = n*this.step;
-        var oldValue = this.getValue();
+        var oldValue = this.value;  //getValue();
         var value = oldValue + delta;
         // validate and adjust value
         oldValue = this.setValue(value);
@@ -126,7 +130,6 @@ include('renderer2d.js');
     Textbox.prototype.isEmpty = function isEmpty() {
         return this.lines.length == 0;
     };
-
     Textbox.prototype.getLines = function getLines() {
         var lines = this.lines;
         if (this.isEmpty()) {
@@ -134,24 +137,29 @@ include('renderer2d.js');
         }
         return lines;
     };
-
     Textbox.prototype.getHandlers = function getHandlers() {
         var handlers = Textbox.base.getHandlers.call(this);
-        handlers.push('focus', 'blur', 'mousedown', 'mouseup', 'keydown', 'keyup', 'dragging');
+        handlers.push(
+            { name: 'mousedown', topDown: true },
+            { name: 'mouseup', topDown: false },
+            { name: 'keydown', topDown: true },
+            { name: 'keyup', topDown: false },
+            { name: 'dragging', topDown: false }
+        );
         return handlers;
     };
-    
     Textbox.prototype.onfocus = function onmouseover() {
         //Textbox.base.onmouseover.call(this);
         // set cursor
         this.cursorAnimation = glui.addAnimation(this.renderer.animateCursor, this.renderer, 500);
         this.isFocused = true;
     };
-
-    Textbox.prototype.onblur = function onblur() {
-        if (glui.Control.atCursor != this) {
-            Textbox.base.onmouseout.call(this);
-        }
+    Textbox.prototype.onblur = function onblur(e) {
+        Textbox.base.onblur.call(this, e);
+        // if (glui.Control.atCursor != this) {
+        //     e.control = this;
+        //     Textbox.base.onmouseout.call(this, e);
+        // }
         // remove cursor
         glui.removeAnimation(this.cursorAnimation);
         this.renderer.cursorVisible = false;
@@ -159,6 +167,7 @@ include('renderer2d.js');
         // save value into datasource
         var value = this.isNumeric ? parseFloat(this.lines[0]) : this.lines.join('\n');
         //var oldValue = Textbox.base.setValue.call(this, value)
+        // todo: allow empty?
         var oldValue = this.setValue(value);
         if (this.value === '') {
             if (this.lines.length > 0) this.lines.splice(0, this.lines.length);
@@ -167,11 +176,12 @@ include('renderer2d.js');
         if (this.value != oldValue) {
             this.callHandler('change', {'type':'change','oldValue': oldValue, 'value':value, 'control':this});
         }
+        //return true;
     };
     Textbox.prototype.ondragging = function ondragging(e) {
         if (this.isNumeric && this.look == glui.Textbox.Look.Potmeter) {
             var delta = this.step * e.deltaX;
-            var oldValue = this.getValue();
+            var oldValue = this.value;
             var value = oldValue + delta;
             // validate and adjust value
             this.setValue(value);
@@ -400,13 +410,11 @@ include('renderer2d.js');
             this.renderer.render();
         }
     };
-
     Textbox.prototype.onmouseup = function onmouseup(e) {
         // get cursor position
         this.isFocused = true;
         this.renderer.render();
     };
-
     Textbox.prototype.setRenderer = function(mode, context) {
         if (mode == glui.Render2d) {
             if (this.renderer2d == null) {
@@ -422,7 +430,6 @@ include('renderer2d.js');
             this.setLook();
         }
     };
-
     Textbox.prototype.setLook = function setLook(look) {
         look = look || this.look;
         switch (look) {

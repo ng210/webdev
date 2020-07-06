@@ -32,11 +32,12 @@
                 var control = Reflect.construct(type, []);
                 control.context = context || this.context;
                 control.fromNode(node);
+                control.addHandlers();
             }            
             return control;
         },
         create: function create(id, tmpl, parent, context) {
-            context = context || this.context;
+            context = context;
             var ctrl = glui.Control.create(id, tmpl, parent, context);
             ctrl.addHandlers();
             if (parent == null) {
@@ -126,35 +127,37 @@
             // }
             // glui.resize();
             // var is2d = glui.mode == '2d';
+            //this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
             for (var i=0; i<glui.controls.length; i++) {
-                if (!glui.controls[i].parent) {
-                    glui.controls[i].render();
-                }
+                glui.controls[i].render();
             }
             //this.animate();
         },
+        repaint: function repaint() {
+            this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.render();
+        },
         resize: function resize(repaint) {
-            glui.width = Math.floor(glui.scale.x * glui.canvas.clientWidth);
-            glui.height = Math.floor(glui.scale.y * glui.canvas.clientHeight);
-            glui.canvas.width = glui.width;
-            glui.canvas.height = glui.height;
-            for (var i=0; i<glui.controls.length; i++) {
-                var ctrl = glui.controls[i];
-                if (ctrl.parent == null) {
-                    var left = ctrl.left, top = ctrl.top;
-                    ctrl.renderer.initialize();
-                    ctrl.move(left, top);
-                    if (repaint) ctrl.render();
-                }
+            this.width = Math.floor(this.scale.x * this.canvas.clientWidth);
+            this.height = Math.floor(this.scale.y * this.canvas.clientHeight);
+            this.canvas.width = this.width;
+            this.canvas.height = this.height;
+            for (var i=0; i<this.controls.length; i++) {
+                var ctrl = this.controls[i];
+                var left = ctrl.left, top = ctrl.top;
+                ctrl.renderer.initialize();
+                ctrl.move(left, top);
+                if (repaint) ctrl.render();
             }
         },
-        getControlAt: function getControlAt(x, y) {
+        getControlAt: function getControlAt(x, y, recursive) {
             var cx = x*glui.scale.x, cy = y*glui.scale.y;
             var res = null;
             for (var i=0; i<glui.controls.length; i++) {
                 var ctrl = glui.controls[i];
                 if (ctrl.left < cx  && cx < ctrl.left + ctrl.width && ctrl.top < cy  && cy < ctrl.top + ctrl.height) {
-                    res = !ctrl.items ? ctrl : ctrl.getControlAt(cx, cy);
+                    res = ctrl;
+                    if (recursive && ctrl.items) res = ctrl.getControlAt(cx, cy);
                     break;
                 }
             }

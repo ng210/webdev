@@ -25,15 +25,26 @@ include('control.js');
             }
         }
     };
+    Container.prototype.setVisible = function setVisible(visible) {
+        Container.base.setVisible.call(this, visible);
+        for (var i=0; i<this.items.length; i++) {
+            this.items[i].setVisible(visible);
+        }
+    };
+    Container.prototype.setRenderer = function setRenderer(mode, context) {
+        for (var i=0; i<this.items.length; i++) {
+            this.items[i].setRenderer(mode, context);
+        }
+    };
     Container.prototype.getControlAt = function getControlAt(cx, cy) {
         var res = null;
 		for (var i=0; i<this.items.length; i++) {
-			var ctrl = this.items[i];
-			if (ctrl.left < cx  && cx < ctrl.left + ctrl.width && ctrl.top < cy  && cy < ctrl.top + ctrl.height) {
+            var ctrl = this.items[i];
+            if (ctrl.style.visible && ctrl.left < cx  && cx < ctrl.left + ctrl.width && ctrl.top < cy  && cy < ctrl.top + ctrl.height) {
                 res = !ctrl.items ? ctrl : ctrl.getControlAt(cx, cy);
 				break;
 			}
-		}
+        }
 		return res;
     };
 

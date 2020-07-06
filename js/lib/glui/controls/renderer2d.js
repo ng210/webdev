@@ -16,6 +16,7 @@ include('renderer.js');
         this.font.em = metrics.width/4;
     };
     Renderer2d.prototype.drawBorder = function drawBorder(x, y, w, h) {
+        if (this.border.style == 'none') return;
         var ctx = this.context;
         var bw = this.border.width;
         var bw2 = Math.floor(this.border.width/2);
@@ -59,13 +60,13 @@ include('renderer.js');
         var y = bw, w = 0;
         var h = lines.length * this.font.size;
         var alignment = this.getAlignment(this.control.style.align);
-        var dy = this.control.height - 2*bw - h; if (dy < 0) dy = 2*bw;
+        var dy = this.control.height - 2*bw - h; //if (dy < 0) dy = 2*bw;
         if (alignment & glui.Alignment.MIDDLE) y += Math.floor(dy/2);
         else if (alignment & glui.Alignment.BOTTOM) y += dy;
         for (var i=0; i<lines.length; i++) {
             var metrics = this.context.measureText(lines[i]);
             var w = Math.abs(metrics.actualBoundingBoxLeft) + Math.abs(metrics.actualBoundingBoxRight);
-            var dx = this.control.width - 2*bw - w; if (dx < 0) dx = 0;
+            var dx = this.control.width - 2*bw - w; //if (dx < 0) dx = 0;
             var x = bw;
             if (alignment & glui.Alignment.CENTER) x += Math.floor(dx/2);
             else if (alignment & glui.Alignment.RIGHT) x += dx;
@@ -85,18 +86,40 @@ include('renderer.js');
         ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
     };
     Renderer2d.prototype.render = function render() {
+        var ctrl = this.control;
         // set clipping area
         this.context.save();
         var region = new Path2D();
-        var borderWidth = this.control.parent && this.control.parent.renderer ? this.control.parent.renderer.border.width : 0;
-        this.context.setTransform(1, 0, 0, 1, this.control.left + borderWidth, this.control.top + borderWidth);
-        region.rect(0, 0, this.control.width, this.control.height);
+        var borderWidth = ctrl.parent && ctrl.parent.renderer ? ctrl.parent.renderer.border.width : 0;
+        var left = ctrl.left + borderWidth;
+        var top = ctrl.top + borderWidth;
+        this.context.setTransform(1, 0, 0, 1, left, top);
+        region.rect(0, 0, ctrl.width, ctrl.height);
         this.context.clip(region);
         if (this.backgroundColor) this.drawRect(0, 0, this.control.width, this.control.height, this.backgroundColor);
+        var width = ctrl.width;
+        var height = ctrl.height;
+        if (this.border.style) {
+            this.drawBorder(0, 0, this.control.width, this.control.height);
+            left = this.border.width;
+            top = this.border.width;
+            width -= 2*this.border.width;
+            height -= 2*this.border.width;
+        }
+        if (ctrl.innerWidth > ctrl.width) {
+            // draw x-scrollbar
+            width -= 16;
+		}
+        if (ctrl.innerHeight > ctrl.height) {
+            // draw y-scrollbar
+            height -= 16;
+		}
         // render control
+        region = new Path2D();
+        region.rect(left, top, width, height);
+        this.context.clip(region);
         if (this.control.style.font) this.setFont(this.control.style.font);
         this.renderControl();
-        if (this.border.style) this.drawBorder(0, 0, this.control.width, this.control.height);
         this.context.restore();
     };
 

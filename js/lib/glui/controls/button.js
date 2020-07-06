@@ -9,14 +9,12 @@ include('renderer2d.js');
 
     ButtonRenderer2d.prototype.renderControl = function renderControl() {
         var color1, color2;
+        var offs = 0;
         if (this.control.state) {
-            this.border.style = this.control.state ? 'inset' : 'outset';    
-            var offs = this.control.state ? this.border.width : 0;
+            offs = this.border.width;
             color2 = this.calculateColor(this.backgroundColor, 1.4);
             color1 = this.calculateColor(this.backgroundColor, 0.6);
         } else {
-            this.border.style = this.control.state ? 'inset' : 'outset';    
-            var offs = this.control.state ? this.border.width : 0;
             color1 = this.calculateColor(this.backgroundColor, 1.4);
             color2 = this.calculateColor(this.backgroundColor, 0.6);
         }
@@ -38,7 +36,12 @@ include('renderer2d.js');
     }
     extend(glui.Label, Button);
 
-    Button.prototype.setRenderer = function(mode, context) {
+    Button.prototype.render = function render() {
+        this.renderer.border.style = this.state ? 'inset' : 'outset';
+        Button.base.render.call(this);
+    };
+
+    Button.prototype.setRenderer = function setRenderer(mode, context) {
         if (mode == glui.Render2d) {
             if (this.renderer2d == null) {
                 this.renderer2d = new ButtonRenderer2d(this, context);
@@ -54,22 +57,25 @@ include('renderer2d.js');
 
     Button.prototype.getHandlers = function getHandlers() {
         var handlers = Button.base.getHandlers();
-        handlers.push('mousedown', 'mouseup', 'click');
+        handlers.push(
+            { name: 'mousedown', topDown: true },
+            { name: 'mouseup', topDown: false }
+        );
         return handlers;
     };
 
-    Button.prototype.onmouseout = function(e) {
+    Button.prototype.onmouseout = function onmouseout(e) {
         Button.base.onmouseout.call(this, e);
         this.state = false;
         this.render();
     };
 
-    Button.prototype.onmousedown = function(e) {
+    Button.prototype.onmousedown = function onmousedown(e) {
         this.state = true;
         this.render();
     };
 
-    Button.prototype.onmouseup = function(e) {
+    Button.prototype.onmouseup = function onmouseup(e) {
         this.state = false;
         this.render();
     };

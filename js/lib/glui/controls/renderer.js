@@ -38,12 +38,16 @@ include('glui/glui.js');
         }
     };
     Renderer.prototype.setBorder = function setBorder(border) {
-        var tokens = border.split(' ');
-        this.border.color = this.toColor(tokens[0]);
-        this.border.colorLight = this.calculateColor(this.border.color, 1.6);
-        this.border.colorDark = this.calculateColor(this.border.color, 0.6);
-        this.border.width = parseFloat(tokens[1]);
-        this.border.style = tokens[2];
+        if (border == 'none') {
+            this.border.style = 'none';
+        } else {
+            var tokens = border.split(' ');
+            this.border.color = this.toColor(tokens[0]);
+            this.border.colorLight = this.calculateColor(this.border.color, 1.6);
+            this.border.colorDark = this.calculateColor(this.border.color, 0.6);
+            this.border.width = parseFloat(tokens[1]);
+            this.border.style = tokens[2];
+        }
     };
     Renderer.prototype.setFont = function setFont(font) {
         throw new Error('Not implemented!');

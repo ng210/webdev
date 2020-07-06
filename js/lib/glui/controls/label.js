@@ -34,6 +34,11 @@ include('renderer2d.js');
     }
     extend(glui.ValueControl, Label);
 
+    Label.prototype.getTemplate = function getTemplate() {
+        var template = Label.base.getTemplate.call(this);
+        template.type = 'Label';
+        return template;
+    };
     Label.prototype.setRenderer = function(mode, context) {
         if (mode == glui.Render2d) {
             if (this.renderer2d == null) {

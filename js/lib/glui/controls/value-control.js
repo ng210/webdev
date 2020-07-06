@@ -9,7 +9,7 @@ include('control.js');
 
     ValueControl.prototype.getHandlers = function getHandlers() {
         var handlers = ValueControl.base.getHandlers.call(this);
-        handlers.push('change');
+        handlers.push({ name: 'change', topDown: false });
         return handlers;
     };
     ValueControl.prototype.getTemplate = function getTemplate() {
@@ -18,6 +18,7 @@ include('control.js');
 		template.max = 100;
 		template.step = 1;
 		template.numeric = false;
+		template.normalized = false;
 		template.value = '';
 		template.blank = '';
 		template.default = '';
@@ -32,10 +33,13 @@ include('control.js');
         return template;
     };
 	ValueControl.prototype.fromNode = function fromNode(node) {
+debugger
 		ValueControl.base.fromNode.call(this, node);
-		var value = node.getAttribute('value')  || node.innerText || this.defaultValue || this.dataSource[this.dataField];
-		if (this.isNumeric) value = this.parse(value);
-		this.setValue(value);
+		if (!this.dataSource) {
+			var value = node.getAttribute('value') || node.innerText;
+			if (this.isNumeric) value = this.parse(value);
+			this.setValue(value);
+		}
 	};
 	ValueControl.prototype.getDataType = function() {
 		var dataType = this.template['data-type'] || (this.isNumeric ? glui.ValueControl.DataTypes.Int : glui.ValueControl.DataTypes.String);
@@ -75,7 +79,7 @@ include('control.js');
         var template = ValueControl.base.applyTemplate.call(this, tmpl);
         this.validations = {};
 		this.defaultValue = template.default || null;
-		this.blankValue = template.blank || null;
+		this.blankValue = template.blank || '';
 		this.template['data-type'] = template['data-type'];
 		if (tmpl.numeric != undefined) {
 			this.isNumeric = tmpl.numeric != 'false' && tmpl.numeric != '0';
@@ -91,8 +95,6 @@ include('control.js');
             this.addValidation('value', x => x <= this.max, 'Value is greater than maximum!', x => this.max);
         }
         this.dataLink = null;
-        this.fromSource = x => x;
-        this.toSource = x => x;
 		this.scale = 1.0;
 		this.value = '';
 		if (template.value) {
@@ -101,7 +103,8 @@ include('control.js');
         this.decimalDigits = template['decimal-digits'];
         if (this.dataSource && this.dataField) {
             this.dataBind();
-        }
+		}
+		this.isNormalized = !!template.normalized;
 		return template;
     };
 	ValueControl.prototype.dataBind = function(source, field) {
@@ -112,9 +115,24 @@ include('control.js');
 				value = this.template['true-value'] || this.value;
 			} else {
 				if (this.isNumeric) {
-					this.min = typeof this.dataSource.obj.min === 'number' ? this.dataSource.obj.min : this.min;
-					this.max = typeof this.dataSource.obj.max === 'number' ? this.dataSource.obj.max : this.max;
-					this.step = typeof this.dataSource.obj.step === 'number' ? this.dataSource.obj.step : this.step;
+					var min = typeof this.dataSource.obj.min === 'number' ? this.dataSource.obj.min : this.min;
+					var max = typeof this.dataSource.obj.max === 'number' ? this.dataSource.obj.max : this.max;
+					var step = typeof this.dataSource.obj.step === 'number' ? this.dataSource.obj.step : this.step;
+					if (this.dataSource.obj.normalized != undefined) {
+						this.isNormalized = this.dataSource.obj.normalized;
+					}
+					var fromDataSource = null;
+					var toDataSource = null;
+					if (this.isNormalized) {
+						step /= (max - min);
+						min = 0.0;
+						max = 1.0;
+						fromDataSource = this.toNormalized;
+						toDataSource = this.fromNormalized;
+					}
+					this.min = min;
+					this.max = max;
+					this.step = step;
 					// this.scale = (max - min)/(this.max - this.min)
 					// // (x-min)/(max-min) = (x'-min')/(max'-min')
 					// // x = (x'-min')(max-min)/(max'-min') + min
@@ -125,12 +143,12 @@ include('control.js');
 				value = this.dataSource[this.dataField];
 			}
 			this.dataLink = new DataLink(this);
-			this.dataLink.link('value', this.dataSource, this.dataField, this.toSource, this.fromSource);
+			this.dataLink.link('value', this.dataSource, this.dataField, fromDataSource, toDataSource);
 			this.dataLink.addHandler('value', glui.Control.prototype.render, this);
 			if (this.dataSource.obj instanceof glui.Control) {
-				this.dataLink.addHandler('value', this.render, this.dataSource.obj);
+				this.dataLink.addHandler('value', glui.Control.prototype.render, this.dataSource.obj);
 			}
-			this.setValue(this.fromSource ? this.fromSource(value) : value);
+			this.setValue(fromDataSource ? fromDataSource.call(this.dataSource.obj, value, 0, {target:this, field:'value'}) : value);
 		}
         return this.dataSource;
 	};
@@ -151,24 +169,25 @@ include('control.js');
 				this.isBlank = true;
 			}
 		}
-		// var results = this.validate(value, true);
-		// if (results.length > 0) {
-		// 	results.forEach(x => {
-		// 		console.warn(x.message);
-		// 		value = x.value;
-		// 	});
-		// }
 		this.dataLink ? this.dataLink.value = value : this.value = value;
-
-		// // update element
-		// if (this.element)
-		// {
-		// 	this.render({element:this.element.parentNode});
-		// }
 		return oldValue;
 	};
+    ValueControl.prototype.normalize = function normalize() {
+// debugger
+//         if (this.isNumeric) {
+//             this.min = 0;
+//             this.max = 1;
+//             var range = this.dataSource.obj.max - this.dataSource.obj.min;
+// 			this.step = this.dataSource.obj.step/range;
+// 			// control -> source
+// 			var handler = this.dataSource.handlers.value.find( x => x.fn == DataLink.defaultTransform);
+// 			handler.fn = this.fromNormalized;
+// 			handler = this.dataLink.handlers.value.find( x => x.fn == DataLink.defaultTransform);
+// 			handler.fn = this.toNormalized;
+//         }
+    };
 	ValueControl.prototype.getValue = function getValue() {
-		return this.dataSource ? this.fromSource(this.dataSource[this.dataField]) : this.value;
+		return this.dataSource ? this.dataSource[this.dataField] : this.value;
 	};
     ValueControl.prototype.addValidation = function(field, check, message, fix) {
 		if (this.validations[field] == undefined) this.validations[field] = [];
@@ -204,6 +223,20 @@ include('control.js');
 		 }
 		 return result;
 	};
+
+    ValueControl.prototype.toNormalized = function toNormalized(value, oldValue, args) {
+		var range = this.max - this.min;
+		var v = (value - this.min)/range;
+		args.target[args.field] = v;
+		return v;
+    };
+    ValueControl.prototype.fromNormalized = function fromNormalized(value, oldValue, args) {
+        var range = this.dataSource.obj.max - this.dataSource.obj.min;
+		var v = value*range + this.dataSource.obj.min;
+		args.target[args.field] = v;
+		return v;
+    };
+
 
 	ValueControl.DataTypes = {
 		Int:	'int',

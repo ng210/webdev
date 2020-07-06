@@ -1,10 +1,12 @@
 include('icontrol.js');
 include('data/datalink.js');
 
+const DEBUG_EVENT = 'click';
+
 (function() {
 
     function Control(id, template, parent, context) {
-        this.id = id || 'ctrl';
+        this.id = id != undefined ? id : 'ctrl';
         this.parent = parent || null;
         this.context = context || this.parent;
         this.template = null;
@@ -20,6 +22,8 @@ include('data/datalink.js');
         this.top = 0;
         this.offsetLeft = 0;
         this.offsetTop = 0;
+        this.innerHeight = 0;
+        this.innerWidth = 0;
         this.width = 0;
         this.height = 0;
     }
@@ -53,46 +57,26 @@ include('data/datalink.js');
         this.style.visible = visible;
     };
     Control.prototype.getHandlers = function getHandlers() {
-        return [ 'mouseover', 'mouseout' ];
+        return [
+            { name: 'mouseover', topDown: true },
+            { name: 'mouseout', topDown: false },
+            { name: 'click', topDown: true },
+            { name: 'focus', topDown: true },
+            { name: 'blur', topDown: false }
+        ];
     };
-    Control.prototype.getTemplate = function getTemplate() {
-        var template = {
-            'id': this.id || 'ctrl',
-            'type': 'control',
-            'label': false,
-            'disabled': false,
-            'data-source': '',
-            'data-field': '',
-            'z-index': '',
-            // styling
-            'style': Control.getStyleTemplate()
-        };
-
-        var handlers = this.getHandlers();
-        for (var i=0; i<handlers.length; i++) {
-            template['on'+handlers[i]] = null;
-        }
-
-        return template;
-    };
-    Control.prototype.dataBind = function dataBind(source, field) {
-        source = source || this.dataSource;
-        if (source) {
-            this.dataSource = source instanceof DataLink ? source : new DataLink(source);
-            this.dataField = field !== undefined ? field : this.dataField;
-            this.dataSource.add(this.dataField);
-        }
-    };
-    Control.prototype.addHandler = function addHandler(eventName) {
+    Control.prototype.addHandler = function addHandler(eventName, topDown) {
         var nodes = [];
         var node = this;
+        if (eventName == DEBUG_EVENT) debug_(`addHandler for ${node.id} (${node.constructor.name})`, 2);
         while (node) {
-            nodes.push(node);
+            topDown ? nodes.unshift(node) : nodes.push(node);
             node = node.context;
         }
         for (var i=0; i<nodes.length; i++) {
             node = nodes[i];
             var handler = node['on'+eventName];
+            if (eventName == DEBUG_EVENT) debug_(node, 2);
             if (handler !== undefined) {
                 if (typeof handler === 'function') {
                     if (this.handlers[eventName] === undefined) {
@@ -107,36 +91,80 @@ include('data/datalink.js');
     };
     Control.prototype.addHandlers = function addHandlers(template) {
         if (template) {
-            for (var i in template) {
-                if (i.startsWith('on') && template.hasOwnProperty(i)) {
-                    var name = i.substr(2);
-                    // todo: templated function calls
-                    this.addHandler(name);
-                }
-            }
+            throw new Error('Not implemented!');
+            // for (var i in template) {
+            //     if (i.startsWith('on') && template.hasOwnProperty(i)) {
+            //         var name = i.substr(2);
+            //         // todo: templated function calls
+            //         this.addHandler(name);
+            //     }
+            // }
         } else {
             var handlers = this.getHandlers();
             for (var i=0; i<handlers.length; i++) {
-                this.addHandler(handlers[i]);
+                this.addHandler(handlers[i].name, handlers[i].topDown);
             }
         }
     };
     Control.prototype.callHandler = async function(eventName, event) {
-        setTimeout( () => {
+        //setTimeout( () => {
             var control = this;
+            if (eventName == DEBUG_EVENT) {
+                debug_(`${DEBUG_EVENT} on ${getObjectPath(control, 'parent').map(x=>x.id)}::${control.id} (${event.control ? `${getObjectPath(event.control, 'parent').map(x=>x.id)}::${event.control.id}` : 'null'})`, 2);
+            }
+                
             while (control) {
                 var handlers = control.handlers[eventName];
                 if (handlers) {
                     for (var i=0; i<handlers.length; i++) {
                         var handler = handlers[i];
+                        if (eventName == DEBUG_EVENT) debug_(` - ${handler.obj}`, 2);
                         if (handler.fn.call(handler.obj, event, control) == true) {
                             return true;
                         }
                     }
+                    break;
+                } else {
+                    control = control.parent;
                 }
-                control = control.parent;
             }
-        }, 10);
+        //}, 0);
+    };
+    Control.prototype.getTemplate = function getTemplate() {
+        var template = {
+            'type': 'control',
+            'label': false,
+            'disabled': false,
+            'data-source': '',
+            'data-field': '',
+            'z-index': '',
+            // styling
+            'style': Control.getStyleTemplate()
+        };
+
+        return template;
+    };
+    Control.prototype.applyTemplate = function(tmpl) {
+        var defaultTemplate = this.getTemplate();
+        this.template = mergeObjects(defaultTemplate, tmpl);
+        if (this.template.id) this.id = this.template.id;
+        this.type = this.template.type;
+        this.disabled = this.template.disabled;
+        var source = this.template['data-source'];
+        this.dataSource = typeof source === 'string' ? glui.controls.find(x => x.id == source) || window[source] : source;
+        this.dataField = this.template['data-field'];
+        this.zIndex = parseInt(this.template['z-index']) || 0;
+        this.style = mergeObjects(this.template.style, null);
+        this.label = null;
+        return this.template;
+	};
+    Control.prototype.dataBind = function dataBind(source, field) {
+        source = source || this.dataSource;
+        if (source) {
+            this.dataSource = source instanceof DataLink ? source : new DataLink(source);
+            this.dataField = field !== undefined ? field : this.dataField;
+            this.dataSource.add(this.dataField);
+        }
     };
     Control.prototype.getBoundingBox = function getBoundingBox() {
         return [this.left, this.top, this.width, this.height];
@@ -155,34 +183,30 @@ include('data/datalink.js');
             this.renderer.render();
         }
     };
-    Control.prototype.applyTemplate = function(tmpl) {
-        this.template = this.getTemplate();
-        var merged = Control.mergeFields(this.template, tmpl);
-        this.id = merged.id;
-        this.type = merged.type;
-        this.disabled = merged.disabled;
-        this.dataSource = glui.controls.find(x => x.id == merged['data-source']) || window[merged['data-source']];
-        this.dataField = merged['data-field'];
-        this.zIndex = parseInt(merged['z-index']) || 0;
-        this.style = {};
-        for (var i in merged.style) {
-            this.style[i] = merged.style[i];
-        }
-        this.label = null;
-        return merged;
-	};
+    Control.prototype.highlight = function hightlight() {
+        this.renderer.backgroundColor_ = this.renderer.backgroundColor;
+        this.renderer.backgroundColor = this.renderer.calculateColor(this.renderer.backgroundColor, 1.2);
+        this.render();
+    };
+    Control.prototype.dehighlight = function dehighlight() {
+        this.renderer.backgroundColor = this.renderer.backgroundColor_;
+        this.render();
+    };
     Control.prototype.onmouseover = function onmouseover(e) {
         if (Control.focused != this) {
-            this.renderer.backgroundColor_ = this.renderer.backgroundColor;
-            this.renderer.backgroundColor = this.renderer.calculateColor(this.renderer.backgroundColor, 1.2);
-            this.render();
+            this.highlight();
         }
     };
     Control.prototype.onmouseout = function onmouseout(e) {
         if (Control.focused != this) {
-            this.renderer.backgroundColor = this.renderer.backgroundColor_;
-            this.render();
+            this.dehighlight();
         }
+    };
+    Control.prototype.onfocus = function onblur(e) {
+        ;
+    };
+    Control.prototype.onblur = function onblur(e) {
+        this.dehighlight();
     };
     // Control.prototype.onmouseup = function onmouseup(e) {
     //     console.log(1)
@@ -192,7 +216,7 @@ include('data/datalink.js');
 	Control.onevent = function(e) {
         // get control by coordinates
         var event = e.type;
-        var control = glui.getControlAt(e.x, e.y);
+        var control = glui.getControlAt(e.x, e.y, true);
         e.control = control;
 		//console.log(`${event} for target=${e.target}, this=${this}, control=${this.control ? this.control : e.target.control ? e.target.control : 'none'}, Control.focused=${Control.focused}`);
 		if (control && control.disabled) {
@@ -204,10 +228,16 @@ include('data/datalink.js');
                 if (Control.focused) {
                     var ctrl = Control.focused;
                     Control.focused = control;
-                    ctrl.callHandler('mouseout', e);
-                    ctrl.callHandler('blur', e);
+                    e.control = control;    //ctrl;
+                    // var parent = getCommonParent(ctrl, control, 'parent')
+                    // if (!parent) {
+                        ctrl.callHandler('blur', e);
+                    // } else {
+                    //     parent.callHandler('blur', e);
+                    // }
                 }
                 if (control) {
+                    e.control = control;
                     control.callHandler('focus', e);
                     Control.focused = control;
                 }
@@ -220,10 +250,12 @@ include('data/datalink.js');
         } else if (event == 'mousemove') {
             if (control != Control.atCursor) {
                 if (Control.atCursor) {
+                    e.control = Control.atCursor;
                     Control.atCursor.callHandler('mouseout', e);
                 }
                 Control.atCursor = control;
                 if (control) {
+                    e.control = control;
                     control.callHandler('mouseover', e);
                 }
             }
@@ -247,7 +279,7 @@ include('data/datalink.js');
         } else if (event == 'mouseup') {
             Control.dragging = null;
             if (control) {
-                control.callHandler('click', e);
+                setTimeout( () => control.callHandler('click', e), 0);
             }
         }
 
@@ -278,7 +310,7 @@ include('data/datalink.js');
         return {
             'left': 0,
             'top': 0,
-            'width': '4em',
+            'width': '2em',
             'height': '1.2em',
             'z-index': 0,
             'background': '#c0c0c0',
@@ -288,18 +320,6 @@ include('data/datalink.js');
             'border': '#c0c0c0 2px solid',
             'visible': true
         };
-    };
-    Control.mergeFields = function mergeFields(src, dst) {
-        var res = {};
-        dst = dst || {};
-		for (var i in src) {
-            if (typeof src[i] === 'object') {
-                res[i] = mergeFields(src[i], dst[i]);
-            } else {
-                res[i] = dst[i] == undefined ? src[i] : dst[i];
-            }
-        }
-        return res;
     };
 
     Control.focused = null;

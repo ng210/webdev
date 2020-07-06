@@ -19,95 +19,127 @@ include('glui/glui-lib.js');
     };
     var gridStyle = {
         'font': 'Arial 20',
-        'width':'18em', // 'height':'15em',
+        'width':'18em', //'height':'6em',
         'align':'center middle',
-        'border':'#308060 4px solid',
-        'color': '#401020',
-        'background': '#60c0a0',
+        'border':'#308060 2px outset',
+        'color': '#184030',
+        'background': '#308060',
+        'cell': {
+            'font': 'Arial 16',
+            'align':'center middle',
+            'border':'#7090c0 1px inset',
+            'color': '#102040',
+            'background': '#90b0c0',
+            'width': '4em'
+        },
         'title': {
             'font': 'Arial 16',
             'border':'#60a080 1px inset',
             'color': '#204060',
             'background': '#80c0a0',
+            'height': '1.5em'
         },
         'header': {
-            'font': 'Arial 22',
-            'height':'2.5em',
+            'font': 'Arial 14',
+            'height':'2.0em',
             'align':'center middle',
-            'border':'#60a080 2px outset',
+            'border':'#60a080 1px outset',
             'color': '#000000',
             'background': '#60a080'
         }
+    };
+    var comboboxStyle = {
+        'font': 'Arial 15',
+        'align':'center middle',
+        'border':'#7090c0 2px solid',
+        'color': '#102040',
+        'background': '#90b0c0',
+        'width': '10em'
     };
 
     var renderer = null;
 
     var controls = [
-        {
-            'type': 'Label',
-            'style': style,
-            'value': 'label'
-        },
-        {
-            'type': 'Label',
-            'style': style,
-            'data-source': 'data',
-            'data-field': 'label1'
-        },
-        {
-            'type': 'Label',
-            'style': style,
-            'data-type': 'int',
-            'decimal-digits': 2,
-            'data-source': 'data',
-            'data-field': 'label2'
-        },
+        // {
+        //     'type': 'Label',
+        //     'style': style,
+        //     'value': 'label'
+        // },
+        // {
+        //     'type': 'Label',
+        //     'style': style,
+        //     'data-source': 'data',
+        //     'data-field': 'label1'
+        // },
+        // {
+        //     'type': 'Label',
+        //     'style': style,
+        //     'data-type': 'int',
+        //     'decimal-digits': 2,
+        //     'data-source': 'data',
+        //     'data-field': 'label2'
+        // },
+
+        // {
+        //     'type': 'Textbox',
+        //     'style': style,
+        //     'look': 'textbox',
+        //     'decimal-digits': 3,
+        //     'value': 'textbox'
+        // },
+        // {
+        //     'type': 'Textbox',
+        //     'style': style,
+        //     'look': 'textbox',
+        //     'decimal-digits': 3,
+        //     'data-source': 'data',
+        //     'data-field': 'textbox1'
+        // },
+        // {
+        //     'type': 'Textbox',
+        //     'style': style,
+        //     'look': 'potmeter',
+        //     'data-type': 'int',
+        //     'decimal-digits': 1,
+        //     'data-source': 'data',
+        //     'data-field': 'textbox2'
+        // },
+
+        // {
+        //     'type': 'Button',
+        //     'style': buttonStyle,
+        //     'value': 'Complete'
+        // },
+        // {
+        //     'type': 'Button',
+        //     'style': buttonStyle,
+        //     'data-source': 'data',
+        //     'data-field': 'button'
+        // },
+
+        // {
+        //     'type': 'Image',
+        //     'style': {
+        //         'width':'128px', 'height':'96px',
+        //         'border':'#805020 2px inset',
+        //         'background': '#102040'
+        //     },
+        //     'source': 'glui/res/test.png'
+        // },
 
         {
-            'type': 'Textbox',
-            'style': style,
-            'look': 'textbox',
-            'decimal-digits': 3,
-            'value': 'textbox'
-        },
-        {
-            'type': 'Textbox',
-            'style': style,
-            'look': 'textbox',
-            'decimal-digits': 3,
+            'type': 'Combobox',
+            'style': comboboxStyle,
+            'readonly': true,
+            'rows': 4,
             'data-source': 'data',
-            'data-field': 'textbox1'
-        },
-        {
-            'type': 'Textbox',
-            'style': style,
-            'look': 'potmeter',
-            'data-type': 'int',
-            'decimal-digits': 1,
-            'data-source': 'data',
-            'data-field': 'textbox2'
-        },
-
-        {
-            'type': 'Button',
-            'style': buttonStyle,
-            'value': 'Complete'
-        },
-        {
-            'type': 'Button',
-            'style': buttonStyle,
-            'data-source': 'data',
-            'data-field': 'button'
-        },
-
-        {
-            'type': 'Image',
-            'style': {
-                'width':'128px', 'height':'96px',
-                'border':'#805020 2px inset',
-                'background': '#102040'
-            },
-            'source': 'glui/res/test.png'
+            'data-field': 'combobox',
+            'key-field': 'name',
+            'values': 'data.grid',
+            'row-template': {
+                'name': { 'type': 'Label', 'style': { 'width':'65%', 'background': '#60c0a0', 'border':'#60c0a0 2px inset' } },
+                'age': { 'type': 'Textbox', 'data-type': 'int', 'style': { 'width':'35%', 'background': '#d0fff0', 'border':'#608078 1px inset' } }
+            }
         },
 
         {
@@ -116,12 +148,15 @@ include('glui/glui-lib.js');
             'title': 'Characters',
             'data-source': 'data',
             'data-field': 'grid',
+            'rows': 8,
+            'cols': 3,
+            'header': true,
             'row-template': {
                 'name': { 'type': 'Label', 'column': '$Key', 'style': {
                     'width':'65%', 'background': '#60c0a0', 'border':'#60c0a0 1px inset'
                 } },
                 'age': { 'type': 'Textbox', 'data-type': 'int', 'column': '$Key', 'style': {
-                    'width':'35%', 'background': '#d0fff0', 'border':'#80a890 1px inset'
+                    'width':'35%', 'background': '#d0fff0', 'border':'#608078 1px inset'
                 } }
             }
         }
@@ -134,10 +169,18 @@ include('glui/glui-lib.js');
         "textbox2": 20,
         "button": "Button",
         "grid": [
-            { "name": "James", "age": 36 },
+            { "name": "James", "age": 38 },
             { "name": "Ivy", "age": 32 },
             { "name": "Alfred", "age": 61 },
-        ]
+            { "name": "Henry", "age": 17 },
+            { "name": "Blange", "age": 60 },
+            { "name": "Wilson", "age": 62 },
+            { "name": "Geroge", "age": 67 },
+            { "name": "Teddy", "age": 52 },
+            { "name": "Sissy", "age": 29 },
+            { "name": "Poppy", "age": 27 }
+        ],
+        "combobox": "James"
     };
 
     var App = {
@@ -160,8 +203,8 @@ include('glui/glui-lib.js');
     };
 
     function setup() {
-        glui.scale.x = 0.5;
-        glui.scale.y = 0.5;
+        glui.scale.x = 0.8;
+        glui.scale.y = 0.8;
         glui.initialize(App, true);
         glui.setRenderingMode(glui.Render2d);
         glui.buildUI(App);
@@ -174,7 +217,7 @@ include('glui/glui-lib.js');
 
     async function createControls() {
         for (var i=0; i<controls.length; i++) {
-            var ctrl = glui.create(`ctrl${i}`, controls[i], null, App);
+            var ctrl = glui.create(`${controls[i].type}${i}`, controls[i], null, App);
             if (ctrl instanceof glui.Image) {
                 await ctrl.load();
             }
@@ -238,7 +281,7 @@ include('glui/glui-lib.js');
         teardown();
     }
 
-    function test_mergeFields() {
+    function test_mergeObjects() {
         var person = {
             "id": 12,
             "name": "James",
@@ -252,7 +295,7 @@ include('glui/glui-lib.js');
         };
 
         test('should merge 2 objects', ctx => {
-            var merged = glui.Control.mergeFields(itemList, person);
+            var merged = mergeObjects(itemList, person);
             var expected = {
                 "id": 12,
                 "name": "James",
@@ -266,15 +309,62 @@ include('glui/glui-lib.js');
             ctx.assert(merged.id, '!=', expected.id);
         });
 
+        test('should merge 2 objects keep source only', ctx => {
+            var merged = mergeObjects(itemList, person, true);
+            var expected = {
+                "id": 12,
+                "items": [
+                    { "name": "knife", "value": 10 },
+                    { "name": "bottle", "value": 5 }            
+                ]
+            };
+            ctx.assert(merged, ':=', expected);
+            merged.id = 1;
+            ctx.assert(merged.id, '!=', expected.id);
+        });
+
+        test('should merge an object with null', ctx => {
+            var merged = mergeObjects(null, person);
+            var expected = {
+                "id": 12,
+                "name": "James"
+            };
+            ctx.assert(merged, ':=', expected);
+            merged.id = 1;
+            ctx.assert(merged.id, '!=', expected.id);
+        });
+
+        test('should merge an object with null subobject', ctx => {
+            var merged = mergeObjects({"id": 12, "items": null}, itemList);
+            var expected = {
+                "id": 113,
+                "items": [
+                    { "name": "knife", "value": 10 },
+                    { "name": "bottle", "value": 5 }            
+                ]
+            };
+            ctx.assert(merged, ':=', expected);
+            merged.id = 1;
+            ctx.assert(merged.id, '!=', expected.id);
+        });
+     
         test('should clone an object', ctx => {
             var expected = {
                 "id": 12,
                 "name": "James"
             };
-            var merged = glui.Control.mergeFields(person);
+            var merged = mergeObjects(person);
             ctx.assert(merged, ':=', person);
             merged.id = 1;
             ctx.assert(merged.id, '!=', expected.id);
+        });
+    }
+
+    function test_getObjectAt() {
+        test('Should get object at path', context => {
+            context.assert(getObjectAt('data.label1'), '=', data.label1);
+            context.assert(getObjectAt('label1', data), '=', data.label1);
+            context.assert(getObjectAt('data.grid.0.name'), '=', data.grid[0].name);
         });
     }
 
@@ -312,8 +402,9 @@ include('glui/glui-lib.js');
     }
 
     var tests = () => [
-        test_mergeFields,
-        test_construct,
+        //test_mergeObjects,
+        //test_getObjectAt,
+        //test_construct,
         //test_valueControls,
         test_render
     ];
