@@ -100,44 +100,53 @@ function test_context(lbl) {
     this.errors = 0;
 }
 
-function deepCompare(a, b) {
+function deepCompare(a, b, path) {
+    path = path || '';
     var result = null;
-    if (a != null && b != null) {
-        if (typeof a === typeof b) {
-            if (typeof a === 'object' || Array.isArray(a)) {
-                for (var i in a) {
-                    if (a.hasOwnProperty(i)) {
-                        var bi = b[i];
-                        result = deepCompare(a[i], bi);
-                        if (result) {
-                            result = '.' + i + result;
-                            break;
-                        }
-                    }
+    if (a == null && b == null) result = null;
+    else if (a == null && b != null) result = `${path} [null ! b]`;
+    else if (a != null && b == null) result = `${path} [a ! null]`;
+    else if (typeof a !== typeof b)  result = `${path} [type a (${typeof a}) ! type b (${typeof a})]`;
+    else if (typeof a === 'object' || Array.isArray(a)) {
+        var keysA = Object.keys(a);
+        var keysB = Object.keys(b);
+        if (keysA.length !== keysB.length) result = `${path} [keys a (${keysA.length}) ! keys b (${keysB.length})]`;
+        else {
+            for (var i=0; i<keysA.length; i++) {
+                result = deepCompare(a[keysA[i]], b[keysA[i]], `${path}.${keysA[i]}`);
+                if (result) {
+                    break;
                 }
-            } else {
-                result = equals(a, b) ? null : `(${a} ! ${b})`;
             }
         }
     } else {
-        result = equals(a, b) ? null : ` ${a} ! ${b}`;
+        result = equals(a, b) ? null : `${path} [${a} ! ${b}]`;
     }
     return result;
 }
 
+function _testDeepCompare(a, b) {
+    console.log(`${JSON.stringify(a)}\n${JSON.stringify(b)}\n => ${deepCompare(a, b)}`)
+}
+
+
 function testDeepCompare() {
     var obj = {'a': 1, 'b':[1,2,3], 'c': { 'a': 2, 'b': 'B'}};
     var obj2 = {'c': 3, 'o': obj };
-    console.log(deepCompare('a', 'b'));
-    console.log(deepCompare('b', 'b'));
-    console.log(deepCompare(1, 2));
-    console.log(deepCompare(null, null));
-    console.log(deepCompare(obj, null));
-    console.log(deepCompare(obj, obj));
-    console.log(deepCompare(obj, obj2));
-    console.log(deepCompare(obj2, obj2));
-    console.log(deepCompare(obj2.o, obj2));
-    console.log(deepCompare(obj2.o, obj));
+    var obj3 = {'a': 1, 'b':[1,2,3], 'c': null};
+    _testDeepCompare('a', 'b');
+    _testDeepCompare('b', 'b');
+    _testDeepCompare(1, 2);
+    _testDeepCompare(1, 1);
+    _testDeepCompare(null, null);
+    _testDeepCompare(obj, null);
+    _testDeepCompare(null, obj);
+    _testDeepCompare(obj, obj);
+    _testDeepCompare(obj, obj2);
+    _testDeepCompare(obj2, obj2);
+    _testDeepCompare(obj2.o, obj2);
+    _testDeepCompare(obj2.o, obj);
+    _testDeepCompare(obj, obj3);
 }
 
 function equals(a, b) {
@@ -192,7 +201,7 @@ async function onpageload(errors) {
     Dbg.prln('Tests 0.1');
     Dbg.con.style.visibility = 'visible';
 
-    // testDeepCompare();
+    //testDeepCompare();
 
     var url = new Url(location.href);
     var testUrl = new Url(`${url.fragment}/test.js`);
