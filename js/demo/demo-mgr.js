@@ -12,6 +12,7 @@ var DemoMgr = {
     fpsCounter: 0,
 
     initialize: async function(url) {
+        console.log('load ' + url);
         var res = await load(appUrl.toString() + '/' + url);
         if (res.error) {
             alert(res.error);
@@ -21,19 +22,21 @@ var DemoMgr = {
         for (var i in this.demoList) {
             if (this.demoList.hasOwnProperty(i)) {
                 var path = appUrl.toString() + '/' + this.demoList[i].path.replace(/\/\w+\.js$/, '/mini.png');
+                console.log('load ' + path);
                 res = await window.load(path);
                 this.demoList[i].image = !res.error ? res.node : new Image(64, 64);                
             }
         }
         
         // create demo list
+        console.log('create demo list');
         var demoList = glui.create('list', {
             'type': 'Grid',
             'style': {
-                'font': 'Arial 16',
+                'font': 'Arial 20',
                 'left': '1em',
                 'top': '1em',
-                'width':'20em',
+                'width':'18em',
                 'align':'right middle',
                 'border':'#406080 1px inset',
                 'background': '#c0e0ff',
@@ -56,6 +59,9 @@ var DemoMgr = {
                 } }
             }
         }, null, this);
+        demoList.onclick = function demoList_onclick (e, ctrl) {
+            DemoMgr.selectDemo(ctrl.row.dataSource.obj.path);
+        };
         demoList.dataBind(this.demoList);
 
         demoList.setVisible(true);
@@ -85,6 +91,9 @@ var DemoMgr = {
                 'border':'#406080 1px inset',
                 'background': '#c0e0ff',
                 'color':'#101820',
+                'cell': {
+                    'height': '1.5em'
+                },
                 'title': {
                     'font': 'Arial 18', 'height':'1.8em',
                     'align':'center middle',
@@ -95,17 +104,20 @@ var DemoMgr = {
             'title': 'Settings',
             'row-template': {
                 'label': { 'type': 'Label', 'column': '$Key', 'style': {
-                    'width':'65%', 'background': '#406080', 'border':'#406080 1px outset'
+                    'width':'60%', 'background': '#406080', 'border':'#406080 1px outset'
                 } },
                 'value': { 'type': 'Textbox', 'look': 'potmeter', 'data-type': 'float', 'decimal-digits': 3, 'data-field': 'value', 'column': '$Key', 'style': {
-                    'width':'35%', 'background': '#d0e0f0', 'border':'#80a890 1px inset'
+                    'width':'40%', 'background': '#d0e0f0', 'border':'#80a890 1px inset'
                 } }
             }
         }, null, demo);
         this.controls.settings.dataBind(demo.settings);
-        for (var ri=0; ri<this.controls.settings.rowKeys.length; ri++) {
+        for (var ri=1; ri<this.controls.settings.rowKeys.length; ri++) {
             var key = this.controls.settings.rowKeys[ri];
             demo.settings[key].control = this.controls.settings.rows[key].cells.value;
+            if (demo.settings[key].normalized) {
+                demo.settings[key].control.normalize();
+            }
         }
         this.controls.start = glui.create('start', {
             'type': 'Button',
@@ -180,40 +192,31 @@ var DemoMgr = {
         glui.render();
     },
 
-    onclick: async function onclick(e, ctrl) {
-        switch (ctrl.id) {
-            case 'start':
-                this.isRunning = !this.isRunning;
-                ctrl.value = this.isRunning ? 'Stop' : 'Start';
-                ctrl.render();
-                this.time = new Date().getTime();
-                this.run();
-                break;
-            case 'list': {
-                if (e.control.row) {
-                    var ri = e.control.row.id;
-                    if (ri >= 0) {
-                        if (this.demo) {
-                            // destroy demo
-                            await this.stop();
-                            for (var i in this.controls) {
-                                glui.remove(this.controls[i]);
-                            }
-                        }
-                        var path = ctrl.dataSource[ri].path;
-                        // load and run demo
-                        var demo = await DemoMgr.load(path);
-                        if (demo instanceof Error) {
-                            alert(demo.message);
-                        } else {
-                            DemoMgr.time = new Date().getTime();
-                            //this.isRunning = true;
-                            DemoMgr.run(demo);
-                        }
-                    }
-                }
-                break;
+    selectDemo: async function(path) {
+        if (this.demo) {
+            // destroy demo
+            await this.stop();
+            for (var i in this.controls) {
+                glui.remove(this.controls[i]);
             }
+        }
+        // load and run demo
+        var demo = await DemoMgr.load(path);
+        if (demo instanceof Error) {
+            alert(demo.message);
+        } else {
+            DemoMgr.time = new Date().getTime();
+            //this.isRunning = true;
+            DemoMgr.run(demo);
+        }
+    },
+    onclick: function(e, ctrl) {
+        if (ctrl.id == 'start') {
+            this.isRunning = !this.isRunning;
+            ctrl.value = this.isRunning ? 'Stop' : 'Start';
+            ctrl.render();
+            this.time = new Date().getTime();
+            this.run();
         }
     },
     onchange: function onchange(e, ctrl) {
@@ -229,9 +232,9 @@ async function onpageload(e) {
     glui.scale.x = 0.6;
     glui.scale.y = 0.6;
     glui.initialize();
+    console.log('glui initialize');
     var cvs = glui.canvas;
     cvs.style.backgroundColor = '203040';
     window.addEventListener('resize', () => DemoMgr.resize());
-
     DemoMgr.initialize('demo-list.json');
 }

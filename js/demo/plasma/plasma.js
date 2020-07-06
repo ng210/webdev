@@ -10,10 +10,10 @@ include('ge/fn.js');
 
 		settings: {
 			zoom: { label: 'Zoom', value: 10, min:1, max:50, step: 0.1, type: 'float', link: null },
-			motion: { label: 'Motion', value: 0.01, min: 0, max:0.02, step: 0.001, type: 'float', link: null },
+			motion: { label: 'Motion', value: 0.01, min: 0, max:0.02, step: 0.0001, normalized: true, type: 'float', link: null },
 			variation: { label: 'Variation', value: 1, min:0, max:10, step: 0.01, type: 'float', link: null },
 			shape: { label: 'Shape', value: 0, min:0, max:3, step: 0.01, type: 'float', link: null },
-			color: { label: 'Color', value: 0.5, min:0, max:1, step: 0.05, type: 'float', link: null }
+			color: { label: 'Color', value: 0.5, min:0, max:1, step: 0.01, type: 'float', link: null }
 		},
 
 		initialize: function initialize() {
@@ -25,7 +25,7 @@ include('ge/fn.js');
 		},
 
 		onchange: function onchange(e, ctrl) {
-			switch (ctrl.id) {
+			switch (ctrl.row.name) {
 				case 'shape':
 					this.updateVelocity();
 					break;
