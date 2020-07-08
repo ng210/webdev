@@ -111,7 +111,6 @@ var DemoMgr = {
                 } }
             }
         }, null, demo);
-debugger
         this.controls.settings.dataBind(demo.settings);
         for (var ri=1; ri<this.controls.settings.rowKeys.length; ri++) {
             var key = this.controls.settings.rowKeys[ri];
@@ -183,7 +182,7 @@ debugger
     resize: function resize(e) {
         this.demo.resize();
         this.demo.render(this.frame, 0);
-        var top = 200, left = 20;
+        var top = 20, left = glui.width - Math.max(this.controls.title.width, this.controls.settings.width) - 20;
         var width = Math.max(this.controls.title.width, this.controls.settings.width, this.controls.start.width);
         this.controls.title.move(left + (width - this.controls.title.width)/2, top);
         top += this.controls.title.height + 4;

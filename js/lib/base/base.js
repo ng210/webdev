@@ -282,9 +282,9 @@ Resource.load = async function(options) {
             return new Promise( async function(resolve, reject) {
                 var timeOut = 100;
                 poll( function() {
-                    if (timeOut > 10000) {
+                    if (timeOut > 30000) {
                         resource.status = Resource.ERROR;
-                        resource.error = new Error('Unspecified error!');
+                        resource.error = new Error('Time-out reached!');
                         reject(resource);
                         return true;
                     }
