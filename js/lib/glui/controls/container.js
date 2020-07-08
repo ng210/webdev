@@ -17,7 +17,7 @@ include('control.js');
         }
         return ctrl;
     };
-    Container.prototype.remove = function remove(ctrl) {
+    Container.prototype.remove = function remove(control) {
         for (var i=0; i<this.items.length; i++) {
             if (this.items[i] == control) {
                 this.items.splice(i, 1);

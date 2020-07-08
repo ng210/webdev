@@ -111,6 +111,7 @@ var DemoMgr = {
                 } }
             }
         }, null, demo);
+debugger
         this.controls.settings.dataBind(demo.settings);
         for (var ri=1; ri<this.controls.settings.rowKeys.length; ri++) {
             var key = this.controls.settings.rowKeys[ri];
@@ -143,7 +144,7 @@ var DemoMgr = {
         glui.setRenderingMode(glui.Render2d);
         this.demo = demo;
         if (typeof demo.initialize === 'function') {
-            demo.initialize();
+            await demo.initialize();
         }
         this.totalTime = 0;
         this.frame = 0;
