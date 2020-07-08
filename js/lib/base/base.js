@@ -280,9 +280,9 @@ Resource.load = async function(options) {
     } else {
         if (resource.status != Resource.COMPLETE && resource.status != Module.RESOLVED) {
             return new Promise( async function(resolve, reject) {
-                var counter = 0;
+		var timeOut = 100;	// 100, 200, 400, 800, 1600, 3200, 6400
                 poll( function() {
-                    if (counter++ == 10) {
+                    if (timeOut > 3000) {
                         resource.status = Resource.ERROR;
                         resource.error = new Error('Unspecified error!');
                         reject(resource);
@@ -292,9 +292,10 @@ Resource.load = async function(options) {
                         resolve(resource);
                         return true;
                     } else {
+			    timeOut *= 2;
                         return false;
                     }
-                }, 100);
+                }, timeOut);
             });
         }
     }
