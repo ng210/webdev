@@ -1,10 +1,11 @@
 (function() {
 
     var glui = {
-        controls: [],
+        //controls: [],
         scale: { x:1, y:1 },
         mode: null,
         canvas: null,
+        screen: null,
         context: null,
         renderingContext2d: null,
         renderingContext3d: null,
@@ -41,24 +42,20 @@
             var ctrl = glui.Control.create(id, tmpl, parent, context);
             ctrl.addHandlers();
             if (parent == null) {
-                var ix = this.controls.findIndex(x => x.zIndex < ctrl.zIndex);
-                if (ix != -1) {
-                    this.controls.splice(ix, 0, ctrl);
-                } else {
-                    this.controls.push(ctrl);
-                }
+                this.screen.add(ctrl);
             }
             //ctrl.setRenderer(this.mode, this.mode == glui.Render2d ? this.renderingContext2d : this.renderingContext3d);
             return ctrl;
         },
         remove: function remove(control) {
-            for (var i=0; i<this.controls.length; i++) {
-                if (this.controls[i] == control) {
-                    this.controls.splice(i, 1);
-                    control.destroy();
-                    delete control;
-                }
-            }
+            this.screen.remove(control);
+            // for (var i=0; i<this.controls.length; i++) {
+            //     if (this.controls[i] == control) {
+            //         this.controls.splice(i, 1);
+            //         control.destroy();
+            //         delete control;
+            //     }
+            // }
         },
         initialize: function initialize(app, isFullscreen) {
             document.body.style.display = 'block';
@@ -74,14 +71,16 @@
                 this.canvas.style.width = '100vw';
                 this.canvas.style.height = '100vh';
             }
+            this.screen = new glui.Container('screen', null, null, app);
             this.setRenderingMode(glui.Render2d);
         },
         shutdown: function shutdown() {
             // remove controls
-            for (var i=0; i<glui.controls.length; i++) {
-                delete glui.controls[i];
-            }
-            glui.controls.splice(0, glui.controls.length);
+            this.screen.destroy();
+            // for (var i=0; i<glui.controls.length; i++) {
+            //     delete glui.controls[i];
+            // }
+            // glui.controls.splice(0, glui.controls.length);
             glui.Control.focused = null;
             glui.Control.atCursor = null;
             glui.Control.dragging = null;
@@ -96,7 +95,7 @@
                 if (nodes[i].tagName.toLowerCase().startsWith('gl-')) {
                     var control = this.fromNode(nodes[i], context || this.context);
                     if (control) {
-                        this.controls.push(control);
+                        this.screen.add(control);
                     }
                     document.body.removeChild(nodes[i]);
                 }
@@ -110,28 +109,13 @@
             } else if (mode == glui.Render3d) {
                 ctx = this.renderingContext3d = this.renderingContext3d || glui.canvas.getContext('webgl');
             }
-            for (var i=0; i<this.controls.length; i++) {
-                this.controls[i].setRenderer(mode, mode == glui.Render2d ? this.renderingContext2d : this.renderingContext3d);
-            }
+            this.screen.setRenderer(mode, mode == glui.Render2d ? this.renderingContext2d : this.renderingContext3d);
             glui.resize(false);
             return ctx;
         },
         render: function render() {
-            // var canvas = typeof ref === 'string' ? document.getElementById(ref) : ref;
-            // if (canvas != null) glui.canvas = canvas;
-            // else canvas = glui.canvas;
-            // if (glui.mode == null) {
-            //     glui.mode = mode || '2d';
-            //     var ctx = canvas.getContext(glui.mode);
-            //     glui.mode == '2d' ? glui.context = ctx : glui.gl = ctx;
-            // }
-            // glui.resize();
-            // var is2d = glui.mode == '2d';
             //this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            for (var i=0; i<glui.controls.length; i++) {
-                glui.controls[i].render();
-            }
-            //this.animate();
+            this.screen.render();
         },
         repaint: function repaint() {
             this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -142,8 +126,8 @@
             this.height = Math.floor(this.scale.y * this.canvas.clientHeight);
             this.canvas.width = this.width;
             this.canvas.height = this.height;
-            for (var i=0; i<this.controls.length; i++) {
-                var ctrl = this.controls[i];
+            for (var i=0; i<this.screen.items.length; i++) {
+                var ctrl = this.screen.items[i];
                 var left = ctrl.left, top = ctrl.top;
                 ctrl.renderer.initialize();
                 ctrl.move(left, top);
@@ -152,16 +136,7 @@
         },
         getControlAt: function getControlAt(x, y, recursive) {
             var cx = x*glui.scale.x, cy = y*glui.scale.y;
-            var res = null;
-            for (var i=0; i<glui.controls.length; i++) {
-                var ctrl = glui.controls[i];
-                if (ctrl.left < cx  && cx < ctrl.left + ctrl.width && ctrl.top < cy  && cy < ctrl.top + ctrl.height) {
-                    res = ctrl;
-                    if (recursive && ctrl.items) res = ctrl.getControlAt(cx, cy);
-                    break;
-                }
-            }
-            return res;
+            return this.screen.getControlAt(cx, cy, recursive);
         },
         addAnimation: function addAnimation(callback, obj, timeout, args) {
             var animationId = glui.animations.length;

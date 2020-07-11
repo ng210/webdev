@@ -151,7 +151,7 @@ const DEBUG_EVENT = 'click';
         this.type = this.template.type;
         this.disabled = this.template.disabled;
         var source = this.template['data-source'];
-        this.dataSource = typeof source === 'string' ? glui.controls.find(x => x.id == source) || window[source] : source;
+        this.dataSource = typeof source === 'string' ? glui.screen.items.find(x => x.id == source) || window[source] : source;
         this.dataField = this.template['data-field'];
         this.zIndex = parseInt(this.template['z-index']) || 0;
         this.style = mergeObjects(this.template.style, null);

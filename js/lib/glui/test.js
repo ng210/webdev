@@ -231,8 +231,8 @@ include('glui/glui-lib.js');
         
         var top = renderer.convertToPixelV('5em'), left = 10;
         var width = 0;
-        for (var i=0; i<glui.controls.length; i++) {
-            var ctrl = glui.controls[i];
+        for (var i=0; i<glui.screen.items.length; i++) {
+            var ctrl = glui.screen.items[i];
             if (ctrl.parent == null) {
                 ctrl.move(left, top);
                 width = Math.max(width, parseFloat(ctrl.width));
@@ -252,8 +252,8 @@ include('glui/glui-lib.js');
     async function test_construct() {
         setup();
         await createControls();
-        for (var i=0; i<glui.controls.length; i++) {
-            var control = glui.controls[i];
+        for (var i=0; i<glui.screen.items.length; i++) {
+            var control = glui.screen.items[i];
             test(`Should create <b><i>${control.type}</i></b> from template`, ctx => {                
                 ctx.assert(control, '!=', null);
                 if (control instanceof glui.ValueControl) {

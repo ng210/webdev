@@ -66,8 +66,11 @@ include('renderer2d.js');
         delete template.style.height;
         template.style.border = 'none';
         this.list.applyTemplate(template);
+        this.list.style.width = '100%';
+        this.list.style['z-index'] = 100;
         template.rows = 1;
         this.selector.applyTemplate(template);
+        this.selector.style.width = '100%';
         if (this.dataSource) {
             this.dataBind();
             var key = this.getValue();
@@ -105,13 +108,25 @@ include('renderer2d.js');
 	Combobox.prototype.getBoundingBox = function getBoundingBox() {
         this.selector.getBoundingBox();
         this.height = this.selector.height + 2*this.renderer.border.width;
-        if (this.isOpen) {
-            this.list.getBoundingBox();
-            this.height += this.list.height + this.renderer.border.width;
-        }
+        // if (this.isOpen) {
+        //     this.list.getBoundingBox();
+        //     this.height += this.list.height + this.renderer.border.width;
+        // }
         this.width = this.selector.width + 2*this.renderer.border.width;
         return [this.left, this.top, this.width, this.height];
     };
+    Combobox.prototype.render = function render() {
+        if (this.renderer && this.style.visible) {
+            this.getBoundingBox();
+            var height = this.height;
+            if (this.isOpen) {
+                this.list.getBoundingBox();
+                this.height += this.list.height + this.renderer.border.width;
+            }
+            this.renderer.render();
+            this.height = height;
+        }
+    };    
     Combobox.prototype.getControlAt = function getControlAt(cx, cy) {
         var res = null;
         var ctrl = this.selector;

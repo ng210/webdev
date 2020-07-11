@@ -326,6 +326,34 @@ include('label.js');
 		// 	console.log(this.rowKeys.length)
 		// }
 	};
+    Grid.prototype.replace = function replace(item, newItem) {
+		var result = Grid.base.replace.call(this, item, newItem);
+		if (result == item) {
+			var id = item.id.split('#');
+			newItem.id = id;
+			newItem.parent = this;
+			newItem.style.width = item.style.width;
+			newItem.style.height = item.style.height;
+			newItem.style.border = item.style.border;
+			newItem.style.background = item.style.background;
+			newItem.style.font = item.style.font;
+
+			var row = item.row;
+			var column = item.column;
+			var colKey = this.columnKeys[id[1]];
+
+			row.cells[colKey] = newItem;
+			row.cells[id[1]] = newItem;
+			newItem.row = row;
+
+			column.cells[id[0]] = newItem;
+			newItem.column = column;
+
+			newItem.context = item.context;
+			newItem.dataBind(item.dataSource, item.dataField);
+		}
+        return item;
+    };
 	Grid.prototype.getCell = function(ri, ci) {
 		if (typeof ri === 'string') {
 			var tokens = ri.split('#');
@@ -335,10 +363,11 @@ include('label.js');
 		var row = this.rows[ri];
 		return row ? row.cells[ci] : null;
 	};
-	// Grid.prototype.render = function render() {
-	// 	//this.updateRows();
-	// 	Grid.base.render.call(this);
-	// };
+	Grid.prototype.render = function render() {
+		//this.updateRows();
+		//Grid.base.render.call(this);
+		glui.Control.prototype.render.call(this);
+	};
 
 // 	Grid.prototype.onmouseover = function onmouseover(e, ctrl) {
 // console.log('grid.onmouseover')
