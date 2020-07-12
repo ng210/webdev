@@ -9,7 +9,7 @@ include('star.js');
             sun: { label: 'Sun', value: 0.02, min:0, max:0.1, step: 0.001, type: 'float', link: null },
             force: { label: 'Force', value: 0.1, min:-0.5, max:0.5, step: 0.01, type: 'float', link: null },
             time: { label: 'Time', value: 0.006, min:0, max:0.01, step: 0.0001, normalized:true, type: 'float', link: null },
-            maxEnergy: { label: 'Max.Energy', value: 3.2, min:0, max:5, step: 0.1, type: 'float', link: null },
+            maxEnergy: { label: 'Max.Energy', value: 2.5, min:0, max:5, step: 0.1, type: 'float', link: null },
             orbit: { label: 'Orbit', value: 1, min:0, max:1, step: 1.0, type: 'bool', link: null },
             alpha: { label: 'Alpha', value: 0.4, min:0, max:1, step: 0.01, type: 'float', link: null }
         },
