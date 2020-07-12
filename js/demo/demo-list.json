@@ -1,5 +1,6 @@
 [
     { "label": "Plasma", "path": "plasma/plasma.js" },
     { "label": "Times-table", "path": "timestable/timestable.js" },
-    { "label": "Fire", "path": "fire/fire.js" }
+    { "label": "Fire", "path": "fire/fire.js" },
+    { "label": "Gravity", "path": "gravity/gravity.js" }
 ]

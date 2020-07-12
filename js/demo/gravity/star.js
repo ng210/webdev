@@ -1,15 +1,22 @@
-include('/ge/fn.js');
+include('ge/fn.js');
 (function() {
 
-	function Star() {
+	function Star(position, radius) {
 		this.reset();
-		
+		if (Array.isArray(position)) {
+			this.pos[0] = position[0];
+			this.pos[1] = position[1];
+		}
+		if (radius) {
+			this.setRadius(radius);
+			this.updateByRadius();
+		}
 	}
 	Star.prototype.reset = function() {
 		// position
 		this.pos = [2*Math.random()-1, 2*Math.random()-1];
 		// energy and mass
-		this.setRadius(0.003);
+		this.setRadius(0.002);
 		this.density = 0.5 + 0.5 * Math.random();
 		this.energy = 0;
 		this.mass = 0;
