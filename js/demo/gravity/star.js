@@ -16,7 +16,7 @@ include('ge/fn.js');
 		// position
 		this.pos = [2*Math.random()-1, 2*Math.random()-1];
 		// energy and mass
-		this.setRadius(0.002);
+		this.setRadius(0.0006);
 		this.density = 0.5 + 0.5 * Math.random();
 		this.energy = 0;
 		this.mass = 0;
@@ -107,7 +107,7 @@ include('ge/fn.js');
 		this.updateByEnergy();
 		return this.energy;
 	};
-	Star.radiusFactor = (function(){ return Math.pow(4, 0.2); })();
+	Star.radiusFactor = (function(){ return Math.pow(1.2, 1.5); })();
 	Star.prototype.render = function(frame, ctx) {
 		// a*x^5 = 1 => x^5 = 1/a => x = pow(1/a, 1/5) = pow(a, -1/5)
 		var r = this.radius;

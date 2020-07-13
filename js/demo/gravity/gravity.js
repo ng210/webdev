@@ -5,19 +5,21 @@ include('star.js');
     var Gravity = {
         name: 'Gravity',
         settings: {
-            count: { label: 'Count', value: 300, min:10, max:500, step: 1.0, type: 'int', link: null },
+            count: { label: 'Count', value: 600, min:10, max:1000, step: 1.0, type: 'int', link: null },
             sun: { label: 'Sun', value: 0.02, min:0, max:0.1, step: 0.001, type: 'float', link: null },
             force: { label: 'Force', value: 0.1, min:-0.5, max:0.5, step: 0.01, type: 'float', link: null },
             time: { label: 'Time', value: 0.006, min:0, max:0.01, step: 0.0001, normalized:true, type: 'float', link: null },
-            maxEnergy: { label: 'Max.Energy', value: 2.5, min:0, max:5, step: 0.1, type: 'float', link: null },
+            maxEnergy: { label: 'Max.Energy', value: 1.0, min:0, max:5, step: 0.1, type: 'float', link: null },
             orbit: { label: 'Orbit', value: 1, min:0, max:1, step: 1.0, type: 'bool', link: null },
-            alpha: { label: 'Alpha', value: 0.4, min:0, max:1, step: 0.01, type: 'float', link: null }
+            alpha: { label: 'Alpha', value: 0.5, min:0, max:1, step: 0.01, type: 'float', link: null }
         },
 
         stars: [],
 		count: 0,
         lastTime: new Date().getTime(),
         sun: null,
+        massCentre: [0, 0],
+        totalMass: 0,
     
         // Member functions
         // required by the framework
@@ -72,28 +74,46 @@ include('star.js');
                     star2.a[0] += -star1.mass*dx; star2.a[1] += -star1.mass*dy;
                 }
             }
+            this.massCentre[0] = 0;
+            this.massCentre[1] = 0;
+            this.totalMass = 0;
             for (var i=0; i<count; i++) {
-                if (!this.stars[i].update(frame, time)) {
-                    this.resetStar(this.stars[i]);
+                var star = this.stars[i];
+                if (!star.update(frame, time)) {
+                    this.resetStar(star);
                 }
+                this.massCentre[0] += star.pos[0]*star.mass;
+                this.massCentre[1] += star.pos[1]*star.mass;
+                this.totalMass += star.mass;
             }
+            this.massCentre[0] /= this.totalMass;
+            this.massCentre[1] /= this.totalMass;
         },
         render: function render(frame, dt) {
             var ctx = glui.renderingContext2d;
             ctx.save();
             var count = this.settings.count.value;
-            ctx.setTransform(ctx.canvas.width, 0, 0, ctx.canvas.width, ctx.canvas.width/2, ctx.canvas.height/2);
+            var ratio = glui.height/glui.width;
     
             ctx.fillStyle = '#0e1028';
             ctx.globalAlpha = this.settings.alpha.value;
-            ctx.fillRect(-1.0, -1.0, 2.0, 2.0);
+            ctx.fillRect(0, 0, glui.width, glui.height);
             ctx.globalAlpha = 1;
 
+            ctx.setTransform(glui.width, 0, 0, glui.width, glui.width*(0.5 - this.massCentre[0]), glui.height*(0.5 - this.massCentre[1]));
             ctx.lineWidth = 2;
             for (var i=0; i<count; i++) {
                  var star = this.stars[i];
                  star.render(frame, ctx);
             }
+
+            //ctx.globalAlpha = 0.3;
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+			ctx.font = '14px Consolas';
+			ctx.fillStyle = "#ffffff";
+			ctx.textAlign = "left";
+            ctx.fillText("Total mass: " + (this.totalMass*1000000).toFixed(3), 4, glui.height - 18);
+            ctx.fillText(`Centre: ${this.massCentre[0].toFixed(3)} | ${this.massCentre[1].toFixed(3)}`, 200, glui.height - 18);
             ctx.restore();
         },
         onchange: function onchange(setting) {
