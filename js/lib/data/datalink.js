@@ -18,6 +18,12 @@
                 configurable: false,
                 writable: false,
                 value: {}
+            },
+            'links': {
+                enumerable: false,
+                configurable: false,
+                writable: false,
+                value: {}
             }
         });
     }
@@ -38,8 +44,15 @@
                         if (handlers) {
                             for (var i=0; i<handlers.length; i++) {
                                 var handler = handlers[i];
-                                handler.fn.call(handler.context, value, oldValue, handler.args);
+                                var result = handler.fn.call(handler.context, value, oldValue, handler.args);
+                                if (result != undefined) {
+                                    this.obj[field] = result;
+                                }
                             }
+                        }
+                        var link = this.links[field];
+                        if (link) {
+                            DataLink.updateLinkedValue(this.obj[field], oldValue, link);
                         }
                         return oldValue;
                     }
@@ -51,14 +64,18 @@
     };
 
     DataLink.prototype.addHandler = function addHandler(field, handler, context, args) {
+        var storedHandler = null;
         if (this.obj[field] !== undefined) {
             if (this.handlers[field] === undefined) {
                 this.handlers[field] = [];
             }
-            if (this.handlers[field].findIndex( x => (x.context == context && x.fn == handler && x.args == args)) == -1) {
-                this.handlers[field].push({context: context || window, fn: handler, args: args || [] });
+            var storedHandler = this.handlers[field].find(x => (x.context == context && x.fn == handler && x.args == args));
+            if (!storedHandler) {
+                storedHandler = { context: context || window, fn: handler, args: args || [] };
+                this.handlers[field].push(storedHandler);
             }
         }
+        return storedHandler;
     };
 
     DataLink.prototype.link = function link(field1, target, field2, transformToSource, transformToTarget) {
@@ -66,26 +83,28 @@
         if (!(target instanceof DataLink)) {
             target = new DataLink(target);
         }
-        this.addHandler(
-            field1,
-            transformToTarget || DataLink.defaultTransform,
-            this.obj,
-            {target:target.obj, field:field2}
-        );
+        this.links[field1] = {
+            fn: transformToTarget || DataLink.defaultTransform,
+            context: this.obj,
+            target: target.obj,
+            field: field2
+        }
 
         target.add(field2);
-        target.addHandler(
-            field2,
-            transformToSource || DataLink.defaultTransform,
-            target.obj,
-            {target:this.obj, field:field1}
-        );
+        target.links[field2] = {
+            fn: transformToSource || DataLink.defaultTransform,
+            context: target.obj,
+            target: this.obj,
+            field: field1
+        };
         return target;
     };
 
-    DataLink.defaultTransform = function defaultTransform(value, oldValue, args) {
-        args.target[args.field] = value;
-        return value;
+    DataLink.defaultTransform = (value, oldValue, args) => value;
+    DataLink.updateLinkedValue = function updateLinkedValue(value, oldValue, link) {
+        var result = link.fn.call(link.context, value, oldValue);
+        if (result == undefined) result = value;
+        link.target[link.field] = result;
     };
 
     public(DataLink, 'DataLink');

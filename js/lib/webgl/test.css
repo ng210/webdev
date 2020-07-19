@@ -39,3 +39,19 @@ canvas {
     left:0px; top:0px; z-index:-1;
     width:100vw; height:100vh;
 }
+
+#con {
+	position:absolute;
+	top:50vh;
+	font-size:14pt;
+	font-family:Consolas;
+	text-align:left;
+	padding:2 4;
+	box-sizing: border-box;
+	margin:0;
+	background-color:#102030;
+	color:#208040;
+	opacity:0.95;
+	height:50vh; width:100vw;
+	overflow:hidden auto
+}

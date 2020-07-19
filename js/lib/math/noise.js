@@ -76,28 +76,28 @@
 	};
 	Noise.prototype.fbm1d = function(x, n, a0, f0, an, fn) {
 		var fi = f0, ai = a0;
-		var v = ai * this.get1d(x);
+		var v = 0;
 		for (var i=1; i<n; i++) {
-			ai *= an; fi *= fn;
 			v += ai * this.get1d(fi*x);
+			ai *= an; fi *= fn;
 		}
 		return v;
 	};
 	Noise.prototype.fbm2d = function(x, y, n, a0, f0, an, fn) {
 		var fi = f0, ai = a0;
-		var v = ai * this.get2d(x, y);
+		var v = 0;
 		for (var i=1; i<n; i++) {
-			ai *= an; fi *= fn;
 			v += ai * this.get2d(fi*x, fi*y);
+			ai *= an; fi *= fn;
 		}
 		return v;
 	};
 	Noise.prototype.fbm3d = function(x, y, z, n, a0, f0, an, fn) {
 		var fi = f0, ai = a0;
-		var v = ai * this.get3d(x, y, z);
-		for (var i=1; i<n; i++) {
-			ai *= an; fi *= fn;
+		var v = 0;
+		for (var i=0; i<n; i++) {
 			v += ai * this.get3d(fi*x, fi*y, fi*z);
+			ai *= an; fi *= fn;
 		}
 		return v;
 	};

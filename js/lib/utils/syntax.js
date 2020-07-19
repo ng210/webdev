@@ -1,5 +1,5 @@
 (function() {
-    include('data/tree.js');
+    include('data/graph.js');
 
     var rs = r => `${r.priority} ${r.input}(${r.in.join('.')})=>${r.output}(${r.out})`
 
@@ -65,14 +65,14 @@
     };
 
     function Expression(syntax) {
-        this.tree = new Tree();
+        this.tree = new Graph();
         this.syntax = syntax;
         this.expression = '';
         this.lastNode = null;
     }
     Expression.prototype.resolve = function(context) {
         this.lastNode = null;
-        var nodes = Array.from(this.tree.nodes);
+        var nodes = Array.from(this.tree.vertices);
         if (this.syntax.isDebug) console.log(`input: ${nodes.map(x => `${this.syntax.symbols[x.data.code]}['${x.data.term}']`)}`);
         // try to apply rules as long as there are nodes
         while (nodes.length > 0) {
@@ -143,10 +143,6 @@
                 n.data.value = n.data.type.action.apply(context, args);
             }
         });
-        for (var i=0; i<this.tree.nodes.length; i++) {
-            // clear node flags for future DFS calls
-            this.tree.nodes[i].flag = 0;
-        }
         return this.lastNode.data.value;
     };
     Expression.prototype.mergeNodes = function(nodes) {
@@ -202,7 +198,7 @@
     };
     Expression.prototype.createNode = function(code, type, term) {
         var node = new Node(code, this.syntax.grammar.prototypes[type], term);
-        return this.tree.createNode(node);
+        return this.tree.createVertex(node);
     };
 
      function Syntax(grammar, debug) {

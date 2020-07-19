@@ -1,6 +1,7 @@
 include('stream.js');
 include('dataseries.js');
 include('datalink.js');
+include('graph.js');
 
 (function() {
 
@@ -138,7 +139,7 @@ include('datalink.js');
         test('Compare([, 1], [1, 0])', context => context.assert(ds.compare([1, ], [0, ]), '>', 0) );
     }
 
-    function test_datalink() {
+    function test_DataLink() {
         message('Test DataLink');
         var obj1 = {
             name: 'Joe',
@@ -171,14 +172,16 @@ include('datalink.js');
         test("Should add link to the field 'name' with transform", context => {
             obj1.name = 'Joe';
             var dl1 = new DataLink(obj1);
-            dl1.add('name', transform, null, [1,2,3]);
+            dl1.add('name');
+            dl1.addHandler('name', transform, null, [1,2,3]);
             dl1.name = 'charlie';
             context.assert(obj1.name, '=', 'Joe => Charlie (1,2,3)');
         });
         test("Should add link to the field 'name' with transform and handler", context => {
             obj1.name = 'Joe';
             var dl1 = new DataLink(obj1);
-            dl1.add( 'name', transform, null, [1,2,3]);
+            dl1.add( 'name');
+            dl1.addHandler('name', transform, null, [1,2,3]);
             dl1.addHandler('name', function(value, oldValue, args) { name = this.addName(value, args); }, obj3, [1,2,3]);
             var name = null;
             dl1.name = 'charlie';
@@ -199,11 +202,71 @@ include('datalink.js');
         });
     }
 
+    function createTestGraph() {
+            //      v0
+            //     /  \
+            //   v1    v2
+            //   /   / | \
+            //  v3-v4 v5  v6
+            var graph = new Graph();
+            var v0 = graph.addVertex('v0');
+            var v1 = graph.addVertex(v0, 'v1', 'e01');
+            var v2 = graph.addVertex(v0, 'v2', 'e02');
+            var v3 = graph.addVertex(v1, 'v3', 'e13');
+            var v4 = graph.addVertex(v2, 'v4', 'e24');
+            graph.addEdge(v3, v4, 'e34');
+            graph.addVertex(v2, 'v5', 'e25');
+            graph.addVertex(v2, 'v6', 'e26');
+            return graph;
+    }
+
+    function test_Graph() {
+        message('Test Graph');
+        test('Should create a graph with 6 vertices and 7 edges', context => {
+            var graph = createTestGraph();
+            context.assert(graph.vertices.length, '=', 7);
+            context.assert(graph.edges.length, '=', 7);
+            var v2 = graph.vertices.find(v => v.data == 'v2');
+            var v3 = graph.vertices.find(v => v.data == 'v3');
+            context.assert(v2.edges.length, '=', 3);
+            context.assert(v3.edges.length, '=', 1);
+        });
+        test('Should create a full graph of 10 nodes', context => {
+            var n = 10;
+            var graph = Graph.createComplete(n, false, v => v.name = v.data, null);
+            for (var i=0; i<n; i++) {
+                var v = graph.vertices[i];
+                context.assert(v.name, '=', 'v'+i);
+                context.assert(v.edges.length, '=', n-1);
+            }    
+        });
+        test('Should create a full 8-level binary tree', context => {
+            var graph = Graph.createCompleteTree(2, 8, false);
+            context.assert(graph.vertices.length, '=', 255);
+            context.assert(graph.edges.length, '=', 2*254);
+            context.assert(graph.vertices[0].data, '=', 'v000');
+        });
+        test('Should DFS traverse a complete graph', context => {
+            var graph = Graph.createComplete(5);
+            var labels = [];
+            graph.DFS(graph.vertices[0], v => labels.push(`→${v.data}`), v => labels.push(`←${v.data}`), null);
+            context.assert(labels.join(''), '=', '→v0→v1←v1→v2←v2→v3←v3→v4←v4←v0');
+        });
+        test('Should DFS traverse the tree', context => {
+            var tree = Graph.createCompleteTree(2, 2, false);
+            var labels = [];
+            tree.DFS(tree.vertices[0], v => console.log(`→${v.data}`), v => console.log(`←${v.data}`), null);
+            //tree.DFS(tree.vertices[0], v => labels.push(`→${v.data}`), v => labels.push(`←${v.data}`), null);
+            //context.assert(labels.join(''), '=', '→v00→v01→v03→v07←v07→v08←v08←v03→v04→v09←v09→v10←v10←v04←v01→v02→v05→v11←v11→v12←v12←v05→v06→v13←v13→v14←v14←v06←v02←v00');
+        });
+    }
+
     var tests = () => [
         test_Stream,
         test_DataSeries,
         test_DataSeriesCompare,
-        test_datalink
+        test_DataLink,
+        test_Graph
     ];
     
     public(tests, 'Data tests');
