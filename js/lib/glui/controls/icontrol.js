@@ -25,6 +25,9 @@ include('glui/glui.js');
     IControl.prototype.setRenderer = function setRenderer(mode, context) {
         throw new Error('Not implemented!');
     };
+    IControl.prototype.createRenderer = function createRenderer(mode) {
+        throw new Error('Not implemented!');
+    };
 
     public(IControl, 'IControl', glui);
 })();

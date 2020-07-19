@@ -8,6 +8,13 @@ include('control.js');
     }
     extend(glui.Control, Container);
 
+    Container.prototype.destroy = function destroy() {
+        Container.base.destroy.call(this);
+        for (var i=0; i<this.items.length; i++) {
+            this.items[i].destroy();
+        }
+        delete this.items
+    };
     Container.prototype.add = function add(ctrl) {
         var ix = this.items.findIndex(x => x.zIndex < ctrl.zIndex);
         if (ix != -1) {
@@ -40,10 +47,14 @@ include('control.js');
             this.items[i].setVisible(visible);
         }
     };
-    Container.prototype.setRenderer = function setRenderer(mode, context) {
+    Container.prototype.createRenderer = mode => mode == glui.Render2d ? new glui.Renderer2d() : 'glui.Renderer3d';
+    Container.prototype.setRenderer = async function setRenderer(mode, context) {
+        await Container.base.setRenderer.call(this, mode, context);
+        var arr = [];
         for (var i=0; i<this.items.length; i++) {
-            this.items[i].setRenderer(mode, context);
+            arr.push(await this.items[i].setRenderer(mode, context));
         }
+        await Promise.all(arr);
     };
     Container.prototype.render = function render() {
         for (var i=0; i<this.items.length; i++) {
@@ -64,6 +75,26 @@ include('control.js');
         }
 		return res;
     };
+    Container.prototype.getControlById = function getControlById(id) {
+        var res = null;
+        var containers = [];
+        // check non-container items first
+        for (var i=0; i<this.items.length; i++) {
+            var item = this.items[i];
+            if (item.id == id) {
+                res = item;
+                break;
+            }
+            if (item.items) {
+                containers.push(items);
+            }
+        }
+        // check containers
+        for (var i=0; i<containers.length; i++) {
+            if ((res = containers.getControlById(id)) != null) break;
+        }
+        return res;
+    },
 
     public(Container, 'Container', glui);
 })();

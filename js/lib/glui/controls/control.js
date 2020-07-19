@@ -16,7 +16,7 @@ const DEBUG_EVENT = 'click';
         this.renderer3d = null;
 
         this.handlers = {};
-        if (template) this.applyTemplate(template);
+        this.applyTemplate(template);
 
         this.left = 0;
         this.top = 0;
@@ -151,7 +151,17 @@ const DEBUG_EVENT = 'click';
         this.type = this.template.type;
         this.disabled = this.template.disabled;
         var source = this.template['data-source'];
-        this.dataSource = typeof source === 'string' ? glui.screen.items.find(x => x.id == source) || window[source] : source;
+        if (typeof source === 'string') {
+            var obj = null;
+            if (glui.screen && glui.screen.items) {
+                var ctrl = glui.screen.items.find(x => x.id == source);
+                if (ctrl) {
+                    obj = ctrl;
+                }
+            }
+            source = obj ? obj : window[source];
+        }
+        this.dataSource = source;
         this.dataField = this.template['data-field'];
         this.zIndex = parseInt(this.template['z-index']) || 0;
         this.style = mergeObjects(this.template.style, null);
@@ -208,17 +218,29 @@ const DEBUG_EVENT = 'click';
     Control.prototype.onblur = function onblur(e) {
         this.dehighlight();
     };
-    // Control.prototype.onmouseup = function onmouseup(e) {
-    //     console.log(1)
-    //     Control.focused = this;
-    // };
+    Control.prototype.setRenderer = async function setRenderer(mode, context) {
+        if (mode == glui.Render2d) {
+            if (this.renderer2d == null) {
+                this.renderer2d = this.createRenderer(mode);
+                await this.renderer2d.initialize(this, context);
+            } else await Promise.resolve();
+            this.renderer = this.renderer2d;
+        } else if (mode == glui.Render3d) {
+            if (this.renderer3d == null) {
+                this.renderer3d = this.createRenderer(mode);
+                await this.renderer3d.initialize(this, context);
+            } else await Promise.resolve();
+            this.renderer = this.renderer3d;
+        }
+        return this.renderer;
+    };
 
 	Control.onevent = function(e) {
         // get control by coordinates
         var event = e.type;
         var control = glui.getControlAt(e.x, e.y, true);
         e.control = control;
-		//console.log(`${event} for target=${e.target}, this=${this}, control=${this.control ? this.control : e.target.control ? e.target.control : 'none'}, Control.focused=${Control.focused}`);
+        //console.log(`${event} for target=${e.target}, this=${this}, control=${this.control ? this.control : e.target.control ? e.target.control : 'none'}, Control.focused=${Control.focused}`);
 		if (control && control.disabled) {
 			return false;
         }
@@ -314,6 +336,7 @@ const DEBUG_EVENT = 'click';
             'height': '1.2em',
             'z-index': 0,
             'background': '#c0c0c0',
+            'background-image': 'none',
             'color': '#000000',
             'font': 'Arial 12 normal',
             'align': 'center middle',
@@ -333,7 +356,6 @@ const DEBUG_EVENT = 'click';
 	document.addEventListener('mousedown', Control.onevent);
 	document.addEventListener('mousemove', Control.onevent);
 	document.addEventListener('dragging', Control.onevent);
-
 
     public(Control, 'Control', glui);
 

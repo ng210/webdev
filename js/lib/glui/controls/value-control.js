@@ -33,7 +33,6 @@ include('control.js');
         return template;
     };
 	ValueControl.prototype.fromNode = function fromNode(node) {
-debugger
 		ValueControl.base.fromNode.call(this, node);
 		if (!this.dataSource) {
 			var value = node.getAttribute('value') || node.innerText;
@@ -81,7 +80,7 @@ debugger
 		this.defaultValue = template.default || null;
 		this.blankValue = template.blank || '';
 		this.template['data-type'] = template['data-type'];
-		if (tmpl.numeric != undefined) {
+		if (tmpl && tmpl.numeric != undefined) {
 			this.isNumeric = tmpl.numeric != 'false' && tmpl.numeric != '0';
 		}		
 		this.getDataType();
@@ -227,13 +226,13 @@ debugger
     ValueControl.prototype.toNormalized = function toNormalized(value, oldValue, args) {
 		var range = this.max - this.min;
 		var v = (value - this.min)/range;
-		args.target[args.field] = v;
+		//args.target[args.field] = v;
 		return v;
     };
     ValueControl.prototype.fromNormalized = function fromNormalized(value, oldValue, args) {
         var range = this.dataSource.obj.max - this.dataSource.obj.min;
 		var v = value*range + this.dataSource.obj.min;
-		args.target[args.field] = v;
+		//args.target[args.field] = v;
 		return v;
     };
 

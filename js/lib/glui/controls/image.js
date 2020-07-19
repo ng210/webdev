@@ -52,19 +52,7 @@ include('renderer2d.js');
         }
         return this.dataSource;
     };
-    Image.prototype.setRenderer = function(mode, context) {
-        if (mode == glui.Render2d) {
-            if (this.renderer2d == null) {
-                this.renderer2d = new ImageRenderer2d(this, context);
-            }
-            this.renderer = this.renderer2d;
-        } else if (mode == glui.Render3d) {
-            if (this.renderer3d == null) {
-                this.renderer3d = new ImageRenderer3d(this, context);
-            }
-            this.renderer = this.renderer3d;
-        }
-    };
+    Image.prototype.createRenderer = mode => mode == glui.Render2d ? new ImageRenderer2d() : 'ImageRenderer3d';
 
     public(Image, 'Image', glui);
     public(ImageRenderer2d, 'ImageRenderer2d', glui);

@@ -1,16 +1,13 @@
 include('glui/glui.js');
 (function() {
 
-    function Renderer(control, context) {
-        this.context = context;
-        this.control = control;
+    function Renderer() {
+        this.context = null;
+        this.control = null;
         this.font = { face:null, size:0, weight:null, em:0 };
         this.border = { color: null, colorLight: null, colorDark: null,width: 0, style: null };
         this.color = [0, 0, 0];
         this.backgroundColor = [192, 192, 192];
-        if (control) {
-            this.initialize();
-        }
     }
     Renderer.prototype.accumulate = function accumulate(property, isVertical) {
         var node = this.control;
@@ -23,18 +20,22 @@ include('glui/glui.js');
         }
         return value;
     };
-    Renderer.prototype.initialize = function initialize() {
-        if (this.control) {
-            this.setFont(this.control.style.font);
-            this.setBorder(this.control.style.border);
-            this.control.width = this.convertToPixel(this.control.style.width);
-            this.control.height = this.convertToPixelV(this.control.style.height);
-            this.control.offsetLeft = this.convertToPixelV(this.control.style.left);
-            this.control.left = this.accumulate('offsetLeft');
-            this.control.offsetTop = this.convertToPixelV(this.control.style.top);
-            this.control.top = this.accumulate('offsetTop', true);
-            this.color = this.toColor(this.control.style.color) || this.color;
-            this.backgroundColor = this.toColor(this.control.style.background) || this.backgroundColor;
+    Renderer.prototype.initialize = async function initialize(control, context) {
+        this.control = control;
+        this.context = context;
+        this.setFont(this.control.style.font);
+        this.setBorder(this.control.style.border);
+        this.control.width = this.convertToPixel(this.control.style.width);
+        this.control.height = this.convertToPixelV(this.control.style.height);
+        this.control.offsetLeft = this.convertToPixelV(this.control.style.left);
+        this.control.left = this.accumulate('offsetLeft');
+        this.control.offsetTop = this.convertToPixelV(this.control.style.top);
+        this.control.top = this.accumulate('offsetTop', true);
+        this.color = this.toColor(this.control.style.color) || this.color;
+        this.backgroundColor = this.toColor(this.control.style.background) || this.backgroundColor;
+        if (this.control.style['background-image'] != 'none') {
+            var res = await load(this.control.style['background-image']);
+            this.backgroundImage = !res.error ? res.node : null;
         }
     };
     Renderer.prototype.setBorder = function setBorder(border) {

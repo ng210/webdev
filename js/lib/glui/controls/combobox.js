@@ -29,18 +29,10 @@ include('renderer2d.js');
     }
     extend(glui.Container, Combobox);
 
+    Combobox.prototype.createRenderer = mode => mode == glui.Render2d ? new ComboboxRenderer2d() : 'ComboboxRenderer3d';
+
     Combobox.prototype.setRenderer = function(mode, context) {
-        if (mode == glui.Render2d) {
-            if (this.renderer2d == null) {
-                this.renderer2d = new ComboboxRenderer2d(this, context);
-            }
-            this.renderer = this.renderer2d;
-        } else if (mode == glui.Render3d) {
-            if (this.renderer3d == null) {
-                this.renderer3d = new ComboboxRenderer3d(this, context);
-            }
-            this.renderer = this.renderer3d;
-        }
+        Combobox.base.setRenderer.call(this, mode, context);
         this.selector.setRenderer(mode, context);
         this.list.setRenderer(mode, context);
     };
@@ -173,10 +165,12 @@ include('renderer2d.js');
 	Combobox.prototype.onmouseout = function mouseover(e, ctrl) {
 		;
     };
-	Combobox.prototype.onblur = function onblur(e, ctrl) {
+	Combobox.prototype.onblur = function onblur(e, control) {
         var path = getObjectPath(e.control, 'parent', this);
+        debugger
         if (path[0] != this) {
             this.close();
+            glui.repaint();
         }
         return true;
     };

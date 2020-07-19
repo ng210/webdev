@@ -1,8 +1,8 @@
 include('renderer.js');
 (function() {
 
-    function Renderer2d(control, context) {
-        Renderer2d.base.constructor.call(this, control, context);
+    function Renderer2d() {
+        Renderer2d.base.constructor.call(this);
     }
     extend(glui.Renderer, Renderer2d);
 

@@ -8,7 +8,8 @@ include('glui/glui-lib.js');
         'width':'10em', 'height':'1.75em',
         'align':'right middle',
         'border':'#406080 1px inset',
-        'background': '#c0e0ff'
+        'background': '#c0e0ff',
+        'background-image': 'none'
     };
     var buttonStyle = {
         'font': 'Arial 12',
@@ -60,86 +61,71 @@ include('glui/glui-lib.js');
     var renderer = null;
 
     var controls = [
-        // {
-        //     'type': 'Label',
-        //     'style': style,
-        //     'value': 'label'
-        // },
-        // {
-        //     'type': 'Label',
-        //     'style': style,
-        //     'data-source': 'data',
-        //     'data-field': 'label1'
-        // },
-        // {
-        //     'type': 'Label',
-        //     'style': style,
-        //     'data-type': 'int',
-        //     'decimal-digits': 2,
-        //     'data-source': 'data',
-        //     'data-field': 'label2'
-        // },
-
-        // {
-        //     'type': 'Textbox',
-        //     'style': style,
-        //     'look': 'textbox',
-        //     'decimal-digits': 3,
-        //     'value': 'textbox'
-        // },
-        // {
-        //     'type': 'Textbox',
-        //     'style': style,
-        //     'look': 'textbox',
-        //     'decimal-digits': 3,
-        //     'data-source': 'data',
-        //     'data-field': 'textbox1'
-        // },
-        // {
-        //     'type': 'Textbox',
-        //     'style': style,
-        //     'look': 'potmeter',
-        //     'data-type': 'int',
-        //     'decimal-digits': 1,
-        //     'data-source': 'data',
-        //     'data-field': 'textbox2'
-        // },
-
-        // {
-        //     'type': 'Button',
-        //     'style': buttonStyle,
-        //     'value': 'Complete'
-        // },
-        // {
-        //     'type': 'Button',
-        //     'style': buttonStyle,
-        //     'data-source': 'data',
-        //     'data-field': 'button'
-        // },
-
-        // {
-        //     'type': 'Image',
-        //     'style': {
-        //         'width':'128px', 'height':'96px',
-        //         'border':'#805020 2px inset',
-        //         'background': '#102040'
-        //     },
-        //     'source': 'glui/res/test.png'
-        // },
+        {
+            'type': 'Label',
+            'style': style,
+            'value': 'label'
+        },
+        {
+            'type': 'Label',
+            'style': style,
+            'data-source': 'data',
+            'data-field': 'label1'
+        },
+        {
+            'type': 'Label',
+            'style': style,
+            'data-type': 'int',
+            'decimal-digits': 2,
+            'data-source': 'data',
+            'data-field': 'label2'
+        },
 
         {
-            'type': 'Combobox',
-            'style': comboboxStyle,
-            'readonly': true,
-            'rows': 4,
+            'type': 'Textbox',
+            'style': style,
+            'look': 'textbox',
+            'decimal-digits': 3,
+            'value': 'textbox'
+        },
+        {
+            'type': 'Textbox',
+            'style': style,
+            'look': 'textbox',
+            'decimal-digits': 3,
             'data-source': 'data',
-            'data-field': 'combobox',
-            'key-field': 'name',
-            'values': 'data.grid',
-            'row-template': {
-                'name': { 'type': 'Label', 'style': { 'width':'65%', 'background': '#60c0a0', 'border':'#60c0a0 2px inset' } },
-                'age': { 'type': 'Textbox', 'data-type': 'int', 'style': { 'width':'35%', 'background': '#d0fff0', 'border':'#608078 1px inset' } }
-            }
+            'data-field': 'textbox1'
+        },
+        {
+            'type': 'Textbox',
+            'style': style,
+            'look': 'potmeter',
+            'data-type': 'int',
+            'decimal-digits': 1,
+            'data-source': 'data',
+            'data-field': 'textbox2'
+        },
+
+        {
+            'type': 'Button',
+            'style': buttonStyle,
+            'value': 'Complete'
+        },
+        {
+            'type': 'Button',
+            'style': buttonStyle,
+            'data-source': 'data',
+            'data-field': 'button'
+        },
+
+        {
+            'type': 'Image',
+            'style': {
+                'width':'128px', 'height':'96px',
+                'border':'#805020 2px inset',
+                'background': '#102040'
+            },
+            'source': 'glui/res/test.png'
         },
 
         {
@@ -158,6 +144,20 @@ include('glui/glui-lib.js');
                 'age': { 'type': 'Textbox', 'data-type': 'int', 'column': '$Key', 'style': {
                     'width':'35%', 'background': '#d0fff0', 'border':'#608078 1px inset'
                 } }
+            }
+        },
+        {
+            'type': 'Combobox',
+            'style': comboboxStyle,
+            'readonly': true,
+            'rows': 4,
+            'data-source': 'data',
+            'data-field': 'combobox',
+            'key-field': 'name',
+            'values': 'data.grid',
+            'row-template': {
+                'name': { 'type': 'Label', 'style': { 'width':'65%', 'background': '#60c0a0', 'border':'#60c0a0 2px inset' } },
+                'age': { 'type': 'Textbox', 'data-type': 'int', 'style': { 'width':'35%', 'background': '#d0fff0', 'border':'#608078 1px inset' } }
             }
         }
     ];
@@ -202,11 +202,11 @@ include('glui/glui-lib.js');
         }
     };
 
-    function setup() {
+    async function setup() {
         glui.scale.x = 0.8;
         glui.scale.y = 0.8;
         glui.initialize(App, true);
-        glui.setRenderingMode(glui.Render2d);
+        await glui.setRenderingMode(glui.Render2d);
         glui.buildUI(App);
     }
 
@@ -222,14 +222,16 @@ include('glui/glui-lib.js');
                 await ctrl.load();
             }
         }
+        var ctrl = glui.getControlById('Label1');
+        ctrl.style['background-image'] = 'glui/background.png';
     }
 
-    function renderUI() {
-        var ctx = glui.setRenderingMode(glui.Render2d);
-        renderer = new glui.Renderer2d(null, ctx);
-        renderer.setFont('Arial 12 normal');
-        
-        var top = renderer.convertToPixelV('5em'), left = 10;
+    async function renderUI() {
+        await glui.setRenderingMode(glui.Render2d);
+        // renderer = new glui.Renderer2d();
+        // renderer.setFont('Arial 12 normal');
+        glui.screen.renderer.setFont('Arial 12 normal');
+        var top = glui.screen.renderer.convertToPixelV('5em'), left = 10;
         var width = 0;
         for (var i=0; i<glui.screen.items.length; i++) {
             var ctrl = glui.screen.items[i];
@@ -238,7 +240,7 @@ include('glui/glui-lib.js');
                 width = Math.max(width, parseFloat(ctrl.width));
                 ctrl.getBoundingBox();
                 top += 8 + parseFloat(ctrl.height);
-                if (top > screen.height/2) {
+                if (top > screen.height/4) {
                     top = 10;
                     left += width + 10;
                     width = 0;
@@ -250,7 +252,7 @@ include('glui/glui-lib.js');
     }
 
     async function test_construct() {
-        setup();
+        await setup();
         await createControls();
         for (var i=0; i<glui.screen.items.length; i++) {
             var control = glui.screen.items[i];
@@ -272,12 +274,11 @@ include('glui/glui-lib.js');
     }
 
     async function test_render() {
-        setup();
+        await setup();
         await createControls();
         renderUI();
         await poll( () => isComplete, 100);
         glui.renderingContext2d.fillRect(0, 0, glui.canvas.width, glui.canvas.height);
-
         teardown();
     }
 

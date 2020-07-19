@@ -41,19 +41,7 @@ include('renderer2d.js');
         Button.base.render.call(this);
     };
 
-    Button.prototype.setRenderer = function setRenderer(mode, context) {
-        if (mode == glui.Render2d) {
-            if (this.renderer2d == null) {
-                this.renderer2d = new ButtonRenderer2d(this, context);
-            }
-            this.renderer = this.renderer2d;
-        } else if (mode == glui.Render3d) {
-            if (this.renderer3d == null) {
-                this.renderer3d = new ButtonRenderer3d(this, context);
-            }
-            this.renderer = this.renderer3d;
-        }
-    };
+    Button.prototype.createRenderer = mode => mode == glui.Render2d ? new ButtonRenderer2d() : 'ButtonRenderer3d';
 
     Button.prototype.getHandlers = function getHandlers() {
         var handlers = Button.base.getHandlers();

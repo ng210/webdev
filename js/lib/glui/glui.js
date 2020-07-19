@@ -7,8 +7,11 @@
         canvas: null,
         screen: null,
         context: null,
+        renderingContext: null,
         renderingContext2d: null,
         renderingContext3d: null,
+        frontBuffer: null,
+        backBuffer: null,
         left: 0,
         top: 0,
         width: 0,
@@ -71,6 +74,8 @@
                 this.canvas.style.width = '100vw';
                 this.canvas.style.height = '100vh';
             }
+            this.frontBuffer = new glui.Buffer(this.canvas);
+            this.backBuffer = new glui.Buffer(this.canvas.width, this.canvas.height);
             this.screen = new glui.Container('screen', null, null, app);
             this.setRenderingMode(glui.Render2d);
         },
@@ -101,17 +106,16 @@
                 }
             }
         },
-        setRenderingMode: function setRenderingMode(mode) {
-            var ctx = null;
+        setRenderingMode: async function setRenderingMode(mode) {
             this.mode = mode || glui.Render2d;
             if (mode == glui.Render2d) {
-                ctx = this.renderingContext2d = this.renderingContext2d || glui.canvas.getContext('2d');
+                this.renderingContext = this.renderingContext2d = this.renderingContext2d || glui.canvas.getContext('2d');
             } else if (mode == glui.Render3d) {
-                ctx = this.renderingContext3d = this.renderingContext3d || glui.canvas.getContext('webgl');
+                this.renderingContext = this.renderingContext3d = this.renderingContext3d || glui.canvas.getContext('webgl');
             }
-            this.screen.setRenderer(mode, mode == glui.Render2d ? this.renderingContext2d : this.renderingContext3d);
+            await this.screen.setRenderer(mode, this.renderingContext);
             glui.resize(false);
-            return ctx;
+            return this.renderingContext;
         },
         render: function render() {
             //this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -129,7 +133,7 @@
             for (var i=0; i<this.screen.items.length; i++) {
                 var ctrl = this.screen.items[i];
                 var left = ctrl.left, top = ctrl.top;
-                ctrl.renderer.initialize();
+                ctrl.renderer.initialize(ctrl, this.renderingContext);
                 ctrl.move(left, top);
                 if (repaint) ctrl.render();
             }
@@ -137,6 +141,9 @@
         getControlAt: function getControlAt(x, y, recursive) {
             var cx = x*glui.scale.x, cy = y*glui.scale.y;
             return this.screen.getControlAt(cx, cy, recursive);
+        },
+        getControlById: function getControlById(id) {
+            return this.screen.getControlById(id);
         },
         addAnimation: function addAnimation(callback, obj, timeout, args) {
             var animationId = glui.animations.length;
@@ -179,12 +186,6 @@
     };
 
     window.addEventListener('resize', e => glui.resize(true));
-
-    // window.addEventListener('resize', e => {
-    //     // glui.scale.x = glui.canvas.width / glui.canvas.clientWidth;
-    //     // glui.scale.y = glui.canvas.height / glui.canvas.clientHeight;
-    //     glui.resize(true);
-    // });
 
     public(glui, 'glui');
 })();

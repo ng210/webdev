@@ -158,21 +158,23 @@ include('label.js');
         for (var i=0; i<this.columnCount; i++) {
             head.cells[i].setVisible(visible);
         }
-    };
-    Grid.prototype.setRenderer = function(mode, context) {
-        if (mode == glui.Render2d) {
-            if (this.renderer2d == null) {
-                this.renderer2d = new GridRenderer2d(this, context);
-            }
-            this.renderer = this.renderer2d;
-        } else if (mode == glui.Render3d) {
-            if (this.renderer3d == null) {
-                this.renderer3d = new GridRenderer3d(this, context);
-            }
-            this.renderer = this.renderer3d;
-		}
-		Grid.base.setRenderer.call(this, mode, context);
 	};
+	Grid.prototype.createRenderer = mode => mode == glui.Render2d ? new GridRenderer2d() : 'GridRenderer3d';
+    // Grid.prototype.setRenderer = function(mode, context) {
+	// 	Grid.base.setRenderer.call(this, mode, context);
+    //     if (mode == glui.Render2d) {
+    //         if (this.renderer2d == null) {
+    //             this.renderer2d = new GridRenderer2d(this, context);
+    //         }
+    //         this.renderer = this.renderer2d;
+    //     } else if (mode == glui.Render3d) {
+    //         if (this.renderer3d == null) {
+    //             this.renderer3d = new GridRenderer3d(this, context);
+    //         }
+    //         this.renderer = this.renderer3d;
+	// 	}
+		
+	// };
 	Grid.prototype.getBoundingBox = function getBoundingBox() {
 		if (this.height == 0) {
 			var rowCount = this.rowCount;

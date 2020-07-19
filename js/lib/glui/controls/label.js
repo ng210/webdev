@@ -2,12 +2,15 @@ include('value-control.js');
 include('renderer2d.js');
 
 (function() {
-    function LabelRenderer2d(control, context) {
-        LabelRenderer2d.base.constructor.call(this, control, context);
+    function LabelRenderer2d() {
+        LabelRenderer2d.base.constructor.call(this);
     }
     extend(glui.Renderer2d, LabelRenderer2d);
 
     LabelRenderer2d.prototype.renderControl = function renderControl() {
+        if (this.backgroundImage) {
+            this.drawImage(this.backgroundImage, 0, 0);
+        }
         var lines = null;
         var value = this.control.getValue();
         if (value) {
@@ -39,19 +42,7 @@ include('renderer2d.js');
         template.type = 'Label';
         return template;
     };
-    Label.prototype.setRenderer = function(mode, context) {
-        if (mode == glui.Render2d) {
-            if (this.renderer2d == null) {
-                this.renderer2d = new LabelRenderer2d(this, context);
-            }
-            this.renderer = this.renderer2d;
-        } else if (mode == glui.Render3d) {
-            if (this.renderer3d == null) {
-                this.renderer3d = new LabelRenderer3d(this, context);
-            }
-            this.renderer = this.renderer3d;
-        }
-    };
+    Label.prototype.createRenderer = mode => mode == glui.Render2d ? new LabelRenderer2d() : 'LabelRenderer3d';
 
     public(Label, 'Label', glui);
     public(LabelRenderer2d, 'LabelRenderer2d', glui);

@@ -2,13 +2,17 @@ include('value-control.js');
 include('renderer2d.js');
 
 (function() {
-    function TextboxRenderer2d(control, context) {
-        control.style.backgroundColor = control.style.backgroundColor || [255, 255, 255];
-        TextboxRenderer2d.base.constructor.call(this, control, context);
+    function TextboxRenderer2d() {
+        TextboxRenderer2d.base.constructor.call(this);
         this.cursorColor = this.color;
         this.box = [0, 0, 0, 0];
     }
     extend(glui.Renderer2d, TextboxRenderer2d);
+
+    TextboxRenderer2d.prototype.initialize = function initialize(control, context) {
+        control.style.backgroundColor = control.style.backgroundColor || [255, 255, 255];
+        TextboxRenderer2d.base.initialize.call(this, control, context);
+    };   
 
     TextboxRenderer2d.prototype.renderCursor = function renderCursor(lines, boxes) {
         if (this.cursorVisible) {
@@ -415,20 +419,10 @@ include('renderer2d.js');
         this.isFocused = true;
         this.renderer.render();
     };
-    Textbox.prototype.setRenderer = function(mode, context) {
-        if (mode == glui.Render2d) {
-            if (this.renderer2d == null) {
-                this.renderer2d = new TextboxRenderer2d(this, context);
-            }
-            this.renderer = this.renderer2d;
-            this.setLook();
-        } else if (mode == glui.Render3d) {
-            if (this.renderer3d == null) {
-                this.renderer3d = new TextboxRenderer3d(this, context);
-            }
-            this.renderer = this.renderer3d;
-            this.setLook();
-        }
+    Textbox.prototype.createRenderer = mode => mode == glui.Render2d ? new TextboxRenderer2d() : 'TextboxRenderer3d';
+    Textbox.prototype.setRenderer = async function(mode, context) {
+        await Textbox.base.setRenderer.call(this, mode, context);
+        this.setLook();
     };
     Textbox.prototype.setLook = function setLook(look) {
         look = look || this.look;
