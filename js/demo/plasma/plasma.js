@@ -1,4 +1,4 @@
-include('ge/fn.js');
+include('math/fn.js');
 
 (function() {
 
@@ -9,19 +9,18 @@ include('ge/fn.js');
 		counter: 0,
 
 		settings: {
-			zoom: { label: 'Zoom', value: 10, min:1, max:50, step: 0.1, type: 'float', link: null },
-			motion: { label: 'Motion', value: 0.01, min: 0, max:0.02, step: 0.0001, normalized: true, type: 'float', link: null },
+			zoom: { label: 'Zoom', value: 4, min:1, max:50, step: 0.1, type: 'float', link: null },
+			motion: { label: 'Motion', value: 1.0, min: 0, max:10.0, step: 0.1, normalized: true, type: 'float', link: null },
 			variation: { label: 'Variation', value: 1, min:0, max:10, step: 0.01, type: 'float', link: null },
 			shape: { label: 'Shape', value: 0, min:0, max:3, step: 0.01, type: 'float', link: null },
-			color: { label: 'Color', value: 0.5, min:0, max:1, step: 0.01, type: 'float', link: null }
+			color: { label: 'Color', value: 0, min:0, max:2, step: 1, type: 'int', link: null },
+			saturation: { label: 'Saturation', value: 0.5, min:0, max:1, step: 0.01, type: 'float', link: null }
 		},
 
+		buffer: null,
+
 		initialize: function initialize() {
-			var canvas = document.createElement('canvas');
-			canvas.width = Math.floor(glui.width/4);
-			canvas.height = Math.floor(glui.height/4);
-			this.context = canvas.getContext('2d');
-			this.buffer = this.context.getImageData(0, 0, canvas.width, canvas.height);
+			this.buffer = new glui.Buffer(glui.width/4, glui.height/4);
 		},
 
 		onchange: function onchange(e, ctrl) {
@@ -34,7 +33,7 @@ include('ge/fn.js');
 		update: function update(frame, dt) {
 			this.counter += this.settings.motion.value * dt;
 		},
-		render: function render(frame) {
+		render: function render(frame, dt) {
 			var ix = 0;
 			for (var j=0; j<this.buffer.height; j++) {
 				for (var i=0; i<this.buffer.width; i++) {
@@ -50,19 +49,20 @@ include('ge/fn.js');
 					cy += Math.cos(this.counter/2.0);
 					v += Math.sin(Math.sqrt(cx*cx + cy*cy) + this.counter);
 					v *= this.settings.variation.value;
-					var r = 0.5 + 0.5*Math.sin(Math.PI * v + this.counter);
-					var g = 0.5 + 0.5*Math.sin(Math.PI * (v - 0.5) + this.counter);
-					var b = 0.5 + 0.5*Math.cos(Math.PI * v + this.counter);
-					var c = 0.2989 * r + 0.5870 * g + 0.1140 * b;
+					var color = this.getColor(v);
+					var c = 0.2989 * color[0] + 0.5870 * color[1] + 0.1140 * color[2];
 
-					this.buffer.data[ix++] = 255 * Fn.lerp(c, r, this.settings.color.value);
-					this.buffer.data[ix++] = 255 * Fn.lerp(c, g, this.settings.color.value);
-					this.buffer.data[ix++] = 255 * Fn.lerp(c, b, this.settings.color.value);
-					this.buffer.data[ix++] = 255;
+					this.buffer.imgData.data[ix++] = 255 * Fn.lerp(c, color[0], this.settings.saturation.value);
+					this.buffer.imgData.data[ix++] = 255 * Fn.lerp(c, color[1], this.settings.saturation.value);
+					this.buffer.imgData.data[ix++] = 255 * Fn.lerp(c, color[2], this.settings.saturation.value);
+					this.buffer.imgData.data[ix++] = 255;
 				}
 			}
-			this.context.putImageData(this.buffer, 0, 0);
-			glui.renderingContext2d.drawImage(this.context.canvas, 0, 0, this.buffer.width, this.buffer.height, 0, 0, glui.width, glui.height);
+			this.buffer.update();
+			glui.frontBuffer.blit(this.buffer);
+			//this.buffer.context.putImageData(this.buffer.imgData, 0, 0);
+			//glui.renderingContext2d.drawImage(this.buffer.canvas, 0, 0, this.buffer.width, this.buffer.height, 0, 0, glui.width, glui.height);
+			//glui.frontBuffer.context.drawImage(this.buffer.canvas, 0, 0);	//, this.buffer.width, this.buffer.height, 0, 0, glui.frontBuffer.width, glui.frontBuffer.height);
 		},
 		updateVelocity: function updateVelocity() {
 			this.vx = this.settings.shape.value;
@@ -70,11 +70,28 @@ include('ge/fn.js');
 		},
 		resize: function resize(e) {
 			this.updateVelocity();
+		},
+		getColor: function getColor(v) {
+			var color = [0, 0, 0];
+			switch (this.settings.color.value) {
+				case 0:
+					color[0] = 0.5 + 0.5*Math.sin(Math.PI * v + this.counter);
+					color[1] = 0.5 + 0.5*Math.sin(Math.PI * (v - 0.5) + this.counter);
+					color[2] = 0.5 + 0.5*Math.cos(Math.PI * v + this.counter);
+					break;
+				case 1:
+					color[0] = 0.5 + 0.5*Math.cos(Math.PI * v);
+					color[1] = 0.5 + 0.5*Math.sin(Math.PI * v);
+					color[2] = 0.5 + 0.5*Math.sin(Math.PI * (v - 0.5));
+					break;
+				case 2:
+					color[0] = 0.2;
+					color[1] = 0.2;
+					color[2] = 0.6 + 0.2*Math.cos(Math.PI * v);
+					break;
+			}
+			return color;
 		}
-		// Plasma.prototype.getMouseCoors = function(v) {
-		// 	v.x = GE.inputs.mpos[0] * GE.canvas.width/GE.canvas.clientWidth;
-		// 	v.y = GE.inputs.mpos[1] * GE.canvas.height/GE.canvas.clientHeight;
-		// };
 	};
 
 	public(Plasma, 'Plasma');

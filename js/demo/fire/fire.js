@@ -1,15 +1,16 @@
-include('ge/fn.js');
-include('ge/noise.js');
+include('math/fn.js');
+include('math/noise.js');
 
 (function() {
 	
     var Fire = {
 		name: 'Fire',
 		settings: {
-			images: { label: 'Image', value: 'fire.png', type: 'string', link: null },
+			image: { label: 'Image', value: 0, min:0, max: 1, step: 1, type: 'int', link: null },
 			motion: { label: 'Motion', value: 0.35, min:0, max:1.0, step: 0.01, normalized:true, type: 'float', link: null },
 			feedback: { label: 'Feedback', value: 0.5, min:0, max:1.0, step: 0.01, normalized:true, type: 'float', link: null },
 			cooling: { label: 'Cooling', value: 0.02, min:0, max:1.0, step: 0.01, normalized:true, type: 'float', link: null },
+			radius: { label: 'Radius', value: 0.02, min:0, max:1.0, step: 0.01, type: 'float', link: null },
 			range: { label: 'Color mapping', value: 0.15, min:0, max:1, step: 0.01,type: 'float', link: null },
 			color: { label: 'Color', value: 0, min:0, max:1, step: 1,type: 'int', link: null },
 
@@ -24,8 +25,7 @@ include('ge/noise.js');
 		images: [],
 		// create 2 heat maps
 		heatMaps: [null, null, null],
-		frontBuffer: { context:null, buffer: null },
-		backBuffer: { context:null, buffer: null },
+		buffer: null,
 		noise: null,
 		filter: new Fn.Filter([
 			[ 0,  1,  0],
@@ -33,14 +33,17 @@ include('ge/noise.js');
 			[ 2,  5,  2]
 		]),
 		backgroundColor: [0.1, 0.15, 0.2],
+		cursor: [0, 0],
+		ratio: [1, 1],
 
 		initialize: async function initialize() {
 			// create list of images
 			var urls = [
 				'/demo/data/fire.png',
-				'/demo/data/bump.gif',
-				'/demo/data/javascript.gif'
+				'/demo/data/aliens.gif',
+				'/demo/data/tilduska.png'
 			];
+			this.images = [];
 			var res = await load(urls);
 			for (var i=0; i<res.length; i++) {
 				if (!(res[i].error instanceof Error) && res[i].node instanceof Image) {
@@ -50,22 +53,22 @@ include('ge/noise.js');
 					this.images.push({key:res[i].node.alt, value: res[i].node});
 				}
 			}
-			var ctrl = DemoMgr.controls.settings.rows["images"].cells["value"];
-			var rowColumn = ctrl.id.split('#');
-			var combobox = glui.Control.create('images', {
-				'type': 'Combobox',
-				//'style': comboboxStyle,
-				'readonly': true,
-				'rows': 4,
-				'key-field': 'key',
-				'values': 'DemoMgr.demo.images',
-				'row-template': {
-					'key': { 'type': 'Label', 'style': { 'background': '#60c0a0', 'border':'#60c0a0 1px inset' } },
-				}
-			}, null, null);
-			combobox.dataBind(ctrl.dataSource, ctrl.dataField);
-			DemoMgr.controls.settings.replace(DemoMgr.controls.settings.rows["images"].cells["value"], combobox);
-			combobox.setRenderer(glui.mode, glui.mode == glui.Render2d ? glui.renderingContext2d : glui.renderingContext3d);
+			this.settings.image.control.max = this.images.length - 1;
+
+			// var combobox = glui.Control.create('images', {
+			// 	'type': 'Combobox',
+			// 	//'style': comboboxStyle,
+			// 	'readonly': true,
+			// 	'rows': 4,
+			// 	'key-field': 'key',
+			// 	'values': 'DemoMgr.demo.images',
+			// 	'row-template': {
+			// 		'key': { 'type': 'Label', 'style': { 'background': '#60c0a0', 'border':'#60c0a0 1px inset' } },
+			// 	}
+			// }, null, null);
+			// combobox.dataBind(ctrl.dataSource, ctrl.dataField);
+			// DemoMgr.controls.settings.replace(DemoMgr.controls.settings.rows["images"].cells["value"], combobox);
+			// combobox.setRenderer(glui.mode, glui.mode == glui.Render2d ? glui.renderingContext2d : glui.renderingContext3d);
 
 			this.colors = [this.settings.color1, this.settings.color2, this.settings.color3, this.settings.color4, this.settings.color5];
 			this.adjustColors();
@@ -74,18 +77,20 @@ include('ge/noise.js');
 			var canvas = document.createElement('canvas');
 			canvas.width = Math.floor(glui.width/2);
 			canvas.height = Math.floor(glui.height/2);
-			canvas.style.backgroundColor = 'rgb(255, 255, 255)';
-			this.frontBuffer.context = canvas.getContext('2d');
-			this.frontBuffer.buffer = this.frontBuffer.context.getImageData(0, 0, canvas.width, canvas.height);
-			var canvas = document.createElement('canvas');
-			canvas.style.backgroundColor = 'rgb(255, 255, 255)';
-			this.backBuffer.context = canvas.getContext('2d');
+
+			this.buffer = new glui.Buffer();
+			this.buffer.canvas.style.backgroundColor = 'rgb(255, 255, 255)';
 			this.setImage();
 			this.heatMaps[1] = this.createHeatMap();
-			this.update(0);
+			this.resize();
+			this.update(0, 0);
+
+			glui.canvas.addEventListener('mousemove', e => Fire.onmousemove(e));
         },
         resize: function resize(e) {
-		},
+			this.ratio[0] = this.buffer.width/glui.canvas.clientWidth;
+			this.ratio[1] = this.buffer.height/glui.canvas.clientHeight;
+        },
 		maxHeat: 0,
         update: function update(frame, dt) {
 			var id = frame % 2;
@@ -96,31 +101,40 @@ include('ge/noise.js');
 			var jx = 0;
 			this.maxR = 0;
 			this.maxHeat = 0;
+			var radius = 0.5 * this.settings.radius.value * source.width;
 			for (var j=0; j<source.height; j++) {
+				var ly = j - this.cursor[1];
 				for (var i=0; i<source.width; i++) {
+					var lx = i - this.cursor[0];
+					var l = Math.sqrt(lx*lx + ly*ly);
+					var d = 0;
+					// if (l < radius) {
+					// 	if (lx > 0 && lx < source.width && ly > 0 && ly < source.height) {
+					// 		d = l/source.data[this.cursor[0] + this.cursor[1]*source.width];
+					// 	}						
+					// }
 					var avg = this.filter.apply(source.data, source.width, source.height, 1, i, j, 0);
 					var r = this.noise.fbm3d(4*i/source.width, 4*j/source.height, 0.01*this.settings.motion.value*frame, 3, 0.5, 8.01, 1.125, 3.95);
 					this.maxR = Math.max(r, this.maxR);
-					var heat = Fn.lerp(1.0, r, this.settings.motion.value)*(avg + (1+this.settings.feedback.value)*this.heatMaps[2].data[ix]);
+					var heat = d + Fn.lerp(1.0, r, this.settings.motion.value)*(avg + (1+this.settings.feedback.value)*this.heatMaps[2].data[ix]);
+
 					heat *= cooling;
 					target.data[ix] = heat;
 					this.maxHeat = Math.max(this.maxHeat, heat);
 					var rgba = this.heatToColor(heat*this.settings.range.value);
-					this.backBuffer.buffer.data[4*ix] = Math.floor(255*Fn.lerp(this.backgroundColor[0], rgba[0], rgba[3]));
-					this.backBuffer.buffer.data[4*ix+1] = Math.floor(255*Fn.lerp(this.backgroundColor[1], rgba[1], rgba[3]));
-					this.backBuffer.buffer.data[4*ix+2] = Math.floor(255*Fn.lerp(this.backgroundColor[2], rgba[2], rgba[3]));
-					//this.backBuffer.buffer.data[4*ix+3] = rgba[3];
+					this.buffer.imgData.data[4*ix] = Math.floor(255*Fn.lerp(this.backgroundColor[0], rgba[0], rgba[3]));
+					this.buffer.imgData.data[4*ix+1] = Math.floor(255*Fn.lerp(this.backgroundColor[1], rgba[1], rgba[3]));
+					this.buffer.imgData.data[4*ix+2] = Math.floor(255*Fn.lerp(this.backgroundColor[2], rgba[2], rgba[3]));
+					//this.buffer.buffer.data[4*ix+3] = rgba[3];
 					ix++;
 				}
 				jx += source.width;
 			}
-			this.backBuffer.context.putImageData(this.backBuffer.buffer, 0, 0);
-			this.frontBuffer.context.drawImage(this.backBuffer.context.canvas, 0, 0, this.backBuffer.buffer.width, this.backBuffer.buffer.height, 0, 0, this.frontBuffer.buffer.width, this.frontBuffer.buffer.height);
-			//this.frontBuffer.context.drawImage(this.backBuffer.context.canvas, 0, 0, this.backBuffer.buffer.width, this.backBuffer.buffer.height, this.frontBuffer.buffer.width/4, this.frontBuffer.buffer.height/4, this.frontBuffer.buffer.width/2, this.frontBuffer.buffer.height/2);
+			this.buffer.update();
 		},
         render: function render(frame, dt) {
 			glui.renderingContext2d.save();
-			glui.renderingContext2d.drawImage(this.frontBuffer.context.canvas, 0, 0, this.frontBuffer.buffer.width, this.frontBuffer.buffer.height, 0, 0, glui.width, glui.height);
+			glui.frontBuffer.blit(this.buffer);
 			glui.renderingContext2d.globalAlpha = 0.3;
 			glui.renderingContext2d.font = '14px Consolas';
 			glui.renderingContext2d.fillStyle = "#ffe080";
@@ -130,21 +144,19 @@ include('ge/noise.js');
 			glui.renderingContext2d.restore();
 		},
 		setImage: function setImage() {
-			var ix = DemoMgr.controls.settings.rows['images'].cells['value'].getValue();
+			var ix = this.settings.image.value;
 			var img = this.images[ix].value;
-			if (this.backBuffer.context.canvas.width != img.width || this.backBuffer.context.canvas.height != img.height) {
-				this.backBuffer.context.canvas.width = img.width;
-				this.backBuffer.context.canvas.height = img.height;
-				this.backBuffer.context = this.backBuffer.context.canvas.getContext('2d');
+			if (this.buffer.width != img.width || this.buffer.height != img.height) {
+				this.buffer.resize(img.width, img.height);
 			}
-
-			this.backBuffer.context.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
-			this.backBuffer.buffer = this.backBuffer.context.getImageData(0, 0, this.backBuffer.context.canvas.width, this.backBuffer.context.canvas.height);
-			this.heatMaps[0] = this.createHeatMap(this.backBuffer.buffer);
-			this.heatMaps[2] = this.createHeatMap(this.backBuffer.buffer);
+			this.buffer.blitImage(img);
+			this.buffer.update(true);
+			
+			this.heatMaps[0] = this.createHeatMap(this.buffer);
+			this.heatMaps[2] = this.createHeatMap(this.buffer);
 		},
 		createHeatMap: function createHeatMap(buffer) {
-			buffer = buffer || this.backBuffer.buffer;
+			buffer = buffer || this.buffer;
 			var heatMap = {
 				width: buffer.width,
 				height: buffer.height,
@@ -153,23 +165,24 @@ include('ge/noise.js');
 			var ix = 0;
 			for (var j=0; j<buffer.height; j++) {
 				for (var i=0; i<buffer.width; i++) {
-					var v = 0.2989 * buffer.data[ix*4] +
-							0.5870 * buffer.data[ix*4+1] +
-							0.1140 * buffer.data[ix*4+2];
+					var v = 0.2989 * buffer.imgData.data[ix*4] +
+							0.5870 * buffer.imgData.data[ix*4+1] +
+							0.1140 * buffer.imgData.data[ix*4+2];
 						v /= 255;
 					heatMap.data[ix++] = v*v;
 				}
 			}
 			return heatMap;
 		},
+		onmousemove: function onmousemove(e) {
+			this.cursor[0] = e.clientX*this.ratio[0];
+			this.cursor[1] = e.clientY*this.ratio[1];
+		},
 		colors: null,
 		onchange: function onchange(setting) {
 			var label = setting.control.dataSource.label;
 			switch (label) {
-				case 'resolution':
-					this.onresize();
-					break;
-				case 'images':
+				case 'Image':
 					this.setImage();
 					break;
 			}
@@ -189,8 +202,6 @@ include('ge/noise.js');
 				tab[tab.length-2-i][0] = v + previous;
 				previous += v;
 			}
-			console.log(tab.map( x => x[0]));
-
 		},
 		colorTables: [
 			[

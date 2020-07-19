@@ -1,6 +1,7 @@
 include('glui/glui-lib.js');
 
 var DemoMgr = {
+    demos: null,
     demoList: null,
     demo: null,
     isRunning: false,
@@ -18,25 +19,25 @@ var DemoMgr = {
             alert(res.error);
             return;
         }
-        this.demoList = res.data;
-        for (var i in this.demoList) {
-            if (this.demoList.hasOwnProperty(i)) {
-                var path = appUrl.toString() + '/' + this.demoList[i].path.replace(/\/\w+\.js$/, '/mini.png');
+        this.demos = res.data;
+        for (var i in this.demos) {
+            if (this.demos.hasOwnProperty(i)) {
+                var path = appUrl.toString() + '/' + this.demos[i].path.replace(/\/\w+\.js$/, '/mini.png');
                 console.log('load ' + path);
                 res = await window.load(path);
-                this.demoList[i].image = !res.error ? res.node : new Image(64, 64);                
+                this.demos[i].image = !res.error ? res.node : new Image(64, 64);                
             }
         }
         
         // create demo list
         console.log('create demo list');
-        var demoList = glui.create('list', {
+        var demoList = this.demoList = glui.create('list', {
             'type': 'Grid',
             'style': {
-                'font': 'Arial 20',
+                'font': 'Arial 12',
                 'left': '1em',
                 'top': '1em',
-                'width':'18em',
+                'width':'24em',
                 'align':'right middle',
                 'border':'#406080 1px inset',
                 'background': '#c0e0ff',
@@ -44,7 +45,7 @@ var DemoMgr = {
                 'title': {
                     'font': 'Arial 18', 'height':'1.8em',
                     'align':'center middle',
-                    'border':'#406080 1px inset',
+                    'border':'#84b0e0 2px inset',
                     'background': '#a0c0ff'
                 },
                 'visible': false
@@ -62,13 +63,15 @@ var DemoMgr = {
         demoList.onclick = function demoList_onclick (e, ctrl) {
             DemoMgr.selectDemo(ctrl.row.dataSource.obj.path);
         };
-        demoList.dataBind(this.demoList);
-
+        demoList.dataBind(this.demos);
+        demoList.collapsed = false;
         demoList.setVisible(true);
         glui.buildUI();
-        glui.setRenderingMode(glui.Render2d);
+        await glui.setRenderingMode(glui.Render2d);
         glui.render();
         glui.animate();
+
+        glui.canvas.addEventListener('mousemove', e => DemoMgr.onmousemove(e));
     },
     buildUI: function buildUI(demo) {
         this.controls.title = glui.create('title', {
@@ -140,7 +143,7 @@ var DemoMgr = {
         var demo = Object.values(Resource.cache[res.url].symbols)[0];
         demo.context = this;
         DemoMgr.buildUI(demo);
-        glui.setRenderingMode(glui.Render2d);
+        await glui.setRenderingMode(glui.Render2d);
         this.demo = demo;
         if (typeof demo.initialize === 'function') {
             await demo.initialize();
@@ -150,16 +153,15 @@ var DemoMgr = {
         this.fpsCounter = 0;
         this.controls.settings.getBoundingBox();
         this.resize();
+
         return demo;
     },
     run: async function run() {
         if (this.isRunning) {
-            lock('RUN', () => {
+            await lock('RUN', () => {
                 var dt = new Date().getTime() - this.time;
                 this.totalTime += dt;
-                this.demo.update(this.frame, dt);
-                this.demo.render(this.frame);
-                glui.render();
+                this.render(this.frame, dt/1000);
                 this.time = new Date().getTime();
                 this.frame++;
                 this.animationId = requestAnimationFrame(() => this.run());
@@ -172,6 +174,15 @@ var DemoMgr = {
             this.fpsCounter++;
         }
     },
+    render: function render(frame, dt) {
+        if (this.demo) {
+            this.demo.update(frame, dt);
+            this.demo.render(frame);
+        } else {
+            glui.renderingContext2d.clearRect(0, 0, glui.width, glui.height);   //fillRect(0, 0, glui.width, glui.height);
+        }
+        glui.render();
+    },
     stop: async function stop() {
         return lock('RUN', () => {
             this.isRunning = false
@@ -180,16 +191,31 @@ var DemoMgr = {
     },
 
     resize: function resize(e) {
-        this.demo.resize();
-        this.demo.render(this.frame, 0);
-        var top = 20, left = glui.width - Math.max(this.controls.title.width, this.controls.settings.width) - 20;
-        var width = Math.max(this.controls.title.width, this.controls.settings.width, this.controls.start.width);
-        this.controls.title.move(left + (width - this.controls.title.width)/2, top);
-        top += this.controls.title.height + 4;
-        this.controls.settings.move(left + (width - this.controls.settings.width)/2, top);
-        top += this.controls.settings.height + 8;
-        this.controls.start.move(left + (width - this.controls.start.width)/2, top);
+        if (this.demo) {
+            this.demo.resize();
+            this.demo.render(this.frame, 0);
+            var top = 20, left = glui.width - Math.max(this.controls.title.width, this.controls.settings.width) - 20;
+            var width = Math.max(this.controls.title.width, this.controls.settings.width, this.controls.start.width);
+            this.controls.title.move(left + (width - this.controls.title.width)/2, top);
+            top += this.controls.title.height + 4;
+            this.controls.settings.move(left + (width - this.controls.settings.width)/2, top);
+            top += this.controls.settings.height + 8;
+            this.controls.start.move(left + (width - this.controls.start.width)/2, top);
+        }
+        //this.demoList.height = this.demoList.collapsed ? this.demoList.titlebar.height : 0;
         glui.render();
+    },
+    toggleDemoList: function toggleDemoList() {
+        if (!this.demoList.collapsed) {
+            this.demoList.height = this.demoList.titlebar.height;
+            this.demoList.titlebar.renderer.border.style = 'outset';
+            this.demoList.collapsed = true;
+        } else {
+            this.demoList.height = 0;
+            this.demoList.titlebar.renderer.border.style = 'inset';
+            this.demoList.collapsed = false;
+        }
+        this.render(0, 0);
     },
 
     selectDemo: async function(path) {
@@ -207,22 +233,38 @@ var DemoMgr = {
         } else {
             DemoMgr.time = new Date().getTime();
             //this.isRunning = true;
-            DemoMgr.run(demo);
+            await DemoMgr.run(demo);
+            this.start();
         }
     },
+    start: function start() {
+        this.isRunning = !this.isRunning;
+        var ctrl = this.controls.start;
+        ctrl.value = this.isRunning ? 'Stop' : 'Start';
+        ctrl.render();
+        this.time = new Date().getTime();
+        this.run();
+
+    },
     onclick: function(e, ctrl) {
-        if (ctrl.id == 'start') {
-            this.isRunning = !this.isRunning;
-            ctrl.value = this.isRunning ? 'Stop' : 'Start';
-            ctrl.render();
-            this.time = new Date().getTime();
-            this.run();
+        switch (ctrl.id) {
+            case 'start':
+                this.start();
+                break;
+            case 'list':
+                this.toggleDemoList();
+                break;
         }
     },
     onchange: function onchange(e, ctrl) {
-        this.demo.render(this.frame);
+        this.demo.render(this.frame, 0);
         glui.render();
-    }
+    },
+    onmousemove: function onmousemove(e) {
+        if (this.demo && typeof this.demo.onmousemove === 'function') {
+            this.demo.onmousemove.call(this.demo, e);
+        }
+    },
 };
 
 async function onpageload(e) {

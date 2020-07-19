@@ -2,5 +2,9 @@
     { "label": "Plasma", "path": "plasma/plasma.js" },
     { "label": "Times-table", "path": "timestable/timestable.js" },
     { "label": "Fire", "path": "fire/fire.js" },
-    { "label": "Gravity", "path": "gravity/gravity.js" }
+    { "label": "Gravity", "path": "gravity/gravity.js" },
+    { "label": "Noise", "path": "noise/noise.js" },
+    { "label": "Lens", "path": "lens/lens.js" },
+    { "label": "Bump mapping", "path": "bump/bump.js" },
+    { "label": "Mesh", "path": "mesh/mesh.js" }
 ]

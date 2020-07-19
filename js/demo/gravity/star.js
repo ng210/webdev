@@ -1,4 +1,4 @@
-include('ge/fn.js');
+include('math/fn.js');
 (function() {
 
 	function Star(position, radius) {
@@ -20,7 +20,6 @@ include('ge/fn.js');
 		this.density = 0.5 + 0.5 * Math.random();
 		this.energy = 0;
 		this.mass = 0;
-		this.updateByRadius();
 		// initial velocity
 		var arg = 2 * Math.PI * Math.random();
 		var r = 0;	//0.0001*Math.random();
@@ -29,7 +28,7 @@ include('ge/fn.js');
 		// acceleration
 		this.a = [0.0, 0.0];
 		this.isAlive = true;
-//Dbg.prln(this.toString());
+		this.updateByRadius();
 	};
 	Star.prototype.getColorFromEnergy = function() {
 		var map = [
@@ -74,8 +73,8 @@ include('ge/fn.js');
 		this.radius2 = this.radius*this.radius;
 	};
 	Star.prototype.updateEnergy = function() {
-		// E = m*c^2
-		this.energy = this.mass*Star.cC2;
+		// E = m*c^2 + 0.5*m*v^2
+		this.energy = this.mass*(Star.cC2 + 0.5*(this.v[0]*this.v[0] + this.v[1] + this.v[1]));
 	};
 	Star.prototype.updateByMass = function() {
 		this.updateRadius();
@@ -100,7 +99,8 @@ include('ge/fn.js');
 		this.a[0] = 0;
 		this.a[1] = 0;
 		// energy loss is proportional to the surface
-		var s = 0*0.07*0.3333*Star.cC*Star.c4pi*this.radius2;
+		var s = 0*0.007*Star.cC*Star.c4pi*this.radius2/3;
+		//this.energy = this.mass*(Star.cC2 + 0*0.5*(this.v[0]*this.v[0] + this.v[1] + this.v[1])) - s;
 		this.energy -= s;
 		// energy cannot be negaive
 		if (this.energy < 0) this.energy = 0;
