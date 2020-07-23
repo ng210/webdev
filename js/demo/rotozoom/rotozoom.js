@@ -1,4 +1,4 @@
-include('/ge/fn.js');
+include('/math/fn.js');
 
 (function() {
 

@@ -1,5 +1,5 @@
-include('/ge/fn.js');
-include('/ge/noise.js');
+include('/math/fn.js');
+include('/math/noise.js');
 
 (function() {
     function TexGen(canvas) {
