@@ -249,23 +249,43 @@ include('graph.js');
         test('Should DFS traverse a complete graph', context => {
             var graph = Graph.createComplete(5);
             var labels = [];
-            graph.DFS(graph.vertices[0], v => labels.push(`→${v.data}`), v => labels.push(`←${v.data}`), null);
+            graph.DFS(graph.vertices[0], v => {labels.push(`→${v.data}`)}, v => {labels.push(`←${v.data}`)}, null);
             context.assert(labels.join(''), '=', '→v0→v1←v1→v2←v2→v3←v3→v4←v4←v0');
         });
-        test('Should DFS traverse the tree', context => {
-            var tree = Graph.createCompleteTree(2, 2, false);
+        test('Should BFS traverse a complete graph', context => {
+            var graph = Graph.createComplete(5);
             var labels = [];
-            tree.DFS(tree.vertices[0], v => console.log(`→${v.data}`), v => console.log(`←${v.data}`), null);
-            //tree.DFS(tree.vertices[0], v => labels.push(`→${v.data}`), v => labels.push(`←${v.data}`), null);
-            //context.assert(labels.join(''), '=', '→v00→v01→v03→v07←v07→v08←v08←v03→v04→v09←v09→v10←v10←v04←v01→v02→v05→v11←v11→v12←v12←v05→v06→v13←v13→v14←v14←v06←v02←v00');
+            graph.BFS(graph.vertices[0], v => {labels.push(`→${v.data}`)}, v => {labels.push(`←${v.data}`)}, null, null);
+            context.assert(labels.join(''), '=', '→v0←v0→v1→v2→v3→v4←v1←v2←v3←v4');
+        });
+        test('Should find a path in a graph', context => {
+            var graph = new Graph();
+            var v = [];
+            v.push(graph.createVertex()); v.push(graph.createVertex());
+            v.push(graph.createVertex()); v.push(graph.createVertex());
+            v.push(graph.createVertex()); v.push(graph.createVertex());
+            graph.addEdge(v[0], v[1]); graph.addEdge(v[0], v[3]);
+            graph.addEdge(v[1], v[0]); graph.addEdge(v[1], v[2]); graph.addEdge(v[1], v[4]);
+            graph.addEdge(v[2], v[1]); graph.addEdge(v[2], v[5]);
+            graph.addEdge(v[3], v[0]); graph.addEdge(v[3], v[4]);
+            graph.addEdge(v[4], v[1]); graph.addEdge(v[4], v[3]);
+            graph.addEdge(v[5], v[2]);
+
+            var path = graph.findPath(v[5], v[4]);
+            context.assert(path, '!=', null);
+            var labels = [path[0].from.id];
+            for (var i=0; i<path.length; i++) {
+                labels.push(path[i].to.id);
+            }
+            context.assert(labels.join(), '=', '5,2,1,4');   //'→v0←v0→v1→v2→v3→v4←v1←v2←v3←v4');
         });
     }
 
     var tests = () => [
-        test_Stream,
-        test_DataSeries,
-        test_DataSeriesCompare,
-        test_DataLink,
+        // test_Stream,
+        // test_DataSeries,
+        // test_DataSeriesCompare,
+        // test_DataLink,
         test_Graph
     ];
     

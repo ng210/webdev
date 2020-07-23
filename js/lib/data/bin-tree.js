@@ -11,18 +11,26 @@
 
         this.objects = [];
     }
+    BinaryNode.prototype.insert = function insert(obj) {
+        this.objects.push(obj);
+    };
+    BinaryNode.prototype.remove = function remove(obj) {
+        var ix = this.objects.findIndex(x => x==obj);
+        this.objects.splice(ix, 1);
+    };
 
     function BinaryTree(maxLevel, width, height) {
         this.objectQuadMap = {};
+        this.root = null;
         this.nodes = [];
 
         // create full binary tree of BinaryNode objects
-        var node = null;
         var nodeCount = 1
         var isHorizontal = width > height;
-        var width = 1, height = 1;
+        //var width = 1, height = 1;
         // add root
-        this.nodes.push(new BinaryNode(0, 0, width, height));
+        this.root = new BinaryNode(0, 0, width, height);
+        this.nodes.push(this.root);
         var ni = 2;
         for (var i=0; i<maxLevel; i++) {
             isHorizontal ? width /= 2 : height /= 2;
@@ -49,14 +57,18 @@
         }
     }
 
-    BinaryTree.prototype.insert = function insert(obj, left, top, right, bottom) {
-        // find containing quad
-        // insert obj
+    BinaryTree.prototype.find = function find(left, top, right, bottom) {
+        var node = this.root;
+        while (true) {
+
+        }
     };
 
-    BinaryTree.prototype.remove = function remove(obj) {
-        // get objects
-        // remove from quad
+    BinaryTree.prototype.insert = function insert(obj, left, top, right, bottom) {
+        // find containing quad
+        var quad = this.find(left, top, right, bottom);
+        // insert obj
+        if (quad) quad.insert(obj);
     };
 
     public(BinaryTree, 'BinaryTree');
