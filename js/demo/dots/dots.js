@@ -1,5 +1,5 @@
 include('math/v3.js');
-include('ge/noise.js');
+include('math/noise.js');
 include('glui/glui-lib.js');
 (function() {
 	include('dot.js');
