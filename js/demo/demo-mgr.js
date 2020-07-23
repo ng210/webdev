@@ -34,14 +34,14 @@ var DemoMgr = {
         var demoList = this.demoList = glui.create('list', {
             'type': 'Grid',
             'style': {
-                'font': 'Arial 12',
+                'font': 'Arial 18',
                 'left': '1em',
                 'top': '1em',
-                'width':'24em',
+                'width':'16em',
                 'align':'right middle',
                 'border':'#406080 1px inset',
                 'background': '#c0e0ff',
-                'color':'#101820',
+                'color':'#ffe080',
                 'title': {
                     'font': 'Arial 18', 'height':'1.8em',
                     'align':'center middle',
@@ -51,27 +51,45 @@ var DemoMgr = {
                 'visible': false
             },
             'title': 'Demo List',
-            'row-template': {
-                'label': { 'type': 'Label', 'column': '$Key', 'style': {
-                    'height':'64px', 'align':'center middle', 'background': '#406080', 'border':'#406080 1px outset'
-                } },
-                'image': { 'type': 'Image', 'column': '$Key', 'style': {
-                    'width':'64px', 'height':'64px', 'background': '#406080', 'border':'#406080 1px outset'
-                } }
-            }
+            'cols': 2,
+            'cell-template': { 'type': 'Label', 'data-field': 'label', 'style': {
+                'height':'64px', 'align':'center middle', 'background': '#406080', 'border':'#406080 1px outset'
+            } }
+            // 'row-template': {
+            //     'label': { 'type': 'Label', 'column': '$Key', 'style': {
+            //         'height':'64px', 'align':'center middle', 'background': '#406080', 'border':'#406080 1px outset'
+            //     } },
+            //     'image': { 'type': 'Image', 'column': '$Key', 'style': {
+            //         'width':'64px', 'height':'64px', 'background': '#406080', 'border':'#406080 1px outset'
+            //     } }
+            // }
         }, null, this);
         demoList.onclick = function demoList_onclick (e, ctrl) {
-            DemoMgr.selectDemo(ctrl.row.dataSource.obj.path);
+            if (ctrl.dataSource) DemoMgr.selectDemo(ctrl.dataSource.obj.path);
         };
         demoList.dataBind(this.demos);
+        //glui.buildUI();
+        await glui.setRenderingMode(glui.Render2d);
+        for (var i=0; i<demoList.rowKeys.length; i++) {
+            var row = demoList.rows[demoList.rowKeys[i]];
+            for (var j=0; j<demoList.columnCount; j++) {
+                var cell = row.cells[j];
+                if (cell.dataSource) {
+                    cell.renderer.backgroundImage = cell.dataSource.obj.image;
+                }                
+            }
+        }
         demoList.collapsed = false;
         demoList.setVisible(true);
-        glui.buildUI();
-        await glui.setRenderingMode(glui.Render2d);
         glui.render();
         glui.animate();
 
         glui.canvas.addEventListener('mousemove', e => DemoMgr.onmousemove(e));
+        glui.canvas.addEventListener('click', e => {
+            if (!glui.getControlAt(e.clientX, e.clientY)) {
+                DemoMgr.onclick(e);
+            }
+        });
     },
     buildUI: function buildUI(demo) {
         this.controls.title = glui.create('title', {
@@ -247,13 +265,21 @@ var DemoMgr = {
 
     },
     onclick: function(e, ctrl) {
-        switch (ctrl.id) {
-            case 'start':
-                this.start();
-                break;
-            case 'list':
-                this.toggleDemoList();
-                break;
+        if (ctrl) {
+            switch (ctrl.id) {
+                case 'start':
+                    this.start();
+                    break;
+                case 'list':
+                    this.toggleDemoList();
+                    break;
+            }
+        } else {
+            if (this.demo && this.demo.onclick) {
+                var x = e.clientX/glui.canvas.clientWidth;
+                var y = e.clientY/glui.canvas.clientHeight;
+                this.demo.onclick(x, y, e);
+            }
         }
     },
     onchange: function onchange(e, ctrl) {
