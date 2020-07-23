@@ -17,7 +17,7 @@ include('renderer2d.js');
             if (this.control.isNumeric) {
                 lines = [value.toFixed(this.control.decimalDigits)];
             } else {
-                lines = value.split('\\n');
+                lines = value.split('\n');
             }
         } else {
             lines = [];
