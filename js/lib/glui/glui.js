@@ -128,8 +128,8 @@
         resize: function resize(repaint) {
             this.width = Math.floor(this.scale.x * this.canvas.clientWidth);
             this.height = Math.floor(this.scale.y * this.canvas.clientHeight);
-            this.canvas.width = this.width;
-            this.canvas.height = this.height;
+            this.screen.width = this.canvas.width = this.width;
+            this.screen.height = this.canvas.height = this.height;
             for (var i=0; i<this.screen.items.length; i++) {
                 var ctrl = this.screen.items[i];
                 var left = ctrl.left, top = ctrl.top;

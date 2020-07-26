@@ -32,7 +32,7 @@ include('glui/glui.js');
         this.control.offsetTop = this.convertToPixelV(this.control.style.top);
         this.control.top = this.accumulate('offsetTop', true);
         this.color = this.toColor(this.control.style.color) || this.color;
-        this.backgroundColor = this.toColor(this.control.style.background) || this.backgroundColor;
+        this.backgroundColor = this.control.style.background != undefined ? this.toColor(this.control.style.background) : this.backgroundColor;
         if (this.control.style['background-image'] != 'none') {
             var res = await load(this.control.style['background-image']);
             this.backgroundImage = !res.error ? res.node : null;
@@ -69,7 +69,7 @@ include('glui/glui.js');
         else if (value.endsWith('%')) {
             var width = parentWidth;
             if (width == undefined) {
-                var parent = this.control && this.control.parent ? this.control.parent : window;
+                var parent = this.control && this.control.parent ? this.control.parent : glui.screen;
                 if (parent.renderer) {
                     width = parent.width - 2*parent.renderer.border.width;
                 } else {

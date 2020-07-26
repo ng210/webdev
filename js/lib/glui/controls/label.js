@@ -13,7 +13,7 @@ include('renderer2d.js');
         }
         var lines = null;
         var value = this.control.getValue();
-        if (value) {
+        if (value != undefined) {
             if (this.control.isNumeric) {
                 lines = [value.toFixed(this.control.decimalDigits)];
             } else {
@@ -23,9 +23,10 @@ include('renderer2d.js');
             lines = [];
         }
         var boxes = this.getTextBoundingBoxes(lines);
+        var bgColor = this.backgroundColor || this.color;
         for (var i=0; i<lines.length; i++) {
-            this.drawText(lines[i], boxes[i][0]-1, boxes[i][1]-1, boxes[i][2], this.calculateColor(this.backgroundColor, 1.4));
-            this.drawText(lines[i], boxes[i][0]+1, boxes[i][1]+1, boxes[i][2], this.calculateColor(this.backgroundColor, 0.6));
+            this.drawText(lines[i], boxes[i][0]-1, boxes[i][1]-1, boxes[i][2], this.calculateColor(bgColor, 1.4));
+            this.drawText(lines[i], boxes[i][0]+1, boxes[i][1]+1, boxes[i][2], this.calculateColor(bgColor, 0.6));
             this.drawText(lines[i], boxes[i][0], boxes[i][1], boxes[i][2], this.color);
         }
     };
