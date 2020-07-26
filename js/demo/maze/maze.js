@@ -14,6 +14,9 @@ include('glui/glui-lib.js');
         Wall: 1,
         Required: 2
     };
+    var ScoreNormal = 1;
+    var ScoreBonus = 5;
+
     var DirectionInverseMap = (function() {
         var map = {};
         map[Direction.left] = Direction.right;
@@ -33,7 +36,7 @@ include('glui/glui-lib.js');
         this.links[Direction.up] = null;
         this.links[Direction.right] = null;
         this.links[Direction.down] = null;
-        this.stores = Math.random() < 0.1 ? 'bonus' : 'dot';
+        this.stores = Math.random() < 0.02 ? ScoreBonus : ScoreNormal;
     }
     Block.prototype.render = function render(ctx, thickness, highlight) {
         var th2 = 2*thickness;
@@ -44,8 +47,8 @@ include('glui/glui-lib.js');
 
         ctx.globalAlpha = alpha;
         switch (this.stores) {
-            case 'dot': ctx.fillStyle = 'white'; ctx.fillRect(this.x+0.4, this.y+0.4, 0.2, 0.2); break;
-            case 'bonus': ctx.fillStyle = 'lightgreen'; ctx.fillRect(this.x+0.35, this.y+0.35, 0.3, 0.3); break;
+            case ScoreNormal: ctx.fillStyle = 'white'; ctx.fillRect(this.x+0.4, this.y+0.4, 0.2, 0.2); break;
+            case ScoreBonus: ctx.fillStyle = 'lightgreen'; ctx.fillRect(this.x+0.35, this.y+0.35, 0.3, 0.3); break;
         }
 
         ctx.fillStyle = `rgb(${this.color})`;
@@ -197,7 +200,7 @@ include('glui/glui-lib.js');
         this.selected = this.graph.vertices[x + this.width*y];
     };
 
-    function Sprite(x, y, color) {
+    function Sprite(x, y, color, parent) {
         this.x = x; this.y = y;
         this.dx = 0; this.dy = 0;
         this.color = color;
@@ -206,22 +209,25 @@ include('glui/glui-lib.js');
         this.next = {x:x, y:y};
         this.velocity = 0;
         this.path = null;
+        this.parent = parent;
+        this.parent.score = this.parent.maze.graph.vertices[x + parent.maze.width*y].data.stores;
+        this.parent.dots--;
     }
     Sprite.prototype.render = function render(ctx) {
         ctx.fillStyle = `rgb(${this.color})`;
         ctx.fillRect(this.x+0.25, this.y+0.25, 0.5, 0.5);
     };
-    Sprite.prototype.update = function update(maze, dt) {
+    Sprite.prototype.update = function update(dt) {
         if (this.path) {
             this.move(dt);
         }
     };
-    Sprite.prototype.setDestination = function setDestination(maze, x, y) {
+    Sprite.prototype.setDestination = function setDestination(x, y) {
         this.destination.x = x;
         this.destination.y = y;
-        var source = maze.graph.vertices[this.next.x + maze.width*this.next.y];
-        var destination = maze.graph.vertices[x + maze.width*y];
-        this.path = maze.graph.findPath(source, destination, e => e.data.status != LinkStatus.Wall);
+        var source = this.parent.maze.graph.vertices[this.next.x + this.parent.maze.width*this.next.y];
+        var destination = this.parent.maze.graph.vertices[x + this.parent.maze.width*y];
+        this.path = this.parent.maze.graph.findPath(source, destination, e => e.data.status != LinkStatus.Wall);
         //if ((this.path = maze.graph.findPath(source, destination, e => e.data.status != LinkStatus.Wall)) != null) {
         //    this.setNextMove();
         //}
@@ -232,6 +238,10 @@ include('glui/glui-lib.js');
             this.next.x = next.to.data.x;
             this.next.y = next.to.data.y;
             next.from.data.stores = 0;
+            if (next.to.data.stores) {
+                this.parent.score += next.to.data.stores;
+                this.parent.dots--;
+            }
             this.dx = Math.sign(this.next.x - this.x)*this.velocity;
             this.dy = Math.sign(this.next.y - this.y)*this.velocity;
         } else {
@@ -283,8 +293,8 @@ include('glui/glui-lib.js');
     var MazeDemo = {
         name: 'Maze',
         settings: {
-            width: { label: 'Width', value: 32, min:1, max:100, step: 1, type: 'int', link: null },
-            height: { label: 'Height', value: 18, min:1, max:100, step: 1, type: 'int', link: null },
+            width: { label: 'Width', value: 10, min:1, max:100, step: 1, type: 'int', link: null },
+            height: { label: 'Height', value: 5, min:1, max:100, step: 1, type: 'int', link: null },
             randomness: { label: 'Randomness', value: 0.5, min:0.0, max:1.0, step: 0.01, type: 'float', link: null },
             thickness: { label: 'Thickness', value: 0.1, min:0.02, max:0.4, step: 0.001, normalized: true, type: 'float', link: null },
             speed: { label: 'Speed', value: 2.0, min:1.0, max:5.0, step: 0.01, normalized:true, type: 'float', link: null },
@@ -298,16 +308,28 @@ include('glui/glui-lib.js');
         counter: 0,
         complete: false,
         selectedBlock: null,
+        score: 0,
+        dots: 0,
     
         initialize: function initialize() {
             this.buffer = new glui.Buffer(glui.width/2, glui.height/2);
-            this.maze = new Maze(this.settings.width.value, this.settings.height.value);
-            this.maze.build(this.settings.randomness.value);
-            this.complete = false;
-            this.player = new Sprite(Math.floor(this.maze.width*Math.random()), Math.floor(this.maze.height*Math.random()), [255, 160, 144]);
-            this.player.velocity = this.settings.speed.value;
-            this.onclick(Math.random(), Math.random());
-            this.resize();
+            this.scoreLabel = glui.create('score', {
+                'type': 'Label',
+                'style': {
+                    'font': 'Consolas 24',
+                    'width':'100%', 'height':'1.5em',
+                    'top': '0.2em', 'left': 0,
+                    'align':'center top',
+                    'border':'none',
+                    'background': 'none',
+                    'color': '#ffffff'
+                },
+                'data-source': 'MazeDemo',
+                'data-field': 'score',
+                'data-type': 'int'
+            });
+            this.scoreLabel.setRenderer(glui.mode, glui.renderingContext);
+            this.resetMaze(true);
         },
         resize: function resize(e) {
             var w = glui.frontBuffer.width/2;
@@ -316,7 +338,10 @@ include('glui/glui-lib.js');
             this.buffer.context.setTransform(w/this.settings.width.value, 0, 0, h/this.settings.height.value, 0, 0);
         },
         update: function update(frame, dt) {
-            this.player.update(this.maze, dt);
+            this.player.update(dt);
+            if (this.dots == 0) {
+                this.resetMaze();
+            }
         },
         render: function render(frame, dt) {
             var ctx = this.buffer.context;
@@ -352,21 +377,27 @@ include('glui/glui-lib.js');
                 var bx = Math.floor(this.maze.width*x);
                 var by = Math.floor(this.maze.height*y);
                 this.maze.selectAt(bx, by);
-                this.player.setDestination(this.maze, bx, by);
+                this.player.setDestination(bx, by);
             }
         },
 
-        resetMaze: function resetMaze(rebuild) {
-            var selected = [this.maze.selected.data.x, this.maze.selected.data.y];
-            if (rebuild) {
+        resetMaze: function resetMaze(recreate) {
+            //var selected = [this.maze.selected.data.x, this.maze.selected.data.y];
+            if (recreate) {
                 this.maze = new Maze(this.settings.width.value, this.settings.height.value);
             }
             this.maze.build(this.settings.randomness.value);
-            this.maze.selectAt(selected[0], selected[1]);
             this.maze.thickness = this.settings.thickness.value;
+            this.dots = this.maze.graph.vertices.length;
+            this.score = 0;
             this.complete = false;
             
-            this.player.setDestination(this.maze, this.player.destination.x, this.player.destination.y);
+            var x = Math.floor(this.maze.width*Math.random());
+            var y = Math.floor(this.maze.height*Math.random());
+            this.player = new Sprite(x, y, [255, 160, 144], this);
+            this.player.velocity = this.settings.speed.value;
+            this.maze.graph.vertices[x + this.maze.width*y].data.stores = 0;
+            //this.player.setDestination(this.player.destination.x, this.player.destination.y);
             this.resize();
         }
     };
