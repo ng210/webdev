@@ -177,15 +177,17 @@ const DEBUG_EVENT = 'click';
         }
     };
     Control.prototype.getBoundingBox = function getBoundingBox() {
+        this.left = this.renderer.accumulate('offsetLeft');
+        this.top = this.renderer.accumulate('offsetTop', true);
         return [this.left, this.top, this.width, this.height];
     };
     Control.prototype.move = function move(dx, dy) {
         this.offsetLeft = dx;
         this.offsetTop = dy;
-        if (this.renderer) {
-            this.left = this.renderer.accumulate('offsetLeft');
-            this.top = this.renderer.accumulate('offsetTop', true);
-        }
+        // if (this.renderer) {
+        //     this.left = this.renderer.accumulate('offsetLeft');
+        //     this.top = this.renderer.accumulate('offsetTop', true);
+        // }
     };
     Control.prototype.render = function render() {
         if (this.renderer && this.style.visible) {

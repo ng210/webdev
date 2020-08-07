@@ -64,39 +64,43 @@ include('glui/glui.js');
     };
     Renderer.prototype.convertToPixel = function convertToPixel(value, parentWidth) {
         var res = 0;
-        if (typeof value === 'number') res = value;
-        else if (value.endsWith('px')) res = parseFloat(value);
-        else if (value.endsWith('%')) {
-            var width = parentWidth;
-            if (width == undefined) {
-                var parent = this.control && this.control.parent ? this.control.parent : glui.screen;
-                if (parent.renderer) {
-                    width = parent.width - 2*parent.renderer.border.width;
-                } else {
-                    width = parent.width != undefined ? parent.width : parent.innerWidth;
+        if (value !== undefined) {
+            if (typeof value === 'number') res = value;
+            else if (value.endsWith('px')) res = parseFloat(value);
+            else if (value.endsWith('%')) {
+                var width = parentWidth;
+                if (width == undefined) {
+                    var parent = this.control && this.control.parent ? this.control.parent : glui.screen;
+                    if (parent.renderer) {
+                        width = parent.width - 2*parent.renderer.border.width;
+                    } else {
+                        width = parent.width != undefined ? parent.width : parent.innerWidth;
+                    }
                 }
-            }
-            res = width * parseFloat(value)/100;
-        } else if (value.endsWith('em')) res = this.font.em * parseFloat(value);
+                res = width * parseFloat(value)/100;
+            } else if (value.endsWith('em')) res = this.font.em * parseFloat(value);
+        }
         return Math.floor(res);
     };
     Renderer.prototype.convertToPixelV = function convertToPixel(value, parentHeight) {
         var res = 0;
         var parent = this.control && this.control.parent ? this.control.parent : window;
-        if (typeof value === 'number') res = value;
-        else if (value.endsWith('px')) res = parseFloat(value);
-        else if (value.endsWith('%')) {
-            var height = parentHeight;
-            if (height == undefined) {
-                var parent = this.control && this.control.parent ? this.control.parent : window;
-                if (parent.renderer) {
-                    height = parent.height - 2*parent.renderer.border.width;
-                } else {
-                    height = parent.height != undefined ? parent.height : parent.innerHeight;
+        if (value !== undefined) {
+            if (typeof value === 'number') res = value;
+            else if (value.endsWith('px')) res = parseFloat(value);
+            else if (value.endsWith('%')) {
+                var height = parentHeight;
+                if (height == undefined) {
+                    var parent = this.control && this.control.parent ? this.control.parent : window;
+                    if (parent.renderer) {
+                        height = parent.height - 2*parent.renderer.border.width;
+                    } else {
+                        height = parent.height != undefined ? parent.height : parent.innerHeight;
+                    }
                 }
-            }
-            res = height * parseFloat(value)/100;
-        } else if (value.endsWith('em')) res = this.font.size * parseFloat(value);
+                res = height * parseFloat(value)/100;
+            } else if (value.endsWith('em')) res = this.font.size * parseFloat(value);
+        }
         return Math.round(res);
     };
     Renderer.prototype.toColor = function toColor(cssColor) {

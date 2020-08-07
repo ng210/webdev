@@ -6,4 +6,4 @@ include('glui/controls/textbox.js');
 include('glui/controls/button.js');
 include('glui/controls/image.js');
 include('glui/controls/grid.js');
-include('glui/controls/combobox.js');
+//include('glui/controls/combobox.js');

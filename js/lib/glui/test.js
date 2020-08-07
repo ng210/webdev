@@ -20,7 +20,7 @@ include('glui/glui-lib.js');
     };
     var gridStyle = {
         'font': 'Arial 20',
-        'width':'18em', //'height':'6em',
+        //'width':'18em', //'height':'6em',
         'align':'center middle',
         'border':'#308060 2px outset',
         'color': '#184030',
@@ -61,105 +61,135 @@ include('glui/glui-lib.js');
     var renderer = null;
 
     var controls = [
-        {
-            'type': 'Label',
-            'style': style,
-            'value': 'label'
-        },
-        {
-            'type': 'Label',
-            'style': style,
-            'data-source': 'data',
-            'data-field': 'label1'
-        },
-        {
-            'type': 'Label',
-            'style': style,
-            'data-type': 'int',
-            'decimal-digits': 2,
-            'data-source': 'data',
-            'data-field': 'label2'
-        },
+        // {
+        //     'type': 'Label',
+        //     'style': style,
+        //     'value': 'label'
+        // },
+        // {
+        //     'type': 'Label',
+        //     'style': style,
+        //     'data-source': 'data',
+        //     'data-field': 'label1'
+        // },
+        // {
+        //     'type': 'Label',
+        //     'style': style,
+        //     'data-type': 'int',
+        //     'decimal-digits': 2,
+        //     'data-source': 'data',
+        //     'data-field': 'label2'
+        // },
 
-        {
-            'type': 'Textbox',
-            'style': style,
-            'look': 'textbox',
-            'decimal-digits': 3,
-            'value': 'textbox'
-        },
-        {
-            'type': 'Textbox',
-            'style': style,
-            'look': 'textbox',
-            'decimal-digits': 3,
-            'data-source': 'data',
-            'data-field': 'textbox1'
-        },
-        {
-            'type': 'Textbox',
-            'style': style,
-            'look': 'potmeter',
-            'data-type': 'int',
-            'decimal-digits': 1,
-            'data-source': 'data',
-            'data-field': 'textbox2'
-        },
+        // {
+        //     'type': 'Textbox',
+        //     'style': style,
+        //     'look': 'textbox',
+        //     'decimal-digits': 3,
+        //     'value': 'textbox'
+        // },
+        // {
+        //     'type': 'Textbox',
+        //     'style': style,
+        //     'look': 'textbox',
+        //     'decimal-digits': 3,
+        //     'data-source': 'data',
+        //     'data-field': 'textbox1'
+        // },
+        // {
+        //     'type': 'Textbox',
+        //     'style': style,
+        //     'look': 'potmeter',
+        //     'data-type': 'int',
+        //     'decimal-digits': 1,
+        //     'data-source': 'data',
+        //     'data-field': 'textbox2'
+        // },
 
-        {
-            'type': 'Button',
-            'style': buttonStyle,
-            'value': 'Complete'
-        },
-        {
-            'type': 'Button',
-            'style': buttonStyle,
-            'data-source': 'data',
-            'data-field': 'button'
-        },
+        // {
+        //     'type': 'Button',
+        //     'style': buttonStyle,
+        //     'value': 'Complete'
+        // },
+        // {
+        //     'type': 'Button',
+        //     'style': buttonStyle,
+        //     'data-source': 'data',
+        //     'data-field': 'button'
+        // },
 
-        {
-            'type': 'Image',
-            'style': {
-                'width':'128px', 'height':'96px',
-                'border':'#805020 2px inset',
-                'background': '#102040'
-            },
-            'source': 'glui/res/test.png'
-        },
+        // {
+        //     'type': 'Image',
+        //     'style': {
+        //         'width':'128px', 'height':'96px',
+        //         'border':'#805020 2px inset',
+        //         'background': '#102040'
+        //     },
+        //     'source': 'glui/res/test.png'
+        // },
 
         {
             'type': 'Grid',
             'style': gridStyle,
-            'title': 'Characters',
-            'data-source': 'data',
-            'data-field': 'grid',
-            'rows': 8,
-            'cols': 3,
-            'header': true,
-            'row-template': {
-                'name': { 'type': 'Label', 'column': '$Key', 'style': {
-                    'width':'65%', 'background': '#60c0a0', 'border':'#60c0a0 1px inset'
-                } },
-                'age': { 'type': 'Textbox', 'data-type': 'int', 'column': '$Key', 'style': {
-                    'width':'35%', 'background': '#d0fff0', 'border':'#608078 1px inset'
-                } }
-            }
+            'title': 'Default'
         },
         {
-            'type': 'Combobox',
-            'style': comboboxStyle,
-            'readonly': true,
-            'rows': 4,
-            'data-source': 'data',
-            'data-field': 'combobox',
-            'key-field': 'name',
-            'values': 'data.grid',
-            'row-template': {
-                'name': { 'type': 'Label', 'style': { 'width':'65%', 'background': '#60c0a0', 'border':'#60c0a0 2px inset' } },
-                'age': { 'type': 'Textbox', 'data-type': 'int', 'style': { 'width':'35%', 'background': '#d0fff0', 'border':'#608078 1px inset' } }
-            }
+            'type': 'Grid',
+            'style': gridStyle,
+            'title': 'Empty 3x2',
+            'rows': 2,
+            'cols': 3
         }
+        // {
+        //     'type': 'Grid',
+        //     'style': gridStyle,
+        //     'title': 'Characters 1x3',
+        //     'data-source': 'data',
+        //     'data-field': 'grid',
+        //     'rows': 4,
+        //     'cols': 1,
+        //     'header': false,
+        //     'row-template': {
+        //         'name': { 'type': 'Label', 'column': '$Key', 'style': {
+        //             'width':'65%', 'background': '#60c0a0', 'border':'#60c0a0 1px inset'
+        //         } },
+        //         'age': { 'type': 'Textbox', 'data-type': 'int', 'column': '$Key', 'style': {
+        //             'width':'35%', 'background': '#d0fff0', 'border':'#608078 1px inset'
+        //         } }
+        //     }
+        // },
+        // {
+        //     'type': 'Grid',
+        //     'style': gridStyle,
+        //     'title': 'Characters 3x8',
+        //     'data-source': 'data',
+        //     'data-field': 'grid',
+        //     'rows': 8,
+        //     'cols': 3,
+        //     'header': false,
+        //     'row-template': {
+        //         'name': { 'type': 'Label', 'column': '$Key', 'style': {
+        //             'width':'65%', 'background': '#60c0a0', 'border':'#60c0a0 1px inset'
+        //         } },
+        //         'age': { 'type': 'Textbox', 'data-type': 'int', 'column': '$Key', 'style': {
+        //             'width':'35%', 'background': '#d0fff0', 'border':'#608078 1px inset'
+        //         } }
+        //     }
+        // },
+        // {
+        //     'type': 'Combobox',
+        //     'style': comboboxStyle,
+        //     'readonly': true,
+        //     'rows': 4,
+        //     'data-source': 'data',
+        //     'data-field': 'combobox',
+        //     'key-field': 'name',
+        //     'values': 'data.grid',
+        //     'row-template': {
+        //         'name': { 'type': 'Label', 'style': { 'width':'65%', 'background': '#60c0a0', 'border':'#60c0a0 2px inset' } },
+        //         'age': { 'type': 'Textbox', 'data-type': 'int', 'style': { 'width':'35%', 'background': '#d0fff0', 'border':'#608078 1px inset' } }
+        //     }
+        // }
     ];
 
     window.data = {
@@ -175,7 +205,7 @@ include('glui/glui-lib.js');
             { "name": "Henry", "age": 17 },
             { "name": "Blange", "age": 60 },
             { "name": "Wilson", "age": 62 },
-            { "name": "Geroge", "age": 67 },
+            { "name": "George", "age": 67 },
             { "name": "Teddy", "age": 52 },
             { "name": "Sissy", "age": 29 },
             { "name": "Poppy", "age": 27 }
@@ -222,8 +252,8 @@ include('glui/glui-lib.js');
                 await ctrl.load();
             }
         }
-        var ctrl = glui.getControlById('Label1');
-        ctrl.style['background-image'] = 'glui/background.png';
+        // var ctrl = glui.getControlById('Label1');
+        // ctrl.style['background-image'] = 'glui/background.png';
     }
 
     async function renderUI() {

@@ -37,7 +37,6 @@ include('control.js');
         for (var i=0; i<this.items.length; i++) {
             if (this.items[i] == control) {
                 this.items.splice(i, 1);
-                control.destroy();
             }
         }
     };
@@ -47,6 +46,12 @@ include('control.js');
             this.items[i].setVisible(visible);
         }
     };
+	Container.prototype.dataBind = function(source, field) {
+        Container.base.dataBind.call(this, source, field);
+        for (var i=0; i<this.items.length; i++) {
+            this.items[i].dataBind(this.dataSource[i]);
+        }
+	};
     Container.prototype.createRenderer = mode => mode == glui.Render2d ? new glui.Renderer2d() : 'glui.Renderer3d';
     Container.prototype.setRenderer = async function setRenderer(mode, context) {
         await Container.base.setRenderer.call(this, mode, context);
@@ -61,13 +66,19 @@ include('control.js');
             this.items[i].render();
         }
     };
+    Container.prototype.move = function move(dx, dy) {
+		Container.base.move.call(this, dx, dy);
+		// for (var i=0; i<this.items.length; i++) {
+		// 	this.items[i].move(0, 0);
+		// }
+	};
     Container.prototype.getControlAt = function getControlAt(cx, cy, recursive) {
         var res = null;
 		for (var i=0; i<this.items.length; i++) {
             var ctrl = this.items[i];
             if (ctrl.style.visible && ctrl.left < cx  && cx < ctrl.left + ctrl.width && ctrl.top < cy  && cy < ctrl.top + ctrl.height) {
                 res = ctrl;
-                if (recursive && ctrl.items && ctrl.items.length > 0) {
+                if (recursive && Array.isArray(ctrl.items) && ctrl.items.length > 0) {
                     res = ctrl.getControlAt(cx, cy, true);
                 }
 				break;
@@ -85,16 +96,16 @@ include('control.js');
                 res = item;
                 break;
             }
-            if (item.items) {
-                containers.push(items);
+            if (Array.isArray(item.items) && item.items.length > 0) {
+                containers.push(item);
             }
         }
         // check containers
         for (var i=0; i<containers.length; i++) {
-            if ((res = containers.getControlById(id)) != null) break;
+            if ((res = containers[i].getControlById(id)) != null) break;
         }
         return res;
-    },
+    };
 
     public(Container, 'Container', glui);
 })();

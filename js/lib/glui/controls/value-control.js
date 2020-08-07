@@ -40,7 +40,7 @@ include('control.js');
 			this.setValue(value);
 		}
 	};
-	ValueControl.prototype.getDataType = function() {
+	ValueControl.prototype.getDataType = function(check) {
 		var dataType = this.template['data-type'] || (this.isNumeric ? glui.ValueControl.DataTypes.Int : glui.ValueControl.DataTypes.String);
 		switch (dataType) {
 			case glui.ValueControl.DataTypes.String:
@@ -62,7 +62,7 @@ include('control.js');
 				//  3. n=true,	d=false		=> n=true,	d=false
 				//     n=false,	d=false		=> n=true,	d=false	+warn
 				//     n=null,	d=false		=> n=true,	d=false
-				if (this.isNumeric === false) {
+				if (check && this.isNumeric === false) {
 					console.warn(`Inconsistency between numeric=false and data-type=${dataType}`);
 				}
 				this.isNumeric = true;
@@ -83,7 +83,7 @@ include('control.js');
 		if (tmpl && tmpl.numeric != undefined) {
 			this.isNumeric = tmpl.numeric != 'false' && tmpl.numeric != '0';
 		}		
-		this.getDataType();
+		this.getDataType(tmpl && tmpl.numeric != undefined);
 		this.parse = this.dataType == glui.ValueControl.DataTypes.Float ? parseFloat : parseInt;
         if (this.isNumeric && this.dataType != glui.ValueControl.DataTypes.Bool) {
             this.min = this.parse(template.min); if (isNaN(this.min)) this.min = 0;

@@ -92,7 +92,9 @@ var ajax = {
 function debug_(txt, lvl) {
     //if (txt.indexOf('player.') == -1) return;
     if (DBGLVL >= lvl) {
-        console.log(txt);
+        var err = new Error();
+        var lines = err.stack.split('\n');
+        console.log(`${txt} (${lines[2].trim()})`);
     }
 }
 
@@ -678,13 +680,13 @@ function mergeObjects(src, dst, sourceOnly) {
             var ix = dstKeys.findIndex(x => x == key);
             dstKeys.splice(ix, 1);
         }
-        var ts = s != null && typeof s === 'object';
-        var td = d != null && typeof d === 'object';
-        if (ts && td) {
+        var isObjectSource = s != null && typeof s === 'object';
+        var isObjectDestination = d != null && typeof d === 'object';
+        if (isObjectSource && isObjectDestination) {
             res[key] = mergeObjects(s, d);
-        } else if (ts && !td) {
+        } else if (isObjectSource && !isObjectDestination) {
             res[key] = d != undefined ? d : mergeObjects(s, null);
-        } else if (!ts && td) {
+        } else if (!isObjectSource && isObjectDestination) {
             res[key] = mergeObjects(d, null);
         } else {
             res[key] = d != undefined ? d : s;
