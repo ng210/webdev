@@ -81,7 +81,7 @@
 }
         </style>
         </style>
-        <script src="/src/base/base.js"></script>
+        <script src="/js/lib/base/base.js"></script>
         <script>
             window.onload = onpageload;
 
@@ -191,15 +191,33 @@ function test_panel() {
     board.render({element:document.body});
 }
 
+function test_canvas_translate() {
+    var canvas = document.getElementsByTagName('canvas')[0];
+    canvas.style.backgroundColor = 'black';
+    var ctx = canvas.getContext('2d');
+    var w = canvas.width;
+    var h = canvas.height;
+    ctx.save();
+    for (var i=0; i<20; i++) {
+        ctx.translate(4, 4);
+        w -= 8;
+        h -= 8;
+        ctx.fillStyle = `rgb(64, ${64+i*8}, 64)`;
+        ctx.fillRect(0, 0, w, h)
+    }
+    ctx.restore();
+}
+
 async function onpageload() {
-    await include('/lib/ui/ui-lib.js');
+    //await include('/lib/ui/ui-lib.js');
     cons = document.getElementById('cons');
 
     // test_mousedown();
     // await test_load();
     // await test_poll();
     // test_lock();
-    test_panel();
+    //test_panel();
+    test_canvas_translate();
 
     out('Tests');
 }
@@ -210,5 +228,6 @@ async function onpageload() {
         <btn id="btn1"></btn>
         <button onclick="out('HELLO');">Hello</button>
         <code id="cons"></code>
+        <canvas id="cvs"></canvas>
     </body>
 </html>

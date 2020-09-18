@@ -12,27 +12,37 @@
     }
 
     function Stream(arg) {
+        this.length = 0;
         if (typeof arg === 'number') {
             this.buffer = new ArrayBuffer(arg);
         } else if (arg instanceof Stream) {
             this.buffer = new Uint8Array(arg.buffer).slice(0, arg.length).buffer;
+            this.length = arg.length;
         } else if (arg instanceof ArrayBuffer) {
             this.buffer = arg;
+            this.length = arg.byteLength;
+        } else if (arg instanceof DataView) {
+            this.buffer = arg.buffer;
+            this.view = arg;
+            this.length = arg.byteLength;
         } else if (arg.buffer && arg.buffer instanceof ArrayBuffer) {
             this.buffer = new Uint8Array(arg.buffer).buffer;
+            this.length = arg.byteLength;
+        } else if (Array.isArray(arg)) {
+            this.buffer = new Uint8Array(arg).buffer;
+            this.length = arg.length;
         } else {
             throw new Error('Invalid argument!');
         }
-        this.length = 0;
         this.readPosition = 0;
         this.writePosition = 0;
-        this.view = new DataView(this.buffer);
+        if (!this.view) this.view = new DataView(this.buffer);
+        this.constructor = Stream;
     }
     Stream.prototype = {
-        get size() { return this.buffer.byteLength; },
-        constructor: Stream
+        get size() { return this.buffer.byteLength; }        
     };
-    Stream.prototype.writeString = function(str) {
+    Stream.prototype.writeString = function writeString(str) {
         ensureSize(this, str.length+1);
         for (var i=0; i<str.length; i++) {
             this.view.setUint8(this.writePosition++, str.charCodeAt(i));
@@ -43,7 +53,7 @@
         }
     };
 
-    Stream.prototype.writeStream = function(stream, offset, length) {
+    Stream.prototype.writeStream = function writeStream(stream, offset, length) {
         offset = offset || 0;
         var byteCount = length || stream.length - offset;
         ensureSize(this, byteCount);
@@ -55,7 +65,7 @@
         }
     };
 
-    Stream.prototype.writeBytes = function(array, offset, length) {
+    Stream.prototype.writeBytes = function writeBytes(array, offset, length) {
         var byteCount = length || array.length - offset;
         ensureSize(this, byteCount);
         for (var i=offset; i<offset+byteCount; i++) {
@@ -66,7 +76,7 @@
         }
     };
 
-    Stream.prototype.writeUint8 = function(value) {
+    Stream.prototype.writeUint8 = function writeUint8(value) {
         ensureSize(this, 4);
         this.view.setUint8(this.writePosition++, value);
         if (this.writePosition > this.length) {
@@ -74,7 +84,7 @@
         }
     };
 
-    Stream.prototype.writeUint16 = function(value) {
+    Stream.prototype.writeUint16 = function writeUint16(value) {
         ensureSize(this, 8);
         this.view.setUint16(this.writePosition, value);
         this.writePosition += 2;
@@ -83,7 +93,7 @@
         }
     };
 
-    Stream.prototype.writeUint32 = function(value) {
+    Stream.prototype.writeUint32 = function writeUint32(value) {
         ensureSize(this, 16);
         this.view.setUint32(this.writePosition, value);
         this.writePosition += 4;
@@ -92,7 +102,7 @@
         }
     };
 
-    Stream.prototype.writeFloat32 = function(value) {
+    Stream.prototype.writeFloat32 = function writeFloat32(value) {
         ensureSize(this, 16);
         this.view.setFloat32(this.writePosition, value);
         this.writePosition += 4;
@@ -101,8 +111,8 @@
         }
     };
 
-    Stream.prototype.readString = function(pos) {
-        this.readPosition = pos || this.readPosition;
+    Stream.prototype.readString = function readString(pos) {
+        this.readPosition = pos != undefined ? pos : this.readPosition;
         var str = [];
         var value = 0;
         while ((value = this.view.getUint8(this.readPosition++)) != 0) {
@@ -111,31 +121,59 @@
         return str.join('');
     };
 
-    Stream.prototype.readUint8 = function(pos) {
-        this.readPosition = pos || this.readPosition;
+    Stream.prototype.readUint8 = function readUint8(pos) {
+        this.readPosition = pos != undefined ? pos : this.readPosition;
         return this.view.getUint8(this.readPosition++);
     };
 
-    Stream.prototype.readUint16 = function(pos) {
-        this.readPosition = pos || this.readPosition;
+    Stream.prototype.readUint16 = function readUint16(pos) {
+        this.readPosition = pos != undefined ? pos : this.readPosition;
         var r = this.readPosition;
         this.readPosition += 2;
         return this.view.getUint16(r);
     };
 
-    Stream.prototype.readUint32 = function(pos) {
-        this.readPosition = pos || this.readPosition;
+    Stream.prototype.readUint32 = function readUint32(pos) {
+        this.readPosition = pos != undefined ? pos : this.readPosition;
         var r = this.readPosition;
         this.readPosition += 4;
         return this.view.getUint32(r);
     };
 
-    Stream.prototype.readFloat32 = function(pos) {
-        this.readPosition = pos || this.readPosition;
+    Stream.prototype.readFloat32 = function readFloat32(pos) {
+        this.readPosition = pos != undefined ? pos : this.readPosition;
         var r = this.readPosition;
         this.readPosition += 4;
         return this.view.getFloat32(r);
     };
+
+    Stream.prototype.dump = function dump(width) {
+        width = width || 16;
+        var dump = [];
+        var j = 0, k = 0;
+        width += Math.floor(width/4);
+        var row = new Array(256);
+        for (var i=0; i<this.length; i++) {
+            var b = this.readUint8(i);
+            b = b.toString(16);
+            if (b.length < 2) b = '0' + b;
+            row[j++] = b;
+            if (k++ == 3) {
+                row[j++] = ' ';
+                k = 0;
+            }
+            if (j == width) {
+                dump.push(row.join(' '));
+                j = 0;
+                k = 0;
+                row = new Array(256);
+            }
+        }
+        if (j != 0) {
+            dump.push(row.join(' '));
+        }
+        return dump.join('\n');
+    }
 
     public(Stream, 'Stream');
 })();

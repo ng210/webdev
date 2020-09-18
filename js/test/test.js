@@ -37,8 +37,9 @@ function println(text) {
     print(text+'<br/>');
 }
 
-function message(text) {
+function message(text, indent) {
     println(`<span style="color:#80a080">${text}</text>`);
+    if (indent) _indent+=indent;
 }
 
 function error(text) {
@@ -46,9 +47,8 @@ function error(text) {
 }
 
 function test(lbl, action) {
-    _indent = 1;
     println(lbl + '..[result]');
-    _indent = 2;
+    _indent++;
     var result = null;
     var context = new test_context(lbl);
     try {
@@ -65,7 +65,8 @@ function test(lbl, action) {
         );
     } else {
         print_result(context, result);
-    }    
+    }
+    _indent--;
 }
 
 async function measure(lbl, action, batchSize) {
@@ -107,7 +108,16 @@ function deepCompare(a, b, path) {
     else if (a == null && b != null) result = `${path} [null ! b]`;
     else if (a != null && b == null) result = `${path} [a ! null]`;
     else if (typeof a !== typeof b)  result = `${path} [type a (${typeof a}) ! type b (${typeof a})]`;
-    else if (typeof a === 'object' || Array.isArray(a)) {
+    else if (a instanceof ArrayBuffer) {
+        var va = new DataView(a);
+        var vb = new DataView(b);
+        for (var i=0; i<va.byteLength; i++) {
+            if (va.getInt8(i) != vb.getInt8(i)) {
+                result = `${path} a[${i}] ! b[${i}]`;
+                break;
+            }
+        }
+    } else if (typeof a === 'object' || Array.isArray(a)) {
         var keysA = Object.keys(a);
         var keysB = Object.keys(b);
         if (keysA.length !== keysB.length) result = `${path} [keys a (${keysA.length}) ! keys b (${keysB.length})]`;
@@ -147,6 +157,17 @@ function testDeepCompare() {
     _testDeepCompare(obj2.o, obj2);
     _testDeepCompare(obj2.o, obj);
     _testDeepCompare(obj, obj3);
+    var buf1 = new ArrayBuffer(128);
+    var vb1 = new DataView(buf1);
+    var buf2 = new ArrayBuffer(128);
+    var vb2 = new DataView(buf2);
+    for (var i=0; i<128; i++) {
+        vb1.setUint8(i, i);
+        vb2.setUint8(i, i);
+    }
+    _testDeepCompare(buf1, buf2);
+    vb2.setUint8(10, 200);
+    _testDeepCompare(buf1, buf2);
 }
 
 function equals(a, b) {

@@ -29,6 +29,18 @@ include('graph.js');
             context.assert(s.writePosition, '=', 0);
             context.assert(s.readPosition, '=', 10);
         });
+        test('Should create a Stream from DataView', context => {
+            var s = new Stream(new DataView(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).buffer, 4));
+            context.assert(s.size, '=', 10);
+            for (var i=5; i<11; i++) {
+                context.assert(s.readUint8(), '=', i);
+            }
+            s.writeUint8(0);
+            context.assert(s.readUint8(0), '=', 0);
+            context.assert(s.readUint8(1), '=', 6);
+            context.assert(s.writePosition, '=', 1);
+            context.assert(s.readPosition, '=', 2);
+        });
         test('Should read proper values from Stream', context => {
             var s = new Stream(new Uint32Array([0x00434241, 0x04030201, 0x08070605, 0x0000C03F]));
             context.assert(s.size, '=', 16);
@@ -282,10 +294,10 @@ include('graph.js');
     }
 
     var tests = () => [
-        // test_Stream,
-        // test_DataSeries,
-        // test_DataSeriesCompare,
-        // test_DataLink,
+        test_Stream,
+        test_DataSeries,
+        test_DataSeriesCompare,
+        test_DataLink,
         test_Graph
     ];
     
