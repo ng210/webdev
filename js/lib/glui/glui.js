@@ -40,12 +40,13 @@
             }            
             return control;
         },
-        create: function create(id, tmpl, parent, context) {
+        create: async function create(id, tmpl, parent, context) {
             context = context;
-            var ctrl = glui.Control.create(id, tmpl, parent, context);
+            var ctrl = glui.Control.create(id, tmpl, parent || this.screen, context);
             ctrl.addHandlers();
             if (parent == null) {
                 this.screen.add(ctrl);
+                await ctrl.setRenderer(this.mode, this.renderingContext);
             }
             //ctrl.setRenderer(this.mode, this.mode == glui.Render2d ? this.renderingContext2d : this.renderingContext3d);
             return ctrl;
@@ -78,6 +79,13 @@
             this.backBuffer = new glui.Buffer(this.canvas.width, this.canvas.height);
             this.screen = new glui.Container('screen', null, null, app);
             this.setRenderingMode(glui.Render2d);
+
+            document.addEventListener('keydown', glui.onevent);
+            document.addEventListener('keyup', glui.onevent);
+            document.addEventListener('mouseup', glui.onevent);
+            document.addEventListener('mousedown', glui.onevent);
+            document.addEventListener('mousemove', glui.onevent);
+            document.addEventListener('dragging', glui.onevent);
         },
         shutdown: function shutdown() {
             // remove controls
@@ -86,13 +94,23 @@
             //     delete glui.controls[i];
             // }
             // glui.controls.splice(0, glui.controls.length);
-            glui.Control.focused = null;
-            glui.Control.atCursor = null;
-            glui.Control.dragging = null;
+            glui.focusedControl = null;
+            glui.controlAtCursor = null;
+            glui.dragging = null;
             // remove animations
             // for (var i=0; i<glui.animations.length; i++) {
             // }
             glui.animations.splice(0, glui.animations.length);
+            
+            // remove event handlers
+            document.removeEventListener('keydown', glui.onevent);
+            document.removeEventListener('keyup', glui.onevent);
+            document.removeEventListener('mouseup', glui.onevent);
+            document.removeEventListener('mousedown', glui.onevent);
+            document.removeEventListener('mousemove', glui.onevent);
+            document.removeEventListener('dragging', glui.onevent);
+            window.removeEventListener('resize', glui.resize);
+
         },
         buildUI: async function buildUI(context) {
             var nodes = document.body.querySelectorAll('*');
@@ -126,17 +144,17 @@
             this.render();
         },
         resize: function resize(repaint) {
-            this.width = Math.floor(this.scale.x * this.canvas.clientWidth);
-            this.height = Math.floor(this.scale.y * this.canvas.clientHeight);
-            this.screen.width = this.canvas.width = this.width;
-            this.screen.height = this.canvas.height = this.height;
-            for (var i=0; i<this.screen.items.length; i++) {
-                var ctrl = this.screen.items[i];
+            glui.width = Math.floor(glui.scale.x * glui.canvas.clientWidth);
+            glui.height = Math.floor(glui.scale.y * glui.canvas.clientHeight);
+            glui.screen.width = glui.canvas.width = glui.width;
+            glui.screen.height = glui.canvas.height = glui.height;
+            for (var i=0; i<glui.screen.items.length; i++) {
+                var ctrl = glui.screen.items[i];
                 var left = ctrl.left, top = ctrl.top;
-                ctrl.renderer.initialize(ctrl, this.renderingContext);
-                ctrl.move(left, top);
-                if (repaint) ctrl.render();
+                ctrl.renderer.initialize(ctrl, glui.renderingContext);
+                //ctrl.move(left, top);
             }
+            if (repaint) glui.render();
         },
         getControlAt: function getControlAt(x, y, recursive) {
             var cx = x*glui.scale.x, cy = y*glui.scale.y;
@@ -172,6 +190,93 @@
             this.animateId = requestAnimationFrame(glui.animate);
         },
 
+        onevent: function(e) {
+            // get control by coordinates
+            var event = e.type;
+            var control = glui.screen.getControlAt(glui.scale.x*e.x, glui.scale.y*e.y, true);
+            e.control = control;
+            //console.log(`${event} for target=${e.target}, this=${this}, control=${this.control ? this.control : e.target.control ? e.target.control : 'none'}, Control.focused=${Control.focused}`);
+            if (control && control.disabled) {
+                return false;
+            }
+            if (event == 'mousedown') {
+                // check onfocus/onblur
+                if (control != glui.focusedControl) {
+                    if (glui.focusedControl) {
+                        var ctrl = glui.focusedControl;
+                        glui.focusedControl = control;
+                        e.control = control;    //ctrl;
+                        // var parent = getCommonParent(ctrl, control, 'parent')
+                        // if (!parent) {
+                            ctrl.callHandler('blur', e);
+                        // } else {
+                        //     parent.callHandler('blur', e);
+                        // }
+                    }
+                    if (control) {
+                        e.control = control;
+                        control.callHandler('focus', e);
+                        glui.focusedControl = control;
+                    }
+                }
+                if (glui.focusedControl) {
+                    glui.dragging = glui.focusedControl;
+                    glui.dragStart[0] = e.screenX;
+                    glui.dragStart[1] = e.screenY;
+                }
+            } else if (event == 'mousemove') {
+                if (control != glui.controlAtCursor) {
+                    if (glui.controlAtCursor) {
+                        e.control = glui.controlAtCursor;
+                        glui.controlAtCursor.callHandler('mouseout', e);
+                    }
+                    glui.controlAtCursor = control;
+                    if (control) {
+                        e.control = control;
+                        control.callHandler('mouseover', e);
+                    }
+                }
+                if (glui.dragging) {
+                    var draggingEvent = {
+                        type: "dragging",
+                        x: e.screenX,
+                        y: e.screenY,
+                        screenX: e.screenX,
+                        screenY: e.screenY,
+                        clientX: e.clientX,
+                        clientY: e.clientY,
+                        deltaX: e.screenX - glui.dragStart[0],
+                        deltaY: e.screenY - glui.dragStart[1]
+                    };
+    
+                    glui.dragging.callHandler('dragging', draggingEvent);
+                    glui.dragStart[0] = e.screenX;
+                    glui.dragStart[1] = e.screenY;
+                }
+            } else if (event == 'mouseup') {
+                glui.dragging = null;
+                if (control) {
+                    setTimeout( () => control.callHandler('click', e), 0);
+                }
+            }
+    
+            if (!control && (event == 'keydown' || event == 'keyup')) {
+                control = glui.focusedControl;
+            }
+    
+            if (control) {
+                e.control = control;
+                control.callHandler(e.type, e);
+                // e.stopPropagation();
+                // e.preventDefault();
+            }
+            //console.log(Control.focused ? Control.focused.id : 'none')
+        },
+        focused: null,
+        atCursor: null,
+        dragging: null,
+        dragStart: [0, 0],    
+
         Alignment: {
             LEFT: 1,
             CENTER: 2,
@@ -185,7 +290,7 @@
         Render3d: 2,
     };
 
-    window.addEventListener('resize', e => glui.resize(true));
+    window.addEventListener('resize', glui.resize);
 
     public(glui, 'glui');
 })();

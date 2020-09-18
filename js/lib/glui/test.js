@@ -5,7 +5,7 @@ include('glui/glui-lib.js');
 
     var style = {
         'font': 'Arial 12',
-        'width':'10em', 'height':'1.75em',
+        'width':'10em', 'height':'1.5em',
         'align':'right middle',
         'border':'#406080 1px inset',
         'background': '#c0e0ff',
@@ -20,13 +20,13 @@ include('glui/glui-lib.js');
     };
     var gridStyle = {
         'font': 'Arial 20',
-        //'width':'18em', //'height':'6em',
+        'width':'14em', 'height':'5em',
         'align':'center middle',
         'border':'#308060 2px outset',
         'color': '#184030',
         'background': '#308060',
         'cell': {
-            'font': 'Arial 16',
+            'font': 'Arial 14',
             'align':'center middle',
             'border':'#7090c0 1px inset',
             'color': '#102040',
@@ -127,7 +127,6 @@ include('glui/glui-lib.js');
         //     },
         //     'source': 'glui/res/test.png'
         // },
-
         {
             'type': 'Grid',
             'style': gridStyle,
@@ -139,25 +138,25 @@ include('glui/glui-lib.js');
             'title': 'Empty 3x2',
             'rows': 2,
             'cols': 3
-        }
-        // {
-        //     'type': 'Grid',
-        //     'style': gridStyle,
-        //     'title': 'Characters 1x3',
-        //     'data-source': 'data',
-        //     'data-field': 'grid',
-        //     'rows': 4,
-        //     'cols': 1,
-        //     'header': false,
-        //     'row-template': {
-        //         'name': { 'type': 'Label', 'column': '$Key', 'style': {
-        //             'width':'65%', 'background': '#60c0a0', 'border':'#60c0a0 1px inset'
-        //         } },
-        //         'age': { 'type': 'Textbox', 'data-type': 'int', 'column': '$Key', 'style': {
-        //             'width':'35%', 'background': '#d0fff0', 'border':'#608078 1px inset'
-        //         } }
-        //     }
-        // },
+        },
+        {
+            'type': 'Grid',
+            'style': gridStyle,
+            'title': 'Characters 4x2',
+            'data-source': 'data',
+            'data-field': 'grid',
+            'rows': 4,
+            'cols': 2,
+            'header': false,
+            'row-template': {
+                'name': { 'type': 'Label', 'column': '$Key', 'style': {
+                    'width':'65%', 'background': '#60c0a0', 'border':'#60c0a0 1px inset'
+                } },
+                'age': { 'type': 'Textbox', 'data-type': 'int', 'column': '$Key', 'style': {
+                    'width':'35%', 'background': '#d0fff0', 'border':'#608078 1px inset'
+                } }
+            }
+        },
         // {
         //     'type': 'Grid',
         //     'style': gridStyle,
@@ -246,37 +245,52 @@ include('glui/glui-lib.js');
     }
 
     async function createControls() {
+        var top = glui.screen.renderer.convertToPixel('5em', true), left = 10;
+        var width = 0;
         for (var i=0; i<controls.length; i++) {
-            var ctrl = glui.create(`${controls[i].type}${i}`, controls[i], null, App);
+            var ctrl = await glui.create(`${controls[i].type}${i}`, controls[i], null, App);
             if (ctrl instanceof glui.Image) {
                 await ctrl.load();
+            } else if (ctrl instanceof glui.Grid) {
+                await ctrl.build();
             }
+            ctrl.move(left, top);
+            width = Math.max(width, parseFloat(ctrl.width));
+            ctrl.getBoundingBox();
+            top += 8 + parseFloat(ctrl.height);
+            if (top > screen.height/4) {
+                top = 10;
+                left += width + 10;
+                width = 0;
+            }
+
         }
         // var ctrl = glui.getControlById('Label1');
         // ctrl.style['background-image'] = 'glui/background.png';
     }
 
     async function renderUI() {
-        await glui.setRenderingMode(glui.Render2d);
+        // await glui.setRenderingMode(glui.Render2d);
         // renderer = new glui.Renderer2d();
         // renderer.setFont('Arial 12 normal');
-        glui.screen.renderer.setFont('Arial 12 normal');
-        var top = glui.screen.renderer.convertToPixelV('5em'), left = 10;
-        var width = 0;
-        for (var i=0; i<glui.screen.items.length; i++) {
-            var ctrl = glui.screen.items[i];
-            if (ctrl.parent == null) {
-                ctrl.move(left, top);
-                width = Math.max(width, parseFloat(ctrl.width));
-                ctrl.getBoundingBox();
-                top += 8 + parseFloat(ctrl.height);
-                if (top > screen.height/4) {
-                    top = 10;
-                    left += width + 10;
-                    width = 0;
-                }
-            }
-        }
+        //glui.screen.renderer.setFont('Arial 12 normal');
+        // var top = glui.screen.renderer.convertToPixel('5em', true), left = 10;
+        // var width = 0;
+        // for (var i=0; i<glui.screen.items.length; i++) {
+        //     var ctrl = glui.screen.items[i];
+        //     // if (ctrl.parent == null) {
+        //     //     //ctrl.move(left, top);
+        //     //     width = Math.max(width, parseFloat(ctrl.width));
+        //     //     ctrl.getBoundingBox();
+        //     //     top += 8 + parseFloat(ctrl.height);
+        //     //     if (top > screen.height/4) {
+        //     //         top = 10;
+        //     //         left += width + 10;
+        //     //         width = 0;
+        //     //     }
+        //     // }
+        // }
+        //glui.render();
         glui.resize(true);
         glui.animate();
     }

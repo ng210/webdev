@@ -9,28 +9,26 @@ include('glui/glui.js');
         this.color = [0, 0, 0];
         this.backgroundColor = [192, 192, 192];
     }
-    Renderer.prototype.accumulate = function accumulate(property, isVertical) {
-        var node = this.control;
-        var value = 0;
-        while (node) {
-            if (node[property] != undefined) {
-                value += isVertical ? this.convertToPixelV(node[property]) : this.convertToPixel(node[property]);
-            }
-            node = node.parent;
-        }
-        return value;
-    };
+    // Renderer.prototype.accumulate = function accumulate(property, isVertical) {
+    //     var node = this.control;
+    //     var value = 0;
+    //     while (node) {
+    //         if (node[property] != undefined) {
+    //             value += isVertical ? this.convertToPixelV(node[property]) : this.convertToPixel(node[property]);
+    //         }
+    //         node = node.parent;
+    //     }
+    //     return value;
+    // };
     Renderer.prototype.initialize = async function initialize(control, context) {
         this.control = control;
         this.context = context;
         this.setFont(this.control.style.font);
         this.setBorder(this.control.style.border);
         this.control.width = this.convertToPixel(this.control.style.width);
-        this.control.height = this.convertToPixelV(this.control.style.height);
-        this.control.offsetLeft = this.convertToPixelV(this.control.style.left);
-        this.control.left = this.accumulate('offsetLeft');
-        this.control.offsetTop = this.convertToPixelV(this.control.style.top);
-        this.control.top = this.accumulate('offsetTop', true);
+        this.control.height = this.convertToPixel(this.control.style.height, true);
+        this.control.offsetLeft = this.control.offsetLeft != -1 ? this.control.offsetLeft : this.convertToPixel(this.control.style.left);
+        this.control.offsetTop = this.control.offsetTop != -1 ? this.control.offsetTop : this.convertToPixel(this.control.style.top, true);
         this.color = this.toColor(this.control.style.color) || this.color;
         this.backgroundColor = this.control.style.background != undefined ? this.toColor(this.control.style.background) : this.backgroundColor;
         if (this.control.style['background-image'] != 'none') {
@@ -62,46 +60,26 @@ include('glui/glui.js');
         }
         return alignment;
     };
-    Renderer.prototype.convertToPixel = function convertToPixel(value, parentWidth) {
+    Renderer.prototype.convertToPixel = function convertToPixel(value, isVertical) {
+        var prop = 'width';
+        var fontSize = 'em';
+        if (isVertical) {
+            prop = 'height'
+            fontSize = 'size';
+        }
         var res = 0;
+if (!this.control) debugger;
         if (value !== undefined) {
             if (typeof value === 'number') res = value;
             else if (value.endsWith('px')) res = parseFloat(value);
+            else if (value.endsWith('em')) res = this.font[fontSize] * parseFloat(value);
             else if (value.endsWith('%')) {
-                var width = parentWidth;
-                if (width == undefined) {
-                    var parent = this.control && this.control.parent ? this.control.parent : glui.screen;
-                    if (parent.renderer) {
-                        width = parent.width - 2*parent.renderer.border.width;
-                    } else {
-                        width = parent.width != undefined ? parent.width : parent.innerWidth;
-                    }
-                }
-                res = width * parseFloat(value)/100;
-            } else if (value.endsWith('em')) res = this.font.em * parseFloat(value);
+                var parent =  this.control.parent ? this.control.parent : glui.screen;
+if (!parent.renderer) debugger;
+                res = ((parent[prop] - 2*parent.renderer.border.width) * parseFloat(value))/100;
+            }
         }
         return Math.floor(res);
-    };
-    Renderer.prototype.convertToPixelV = function convertToPixel(value, parentHeight) {
-        var res = 0;
-        var parent = this.control && this.control.parent ? this.control.parent : window;
-        if (value !== undefined) {
-            if (typeof value === 'number') res = value;
-            else if (value.endsWith('px')) res = parseFloat(value);
-            else if (value.endsWith('%')) {
-                var height = parentHeight;
-                if (height == undefined) {
-                    var parent = this.control && this.control.parent ? this.control.parent : window;
-                    if (parent.renderer) {
-                        height = parent.height - 2*parent.renderer.border.width;
-                    } else {
-                        height = parent.height != undefined ? parent.height : parent.innerHeight;
-                    }
-                }
-                res = height * parseFloat(value)/100;
-            } else if (value.endsWith('em')) res = this.font.size * parseFloat(value);
-        }
-        return Math.round(res);
     };
     Renderer.prototype.toColor = function toColor(cssColor) {
         var color = null;

@@ -2,6 +2,19 @@ include('control.js');
 
 (function() {
 
+    function ContainerRenderer2d() {
+        ContainerRenderer2d.base.constructor.call(this);
+    }
+    extend(glui.Renderer2d, ContainerRenderer2d);
+
+    ContainerRenderer2d.prototype.renderControl = function renderControl() {
+        var ctrl = this.control;
+        for (var i=0; i<ctrl.items.length; i++) {
+            ctrl.items[i].render();
+        }
+    };
+
+
     function Container(id, template, parent, context) {
         this.items = [];
         Container.base.constructor.call(this, id, template, parent, context);
@@ -14,6 +27,12 @@ include('control.js');
             this.items[i].destroy();
         }
         delete this.items
+    };
+    Container.prototype.getTemplate = function getTemplate() {
+        var tmpl = Container.base.getTemplate.call(this);
+        tmpl.style.background = 'none';
+        tmpl.style.border = 'none';
+        return tmpl;
     };
     Container.prototype.add = function add(ctrl) {
         var ix = this.items.findIndex(x => x.zIndex < ctrl.zIndex);
@@ -48,11 +67,12 @@ include('control.js');
     };
 	Container.prototype.dataBind = function(source, field) {
         Container.base.dataBind.call(this, source, field);
+        var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
         for (var i=0; i<this.items.length; i++) {
-            this.items[i].dataBind(this.dataSource[i]);
+            this.items[i].dataBind(dataSource[i]);
         }
 	};
-    Container.prototype.createRenderer = mode => mode == glui.Render2d ? new glui.Renderer2d() : 'glui.Renderer3d';
+    Container.prototype.createRenderer = mode => mode == glui.Render2d ? new ContainerRenderer2d() : 'ContainerRenderer3d';
     Container.prototype.setRenderer = async function setRenderer(mode, context) {
         await Container.base.setRenderer.call(this, mode, context);
         var arr = [];
@@ -61,11 +81,11 @@ include('control.js');
         }
         await Promise.all(arr);
     };
-    Container.prototype.render = function render() {
-        for (var i=0; i<this.items.length; i++) {
-            this.items[i].render();
-        }
-    };
+    // Container.prototype.render = function render() {
+    //     for (var i=0; i<this.items.length; i++) {
+    //         this.items[i].render();
+    //     }
+    // };
     Container.prototype.move = function move(dx, dy) {
 		Container.base.move.call(this, dx, dy);
 		// for (var i=0; i<this.items.length; i++) {
@@ -74,9 +94,11 @@ include('control.js');
 	};
     Container.prototype.getControlAt = function getControlAt(cx, cy, recursive) {
         var res = null;
+        cx -= this.renderer.border.width + this.offsetLeft;
+        cy -= this.renderer.border.width + this.offsetTop;
 		for (var i=0; i<this.items.length; i++) {
             var ctrl = this.items[i];
-            if (ctrl.style.visible && ctrl.left < cx  && cx < ctrl.left + ctrl.width && ctrl.top < cy  && cy < ctrl.top + ctrl.height) {
+            if (ctrl.style.visible && ctrl.offsetLeft < cx  && cx < ctrl.offsetLeft + ctrl.width && ctrl.offsetTop < cy  && cy < ctrl.offsetTop + ctrl.height) {
                 res = ctrl;
                 if (recursive && Array.isArray(ctrl.items) && ctrl.items.length > 0) {
                     res = ctrl.getControlAt(cx, cy, true);

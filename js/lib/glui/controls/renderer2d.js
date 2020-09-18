@@ -90,10 +90,11 @@ include('renderer.js');
         // set clipping area
         this.context.save();
         var region = new Path2D();
-        var borderWidth = ctrl.parent && ctrl.parent.renderer ? ctrl.parent.renderer.border.width : 0;
-        var left = ctrl.left + borderWidth;
-        var top = ctrl.top + borderWidth;
-        this.context.setTransform(1, 0, 0, 1, left, top);
+        // var borderWidth = ctrl.parent && ctrl.parent.renderer ? ctrl.parent.renderer.border.width : 0;
+        // var left = ctrl.left + borderWidth;
+        // var top = ctrl.top + borderWidth;
+        this.context.setTransform(1, 0, 0, 1, ctrl.left, ctrl.top);
+        //this.context.translate(ctrl.offsetLeft, ctrl.offsetTop);
         region.rect(0, 0, ctrl.width, ctrl.height);
         this.context.clip(region);
         if (this.backgroundColor) this.drawRect(0, 0, this.control.width, this.control.height, this.backgroundColor);
@@ -101,8 +102,6 @@ include('renderer.js');
         var height = ctrl.height;
         if (this.border.style) {
             this.drawBorder(0, 0, this.control.width, this.control.height);
-            left = this.border.width;
-            top = this.border.width;
             width -= 2*this.border.width;
             height -= 2*this.border.width;
         }
@@ -116,7 +115,7 @@ include('renderer.js');
 		}
         // render control
         region = new Path2D();
-        region.rect(left, top, width, height);
+        region.rect(this.border.width, this.border.width, width, height);
         this.context.clip(region);
         if (this.control.style.font) this.setFont(this.control.style.font);
         this.renderControl();
