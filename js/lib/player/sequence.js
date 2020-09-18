@@ -5,26 +5,16 @@ include('data/stream.js');
     // byte streams
     // - commands: code, byte count, arguments
     // - frames: delta, command-1, command-2, ..., command-n, 0
-    // - sequence: header byte count, header, frame-1, frame-2, ..., frame-n, EOS frame
+    // - sequence: adapter id, frame-1, frame-2, ..., frame-n, EOS frame
 
     function Sequence(adapter) {
         this.stream = new Stream(256);
-        this.headerSizeInBytes = 2;
         this.adapter = adapter;
-
-        
     };
-    Sequence.prototype = {
-        get cursor() { return this.stream.cursor; },
-        set cursor(v) { this.stream.cursor = v; }
-    };
-
     Sequence.prototype.writeHeader = function() {
-        this.cursor = 0;
-        this.stream.writeUint8(this.headerSizeInBytes);
+        this.stream.writePosition = 0;
         this.stream.writeUint8(this.adapter.getInfo().id);
     };
-
     Sequence.prototype.writeDelta = function(delta) { this.stream.writeUint16(delta); };
     Sequence.prototype.writeCommand = function(cmd) { this.stream.writeUint8(cmd); };
     Sequence.prototype.writeEOF = function() { this.stream.writeUint8(Ps.Player.EOF); };
@@ -41,21 +31,18 @@ include('data/stream.js');
 
     Sequence.prototype.toFrames = function() {
         var frames = [];
-        var cursor = this.headerSizeInBytes;
+        var cursor = 0;
         while (true) {
             var frame = new Ps.Frame();
             frame.delta = this.getUint16(cursor); cursor += 2;
             var cmd = 0;
             while (true) {
-                // read command code, 1 byte
+                // read command code byte
                 cmd = this.getUint8(cursor++);
                 if (cmd > Ps.Player.EOS) {
-                    // var oldCursor = cursor;
-                    // cursor += this.adapter.getCommandSize(cmd-2, this.sequence, cursor+1);
-                    // frame.commands.push(new DataView(this.sequence.stream.slice(oldCursor, cursor)));
                     var command = this.adapter.makeCommand(cmd, this, cursor);
                     frame.commands.push(command);
-                    cursor += command.length - 1;
+                    cursor += command.size - 1;
                 } else if (cmd == Ps.Player.EOF) {
                     if (frame.commands.length == 0) {
                         cmd = new Stream(1);
@@ -74,16 +61,25 @@ include('data/stream.js');
         }
         return frames;
     };
-    Sequence.prototype.fromFrames = function(frames) {
+
+    // static members
+    Sequence.fromStream = function fromStream(stream, offset, length) {
+        var adapter = Ps.Player.adapters[stream.readUint8(offset)];
+        var sequence = new Sequence(adapter);
+        sequence.stream.writeStream(stream, offset+1, length-1);
+        return sequence;
+    };
+
+    Sequence.fromFrames = function fromFrames(frames, adapter) {
+        var sequence = new Sequence(adapter);
         var hasEOS = false;
-        this.writeHeader();
         for (var fi=0; fi<frames.length; fi++) {
             var frame = frames[fi];
             var hasEOF = false;
-            this.writeDelta(frame.delta);
+            sequence.writeDelta(frame.delta);
             for (var ci=0; ci<frame.commands.length; ci++) {
                 var command = frame.commands[ci];
-                this.stream.writeStream(command, 0);
+                sequence.stream.writeStream(command);
                 var cmd = command.readUint8(0);                
                 if (cmd == 0) {
                     hasEOF = true;
@@ -96,13 +92,15 @@ include('data/stream.js');
             }
             //if (hasEOS) break;
             if (!hasEOF) {
-                this.writeUint8(0);
+                sequence.writeUint8(0);
             }
         }
-        this.cursor--;
+        sequence.stream.writePosition--;
         if (!hasEOS) {
-            this.writeUint8(1);
+            sequence.writeUint8(1);
         }
+
+        return sequence;
     };
 
     public(Sequence, 'Sequence', Ps);

@@ -5,7 +5,7 @@ include('data/stream.js');
 include('/synth/synth-adapter.js');
 include('ui/ui-lib.js');
 
-// Extensions to the synth-adapter
+// Extensions to the player-adapter
 (function() {
     Ps.Player.prototype.makeCommand = function(command) {
         var stream = new Stream(128);

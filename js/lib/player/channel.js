@@ -7,11 +7,9 @@ include('sequence.js');
         
     };
     public(Frame, 'Frame', Ps)
-    //Ps.Frame = Frame;
 
-    function Channel(id, player) {
+    function Channel(id) {
         this.id = id;
-        this.player = player;
         this.sequence = null;
         this.frames = null;
         this.device = null;
@@ -24,16 +22,17 @@ include('sequence.js');
 
     Channel.prototype.assign = function(deviceId, sequence) {
         this.sequence = sequence;
-        this.cursor = sequence.headerSizeInBytes;
+        this.cursor = 0;
         this.adapter = sequence.adapter;
         if (!this.adapter) {
             throw new Error(`Missing adapter!`);
         }
         this.device = this.adapter.getDevice(deviceId);
+        this.isActive = true;
     };
 
     Channel.prototype.reset = function() {
-        this.cursor = this.sequence.headerSizeInBytes;
+        this.cursor = 0;
         if (this.loopCount > 0) {
             this.currentTick = 0;
             this.loopCount--;

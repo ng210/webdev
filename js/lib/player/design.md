@@ -3,7 +3,7 @@
 ## 1. Sequence and adapter ##
 
 ### Dedicated sequences
-* commands are pre-bound to adapter types
+* commands are bound to adapter types
 * command codes are reused
 * requires transformation to be used by other adapter types
 
@@ -97,3 +97,46 @@ Entities are created and destroyed on command. For ease of sequence editing, the
 Entities are mostly visible or audible objects that are rendered using devices. These devices are wrapped in a context, that has to be created before processing commands. A self-containing system has to implement and/or provide entry points (callbacks) for device handling and context management. Best entry point would be the initialization of the adapters.
 
 ### Conclusion: devices and contexts are created and destroyed by the singleton adapter objects at initialization. ###
+
+
+# Control and data flow
+
+## Player initialization
+* load binary data
+* prepare access to adapter, sequence and data-block tables
+* create and initialize adapters
+* create master channel: sequence #1, player adapter, player device
+
+## Binary data
+0000 02 header size
+0002 02 offset to table of adapters
+0004 02 offset to table of sequences
+0006 02 offset to table of data blocks
+...
+Table of adapters
+0000 01 adapter count
+0001 01 1st adapter type
+0002 01 1st adapter init data block id
+...
+Table of sequences
+0000 02 sequence count
+0002 02 offset to 1st sequence 
+0004 02 length of 1st sequence in bytes
+0006 02 offset to 2nd sequence
+0008 02 length of 2nd sequence in bytes
+000A 02 offset to 3rd sequence
+000C 02 length of 3rd sequence in bytes
+...
+Table of data blocks
+0000 02 data block count
+0002 04 offset to 1st data block
+0006 04 length of 1st data block in bytes
+000A 04 offset to 2nd data block
+000E 04 length of 2nd data block in bytes
+0012 04 offset to 3rd data block
+0016 04 length of 3rd data block in bytes
+
+## Handling tables internally
+* binary is read into a stream
+* table offsets are written into cursors
+* table entries are accessed by using the cursors on the stream

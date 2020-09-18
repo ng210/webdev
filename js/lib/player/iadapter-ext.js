@@ -3,44 +3,48 @@ include('iadapter.js');
  * Adapter interface extensions for editor
  ******************************************************************************/
 (function() {
-    IAdapterExt = {
-        // data handling extensions
-        makeCommand: function(command) { throw new Error('Not implemented!'); },
-        //getCommandSize: function(command, args) { throw new Error('Not implemented!'); },
-        toDataSeries: function(sequence, getSeriesId, convertCommand) {
-            var series = {};
-            var stream = sequence.stream;
-            stream.readPosition = sequence.headerSizeInBytes;
-            var delta = 0;
+    function IAdapterExt() {
+
+    }
+    extend(Ps.IAdapter, IAdapterExt);
+
+    // data handling extensions
+    IAdapterExt.prototype.makeCommand = function makeCommand(command) { throw new Error('Not implemented!'); };
+    //getCommandSize: function(command, args) { throw new Error('Not implemented!'); },
+    IAdapterExt.prototype.toDataSeries = function toDataSeries(sequence, getSeriesId, convertCommand) {
+        var series = {};
+        var stream = sequence.stream;
+        stream.readPosition = sequence.headerSizeInBytes;
+        var delta = 0;
+        while (stream.readPosition < stream.length) {
+            delta += stream.readUint16();
+            var cmd = 0;
             while (stream.readPosition < stream.length) {
-                delta += stream.readUint16();
-                var cmd = 0;
-                while (stream.readPosition < stream.length) {
-                    // read command code, 1 byte
-                    cmd = stream.readUint8();
-                    if (cmd == Ps.Player.EOF) break;
-                    if (cmd == Ps.Player.EOS) {
-                        series[cmd] = ds = new DataSeries();
-                        ds.set([delta, 0]);
-                        break;
-                    }
-                    var seriesId = getSeriesId(cmd, stream);
-                    var ds = series[seriesId];
-                    if (!ds) {
-                        ds = series[seriesId] = new DataSeries();
-                        // if (cmd == psynth.SynthAdapter.SETNOTE && !series[psynth.SynthAdapter.SETVELOCITY]) {
-                        //     series[psynth.SynthAdapter.SETVELOCITY] = new DataSeries();
-                        // }
-                    }
-                    convertCommand(cmd, delta, stream, ds);
-                }
+                // read command code, 1 byte
+                cmd = stream.readUint8();
+                if (cmd == Ps.Player.EOF) break;
                 if (cmd == Ps.Player.EOS) {
+                    series[cmd] = ds = new DataSeries();
+                    ds.set([delta, 0]);
                     break;
                 }
+                var seriesId = getSeriesId(cmd, stream);
+                var ds = series[seriesId];
+                if (!ds) {
+                    ds = series[seriesId] = new DataSeries();
+                    // if (cmd == psynth.SynthAdapter.SETNOTE && !series[psynth.SynthAdapter.SETVELOCITY]) {
+                    //     series[psynth.SynthAdapter.SETVELOCITY] = new DataSeries();
+                    // }
+                }
+                convertCommand(cmd, delta, stream, ds);
             }
-            return series;
-        },
-        fromDataSeries: function(series, adapter, channelId) {
+            if (cmd == Ps.Player.EOS) {
+                break;
+            }
+        }
+        return series;
+    };
+    IAdapterExt.prototype.fromDataSeries = function fromDataSeries(series, adapter, channelId) {
             var sequence = null;
             var keys = Object.keys(series);
             var f0 = 0, f1 = 0;
@@ -109,16 +113,14 @@ include('iadapter.js');
                 f0++;
             } while (true);
             return sequence;
-        },
-        createInitData: function() {
-            return null;
-        },
+    };
+    IAdapterExt.prototype.createInitData = function createInitData() { return null; };
 
-        // UI extensions
-        createDialog: function(type) { throw new Error('Not implemented!'); },
-        createDeviceUi: function(device) { throw new Error('Not implemented!'); },
-        createSequenceUi: function(device) { throw new Error('Not implemented!'); }
-    };        
+    // UI extensions
+    IAdapterExt.prototype.createDialog = function createDialog(type) { throw new Error('Not implemented!'); };
+    IAdapterExt.prototype.createDeviceUi = function createDeviceUi(device) { throw new Error('Not implemented!'); };
+    IAdapterExt.prototype.createSequenceUi = function createSequenceUi(device) { throw new Error('Not implemented!'); };
+   
 
     public(IAdapterExt, 'IAdapterExt', Ps);
 })();

@@ -8,18 +8,31 @@ include('data/stream.js');
     function IAdapter() {
         this.devices = [];
     }
-    IAdapter.prototype.getInfo = function() { throw new Error('Not implemented!'); };
-    IAdapter.prototype.registerCommands = function(registry) { throw new Error('Not implemented!'); };
+    IAdapter.getInfo = function() { throw new Error('Not implemented!'); };
+    IAdapter.prototype.getInfo = function() { return this.constructor.getInfo(); };
+    //IAdapter.prototype.registerCommands = function(registry) { throw new Error('Not implemented!'); };
     IAdapter.prototype.prepareContext = function(data) {
         if (data) {
-            var cursor = 0;
-            var deviceCount = data.readUint8(cursor++);
+            data.readPosition = 0;
+            var deviceCount = data.readUint8();
             for (var i=0; i<deviceCount; i++) {
-                this.createDevice(data.readUint8(cursor++));
+                var device = this.createDevice(data.readUint8(), data);
+                this.devices.push(device);
             }
         }
     };
-    IAdapter.prototype.createDevice = function(deviceId, initData) { throw new Error('Not implemented!'); };
+    IAdapter.prototype.createDeviceImpl = function(deviceType, initData) {
+        throw new Error('Not implemented!');
+    };
+    IAdapter.prototype.createDevice = function(deviceType, initData) {
+        var device = this.createDeviceImpl(deviceType, initData);
+        if (device != null) {
+            device.type = deviceType;
+            this.devices.push(device);
+        }
+        return device;
+    };        
+    IAdapter.prototype.getDevice = function getDevice(id) { return this.devices[id]; }
     IAdapter.prototype.processCommand = function(device, command, sequence, cursor) { throw new Error('Not implemented!'); };
     IAdapter.prototype.updateRefreshRate = function(fps) {
         for (var i=0; i<this.devices.length; i++) {
