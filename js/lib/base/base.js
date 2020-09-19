@@ -15,6 +15,7 @@ var ajax = {
         'jpg':   { mimeType: 'image/jpg', responseType: 'blob', charSet: 'binary' },
         'png':   { mimeType: 'image/png', responseType: 'blob', charSet: 'binary' },
         'json':  { mimeType: 'text/json', responseType: 'json', charSet: 'utf-8' },
+        'bin':   { mimeType: 'application/octet-stream', responseType: 'arraybuffer', charSet: 'binary' },
     },
     getTypeByExtension: function(url) {
         var m = url.match(/[^\\\/\.]+\.([^.]+)$/);

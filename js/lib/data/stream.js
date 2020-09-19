@@ -51,6 +51,7 @@
         if (this.writePosition > this.length) {
             this.length = this.writePosition;
         }
+        return this;
     };
 
     Stream.prototype.writeStream = function writeStream(stream, offset, length) {
@@ -63,6 +64,7 @@
         if (this.writePosition > this.length) {
             this.length = this.writePosition;
         }
+        return this;
     };
 
     Stream.prototype.writeBytes = function writeBytes(array, offset, length) {
@@ -74,6 +76,7 @@
         if (this.writePosition > this.length) {
             this.length = this.writePosition;
         }
+        return this;
     };
 
     Stream.prototype.writeUint8 = function writeUint8(value) {
@@ -82,6 +85,7 @@
         if (this.writePosition > this.length) {
             this.length = this.writePosition;
         }
+        return this;
     };
 
     Stream.prototype.writeUint16 = function writeUint16(value) {
@@ -91,6 +95,7 @@
         if (this.writePosition > this.length) {
             this.length = this.writePosition;
         }
+        return this;
     };
 
     Stream.prototype.writeUint32 = function writeUint32(value) {
@@ -100,6 +105,7 @@
         if (this.writePosition > this.length) {
             this.length = this.writePosition;
         }
+        return this;
     };
 
     Stream.prototype.writeFloat32 = function writeFloat32(value) {
@@ -109,6 +115,7 @@
         if (this.writePosition > this.length) {
             this.length = this.writePosition;
         }
+        return this;
     };
 
     Stream.prototype.readString = function readString(pos) {
@@ -173,7 +180,28 @@
             dump.push(row.join(' '));
         }
         return dump.join('\n');
-    }
+    };
+
+    Stream.prototype.toFile = function toFile(fileName, type, offset, length) {
+        var view = new Uint8Array(this.buffer, offset || 0, length || this.length);
+        var data = new Blob([view], {'type': type});
+        var url = window.URL.createObjectURL(data);
+        var link = document.createElement('a');
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.setAttribute('download', fileName);
+        link.href = url;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+        delete link;
+    };
+    
+    Stream.fromFile = async function fromFile(path, type) {
+        type = type || 'application/octet-stream';
+        var file = await load({ 'url':path, 'contentType': type, 'charSet': 'bin'});
+        return new Stream(file.data);
+    };
 
     public(Stream, 'Stream');
 })();
