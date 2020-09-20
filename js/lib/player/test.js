@@ -87,7 +87,8 @@ include('player-lib.js');
 
         createSequences: function createSequences() {
             this.sequences = [];
-            // master sequence
+
+            // MASTER sequence
             var sequence = new Ps.Sequence(Ps.Player.adapters[Ps.Player.getInfo().id]);
             // Frame #1
             sequence.writeDelta(0);
@@ -161,18 +162,13 @@ include('player-lib.js');
             return this.sequences;
         },
 
-        startChannelPlayBack: async function startChannelPlayBack(channel) {
-            function loop(resolve) {
-                clearTimeout(App.timer);
-                if (channel.run(1)) {
-                    App.timer = setTimeout(loop, 20, resolve);
-                } else {
-                    resolve(1);
-                }
-            }
-
-            App.timer = null;
-            return new Promise(resolve => loop(resolve));
+        createDataBlocks: function createDataBlocks() {
+            var dataBlocks = [
+                new Stream([1, Ps.Player.Device.CHANNEL]),
+                new Stream(16).writeUint8(1).writeUint8(TestAdapter.DIV).writeUint16(120).writeUint16(200),
+                new Stream(16).writeString('Hello world!')
+            ];
+            return dataBlocks;
         }
     };
 
@@ -220,55 +216,23 @@ include('player-lib.js');
         });
     }
 
-    function test_createBinaryData() {
-        message('Test create binary data', 1);
-        Ps.Player.addAdapter(Ps.Player);
-        Ps.Player.addAdapter(TestAdapter);
-        App.stream = Ps.Player.createBinaryData(
-            () => [
-                    [1, 0]      // test adapter with 1st data block for initialization
-            ],
-            function createSequences01() {
-                var sequences = [];
-                var sequence = new Ps.Sequence(TestAdapter);
-                sequence.writeHeader();
-                // Frame #1
-                sequence.writeDelta(16);    // 2
-                sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq1.1 - Hello World!');  // 1+22
-                sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(1);  // 1+1
-                sequence.writeEOF();    // 1 => 28
-                // Frame #2
-                sequence.writeDelta(16);    // 2
-                sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq1.2 - End'); // 1+13
-                sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(3);  // 1+1
-                sequence.writeEOS();    // 1 => 19
-                sequences.push(sequence);   // 19+28=47
-                return sequences;
-            },
-            function createDataBlocks01() {
-                var dataBlocks = [];
-                var dataBlock = new Stream(16);
-                dataBlock.writeString('Hello world!');  // 13
-                dataBlocks.push(dataBlock);
-                return dataBlocks;
-            }
-        );
-        test('Binary data should contain 1 adapter, 1 sequence and 1 data block', ctx => {
+    function test_binary() {
+        test('Binary data should contain 1 adapter, 4 sequences and 3 data block', ctx => {
             var offset = App.stream.readUint16(2);              // offset to adapter list
             ctx.assert(offset, '=', 8);
             ctx.assert(App.stream.readUint8(offset), '=', 1);   // adapter count should be 1
             offset = App.stream.readUint16(4);                  // offset to sequence table
             ctx.assert(offset, '=', 11);
-            ctx.assert(App.stream.readUint16(offset), '=', 1);  // sequence count
+            ctx.assert(App.stream.readUint16(offset), '=', 4);  // sequence count
             offset = App.stream.readUint16(6);                  // offset to data block table
             ctx.assert(offset, '=', 17);
-            ctx.assert(App.stream.readUint16(offset), '=', 1);  // data block count
+            ctx.assert(App.stream.readUint16(offset), '=', 3);  // data block count
         });
         test('Adapter should be TestAdapter with init data block id #0', ctx => {
             ctx.assert(App.stream.readUint8(9), '=', TestAdapter.getInfo().id);
             ctx.assert(App.stream.readUint8(11), '=', 0);
         });
-        test('Sequence should consist of 2 frames with 2 commands each', ctx => {
+        test('Sequence #1 should consist of 6 frames with 2 commands each', ctx => {
             var offset = App.stream.readUint16(13);
             ctx.assert(offset, '=', 27);
             var length = App.stream.readUint16(15);
@@ -279,6 +243,55 @@ include('player-lib.js');
             ctx.assert(frames[0].commands.length, '=', 2);
             ctx.assert(frames[1].commands.length, '=', 2);
         });
+
+    }
+
+    function test_create_binary() {
+        message('Should create binary data', 1);
+        Ps.Player.addAdapter(Ps.Player);
+        Ps.Player.addAdapter(TestAdapter);
+        App.stream = Ps.Player.createBinaryData(
+            () => [
+                    [1, 0]      // test adapter with 1st data block for initialization
+            ],
+            App.createSequences
+            // function createSequences01() {
+            //     var sequences = [];
+            //     var sequence = new Ps.Sequence(TestAdapter);
+            //     sequence.writeHeader();
+            //     // Frame #1
+            //     sequence.writeDelta(16);    // 2
+            //     sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq1.1 - Hello World!');  // 1+22
+            //     sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(1);  // 1+1
+            //     sequence.writeEOF();    // 1 => 28
+            //     // Frame #2
+            //     sequence.writeDelta(16);    // 2
+            //     sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq1.2 - End'); // 1+13
+            //     sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(3);  // 1+1
+            //     sequence.writeEOS();    // 1 => 19
+            //     sequences.push(sequence);   // 19+28=47
+            //     return sequences;
+            // }
+            ,
+            App.createDataBlocks
+            // function createDataBlocks01() {
+            //     var dataBlocks = [];
+            //     var dataBlock = new Stream(16);
+            //     dataBlock.writeString('Hello world!');
+            //     dataBlocks.push(dataBlock);
+            //     return dataBlocks;
+            // }
+        );
+        test_binary();
+        // App.stream.toFile('test-data.bin', 'application/octet-stream');
+    }
+
+    async function test_load_binary() {
+        message('Should load binary data', 1);
+        Ps.Player.addAdapter(Ps.Player);
+        Ps.Player.addAdapter(TestAdapter);
+        App.stream = await Stream.fromFile('player/test-data.bin');
+        test_binary();
     }
 
     function test_create_channel() {
@@ -286,7 +299,8 @@ include('player-lib.js');
 
         Ps.Player.addAdapter(Ps.Player);
         var adapter = Ps.Player.addAdapter(TestAdapter);
-        var device = adapter.createDevice(TestAdapter.DIV, null);
+        var dataBlock = new Stream(16); dataBlock.writeUint16(120); dataBlock.writeUint16(100);
+        var device = adapter.createDevice(TestAdapter.DIV, dataBlock);
         var sequence = App.createSequences()[1];
         var channel = new Ps.Channel('testChannel');
         channel.assign(0, sequence);
@@ -332,7 +346,7 @@ include('player-lib.js');
     }
 
     async function test_run_player() {
-        message('Test complete run', 1);
+        message('Test run player', 1);
 
         var player = Ps.Player.addAdapter(Ps.Player);
         var testAdapter = Ps.Player.addAdapter(TestAdapter);
@@ -354,7 +368,7 @@ include('player-lib.js');
         masterChannel.isActive = true;
         // 3. Initialize player: create channels
         player.prepareContext(dataBlocks[0]);
-        var masterSequence = sequences[0];  //.shift();
+        var masterSequence = sequences[0];
         player.sequences = sequences;
         
         test('Player should create 1 channel device', ctx => {
@@ -443,7 +457,7 @@ include('player-lib.js');
         ];
     }
 
-    async function test_channel_insertFrame() {
+    function test_channel_insertFrame() {
         var channel = setup();
         channel.toFrames();
         var adapter = channel.adapter;
@@ -466,15 +480,16 @@ include('player-lib.js');
     }
 
     var tests = () => [
-        // test_sequence_fromFrames,
-        // test_sequence_toFrames,
-        // test_createBinaryData,
+        test_sequence_fromFrames,
+        test_sequence_toFrames,
+        test_create_binary,
+        test_load_binary,
         // test_create_channel,
-        test_run_channel,
-        test_run_player,
-        // test_channel_toFrames(),
-        // test_channel_toSequence(),
-        // test_channel_insertFrame()
+        // test_run_channel,
+        // test_run_player,
+        // test_complete_player,
+        // test_insert_frame,
+        // test_remove_frame,
     ];
 
     public(tests, 'Player tests');
