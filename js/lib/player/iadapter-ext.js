@@ -4,7 +4,7 @@ include('iadapter.js');
  ******************************************************************************/
 (function() {
     function IAdapterExt() {
-
+        IAdapterExt.base.constructor.call(this);
     }
     extend(Ps.IAdapter, IAdapterExt);
 

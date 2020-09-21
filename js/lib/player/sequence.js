@@ -7,8 +7,8 @@ include('data/stream.js');
     // - frames: delta, command-1, command-2, ..., command-n, 0
     // - sequence: adapter id, frame-1, frame-2, ..., frame-n, EOS frame
 
-    function Sequence(adapter) {
-        this.stream = new Stream(256);
+    function Sequence(adapter, buffer, offset, length) {
+        this.stream = !buffer ? new Stream(256) : new Stream(new DataView(buffer, offset, length));
         this.adapter = adapter;
     };
     Sequence.prototype.writeHeader = function() {
@@ -42,7 +42,7 @@ include('data/stream.js');
                 if (cmd > Ps.Player.EOS) {
                     var command = this.adapter.makeCommand(cmd, this, cursor);
                     frame.commands.push(command);
-                    cursor += command.size - 1;
+                    cursor += command.length - 1;
                 } else if (cmd == Ps.Player.EOF) {
                     if (frame.commands.length == 0) {
                         cmd = new Stream(1);
@@ -60,14 +60,6 @@ include('data/stream.js');
             }
         }
         return frames;
-    };
-
-    // static members
-    Sequence.fromStream = function fromStream(stream, offset, length) {
-        var adapter = Ps.Player.adapters[stream.readUint8(offset)];
-        var sequence = new Sequence(adapter);
-        sequence.stream.writeStream(stream, offset+1, length-1);
-        return sequence;
     };
 
     Sequence.fromFrames = function fromFrames(frames, adapter) {

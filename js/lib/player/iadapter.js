@@ -17,7 +17,6 @@ include('data/stream.js');
             var deviceCount = data.readUint8();
             for (var i=0; i<deviceCount; i++) {
                 var device = this.createDevice(data.readUint8(), data);
-                this.devices.push(device);
             }
         }
     };
