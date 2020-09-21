@@ -6,41 +6,154 @@ include('graph.js');
 (function() {
 
     function test_Stream() {
-        message('Test Stream');
+        message('Test Stream', 1);
+
         test('Should create an empty Stream with capacity of 10', context => {
             var s = new Stream(10);
             context.assert(s.size, '=', 10);
+            context.assert(s.length, '=', 0);
         });
+
+        test('Should create a Stream by cloning an ArrayBuffer', context => {
+            var buffer = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).buffer;
+            var s = new Stream(buffer);
+            context.assert(s.size, '=', 10);
+            context.assert(s.length, '=', 10);
+            for (var i=1; i<=10; i++) {
+                context.assert(s.readUint8(), '=', i);
+            }
+            context.assert(s.writePosition, '=', 0);
+            context.assert(s.readPosition, '=', 10);
+            context.assert(s.buffer, '!=', buffer);
+        });
+
+        test('Should create a Stream from ArrayBuffer with offset and length', context => {
+            var buffer = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).buffer;
+            var s = new Stream(buffer, 2, 4);
+            context.assert(s.size, '=', 10);
+            context.assert(s.length, '=', 4);
+            for (var i=3; i<=6; i++) {
+                context.assert(s.readUint8(), '=', i);
+            }
+            context.assert(s.writePosition, '=', 0);
+            context.assert(s.readPosition, '=', 4);
+            context.assert(s.buffer, '=', buffer);
+        });
+
+        test('Should create a Stream from an array', context => {
+            var array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+            var s = new Stream(array);
+            context.assert(s.size, '=', 10);
+            context.assert(s.length, '=', 10);
+            for (var i=1; i<=10; i++) {
+                context.assert(s.readUint8(), '=', i);
+            }
+            context.assert(s.writePosition, '=', 0);
+            context.assert(s.readPosition, '=', 10);
+        });
+
+        test('Should create a Stream from an array with offset and length', context => {
+            var array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+            var s = new Stream(array, 2, 4);
+            context.assert(s.size, '=', 4);
+            context.assert(s.length, '=', 4);
+            for (var i=3; i<=6; i++) {
+                context.assert(s.readUint8(), '=', i);
+            }
+            context.assert(s.writePosition, '=', 0);
+            context.assert(s.readPosition, '=', 4);
+        });
+
+        test('Should create a Stream by cloning a TypedArray', context => {
+            var typedArray = new Uint16Array(10);
+            var view = new DataView(typedArray.buffer);
+            for (var i=0; i<10; i++) view.setUint16(2*i, 1+i);
+
+            var s = new Stream(typedArray);
+            context.assert(s.size, '=', 20);
+            context.assert(s.length, '=', 20);
+            for (var i=1; i<=10; i++) {
+                context.assert(s.readUint16(), '=', i);
+            }
+            context.assert(s.writePosition, '=', 0);
+            context.assert(s.readPosition, '=', 20);
+            context.assert(s.buffer, '!=', typedArray.buffer);
+        });
+
+        test('Should create a Stream from a TypedArray with offset and length', context => {
+            var typedArray = new Uint16Array(10);
+            var view = new DataView(typedArray.buffer);
+            for (var i=0; i<10; i++) view.setUint16(2*i, 1+i);
+
+            var s = new Stream(typedArray, 2, 4);
+            context.assert(s.size, '=', 20);
+            context.assert(s.length, '=', 8);
+            for (var i=3; i<=6; i++) {
+                context.assert(s.readUint16(), '=', i);
+            }
+            context.assert(s.writePosition, '=', 0);
+            context.assert(s.readPosition, '=', 8);
+            context.assert(s.buffer, '=', typedArray.buffer);
+        });
+
+
         test('Should create a Stream from array', context => {
-            var s = new Stream(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]));
+            var s = new Stream([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
             context.assert(s.size, '=', 10);
+            context.assert(s.length, '=', 10);
             for (var i=1; i<=10; i++) {
                 context.assert(s.readUint8(), '=', i);
             }
             context.assert(s.writePosition, '=', 0);
             context.assert(s.readPosition, '=', 10);
         });
-        test('Should create a Stream from ArrayBuffer', context => {
-            var s = new Stream(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).buffer);
+        test('Should create a Stream from array with offset and length', context => {
+            var s = new Stream([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 2, 4);
+            context.assert(s.size, '=', 4);
+            context.assert(s.length, '=', 4);
+            for (var i=3; i<=6; i++) {
+                context.assert(s.readUint8(), '=', i);
+            }
+            context.assert(s.writePosition, '=', 0);
+            context.assert(s.readPosition, '=', 4);
+        });
+
+        test('Should create a Stream by cloning a Stream', context => {
+            var s = new Stream(new Stream([1,2,3,4,5,6,7,8,9,10]));
             context.assert(s.size, '=', 10);
+            context.assert(s.length, '=', 10);
             for (var i=1; i<=10; i++) {
                 context.assert(s.readUint8(), '=', i);
             }
             context.assert(s.writePosition, '=', 0);
             context.assert(s.readPosition, '=', 10);
         });
+        test('Should create a Stream from Stream with offset and length', context => {
+            var stream = new Stream([1,2,3,4,5,6,7,8,9,10]);
+            var s = new Stream(stream, 2, 4);
+            context.assert(s.size, '=', 10);
+            context.assert(s.length, '=', 4);
+            for (var i=3; i<=6; i++) {
+                context.assert(s.readUint8(), '=', i);
+            }
+            context.assert(s.writePosition, '=', 0);
+            context.assert(s.readPosition, '=', 4);
+        });
+
         test('Should create a Stream from DataView', context => {
-            var s = new Stream(new DataView(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).buffer, 4));
-            context.assert(s.size, '=', 10);
-            for (var i=5; i<11; i++) {
-                context.assert(s.readUint8(), '=', i);
+            var typedArray = new Uint16Array(10).fill(-1);
+            var view = new DataView(typedArray.buffer, 2*2, 2*4);
+            for (var i=0; i<4; i++) view.setUint16(2*i, 1+i);
+            var s = new Stream(view);
+            context.assert(s.size, '=', 20);
+            context.assert(s.length, '=', 8);
+            for (var i=1; i<=4; i++) {
+                context.assert(s.readUint16(), '=', i);
             }
-            s.writeUint8(0);
-            context.assert(s.readUint8(0), '=', 0);
-            context.assert(s.readUint8(1), '=', 6);
-            context.assert(s.writePosition, '=', 1);
-            context.assert(s.readPosition, '=', 2);
+            context.assert(s.writePosition, '=', 0);
+            context.assert(s.readPosition, '=', 8);
         });
+        
         test('Should read proper values from Stream', context => {
             var s = new Stream(new Uint32Array([0x00434241, 0x04030201, 0x08070605, 0x0000C03F]));
             context.assert(s.size, '=', 16);
@@ -295,10 +408,10 @@ include('graph.js');
 
     var tests = () => [
         test_Stream,
-        test_DataSeries,
-        test_DataSeriesCompare,
-        test_DataLink,
-        test_Graph
+        // test_DataSeries,
+        // test_DataSeriesCompare,
+        // test_DataLink,
+        // test_Graph
     ];
     
     public(tests, 'Data tests');

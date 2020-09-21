@@ -12,35 +12,72 @@
     }
 
     function Stream(arg) {
-        this.length = 0;
+        var offset = arguments[1];
+        var length = arguments[2];
+
         if (typeof arg === 'number') {
-            this.buffer = new ArrayBuffer(arg);
-        } else if (arg instanceof Stream) {
-            this.buffer = new Uint8Array(arg.buffer).slice(0, arg.length).buffer;
-            this.length = arg.length;
+            this.buffer = new Uint8Array(arg).buffer;
+            this.length = 0;
+
         } else if (arg instanceof ArrayBuffer) {
-            this.buffer = arg;
-            this.length = arg.byteLength;
+            if (offset == undefined) {
+                this.buffer = arg.slice();
+                this.length = arg.byteLength;
+             } else {
+                 this.buffer = new Uint8Array(arg).buffer;
+                 this.length = length == undefined ? arg.byteLength - offset : length;
+             }
+
+        } else if (Array.isArray(arg)) {
+            if (!length) length = arg.length;
+            if (offset == undefined) offset = 0;
+            this.buffer = new Uint8Array(arg.slice(offset, offset+length)).buffer;
+            this.length = this.buffer.byteLength;
+            offset = 0;
+
         } else if (arg instanceof DataView) {
             this.buffer = arg.buffer;
             this.view = arg;
             this.length = arg.byteLength;
+
         } else if (arg.buffer && arg.buffer instanceof ArrayBuffer) {
-            this.buffer = new Uint8Array(arg.buffer).buffer;
-            this.length = arg.byteLength;
-        } else if (Array.isArray(arg)) {
-            this.buffer = new Uint8Array(arg).buffer;
-            this.length = arg.length;
+            if (offset == undefined) {
+                this.buffer = arg.buffer.slice();
+                this.length = arg.length != undefined ? arg.length : arg.buffer.byteLength;
+             } else {
+                var bytes = arg.buffer.byteLength/arg.length;
+                this.buffer = arg.buffer;
+                offset *= bytes;
+                if (length == undefined) {
+                    this.length = arg.buffer.byteLength - offset;
+                } else {
+                    length *= bytes;
+                    this.length = length;
+                }                
+             }
+
+        // } else if (arg instanceof Stream) {
+        //     if (offset == undefined) {
+        //     }
+        //     this.buffer = new Uint8Array(arg.buffer);
+
+        // } else if (arg instanceof DataView) {
+        //     this.buffer = arg.buffer;
+        //     this.view = arg;
+        //     this.length = this.size;
+        // } else if (arg.buffer && arg.buffer instanceof ArrayBuffer) {
+        //     this.buffer = new Uint8Array(arg.buffer, offset, length).buffer;
+        //     this.length = this.size;
         } else {
             throw new Error('Invalid argument!');
         }
         this.readPosition = 0;
         this.writePosition = 0;
-        if (!this.view) this.view = new DataView(this.buffer);
+        if (!this.view) this.view = new DataView(this.buffer, offset, length);
         this.constructor = Stream;
     }
     Stream.prototype = {
-        get size() { return this.buffer.byteLength; }        
+        get size() { return this.buffer.byteLength; },
     };
     Stream.prototype.writeString = function writeString(str) {
         ensureSize(this, str.length+1);
