@@ -41,11 +41,11 @@
             this.length = arg.byteLength;
 
         } else if (arg.buffer && arg.buffer instanceof ArrayBuffer) {
+            var bytes = arg instanceof Stream ? 1 : arg.buffer.byteLength/arg.length;
             if (offset == undefined) {
                 this.buffer = arg.buffer.slice();
-                this.length = arg.length != undefined ? arg.length : arg.buffer.byteLength;
+                this.length = arg instanceof Stream ? bytes*arg.length : arg.byteLength;
              } else {
-                var bytes = arg.buffer.byteLength/arg.length;
                 this.buffer = arg.buffer;
                 offset *= bytes;
                 if (length == undefined) {
@@ -55,6 +55,22 @@
                     this.length = length;
                 }                
              }
+
+        // } else if (arg.buffer && arg.buffer instanceof ArrayBuffer) {
+        //     var bytes = arg.buffer.byteLength/arg.length;
+        //     if (offset == undefined) {
+        //         this.buffer = arg.buffer.slice();
+        //         this.length = bytes*arg.length;
+        //      } else {
+        //         this.buffer = arg.buffer;
+        //         offset *= bytes;
+        //         if (length == undefined) {
+        //             this.length = arg.buffer.byteLength - offset;
+        //         } else {
+        //             length *= bytes;
+        //             this.length = length;
+        //         }                
+        //      }
 
         // } else if (arg instanceof Stream) {
         //     if (offset == undefined) {
@@ -104,11 +120,22 @@
         return this;
     };
 
-    Stream.prototype.writeBytes = function writeBytes(array, offset, length) {
+    Stream.prototype.writeArray = function writeArray(array, offset, length) {
         var byteCount = length || array.length - offset;
         ensureSize(this, byteCount);
         for (var i=offset; i<offset+byteCount; i++) {
             this.view.setUint8(this.writePosition++, array[i]);
+        }
+        if (this.writePosition > this.length) {
+            this.length = this.writePosition;
+        }
+        return this;
+    };
+
+    Stream.prototype.writeBytes = function writeBytes(value, byteCount) {
+        ensureSize(this, byteCount);
+        for (var i=0; i<byteCount; i++) {
+            this.view.setUint8(this.writePosition++, value);
         }
         if (this.writePosition > this.length) {
             this.length = this.writePosition;

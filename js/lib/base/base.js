@@ -727,7 +727,7 @@ function getCommonParent(obj1, obj2, parentAttributeName) {
 }
 function getObjectPath(obj, parentAttributeName, ancestor) {
     var res = [];
-    ancestor = ancestor ||window;
+    ancestor = ancestor || window;
     while (obj!= null) {
         res.unshift(obj);
         if (obj == ancestor) break;

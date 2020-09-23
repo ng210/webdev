@@ -7,9 +7,11 @@
         context: null,
         audioNode: null,
         smpRate: 0,
+        isRunning: false,
 
         init: function(smpRate, callback) {
             this.smpRate = smpRate || 48000;
+            // TODO: if (this.context) delete context/change sampling rate
             this.context = window.AudioContext ? new window.AudioContext() :
                 window.webkitAudioContext ? new window.webkitAudioContext() :
                 window.mozAudioContext ? new window.mozAudioContext() :
@@ -31,9 +33,11 @@
 
         start: function() {
             this.context.resume();
+            this.isRunning = true;
         },
         stop: function() {
             this.context.suspend();
+            this.isRunning = false;
         }
     };
     public(sound, 'sound');

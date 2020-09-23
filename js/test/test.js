@@ -75,12 +75,13 @@ async function measure(lbl, action, batchSize) {
     var duration = 0;
     var lastTick = 0;
     print(`<span style="color:#f0e080">Measuring ${lbl}</span>`);
+    var start = new Date().getTime();
+    var iteration = 0;
     await poll( () => {
+        for (var i=0; i<batchSize; i++) action(iteration++, i);
+        count += batchSize;
+        duration = new Date().getTime() - start;
         if (duration < 1000) {
-            var start = new Date().getTime();
-            for (var i=0; i<batchSize; i++) action();
-            duration += new Date().getTime() - start;
-            count += batchSize;
             var tick = Math.floor(duration/100);
             if (tick > lastTick) {
                 Dbg.pr('.');
@@ -139,7 +140,6 @@ function _testDeepCompare(a, b) {
     console.log(`${JSON.stringify(a)}\n${JSON.stringify(b)}\n => ${deepCompare(a, b)}`)
 }
 
-
 function testDeepCompare() {
     var obj = {'a': 1, 'b':[1,2,3], 'c': { 'a': 2, 'b': 'B'}};
     var obj2 = {'c': 3, 'o': obj };
@@ -184,8 +184,16 @@ function isEmpty(a) {
     return typeof a === 'object' && Object.keys(a).length == 0 || Array.isArray(a) && a.length == 0;
 }
 
+function approx(a, b, precision) {
+    precision = precision || Number.EPSILON;
+    if (typeof a != 'number') a = parseFloat(a);
+    if (typeof b != 'number') b = parseFloat(b);
+    return (!isNaN(a) && !isNaN(b)) ? Math.abs(a-b) <= precision : false;
+}
+
 var _assertion_operators = {
         "=": { "term": "equal", "action": (a, b) => equals(a,b) },
+        "~": { "term": "match", "action": (a, b) => approx(a, b) },
        "!=": { "term": "not be", "action": (a, b) => a != b },
         "<": { "term": "be less", "action": (a, b) => a < b },
         ">": { "term": "be greater", "action": (a, b) => a > b },
@@ -193,7 +201,9 @@ var _assertion_operators = {
         ">": { "term": "be greater or equal", "action": (a, b) => a >= b },
        ":=": { "term": "match", "action": (a, b) => deepCompare(a, b) },
     "empty": { "term": "be empty", "action": a => isEmpty(a) },
-   "!empty": { "term": "have an element", "action": a => !isEmpty(a) }
+   "!empty": { "term": "have an element", "action": a => !isEmpty(a) },
+   "true":   { "term": "have an element", "action": a => a == true },
+   "false":  { "term": "have an element", "action": a => a == false }
 };
 
 test_context.prototype.assert = function assert(value, operator, expected) {
