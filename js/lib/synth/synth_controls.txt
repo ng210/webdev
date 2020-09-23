@@ -1,0 +1,53 @@
+out = uint8
+    lfo1wave
+    lfo2wave
+    osc1note
+    osc1wave
+    osc2note
+    osc2wave
+    flt1mode
+
+out = uint8/256
+    amp
+    env1atk
+    env1dec
+    env1sus
+    env1rel
+    env2atk
+    env2dec
+    env2sus
+    env2rel
+    env3atk
+    env3dec
+    env3sus
+    env3rel
+    osc1psw
+    osc1tune
+    osc2psw
+    osc2tune
+    flt1res
+    flt1mod
+
+out = uint16
+
+out = float32
+    lfo1dc
+    lfo1fre
+    lfo1amp
+    lfo2amp
+    lfo2dc
+    lfo2fre
+    env1amp
+    env1dc
+    env2amp
+    env2dc
+    env3amp
+    env3dc
+    osc1amp
+    osc1dc
+    osc1fre
+    osc2amp
+    osc2dc
+    osc2fre
+    flt1amp
+    flt1cut
