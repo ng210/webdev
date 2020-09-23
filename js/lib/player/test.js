@@ -2,8 +2,8 @@ include('player-lib.js');
 
 (function(){
 
-    function TestAdapter() {
-        TestAdapter.base.constructor.call(this);
+    function TestAdapter(player) {
+        TestAdapter.base.constructor.call(this, player);
     };
     extend(Ps.IAdapter, TestAdapter);
 
@@ -176,12 +176,11 @@ include('player-lib.js');
     }
 
     function createDataBlocks() {
-        var dataBlocks = [
+        return [
             new Stream([1, Ps.Player.Device.CHANNEL]),
             new Stream(16).writeUint8(1).writeUint8(TestAdapter.DIV).writeUint16(120).writeUint16(200),
             new Stream(16).writeString('Hello world!')
         ];
-        return dataBlocks;
     }
 
     async function run(callback, timeout) {
@@ -238,7 +237,6 @@ include('player-lib.js');
 
     function test_sequence_fromFrames() {
         message('Test Sequence.fromFrames', 1);
-
         var player = Ps.Player.create();
         var adapter = player.addAdapter(TestAdapter);
         var sequence1 = createSequences(player)[1];
@@ -246,9 +244,7 @@ include('player-lib.js');
         var sequence2 = Ps.Sequence.fromFrames(frames, adapter);
         Dbg.prln('Input:\n' + sequence1.stream.dump(32));
         Dbg.prln('Output:\n' + sequence2.stream.dump(32));
-        test('Sequence should be created from frames successfully', ctx => {
-            ctx.assert(sequence1, ':=', sequence2);
-        });
+        test('Sequence should be created from frames successfully', ctx => ctx.assert(sequence1.stream, ':=', sequence2.stream));
     }
 
     function test_binary(stream, player) {
@@ -351,11 +347,11 @@ include('player-lib.js');
         });
     }
 
-    async function  test_complete_player() {
+    async function test_complete_player() {
         message('Test complete player', 1);
         // register adapter types
-        Ps.Player.adapterTypes[Ps.Player.getInfo().id] = Ps.Player;
-        Ps.Player.adapterTypes[TestAdapter.getInfo().id] = TestAdapter;
+        Ps.Player.registerAdapter(Ps.Player);
+        Ps.Player.registerAdapter(TestAdapter);
         // create player
         var player = Ps.Player.create();
         // load binary data, prepare adapters
@@ -378,7 +374,6 @@ include('player-lib.js');
         test('Playback should terminate as expected', async function(ctx) {
             ctx.assert(player.channels[1].device.innerHTML, '=', 'End');
         });
-
     }
 
     function test_channel_toFrames() {

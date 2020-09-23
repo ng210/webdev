@@ -3,8 +3,8 @@ include('iadapter.js');
  * Adapter interface extensions for editor
  ******************************************************************************/
 (function() {
-    function IAdapterExt() {
-        IAdapterExt.base.constructor.call(this);
+    function IAdapterExt(player) {
+        IAdapterExt.base.constructor.call(this, player);
     }
     extend(Ps.IAdapter, IAdapterExt);
 

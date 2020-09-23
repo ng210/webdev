@@ -1,7 +1,7 @@
 include('iadapter-ext.js');
 (function () {
     function Player() {
-        Player.base.constructor.call(this);
+        Player.base.constructor.call(this, this);
         this.adapters = {};
         this.sequences = [];
         this.dataBlocks = [];
@@ -17,17 +17,6 @@ include('iadapter-ext.js');
     Player.TEMPO = 3;
 
     // IAdapter implementation
-    Player.prototype.getInfo = function () { return Player.info; };
-
-    Player.prototype.prepareContext = function (data) {
-    // #00 device count
-    // #01 type of device #0
-    // #02 type of device #1
-    // ...
-    // #0n type of device #n-1
-        Player.base.prepareContext.call(this, data);
-    };
-
     Player.prototype.createDeviceImpl = function createDeviceImpl(deviceType, initData) {
         var device = null;
         switch (deviceType) {
@@ -41,14 +30,6 @@ include('iadapter-ext.js');
         }
         return device;
     };
-
-    Player.prototype.createSequence = function createSequence(stream, offset, length) {
-        var adapter = this.adapters[stream.readUint8(offset)];
-        var sequence = new Ps.Sequence(adapter);
-        sequence.stream.writeStream(stream, offset+1, length-1);
-        return sequence;
-    };
-
     Player.prototype.processCommand = function processCommand(device, command, sequence, cursor) {
         switch (command) {
             case Player.ASSIGN:
@@ -68,10 +49,6 @@ include('iadapter-ext.js');
                 break;
         }
         return cursor;
-    };
-
-    Player.prototype.updateRefreshRate = function updateRefreshRate(fps) {
-        console.log('Player.updateRefreshRate to ' + fps.toPrecision(4));
     };
 
     // IAdapterExt implementation
@@ -110,7 +87,7 @@ include('iadapter-ext.js');
     // Player methods
     Player.prototype.addAdapter = function addAdapter(adapterType) {
         var id = adapterType.getInfo().id;
-        var adapter = Reflect.construct(adapterType, []);
+        var adapter = Reflect.construct(adapterType, [this]);
         this.adapters[id] = adapter;
         return adapter;
     };
@@ -150,7 +127,12 @@ include('iadapter-ext.js');
         this.masterChannel.assign(0, this.sequences[0]);
         //player.prepareContext(this.dataBlocks[0]);
     };
-
+    Player.prototype.createSequence = function createSequence(stream, offset, length) {
+        var adapter = this.adapters[stream.readUint8(offset)];
+        var sequence = new Ps.Sequence(adapter);
+        sequence.stream.writeStream(stream, offset+1, length-1);
+        return sequence;
+    };
     Player.prototype.run = function run(ticks) {
         for (var i=0; i<this.channels.length; i++) {
             this.channels[i].run(ticks);
@@ -160,6 +142,7 @@ include('iadapter-ext.js');
 
     // static members
     Player.adapterTypes = {};
+    Player.registerAdapter = adapter => Ps.Player.adapterTypes[adapter.getInfo().id] = adapter;
     Player.createBinaryData = function createBinaryData(player, createAdapterList, createSequences, createDataBlocks) {
         var data = new Stream(256);
 
@@ -234,11 +217,7 @@ include('iadapter-ext.js');
     };
 
     Player.getInfo = () => Player.info;
-
-    Player.info = {
-	    name: 'PlayerAdapter',
-	    id: 0
-    };
+    Player.info = { name: 'PlayerAdapter', id: 0 };
     
     Player.Device = {
         PLAYER: 0,
