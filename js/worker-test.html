@@ -13,57 +13,66 @@
               color: #5070a0;
               border: groove 2px #606c78;
               padding: 1em;
+              overflow: auto;
           }
       </style>
       <script type="text/javascript" src="lib/base/base.js"></script>
       <script type="text/javascript">
 
-
+include('/base/dbg.js');
 /******************************************************************************
     Worker
  *****************************************************************************/
 function MyWorker(url) {
-    this.msgId = 0;
     this.queue = [];
-    this.worker = new Worker('lib/base/worker-base.js');
+    this.worker = new Worker('lib/base/base.js');
     this.worker.addEventListener('message', e => this.onmessage(e));
-    this.postMessage({msg:'initialize', data:{module:url, app:document.location.href, root:rootUrl.toString(), path:[baseUrl.toString(), ...Resource.searchPath]}});
+    var msg = {
+        'id': 0,
+        'code': 'startup',
+        'body': {
+            module: url,
+            app: document.location.href,
+            root: rootUrl.toString(),
+            path: [baseUrl.toString(), ...Resource.searchPath]
+        }
+    };
+    this.worker.postMessage(msg);
 }
 MyWorker.prototype.peekMessage = function(key, value) {
     for (var i=0; i<this.queue.length; i++) {
-        var item = this.queue[i];
-        if (key == undefined || item[key] == value) {
-            return item;
+        var msg = this.queue[i];
+        if (key == undefined || msg[key] == value) {
+            return msg;
         }
     }
     return null;
 };
 MyWorker.prototype.getMessage = async function(key, value, retry) {
-    return await poll( () => {
+    var result = await poll( () => {
+        if (isNaN(retry)) retry = 100;
         for (var i=0; i<this.queue.length; i++) {
-            var item = this.queue[i];
-            if (key == undefined || item[key] == value) {
+            var msg = this.queue[i];
+            if (key == undefined || msg[key] == value) {
                 this.queue.splice(i, 1);
-                console.log(`Msg #${item.id} de-queued`);
-                return item;
+                console.log(`Msg #${msg.id}:${msg.code} de-queued`);
+                return msg;
             }
         }
         if (retry-- == 0) return true;
         return null;
-    });
+    }, 25);
+    if (result === true) result = null;
+    return result;
 };
 MyWorker.prototype.postMessage = function(msg) {
-    msg.id = this.msgId;
+    msg.id = new Date().getTime();
     this.worker.postMessage(msg);
 };
 MyWorker.prototype.sendMessage = async function(msg) {
-    var id = this.msgId;
+    var id = msg.id = this.msgId;
     this.postMessage(msg);
-    await poll(() => {
-        return this.peekMessage('id', id) != null;
-    });
-    var result = this.getMessage('id', id);
-    return result;
+    return this.getMessage('id', id, 3);
 };
 MyWorker.prototype.onmessage = function(e) {
     var msg = e.data;
@@ -73,12 +82,12 @@ MyWorker.prototype.onmessage = function(e) {
             this.worker.terminate();
             break;
         case 'dbg':
-            Dbg.prln(msg.text);
+            Dbg.pr(msg.body);
             msg = null;
             break;
     }
-    if (msg) {
-        console.log(`Msg #${msg.id} queued`);
+    if (msg && onMessage(msg)) {
+        console.log(`Msg #${msg.id}:${msg.code} queued`);
         this.queue.push(msg);
     }
 };
@@ -92,8 +101,22 @@ async function onpageload() {
     Dbg.init('con');
     _worker = new MyWorker(appUrl+'/worker-test.js');
     var result = await _worker.getMessage('id', 0);
-    Dbg.prln(result.data);
+    Dbg.prln(result.body);
+
+    setInterval(async function() {
+        var msg = await _worker.sendMessage( {'code': 'count'});
+    }, 1000);
 };
+
+async function onMessage(msg) {
+    switch (msg.code) {
+        case 'count':
+            Dbg.prln(msg.id+': '+msg.body);
+            msg = null;
+            break;
+    }
+    return msg;
+}
       </script>
   </head>
   <body>
