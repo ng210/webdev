@@ -1,4 +1,7 @@
+'use strict';
+
 var DBGLVL = 0;
+var ISWORKER = self.document == undefined;
 
 /******************************************************************************
  * AJAX
@@ -26,10 +29,10 @@ var ajax = {
     createXhr: function(options) {
         // create XHR object
         var xhr = null;
-        if (window.XMLHttpRequest !== undefined) {
+        if (XMLHttpRequest !== undefined) {
             xhr = new XMLHttpRequest();
         } else {
-            if (window.ActiveXObject !== undefined) {
+            if (ActiveXObject !== undefined) {
                 xhr = new ActiveXObject("Microsoft.XMLHTTP");
             } else {
                 throw new Error('Could not create XmlHttpRequest object!');
@@ -117,7 +120,7 @@ function Url(url) {
     this.path = '';
     this.query = {};
     this.fragment = '';
-    if (window.baseUrl != undefined) {
+    if (self.baseUrl != undefined) {
         this.schema = baseUrl.schema;
         this.user = baseUrl.user;
         this.password = baseUrl.password;
@@ -271,7 +274,6 @@ Resource.load = async function(options) {
             resource.error = options.error;
             resource.status = Resource.ERROR;
         } else {
-            //resource.resolvedAddress = options.resolvedUrl;
             resource.resolvedUrl = new Url(options.resolvedUrl);
             resource.status = Resource.LOADED;
             if (options.process) {
@@ -307,7 +309,7 @@ Resource.load = async function(options) {
     return resource;
 };
 Resource.prototype.processContent = async function(options) {
-debug_('PROCESS @' + this.url, 1);
+    debug_('PROCESS @' + this.url, 1);
     var data = options.response;
     switch (options.contentType) {
         case 'text/javascript':
@@ -322,11 +324,15 @@ debug_('PROCESS @' + this.url, 1);
         case 'x-shader/*':
         case 'x-shader/x-vertex':
         case 'x-shader/x-fragment':
-            this.node = document.createElement('script');
-            this.node.setAttribute('type', options.contentType);
-            this.node.innerHTML = data;
-            this.node.url = options.url;
-            document.head.appendChild(this.node);
+            if (!ISWORKER) {
+                this.node = document.createElement('script');
+                this.node.setAttribute('type', options.contentType);
+                this.node.innerHTML = data;
+                this.node.url = options.url;
+                document.head.appendChild(this.node);
+            } else {
+                this.node = data;
+            }
             break;
         case 'text/xml':
             this.node = data;
@@ -338,19 +344,22 @@ debug_('PROCESS @' + this.url, 1);
             this.node = data
             this.node.url = options.url;
             break;
-        case 'text':
         case 'text/css':
-            this.node = document.createElement('style');
-            this.node.innerHTML = data;
-            this.node.url = options.url;
-            document.head.appendChild(this.node);
+            if (!ISWORKER) {
+                this.node = document.createElement('style');
+                this.node.innerHTML = data;
+                this.node.url = options.url;
+                document.head.appendChild(this.node);
+            } else {
+                this.node = data;
+            }
             break;
         case 'image/bmp':
         case 'image/gif':
         case 'image/jpg':
         case 'image/png':
             this.node = new Image();
-            this.node.src = window.URL.createObjectURL(data);
+            this.node.src = self.URL.createObjectURL(data);
             await this.node.decode();
             break;
         default: this.node = data; break;
@@ -422,11 +431,26 @@ Module.prototype.resolveIncludes = async function() {
     this.status = Module.RESOLVED;
     debug_('ADD @' + this.toString() + '\n' + this.includes.map(x=>`-${x}\n`).join(''), 2);
 
-    this.node = document.createElement('script');
-    this.node.url = this.url;
-    this.node.innerHTML = this.data;
     debug_('ADD INCLUDE ' + this.url, 1);
-    document.head.appendChild(this.node);
+    if (!ISWORKER) {
+        this.node = document.createElement('script');
+        this.node.url = this.url;
+        this.node.innerHTML = this.data;
+        document.head.appendChild(this.node);
+    } else {
+        var lines = this.data.split('\n');
+        for (var i=0; i<lines.length; i++) {
+            var match = lines[i].match(/^(\s*publish\s*)\(\s*([^)]+)\s*\)\s*;?.*\r?$/);
+            if (match != null) {
+                var args = match[2].split(',');
+                if (args.length < 3) args.push(' null');
+                args.push(` '${this.url}'`);
+                lines[i] = `${match[1]}(${args.join(',')});`;
+            }
+        }
+        this.data = lines.join('\n');
+        eval(this.data);
+    }
 };
 
 Module.prototype.toString = function() {
@@ -449,14 +473,14 @@ Module.RESOLVED = 'resolved';
  * Boot, environment
  ******************************************************************************/
 var baseUrl = (function(){
-    var address = document.currentScript.src;
+    var address = !ISWORKER ? document.currentScript.src : self.location.href;
     var tokens = address.split('/');
     tokens.pop(); tokens.pop();
     return new Url(tokens.join('/'));
 })();
 
 var appUrl = (function(){
-    var url = document.URL;
+    var url = !ISWORKER ? document.URL : self.location.href;
     var address = url.split('#')[0];
     var pos = address.lastIndexOf('/');
     if (pos == -1) pos == undefined;
@@ -477,7 +501,7 @@ var rootUrl = (function() {
 
 function addToSearchPath(url) {
     if (url === undefined) {
-        url = document.currentScript.src || document.currentScript.url;
+        url = !ISWORKER ? document.currentScript.src || document.currentScript.url : self.location.href;
         url = url.substring(0, url.lastIndexOf('/'));
     }
     Resource.searchPath.push(url);
@@ -597,17 +621,18 @@ function load(obj) {
     }
 }
 
-function public(obj, name, context) {
-    var script = document.currentScript;
-    var url = script.src || script.url;
+function publish(obj, name, context, url) {
+    if (!ISWORKER) {
+        var script = document.currentScript;
+        url = script.src || script.url;
+    }
     var mdl = Resource.cache[url];
     if (mdl === undefined) {
         throw new Error('Module \'' + url + '\' not found!');
     }
-    context = context || window;
+    context = context || self;
     mdl.symbols[name] = obj;
     context[name] = obj;
-    
 }
 
 async function include(path, parentPath) {
@@ -727,7 +752,7 @@ function getCommonParent(obj1, obj2, parentAttributeName) {
 }
 function getObjectPath(obj, parentAttributeName, ancestor) {
     var res = [];
-    ancestor = ancestor || window;
+    ancestor = ancestor || self;
     while (obj!= null) {
         res.unshift(obj);
         if (obj == ancestor) break;
@@ -737,7 +762,7 @@ function getObjectPath(obj, parentAttributeName, ancestor) {
 }
 
 function getObjectAt(path, obj) {
-    obj = obj || window;
+    obj = obj || self;
     var tokens = path.split('.');
     for (var i=0; i<tokens.length; i++) {
         obj = obj[tokens[i]];
@@ -749,7 +774,10 @@ function getObjectAt(path, obj) {
     return obj;
 }
 
-window.onload = e => poll(async function() {
+if (!ISWORKER) {
+
+// APPLICATION
+self.onload = e => poll(async function() {
     var errors = [];
     for (var i in Resource.cache) {
         var res = Resource.cache[i];
@@ -763,3 +791,36 @@ window.onload = e => poll(async function() {
     onpageload(errors);
     return true;
 });
+
+} else {
+
+// WORKER
+self.onmessage = async function(e) {
+    var msg = e.data;
+    var body = msg.body;
+    switch (msg.code) {
+        case 'startup':
+            if (body.root) {
+                rootUrl = new Url(body.root);
+            }
+            if (body.path) {
+                Resource.searchPath.push(...body.path);
+            }
+            var res = await load(body.module);
+            if (res.error instanceof Error) {
+                console.log('Sending kill signal');
+                self.postMessage({'code':'kill', 'id':msg.id, 'body':res.error.message});
+            } else {
+                if (typeof res.symbols.main !== 'function') {
+                    self.postMessage({'code':'kill', 'id':msg.id, 'body':`Entry point static function 'main' missing!`});
+                }
+            }
+            break;
+    }
+    var resp = await main(msg);
+    if (resp != undefined) {
+        self.postMessage({code:'startup', id:msg.id, body:resp});
+    }
+};
+console.log(ISWORKER);
+}
