@@ -28,6 +28,6 @@ include('asu/asu.js');
         Dbg.prln('Space.onclick at ' + ctrl.id);
     };
 
-    public(Space, 'Space');
+    publish(Space, 'Space');
 
 })();

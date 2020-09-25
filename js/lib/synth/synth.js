@@ -237,5 +237,5 @@ include('voice.js');
         flt1mode: 83
     },
 
-    public(Synth, 'Synth', psynth);
+    publish(Synth, 'Synth', psynth);
 })();

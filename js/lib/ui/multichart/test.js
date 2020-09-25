@@ -149,5 +149,5 @@ include('data/dataseries.js');
         await test_multichart();
         return 0;
     };
-    public(tests, 'UI tests');
+    publish(tests, 'UI tests');
 })();

@@ -94,5 +94,5 @@ include('math/fn.js');
 		}
 	};
 
-	public(Plasma, 'Plasma');
+	publish(Plasma, 'Plasma');
 })();

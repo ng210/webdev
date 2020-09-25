@@ -43,6 +43,6 @@
         }
     };
 
-    public(TestUi, 'TestUi');
+    publish(TestUi, 'TestUi');
 
 })();

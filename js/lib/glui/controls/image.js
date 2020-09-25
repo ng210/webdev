@@ -54,6 +54,6 @@ include('renderer2d.js');
     };
     Image.prototype.createRenderer = mode => mode == glui.Render2d ? new ImageRenderer2d() : 'ImageRenderer3d';
 
-    public(Image, 'Image', glui);
-    public(ImageRenderer2d, 'ImageRenderer2d', glui);
+    publish(Image, 'Image', glui);
+    publish(ImageRenderer2d, 'ImageRenderer2d', glui);
 })();

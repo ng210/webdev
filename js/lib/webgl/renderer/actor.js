@@ -26,5 +26,5 @@ include('repo-item.js');
     Actor.Type = 'actor';
     webGL.Repository.registerClass(Actor.Type, Actor, ['meshes']);
 
-    public(Actor, 'Actor', webGL);
+    publish(Actor, 'Actor', webGL);
 })();

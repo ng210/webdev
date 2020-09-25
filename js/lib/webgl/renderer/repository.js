@@ -101,5 +101,5 @@ include('webgl/webgl.js');
     Repository.Types = { };
 
 
-    public(Repository, 'Repository', webGL);
+    publish(Repository, 'Repository', webGL);
 })();

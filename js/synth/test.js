@@ -211,5 +211,5 @@ include('/synth/grammar.js');
 
 var tests = () => [ test_synthAdapterToDataSeries/*, test_synthAdapterFromDataSeries, test_synth_Ui_binding, test_synth_fromPreset*/ ];
 
-    public(tests, 'Synth tests');
+    publish(tests, 'Synth tests');
 })();

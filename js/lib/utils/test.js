@@ -61,10 +61,11 @@ include('syntax.js');
             'id': 12,
             'key': 5
         };
+        message('Evaluate on ' + JSON.stringify(obj));
         for (var r in tests) {
             var expr = syntax.parse(tests[r]);
             var result = expr.resolve().evaluate(obj);
-            test(`Should evaluate to ${r}`, context => context.assert(r, '=', result));
+            test(`Should evaluate '${tests[r]}' to ${r}`, context => context.assert(r, '=', result));
         }
 
         return results;
@@ -77,5 +78,5 @@ include('syntax.js');
         ];
     };
 
-    public(tests, 'Util tests');
+    publish(tests, 'Util tests');
 })();

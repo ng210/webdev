@@ -402,5 +402,5 @@ include('glui/glui-lib.js');
         }
     };
 
-    public(MazeDemo, 'MazeDemo');
+    publish(MazeDemo, 'MazeDemo');
 })();

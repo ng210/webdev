@@ -83,5 +83,5 @@ include('glui/glui-lib.js');
             }
         }
     };
-    public(Timestable, 'Timestable');
+    publish(Timestable, 'Timestable');
 })();

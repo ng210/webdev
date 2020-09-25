@@ -71,5 +71,5 @@
         if (quad) quad.insert(obj);
     };
 
-    public(BinaryTree, 'BinaryTree');
+    publish(BinaryTree, 'BinaryTree');
 })();

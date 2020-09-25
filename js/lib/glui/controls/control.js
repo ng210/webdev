@@ -300,6 +300,6 @@ const DEBUG_EVENT = 'click';
         };
     };
 
-    public(Control, 'Control', glui);
+    publish(Control, 'Control', glui);
 
 })();

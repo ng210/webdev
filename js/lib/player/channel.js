@@ -6,7 +6,7 @@ include('sequence.js');
         this.commands = [];
         
     };
-    public(Frame, 'Frame', Ps)
+    publish(Frame, 'Frame', Ps)
 
     function Channel(id) {
         this.id = id;
@@ -90,5 +90,5 @@ include('sequence.js');
         return this.sequence;
     };
 
-    public(Channel, 'Channel', Ps)
+    publish(Channel, 'Channel', Ps)
 })();

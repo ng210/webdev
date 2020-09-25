@@ -453,5 +453,5 @@ include('glui/glui-lib.js');
         //test_valueControls,
         test_render
     ];
-    public(tests, 'glUi tests');
+    publish(tests, 'glUi tests');
 })();

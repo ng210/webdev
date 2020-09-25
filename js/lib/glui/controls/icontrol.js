@@ -29,5 +29,5 @@ include('glui/glui.js');
         throw new Error('Not implemented!');
     };
 
-    public(IControl, 'IControl', glui);
+    publish(IControl, 'IControl', glui);
 })();

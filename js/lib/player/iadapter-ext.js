@@ -122,5 +122,5 @@ include('iadapter.js');
     IAdapterExt.prototype.createSequenceUi = function createSequenceUi(device) { throw new Error('Not implemented!'); };
    
 
-    public(IAdapterExt, 'IAdapterExt', Ps);
+    publish(IAdapterExt, 'IAdapterExt', Ps);
 })();

@@ -229,6 +229,6 @@ include('/ge/sound.js');
 	};
 
 
-	public(SynthAdapter, 'SynthAdapter', psynth);
+	publish(SynthAdapter, 'SynthAdapter', psynth);
 
 })();

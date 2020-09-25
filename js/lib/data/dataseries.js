@@ -144,5 +144,5 @@
         this.data = values;
     };
 
-    public(DataSeries, 'DataSeries');
+    publish(DataSeries, 'DataSeries');
 })();

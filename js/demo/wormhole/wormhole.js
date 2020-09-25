@@ -164,6 +164,6 @@ include('/math/noise.js');
 		v.y = GE.inputs.mpos[1] * GE.canvas.height/GE.canvas.clientHeight;
 	};
 
-    public(Wormhole, 'Wormhole');
+    publish(Wormhole, 'Wormhole');
 
 })();

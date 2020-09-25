@@ -45,6 +45,6 @@ include('renderer2d.js');
     };
     Label.prototype.createRenderer = mode => mode == glui.Render2d ? new LabelRenderer2d() : 'LabelRenderer3d';
 
-    public(Label, 'Label', glui);
-    public(LabelRenderer2d, 'LabelRenderer2d', glui);
+    publish(Label, 'Label', glui);
+    publish(LabelRenderer2d, 'LabelRenderer2d', glui);
 })();

@@ -5,10 +5,10 @@ include('/utils/syntax.js');
 
 include('/synth/synth.js');
 
-include('/ge/player/player-lib.js');
-include('/ge/player/player-ext.js');
+include('/player/player-lib.js');
+include('/player/player-ext.js');
 include('/synth/synth-adapter.js');
-include('./synth-adapter-ext.js');
+include('/synth/synth-adapter-ext.js');
 
 include('ui/notechart.js');
 include('ui/synth-ui.js');

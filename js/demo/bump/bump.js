@@ -139,5 +139,5 @@ include('glui/glui-lib.js');
 		}
     };
 
-    public(Bump, 'Bump');
+    publish(Bump, 'Bump');
 })();

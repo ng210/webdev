@@ -54,6 +54,6 @@
     //     console.log(`settings[${e.control.dataField}] = ${e.control.getValue()}`);
     // };
 
-    public(SettingsDialog, 'Constructor');
+    publish(SettingsDialog, 'Constructor');
 
 })();

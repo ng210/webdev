@@ -55,6 +55,6 @@
         }
     };
 
-    public(NewDialog, 'Constructor');
+    publish(NewDialog, 'Constructor');
 
 })();

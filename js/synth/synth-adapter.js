@@ -1,4 +1,4 @@
-include('/ge/player/player-lib.js');
+include('/player/player-lib.js');
 include('/synth/synth.js');
 include('/ge/sound.js');
 
@@ -104,6 +104,6 @@ include('/ge/sound.js');
 	};
 
 
-	public(SynthAdapter, 'SynthAdapter', psynth);
+	publish(SynthAdapter, 'SynthAdapter', psynth);
 
 })();

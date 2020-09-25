@@ -95,5 +95,5 @@ include('data/stream.js');
         return sequence;
     };
 
-    public(Sequence, 'Sequence', Ps);
+    publish(Sequence, 'Sequence', Ps);
 })();

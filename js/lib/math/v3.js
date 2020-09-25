@@ -133,5 +133,5 @@
         return `(${this[0]},${this[1]},${this[2]})`;
     };
 
-    public(V3, 'V3');
+    publish(V3, 'V3');
 })();

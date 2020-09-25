@@ -108,5 +108,5 @@ include('input.js');
         IDLE:    7
     };
 
-    public(Env, 'Env', psynth);
+    publish(Env, 'Env', psynth);
 })();

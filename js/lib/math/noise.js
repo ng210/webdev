@@ -102,5 +102,5 @@
 		return v;
 	};
 
-	public(Noise, 'Noise');
+	publish(Noise, 'Noise');
 })();

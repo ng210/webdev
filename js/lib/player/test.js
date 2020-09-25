@@ -376,76 +376,6 @@ include('player-lib.js');
         });
     }
 
-    function test_channel_toFrames() {
-        var channel = setup();
-        channel.toFrames();
-
-        return [
-            'Test Channel.toFrames',
-            test('Frame count should be 5', () => {
-                if (channel.frames.length != 6) return ['Frame count is not 5!'];
-            }),
-            test('Sequence should be ok', () => {
-                var errors = [];
-                for (var fi=0; fi<5; fi++) {
-                    var frame = channel.frames[fi];
-                    if (frame.delta != 16) errors.push(`Frame #${fi+1} delta is not 16!`);
-                    if (frame.commands.length != 2) errors.push(`Frame #${fi+1} does not have exactly 2 commands!`);
-                    if (frame.commands[0].readUint8(0) != TestAdapter.SETTEXT) errors.push(`Frame #${fi+1} command is not SETTEXT!`);
-                }
-                return errors;
-            }),
-            test('Frame #6 should be ok', () => {
-                var errors = [];
-                var frame = channel.frames[5];
-                if (frame.delta != 16) errors.push(`Frame #6 delta is not 16!`);
-                if (frame.commands.length != 1) errors.push(`Frame #6 does not have exactly 1 commands!`);
-                if (frame.commands[0].readUint8(0) != TestAdapter.SETINK) errors.push(`Frame #6 command is not SETINK!`);
-                return errors;
-            }),
-        ];
-    }
-
-    function test_channel_toSequence() {
-        var channel = setup();
-        channel.toFrames();
-        var sequence = channel.sequence;
-        channel.toSequence();
-        return [
-            'Test Channel.toSequence',
-            test('Converted stream should match input stream', () => {
-                var pos = 0;
-                for (var i=0; i<channel.sequence.cursor; i++) {
-                    if (sequence.cursor <= i || sequence.getUint8(i) != channel.sequence.getUint8(i)) {
-                        return [`Stream does not match at ${pos}`];
-                    }
-                }
-            })
-        ];
-    }
-
-    function test_channel_insertFrame() {
-        var channel = setup();
-        channel.toFrames();
-        var adapter = channel.adapter;
-        var frame = new Ps.Frame();
-        frame.delta = 8;
-        frame.commands.push(adapter.makeCommand(TestAdapter.SETTEXT, 'New'));
-        frame.commands.push(adapter.makeCommand(TestAdapter.SETINK, 4));
-        channel.frames.splice(1, 0, frame);
-        channel.toSequence();
-        //channel.reset();
-        channel.loopCount = 1;
-        channel.isActive = true;
-
-        return [
-            'Test insert frame',
-            test('Playback should be correct', () => {
-                return startPlayBack(channel);
-            })
-        ];
-    }
-
     var tests = () => [
         test_create_player,
         test_sequence_toFrames,
@@ -455,10 +385,8 @@ include('player-lib.js');
         test_create_channel,
         test_run_channel,
         test_run_player,
-        test_complete_player,
-        // test_insert_frame,
-        // test_remove_frame,
+        test_complete_player
     ];
 
-    public(tests, 'Player tests');
+    publish(tests, 'Player tests');
 })();

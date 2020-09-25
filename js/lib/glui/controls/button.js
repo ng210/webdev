@@ -68,5 +68,5 @@ include('renderer2d.js');
         this.render();
     };
 
-    public(Button, 'Button', glui);
+    publish(Button, 'Button', glui);
 })();

@@ -218,5 +218,5 @@
         return tree;
     }
 
-    public(Graph, 'Graph');
+    publish(Graph, 'Graph');
 })();

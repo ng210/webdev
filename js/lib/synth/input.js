@@ -37,7 +37,7 @@ include('psynth.js');
         this.set(stream.readFloat32());
     };
 
-    public(Pot, 'Pot', psynth);
-    public(PotF8, 'PotF8', psynth);
-    public(PotF32, 'PotF32', psynth);
+    publish(Pot, 'Pot', psynth);
+    publish(PotF8, 'PotF8', psynth);
+    publish(PotF32, 'PotF32', psynth);
 })();

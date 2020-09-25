@@ -135,8 +135,10 @@ Table of data blocks
 000E 04 length of 2nd data block in bytes
 0012 04 offset to 3rd data block
 0016 04 length of 3rd data block in bytes
-
-## Handling tables internally
-* binary is read into a stream
-* table offsets are written into cursors
-* table entries are accessed by using the cursors on the stream
+...
+xxxx xx 1st sequence
+xxxx xx 2nd sequence
+...
+xxxx xx 1st data block
+xxxx xx 2nd data block
+...

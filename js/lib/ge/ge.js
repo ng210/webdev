@@ -214,5 +214,5 @@
 
 	addToSearchPath();
 
-	public(GE, 'GE');
+	publish(GE, 'GE');
 })();

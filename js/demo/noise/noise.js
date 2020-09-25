@@ -158,5 +158,5 @@ include('glui/glui-lib.js');
         }
     };
 
-    public(NoiseDemo, 'NoiseDemo');
+    publish(NoiseDemo, 'NoiseDemo');
 })();

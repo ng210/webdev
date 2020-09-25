@@ -151,5 +151,5 @@ include('glui/glui-lib.js');
 		}
     };
 
-    public(Lens, 'Lens');
+    publish(Lens, 'Lens');
 })();

@@ -107,5 +107,5 @@
         link.target[link.field] = result;
     };
 
-    public(DataLink, 'DataLink');
+    publish(DataLink, 'DataLink');
 })();

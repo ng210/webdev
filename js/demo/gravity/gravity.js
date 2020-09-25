@@ -157,5 +157,5 @@ include('star.js');
         }
     };
 
-    public(Gravity, 'Gravity');
+    publish(Gravity, 'Gravity');
 })();

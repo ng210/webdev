@@ -17,6 +17,6 @@
         if (e.control.value == 'Ok') this.close();
     }
 
-    public(AboutDialog, 'Constructor');
+    publish(AboutDialog, 'Constructor');
 
 })();

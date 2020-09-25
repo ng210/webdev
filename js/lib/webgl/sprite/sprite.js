@@ -195,6 +195,6 @@ debugger
         // gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     };
 
-    public(Sprite, 'Sprite', webGL);
-    public(SpriteManager, 'SpriteManager', webGL);
+    publish(Sprite, 'Sprite', webGL);
+    publish(SpriteManager, 'SpriteManager', webGL);
 })();

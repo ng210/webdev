@@ -120,6 +120,6 @@
         return r33;
     }
 
-    public(M33, 'M33');
+    publish(M33, 'M33');
 
 })();

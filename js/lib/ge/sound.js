@@ -12,11 +12,11 @@
         init: function(smpRate, callback) {
             this.smpRate = smpRate || 48000;
             // TODO: if (this.context) delete context/change sampling rate
-            this.context = window.AudioContext ? new window.AudioContext() :
-                window.webkitAudioContext ? new window.webkitAudioContext() :
-                window.mozAudioContext ? new window.mozAudioContext() :
-                window.oAudioContext ? new window.oAudioContext() :
-                window.msAudioContext ? new window.msAudioContext() :
+            this.context = self.AudioContext ? new self.AudioContext() :
+                self.webkitAudioContext ? new self.webkitAudioContext() :
+                self.mozAudioContext ? new self.mozAudioContext() :
+                self.oAudioContext ? new self.oAudioContext() :
+                self.msAudioContext ? new self.msAudioContext() :
                 undefined;
             if (!this.context) throw new Error('Could not create sound context!');
             this.audioNode = this.context.createScriptProcessor(this.BUFFER_SIZE, 0, 2);
@@ -40,5 +40,5 @@
             this.isRunning = false;
         }
     };
-    public(sound, 'sound');
+    publish(sound, 'sound');
 })();

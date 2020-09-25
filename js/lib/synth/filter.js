@@ -74,5 +74,5 @@ include('input.js');
         HIGHPASS:   4
     };
 
-    public(Filter, 'Filter', psynth);
+    publish(Filter, 'Filter', psynth);
 })();

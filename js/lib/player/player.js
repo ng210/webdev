@@ -224,5 +224,5 @@ include('iadapter-ext.js');
         CHANNEL: 1
     };
 
-    public(Player, 'Player', Ps);
+    publish(Player, 'Player', Ps);
 })();

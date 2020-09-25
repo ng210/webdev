@@ -29,5 +29,5 @@
     psynth.p2f = p => ((p == 0) ? 0.0 : (Math.pow(1.05946309436, p) * 7.7169265821269392473555397165444));
 
 
-    public(psynth, 'psynth');
+    publish(psynth, 'psynth');
 })();

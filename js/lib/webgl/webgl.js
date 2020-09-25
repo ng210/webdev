@@ -141,6 +141,6 @@
 		return map;
 	})();
 
-	public(webGL, 'webGL');
+	publish(webGL, 'webGL');
 
 })();

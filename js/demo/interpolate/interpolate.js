@@ -72,5 +72,5 @@
             this.ui.controls.time.setValue(fps.toPrecision(4));
         }
     };
-    public(Interpolate, 'Interpolate');
+    publish(Interpolate, 'Interpolate');
 })();

@@ -70,5 +70,5 @@
         return `${this.name}(${this.race} ${this.class})\n - woe:${this.woe}\n - wits:${this.wits}\n - will:${this.will}`;
     };
 
-    public(Heroes, 'Heroes')    
+    publish(Heroes, 'Heroes')    
 })();

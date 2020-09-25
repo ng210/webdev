@@ -444,6 +444,6 @@ include('renderer2d.js');
         Potmeter: 'potmeter'
     };
 
-    public(Textbox, 'Textbox', glui);
-    public(TextboxRenderer2d, 'TextboxRenderer2d', glui);
+    publish(Textbox, 'Textbox', glui);
+    publish(TextboxRenderer2d, 'TextboxRenderer2d', glui);
 })();

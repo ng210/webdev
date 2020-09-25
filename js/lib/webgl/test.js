@@ -473,6 +473,6 @@
 
     var tests = () => [test_simple_rendering];
 
-    public(tests, 'WebGL tests');
+    publish(tests, 'WebGL tests');
 
 })();

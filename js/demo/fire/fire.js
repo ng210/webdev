@@ -242,5 +242,5 @@ include('math/noise.js');
 			return col;
 		}
 	};
-	public(Fire, 'Fire');
+	publish(Fire, 'Fire');
 })();

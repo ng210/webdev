@@ -58,5 +58,5 @@ include('glui.js');
 	// 	}
 	// 	delete buffer;
     // }
-    public(Buffer, 'Buffer', glui);
+    publish(Buffer, 'Buffer', glui);
 })();

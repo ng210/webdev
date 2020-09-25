@@ -42,7 +42,7 @@
     //    - the merge works on 2 and only 2 nodes
     //    - a literal node is always merged into the other node
     //    - a node without action is never merged into the other node, as such nodes should represent syntax elements only
-    // - the merge adds a node to another node as a child node definingan edge in the tree that represents the dependency of the 2 nodes
+    // - the merge adds a node to another node as a child node defining an edge in the tree that represents the dependency of the 2 nodes
 
     // 5. Evaluate
     // Last step is to evaluate the nodes of the tree in the proper order using a context passed by the user.
@@ -295,5 +295,5 @@
         return expression;
     };
 
-    public(Syntax, 'Syntax');
+    publish(Syntax, 'Syntax');
 })();

@@ -265,5 +265,5 @@ include('glui/glui-lib.js');
         }
     };
 
-    public(Mesh, 'Mesh');
+    publish(Mesh, 'Mesh');
 })();

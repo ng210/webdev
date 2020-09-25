@@ -115,5 +115,5 @@
     Quaternion.prototype.rotate = function rotate(v4) {
         return this.mul(v4).mul(this.conjugate());
     }
-    public(Quaternion, 'Quaternion');
+    publish(Quaternion, 'Quaternion');
 })();

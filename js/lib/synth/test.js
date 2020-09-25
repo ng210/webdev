@@ -222,6 +222,12 @@ include('/synth/synth-adapter.js');
     }
 
     var buttonCount = 0;
+    function addButton(handler) {
+        var id = 'startSound' + buttonCount++;
+        message('<button id="' + id + '">Start</button>');
+        var button = document.getElementById(id);
+        button.onclick = handler;
+    }
     async function run(callback) {
         var timer = 0;
         sound.init(SAMPLE_RATE,
@@ -232,19 +238,16 @@ include('/synth/synth-adapter.js');
         );
 
         var isDone = false;
-        var id = 'startSound' + buttonCount++;
-        message('<button id="' + id + '">Start</button>');
-        var button = document.getElementById(id);
-        button.onclick = function() {
+        addButton(function() {
             if (!sound.isRunning) {
-                button.innerHTML = 'Stop';
+                this.innerHTML = 'Stop';
                 sound.start();
             } else {
                 sound.stop();
-                button.innerHTML = 'Done';
+                this.innerHTML = 'Done';
                 isDone = true;
             }
-        }
+        });
 
         await poll( () => isDone, 10);
     }
@@ -283,7 +286,7 @@ include('/synth/synth-adapter.js');
         // frame #3
         frame = new Ps.Frame();
         frame.delta = 4;
-        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 45, 240));
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 45, 200));
         frames.push(frame);
         // frame #4
         frame = new Ps.Frame();
@@ -293,7 +296,7 @@ include('/synth/synth-adapter.js');
         // frame #5
         frame = new Ps.Frame();
         frame.delta = 2;
-        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 45, 240));
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 45, 180));
         frames.push(frame);
         // frame #6
         frame = new Ps.Frame();
@@ -309,7 +312,7 @@ include('/synth/synth-adapter.js');
     }
 
     async function createDataBlocks(adapter) {
-        var playerAdapterInit = new Stream(128);
+        var playerAdapterInit = new Stream([1, Ps.Player.Device.CHANNEL]);
 
         var synthAdapterInit = new Stream(128)
             .writeUint16(SAMPLE_RATE)
@@ -463,11 +466,15 @@ include('/synth/synth-adapter.js');
         message('Test complete player', 1);
         // register adapter types
         Ps.Player.registerAdapter(Ps.Player);
-        Ps.Player.registerAdapter(TestAdapter);
+        Ps.Player.registerAdapter(psynth.SynthAdapter);
         // create player
         var player = Ps.Player.create();
         // load binary data, prepare adapters
         await player.load('synth/test-data.bin');
+
+        player.start();
+
+        await poll( () => !player.isActive, 100);
     }
 
     // 
@@ -684,5 +691,5 @@ include('/synth/synth-adapter.js');
         //test_synthAdapterToDataSeries/*, test_synthAdapterFromDataSeries, test_synth_Ui_binding, test_synth_fromPreset*/
     ];
 
-    public(tests, 'Synth tests');
+    publish(tests, 'Synth tests');
 })();

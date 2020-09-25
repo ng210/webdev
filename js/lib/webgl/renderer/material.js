@@ -30,5 +30,5 @@ include('pass.js');
 
     webGL.Repository.registerClass(Material.Type, Material, ['type']);
 
-    public(Material, 'Material', webGL);
+    publish(Material, 'Material', webGL);
 })();

@@ -118,5 +118,5 @@ include('glui/glui-lib.js');
         }
     };
 
-    public(QuadTree, 'QuadTree');
+    publish(QuadTree, 'QuadTree');
 })();

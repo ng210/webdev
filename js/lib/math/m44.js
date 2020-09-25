@@ -187,5 +187,5 @@
         return r44;
     };
 
-    public(M44, 'M44');
+    publish(M44, 'M44');
 })();

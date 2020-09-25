@@ -258,5 +258,5 @@ include('control.js');
 		Bool:	'bool'
     };
 
-    public(ValueControl, 'ValueControl', glui);
+    publish(ValueControl, 'ValueControl', glui);
 })();

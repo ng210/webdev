@@ -129,5 +129,5 @@ include('control.js');
         return res;
     };
 
-    public(Container, 'Container', glui);
+    publish(Container, 'Container', glui);
 })();

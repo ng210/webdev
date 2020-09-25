@@ -44,5 +44,5 @@
 	Actor.prototype.addConstraint = function(obj, method) {
 		this.constraints.push(obj, method);
 	};
-	public(Actor, 'Actor');
+	publish(Actor, 'Actor');
 })();

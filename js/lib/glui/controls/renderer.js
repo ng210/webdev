@@ -123,5 +123,5 @@ if (!parent.renderer) debugger;
         throw new Error('Not implemented!');
     };
 
-    public(Renderer, 'Renderer', glui);
+    publish(Renderer, 'Renderer', glui);
 })();

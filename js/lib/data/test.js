@@ -414,5 +414,5 @@ include('graph.js');
         // test_Graph
     ];
     
-    public(tests, 'Data tests');
+    publish(tests, 'Data tests');
 })();

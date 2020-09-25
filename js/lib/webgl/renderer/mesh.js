@@ -28,5 +28,5 @@ include('repo-item.js');
 
     webGL.Repository.registerClass(Mesh.Type, Mesh, ['material']);
 
-    public(Mesh, 'Mesh', webGL);
+    publish(Mesh, 'Mesh', webGL);
 })();

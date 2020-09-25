@@ -17,5 +17,5 @@ include('repo-item.js');
 		"Transparent": 2
     };
     
-    public(Pass, 'Pass', webGL);
+    publish(Pass, 'Pass', webGL);
 })();

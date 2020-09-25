@@ -43,5 +43,5 @@ include('webgl/webgl.js');
 
     };
     
-    public(Scene, 'Scene', webGL);
+    publish(Scene, 'Scene', webGL);
 })();

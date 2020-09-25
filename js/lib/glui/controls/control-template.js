@@ -35,6 +35,6 @@ include('renderer2d.js');
         }
     };
 
-    public(Template, 'Template', glui);
-    public(TemplateRenderer2d, 'TemplateRenderer2d', glui);
+    publish(Template, 'Template', glui);
+    publish(TemplateRenderer2d, 'TemplateRenderer2d', glui);
 })();

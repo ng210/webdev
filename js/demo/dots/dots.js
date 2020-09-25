@@ -183,7 +183,7 @@ include('glui/glui-lib.js');
 
     };
 
-    public(Dots, 'Dots');
+    publish(Dots, 'Dots');
 })();
 	// Dots.prototype.processInputs = function(e) {
 	// 	if ((GE.inputs.mbuttons & 2) != 0) {
@@ -366,5 +366,5 @@ include('glui/glui-lib.js');
 		v.y = 2*GE.inputs.mpos[1]/this.settings.resolution/GE.canvas.height - 1.0;
 	};
 
-	public(Dots, 'Dots');
+	publish(Dots, 'Dots');
 })();

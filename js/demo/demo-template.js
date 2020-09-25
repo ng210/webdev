@@ -28,5 +28,5 @@ include('glui/glui-lib.js');
 
     };
 
-    public(Demo, 'Demo');
+    publish(Demo, 'Demo');
 })();

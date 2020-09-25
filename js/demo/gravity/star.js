@@ -141,6 +141,6 @@ include('math/fn.js');
 	Star.cC2 = Star.cC*Star.cC;
 	Star.MAX_ENERGY = 10000;
 	
-	public(Star, 'Star');
+	publish(Star, 'Star');
 
 })();

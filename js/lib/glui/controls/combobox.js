@@ -193,5 +193,5 @@ include('renderer2d.js');
         }
     };
 
-    public(Combobox, 'Combobox', glui);
+    publish(Combobox, 'Combobox', glui);
 })();

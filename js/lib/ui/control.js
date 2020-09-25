@@ -379,5 +379,5 @@ include('datalink.js');
 	Ui.Control = Control;
 
 	addToSearchPath();
-	public(Ui, 'Ui');
+	publish(Ui, 'Ui');
 })();

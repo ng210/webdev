@@ -47,6 +47,6 @@ include('webgl/renderer/renderer.js');
 
     var tests = () => [ test_registered_classes, test_repository ];
 
-    public(tests, 'webGL tests');
+    publish(tests, 'webGL tests');
 
 })();

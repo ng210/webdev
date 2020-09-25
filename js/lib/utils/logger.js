@@ -172,5 +172,5 @@
     Log.prototype.hr = function() {
         this.print.method.call(this.print.context, '<hr/>');
     };
-    public(Log, 'Log');
+    publish(Log, 'Log');
 })();

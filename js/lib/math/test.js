@@ -210,5 +210,5 @@ include('m44.js');
         test_performance
     ];
 
-    public(tests, 'Math tests');
+    publish(tests, 'Math tests');
 })();

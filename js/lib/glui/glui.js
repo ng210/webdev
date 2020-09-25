@@ -292,5 +292,5 @@
 
     window.addEventListener('resize', glui.resize);
 
-    public(glui, 'glui');
+    publish(glui, 'glui');
 })();

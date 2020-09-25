@@ -17,5 +17,5 @@ include('webgl/webgl.js');
 
     RepoItem.prototype.onunload = function onunload() { throw new Error('Not implemented!'); }
 
-    public(RepoItem, 'RepoItem', webGL);
+    publish(RepoItem, 'RepoItem', webGL);
 })();

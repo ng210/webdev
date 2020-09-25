@@ -120,5 +120,5 @@ include('/math/fn.js');
 	// 	v.y = GE.inputs.mpos[1] * GE.canvas.height/GE.canvas.clientHeight;
 	// };
 
-	public(Rotozoom, 'Rotozoom');
+	publish(Rotozoom, 'Rotozoom');
 })();

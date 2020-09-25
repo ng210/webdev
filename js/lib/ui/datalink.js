@@ -66,5 +66,5 @@
     DataLink.defaultHandler = v => v;
 
     var Ui = window.Ui || { DataLink: DataLink};
-    public(Ui, 'Ui');
+    publish(Ui, 'Ui');
 })();

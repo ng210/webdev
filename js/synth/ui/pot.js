@@ -88,5 +88,5 @@
 
         }
     });
-    //public(Pot, 'Pot');
+    //publish(Pot, 'Pot');
 })();

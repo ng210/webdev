@@ -4,7 +4,7 @@
  ******************************************************************************/
 include('data/stream.js');
 (function() {
-    var Ps = window.Ps || {};
+    var Ps = self.Ps || {};
     function IAdapter(player) {
         this.player = player;
         this.devices = [];
@@ -36,6 +36,6 @@ include('data/stream.js');
     IAdapter.prototype.createDeviceImpl = function(deviceType, initData) { throw new Error('Not implemented!'); };
     IAdapter.prototype.processCommand = function(device, command, sequence, cursor) { throw new Error('Not implemented!'); };
 
-    public(Ps, 'Ps');
-    public(IAdapter, 'IAdapter', Ps);
+    publish(Ps, 'Ps');
+    publish(IAdapter, 'IAdapter', Ps);
 })();

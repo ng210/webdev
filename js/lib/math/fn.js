@@ -43,5 +43,5 @@
 		return w != 0 ? v/w : 0;
 	};
 
-	public(Fn, 'Fn');
+	publish(Fn, 'Fn');
 })();

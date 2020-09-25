@@ -538,7 +538,7 @@ console.log(this.rowCount);
 		return result;
 	};
 
-	public(Grid, 'Grid', glui);
+	publish(Grid, 'Grid', glui);
 
 })();
 

@@ -54,5 +54,5 @@ include('filter.js')
         return this.envelopes[0].ticks;
     };
 
-    public(Voice, 'Voice', psynth);
+    publish(Voice, 'Voice', psynth);
 })();

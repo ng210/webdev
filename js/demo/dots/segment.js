@@ -34,6 +34,6 @@ Segment.prototype.intersect = function(u) {
     return p;
 }
 
-public(Segment, 'Segment');
+publish(Segment, 'Segment');
 
 })();

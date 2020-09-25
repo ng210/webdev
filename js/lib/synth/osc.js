@@ -84,5 +84,5 @@ include('input.js');
         NOISE:    16
     };
 
-    public(Osc, 'Osc', psynth);
+    publish(Osc, 'Osc', psynth);
 })();

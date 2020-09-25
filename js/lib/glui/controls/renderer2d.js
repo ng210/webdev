@@ -122,5 +122,5 @@ include('renderer.js');
         this.context.restore();
     };
 
-    public(Renderer2d, 'Renderer2d', glui);
+    publish(Renderer2d, 'Renderer2d', glui);
 })();

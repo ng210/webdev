@@ -105,6 +105,6 @@ include('/lib/ui/ui-lib.js');
     };
 
     addToSearchPath();
-    public(Demo, 'Demo');
+    publish(Demo, 'Demo');
 
 })();

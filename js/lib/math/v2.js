@@ -114,5 +114,5 @@
         return `(${this[0]},${this[1]})`;
     };
 
-    public(V2, 'V2');
+    publish(V2, 'V2');
 })();

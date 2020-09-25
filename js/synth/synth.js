@@ -591,5 +591,5 @@
         }
     };
 
-    public(psynth, 'psynth');
+    publish(psynth, 'psynth');
 })();

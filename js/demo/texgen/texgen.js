@@ -131,6 +131,6 @@ include('/math/noise.js');
         this.dstBuffer = GE.backBuffer;
     };
 
-    public(TexGen, 'TexGen');
+    publish(TexGen, 'TexGen');
 
 })();

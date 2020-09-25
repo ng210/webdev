@@ -267,5 +267,5 @@
         return new Stream(file.data);
     };
 
-    public(Stream, 'Stream');
+    publish(Stream, 'Stream');
 })();

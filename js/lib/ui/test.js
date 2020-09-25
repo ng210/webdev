@@ -208,5 +208,5 @@ include('ui-lib.js');
             test_panel()
         ];
     };
-    public(tests, 'Ui tests');
+    publish(tests, 'Ui tests');
 })();

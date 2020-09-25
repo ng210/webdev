@@ -56,6 +56,6 @@ include('webgl/sprite/sprite.js');
 
     var tests = () => [test_spriteManager, test_createSprites];
 
-    public(tests, 'Sprite tests');
+    publish(tests, 'Sprite tests');
 
 })();
