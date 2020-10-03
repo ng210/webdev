@@ -1,21 +1,8 @@
-var pitch = 0;
-var smpRate = 0;
-var theta = 0;
-var acc = 0;
-var vibrato = 110;
-var vibratoAcc = 0;
-var threshold = 0.01;
-var delta = 0;
-var phase = 0;
-var amp = 1.0;
-var ampFactor = 1.0;
-
-var synth = null;
-
-
 class AudioProcessor extends AudioWorkletProcessor {
     constructor(options) {
         super();
+        console.log('hello');
+debugger
         this.port.onmessage = msg => {
             switch (msg.data.code) {
                 case 'init':
@@ -34,6 +21,16 @@ class AudioProcessor extends AudioWorkletProcessor {
             
         }
     }
+
+    process_(inputs, outputs, parameters) {
+        const output = outputs[0]
+        output.forEach(channel => {
+          for (let i = 0; i < channel.length; i++) {
+            channel[i] = Math.random() * 2 - 1
+          }
+        })
+        return true
+      }
 
     process(inputs, outputs, parameters) {
         const output = outputs[0];

@@ -1,0 +1,109 @@
+<html>
+    <head>
+        <script src="/js/lib/base/base.js"></script>
+        <script>
+
+var _audioContext = null
+var _audioWorklet = null;
+var _timer = null;
+var _smpRate = 48000;
+var _pitch = 55;
+var _pitchElement = null;
+var _f2r = Math.pow(2, 4/12);
+
+var _note = 24;
+var _phase = 0;
+
+async function init() {
+    var bpm = document.getElementById('bpm');
+    bpm.onchange = e => setBpm.call(bpm, e);
+    setBpm.call(bpm);
+}
+
+async function start() {
+    _audioContext = new AudioContext();
+    await _audioContext.audioWorklet.addModule('synth.out.js');
+    _audioWorklet = new AudioWorkletNode(_audioContext, 'audio-processor', { outputChannelCount: [2] });
+    _audioWorklet.port.postMessage({code:'init'});
+    _audioWorklet.connect(_audioContext.destination);
+    startPlay();
+}
+
+var sequence = 
+[
+    24, 0.8, 24, 0.0,
+    24, 0.6, 24, 0.0,
+    48, 1.0, 48, 1.0,
+    36, 0.8, 36, 0.0,
+
+    // 36, 0.8, 36, 0.0,
+    // 24, 0.8, 24, 0.0,
+    // 48, 1.0, 36, 0.0,
+    // 36, 0.8, 36, 0.0
+
+    // 36, 0.8, 36, 0.0,
+    // 24, 0.8, 24, 0.0,
+    // 36, 0.8, 36, 1.0,
+    // 48, 0.8, 48, 0.0,
+
+    // 48, 0.8, 36, 0.0,
+    // 24, 0.8, 24, 0.0,
+    // 36, 0.8, 36, 0.0,
+    // 48, 0.8, 48, 0.0
+];
+
+var counter = 0;
+var bpm = 50;
+var frame = 0;
+var msPerFrame = 0;
+var restTime = 0;
+var lastTime = 0;
+
+function startPlay() {
+    lastTime = new Date().getTime();
+    playNote();
+}
+
+function playNote() {
+    var time = new Date().getTime();
+    var dt = time - lastTime;
+    if ((restTime -= dt) <= 0) {
+        _audioWorklet.port.postMessage({code:'setNote', note: sequence[counter], velocity: sequence[counter+1] });
+        counter += 2;
+        if (counter == sequence.length) counter = 0;
+        restTime += msPerFrame;
+        //console.log(restTime);
+    }
+    //_audioWorklet.port.postMessage({code:'setControl', id: 81, value: Math.random()/*0.1 - 0.1*Math.cos(frame*2*Math.PI/512)*/ });
+    _audioWorklet.port.postMessage({code:'setControl', id: 81, value: 0.4 - 0.4*Math.cos(frame*2*Math.PI/256) });
+    // duration = msPerFrame - duration;
+    // if (duration < 0) duration += msPerFrame;
+    requestAnimationFrame(playNote);
+    lastTime = time;
+    frame++;
+}
+
+function setBpm() {
+    msPerFrame = 7500/this.value;
+    console.log('msPerFrame: ' + msPerFrame);
+}
+
+function onpageload() {}
+
+// function changePitch() {
+//     clearTimeout(_timer);
+//     _pitchElement.innerHTML = _pitch.toPrecision(6);
+//     _audioWorklet.port.postMessage({code:'set', pitch: _pitch});
+//     if (_pitch > 220)
+//         _pitch = 55;
+//     else
+//         _pitch *= _f2r;
+//     _timer = setTimeout(changePitch, 80);
+// }
+        </script>
+    </head>
+    <body onload="init()">
+        <button onclick="start();">Start</button>
+        <input type="number" id="bpm" min="60" max="180" step="1" value="87" />
+    </body>
+</html>
