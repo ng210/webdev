@@ -264,6 +264,7 @@
     Stream.fromFile = async function fromFile(path, type) {
         type = type || 'application/octet-stream';
         var file = await load({ 'url':path, 'contentType': type, 'charSet': 'bin'});
+        if (file.error instanceof Error) throw file.error;
         return new Stream(file.data);
     };
 

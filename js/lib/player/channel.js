@@ -16,7 +16,7 @@ include('sequence.js');
         this.adapter = null;
         this.isActive = false;
         this.currentTick = 0;
-        this.loopCount = 0;
+        this.loopCount = 1;
         this.cursor = 0;
     };
 
@@ -33,9 +33,9 @@ include('sequence.js');
 
     Channel.prototype.reset = function() {
         this.cursor = 0;
-        if (this.loopCount > 0) {
+        if (--this.loopCount > 0) {
             this.currentTick = 0;
-            this.loopCount--;
+            this.loopCount;
             this.isActive = true;
         } else {
             this.isActive = false;

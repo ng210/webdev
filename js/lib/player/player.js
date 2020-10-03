@@ -36,6 +36,7 @@ include('iadapter-ext.js');
                 var channelId = sequence.getUint8(cursor++);
                 var sequenceId = sequence.getUint8(cursor++);
                 var deviceId = sequence.getUint8(cursor++);
+                this.channels[channelId].loopCount = sequence.getUint8(cursor++);
                 var sequence = this.sequences[sequenceId];
                 this.channels[channelId].assign(deviceId, sequence);
                 break;
@@ -61,10 +62,12 @@ include('iadapter-ext.js');
         switch (command) {
             case Player.ASSIGN:
                 if (inputStream) {
-                    stream.writeStream(inputStream, arguments[2], 2);
+                    stream.writeStream(inputStream, arguments[2], 4);
                 } else {
-                    stream.writeUint8(arguments[1]);
-                    stream.writeUint8(arguments[2]);
+                    stream.writeUint8(arguments[1]);    // channel id
+                    stream.writeUint8(arguments[2]);    // sequence id
+                    stream.writeUint8(arguments[3]);    // device id
+                    stream.writeUint8(arguments[4]);    // loop count
                 }
                 break;
             case Player.TEMPO:
@@ -139,6 +142,16 @@ include('iadapter-ext.js');
         }
         return this.channels[0].isActive;
     };
+    Player.prototype.reset = function reset() {
+        for (var i=0; i<this.channels.length; i++) {
+            this.channels[i].reset();
+        }
+    };
+    Object.defineProperties(Player.prototype, {
+        isActive: {
+            get() { return this.channels[0].isActive; }
+        }
+    });
 
     // static members
     Player.adapterTypes = {};
@@ -211,7 +224,7 @@ include('iadapter-ext.js');
         // crate master channel
         player.masterChannel = player.createDevice(Ps.Player.Device.CHANNEL);
         player.masterChannel.id = 'master';
-        player.masterChannel.loopCount = 1;
+        player.masterChannel.loopCount = 0;
         player.masterChannel.isActive = true;
         return player;
     };
