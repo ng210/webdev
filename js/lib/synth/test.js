@@ -227,29 +227,30 @@ include('/synth/synth-adapter.js');
         message('<button id="' + id + '">Start</button>');
         var button = document.getElementById(id);
         button.onclick = handler;
+        return button;
     }
+    var _isDone = false;
     async function run(callback) {
         var timer = 0;
         sound.init(SAMPLE_RATE,
             function fillBuffer(left, right, bufferSize, channel) {
-                callback(left, right, bufferSize, channel);
+                _isDone = !callback(left, right, bufferSize, channel);
                 timer += bufferSize;
             }
         );
 
-        var isDone = false;
-        addButton(function() {
+        var button = addButton(function() {
             if (!sound.isRunning) {
                 this.innerHTML = 'Stop';
                 sound.start();
             } else {
-                sound.stop();
-                this.innerHTML = 'Done';
-                isDone = true;
+                _isDone = true;
             }
         });
 
-        await poll( () => isDone, 10);
+        await poll( () => _isDone, 10);
+        sound.stop();
+        button.innerHTML = 'Done';
     }
 
     async function test_generate_sound_simple() {
@@ -267,48 +268,170 @@ include('/synth/synth-adapter.js');
         await run((left, right, bufferSize) => {
             for (var i=0; i<bufferSize; i++) left[i] = right[i] = 0.0;
             synth.run(left, right, 0, bufferSize)
+            return false;
         });
     }
 
     function createFrames(adapter) {
         var frames = [];
-        // frame #1
-        var frame = new Ps.Frame();
-        frame.delta = 0;
+        // frame #1-on
+        var frame = new Ps.Frame(); frame.delta = 0;
         frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETPROGRAM, 0));
-        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 33, 240));
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 240));
         frames.push(frame);
-        // frame #2
-        frame = new Ps.Frame();
-        frame.delta = 4;
-        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 33, 0));
+        // frame #1-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 0));
         frames.push(frame);
-        // frame #3
-        frame = new Ps.Frame();
-        frame.delta = 4;
+        // frame #2-on
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 200));
+        frames.push(frame);
+        // frame #2-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 0));
+        frames.push(frame);
+        // frame #3-on
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 48, 200));
+        frames.push(frame);
+        // frame #3-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 48, 0));
+        frames.push(frame);
+        // frame #4-on
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 200));
+        frames.push(frame);
+        // frame #4-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 0));
+        frames.push(frame);
+
+        // frame #5-on
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 240));
+        frames.push(frame);
+        // frame #5-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 0));
+        frames.push(frame);
+        // frame #6-on
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 43, 200));
+        frames.push(frame);
+        // frame #6-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 43, 0));
+        frames.push(frame);
+        // frame #7-on
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 200));
+        frames.push(frame);
+        // frame #7-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 0));
+        frames.push(frame);
+        // frame #8-on
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 200));
+        frames.push(frame);
+        // frame #8-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 0));
+        frames.push(frame);
+
+        // frame #9-on
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 46, 240));
+        frames.push(frame);
+        // frame #9-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 46, 0));
+        frames.push(frame);
+        // frame #10-on
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 200));
+        frames.push(frame);
+        // frame #10-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 0));
+        frames.push(frame);
+        // frame #11-on
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 200));
+        frames.push(frame);
+        // frame #11-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 0));
+        frames.push(frame);
+        // frame #12-on
+        frame = new Ps.Frame(); frame.delta = 2;
         frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 45, 200));
         frames.push(frame);
-        // frame #4
-        frame = new Ps.Frame();
-        frame.delta = 2;
+        // frame #12-off
+        frame = new Ps.Frame(); frame.delta = 2;
         frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 45, 0));
         frames.push(frame);
-        // frame #5
-        frame = new Ps.Frame();
-        frame.delta = 2;
-        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 45, 180));
+
+        // frame #13-on
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 240));
         frames.push(frame);
-        // frame #6
-        frame = new Ps.Frame();
-        frame.delta = 2;
-        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 45, 0));
+        // frame #13-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 0));
         frames.push(frame);
-        // frame #7 - end
-        frame = new Ps.Frame();
-        frame.delta = 2;
-        frame.commands.push(adapter.makeCommand(Ps.Player.EOS));
+        // frame #14-on
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 200));
         frames.push(frame);
+        // frame #14-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 0));
+        frames.push(frame);
+        // frame #15-on
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 43, 200));
+        frames.push(frame);
+        // frame #15-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 43, 0));
+        frames.push(frame);
+        // frame #16-on
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 41, 200));
+        frames.push(frame);
+        // frame #16-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 41, 0));
+        frames.push(frame);
+        // frame #16-off
+        frame = new Ps.Frame(); frame.delta = 2;
+        frames.push(frame);
+        
         return frames;
+    }
+
+    function createSequences(player) {
+        var sequences = [];
+        // MASTER sequence
+        var sequence = new Ps.Sequence(player.adapters[Ps.Player.getInfo().id]);
+        // Frame #1
+        sequence.writeDelta(0);
+        sequence.stream.writeStream(player.makeCommand(Ps.Player.ASSIGN, 1, 1, 0, 4));
+        sequence.writeEOF();
+        // Frame #2
+        sequence.writeDelta(16);
+        sequence.writeEOS();
+        sequences.push(sequence);
+
+        var adapter = player.addAdapter(psynth.SynthAdapter);
+        var frames = createFrames(adapter);
+        sequence = Ps.Sequence.fromFrames(frames, adapter);
+        sequences.push(sequence);
+
+        return sequences;
     }
 
     async function createDataBlocks(adapter) {
@@ -362,6 +485,14 @@ include('/synth/synth-adapter.js');
         ];
     }
 
+    async function createPlayer() {
+        var player = Ps.Player.create();
+        var adapter = player.addAdapter(psynth.SynthAdapter);
+        player.sequences = createSequences(player);
+        player.dataBlocks = await createDataBlocks(adapter);
+        return player;
+    }
+
     function test_synthAdapter_makeSetCommandForContoller() {
         message('Test SynthAdapter.makeSetCommandForContoller', 1);
         var adapter = new psynth.SynthAdapter();
@@ -407,11 +538,10 @@ include('/synth/synth-adapter.js');
         }
     }
 
-    var _player = null;
     var _frame = 0;
-    var bpm = 113;
+    var bpm = 92;
     var _samplePerFrame = SAMPLE_RATE*3.75/bpm;
-    function playerBasedFillBuffer(left, right, bufferSize, channel) {
+    function channelBasedFillBuffer(left, right, bufferSize, channel) {
         var start = 0;
         var end = 0;
         var remains = bufferSize;
@@ -422,44 +552,72 @@ include('/synth/synth-adapter.js');
         while (remains) {
             var frameInt = Math.floor(_frame);
             if (frameInt == 0) {
-                if (!_player.channels[1].run(1)) {
+                if (!channel.run(1)) {
                     // reset
-                    for (var i=0; i<_player.channels.length; i++) {
-                        _player.channels[i].loopCount = 1;
-                        _player.channels[i].reset();
-                        _player.channels[i].isActive = true;
-                        _player.channels[1].run(1);
-                    }
+                    channel.reset();
                 }
                 _frame += _samplePerFrame;
             }
             var len = _frame < remains ? frameInt : remains;
             end = start + len;
             _frame -= len;
-            for (var i=0; i<_adapter.devices.length; i++) {
-                _adapter.devices[i].run(left, right, start, end);
+            var adapter = channel.adapter;
+            for (var i=0; i<adapter.devices.length; i++) {
+                adapter.devices[i].run(left, right, start, end);
             }
             start = end;
             remains -= len;
         }
+        return channel.isActive;
     }
 
-    async function test_run_channel_with_synthAdapter() {
-        message('Test run channelwith SynthAdapter', 1);
-        _player = Ps.Player.create();
-        _adapter = _player.addAdapter(psynth.SynthAdapter);
-        _player.dataBlocks = await createDataBlocks(_adapter);
-        _adapter.prepareContext(_player.dataBlocks[1]);
+    function playerBasedFillBuffer(left, right, bufferSize, player) {
+        var start = 0;
+        var end = 0;
+        var remains = bufferSize;
+        for (var i=0; i<bufferSize; i++) {
+            left[i] = .0;
+            right[i] = .0;
+        }
+        while (remains) {
+            var frameInt = Math.floor(_frame);
+            if (frameInt == 0) {
+                if (!player.run(1)) {
+                    //player.reset();
+                }
+                _frame += _samplePerFrame;
+            }
+            var len = _frame < remains ? frameInt : remains;
+            end = start + len;
+            _frame -= len;
+            var adapter = player.adapters[psynth.SynthAdapter.getInfo().id];
+            for (var i=0; i<adapter.devices.length; i++) {
+                adapter.devices[i].run(left, right, start, end);
+            }
+            start = end;
+            remains -= len;
+        }
+        return player.isActive;
+    }
 
-        var frames = createFrames(_adapter);
-        var sequence = Ps.Sequence.fromFrames(frames, _adapter);
+    async function test_run_channel() {
+        message('Test run channelwith SynthAdapter', 1);
+        var player = await createPlayer();
+        var adapter = player.adapters[psynth.SynthAdapter.getInfo().id];
+        // player.dataBlocks = await createDataBlocks(_adapter);
+        adapter.prepareContext(player.dataBlocks[1]);
 
         // create test channel
-        var channel = _player.createDevice(Ps.Player.Device.CHANNEL, null);
-        channel.assign(0, sequence);
-        channel.loopCount = 3;
+        var channel = player.createDevice(Ps.Player.Device.CHANNEL, null);
+        channel.assign(0, player.sequences[1]);
+        channel.loopCount = 16;
 
-        await run((left, right, bufferSize) => playerBasedFillBuffer(left, right, bufferSize));
+        // var stream = Ps.Player.createBinaryData(
+        //     player,
+        //     () => [ [psynth.SynthAdapter.getInfo().id, 1] ]
+        // );
+        // stream.toFile('test-data.bin', 'application/octet-stream');
+        await run((left, right, bufferSize) => channelBasedFillBuffer(left, right, bufferSize, channel));
     }
 
     async function test_complete_player() {
@@ -471,10 +629,30 @@ include('/synth/synth-adapter.js');
         var player = Ps.Player.create();
         // load binary data, prepare adapters
         await player.load('synth/test-data.bin');
+        test('Player should have 2 adapters: playerAdapter and synthAdapter', ctx => {
+            ctx.assert(Object.keys(player.adapters).length, '=', 2);
+            ctx.assert(Object.values(player.adapters)[0] instanceof Ps.Player, 'true');
+            ctx.assert(Object.values(player.adapters)[1] instanceof psynth.SynthAdapter, 'true');
+        });
+        test('Player should have 2 channels', ctx => {
+            ctx.assert(player.channels.length, '=', 2);
+        });
+        test('Player adapter should have 3 devices: 1 player, 2 channels', ctx => {
+            ctx.assert(player.devices.length, '=', 3);
+            ctx.assert(player.devices[0], '=', player);
+            ctx.assert(player.devices[1].constructor, '=', Ps.Channel);
+            ctx.assert(player.devices[2].constructor, '=', Ps.Channel);
+        });
+        var synthAdapter = player.adapters[psynth.SynthAdapter.getInfo().id];
+        test('Synth adapter should have 1 device: Synth', ctx => {
+            ctx.assert(synthAdapter.devices.length, '=', 1);
+            ctx.assert(synthAdapter.devices[0] instanceof psynth.Synth, 'true');
+        });
 
-        player.start();
+        await run((left, right, bufferSize) => playerBasedFillBuffer(left, right, bufferSize, player));
 
-        await poll( () => !player.isActive, 100);
+        // player.start();
+        // await poll( () => !player.isActive, 100);
     }
 
     // 
@@ -677,16 +855,16 @@ include('/synth/synth-adapter.js');
     // }
 
     var tests = () => [
-        test_freqTable,
-        test_control_labels,
-        test_create_synth,
-        test_run_env,
-        test_osc_run,
-        test_generate_sound_simple,
-        test_synthAdapter_makeSetCommandForContoller,
-        test_synthAdapter_prepareContext,
-        test_synthAdapter_makeCommands,
-        test_run_channel_with_synthAdapter,
+        // test_freqTable,
+        // test_control_labels,
+        // test_create_synth,
+        // test_run_env,
+        // test_osc_run,
+        // test_generate_sound_simple,
+        // test_synthAdapter_makeSetCommandForContoller,
+        // test_synthAdapter_prepareContext,
+        // test_synthAdapter_makeCommands,
+        test_run_channel,
         // test_complete_player,
         //test_synthAdapterToDataSeries/*, test_synthAdapterFromDataSeries, test_synth_Ui_binding, test_synth_fromPreset*/
     ];

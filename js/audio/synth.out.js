@@ -2,19 +2,19 @@ var psynth = {};
 
 var preset = {
     "default": {
-        "amp": 0.80,
+        "amp":      0.80,
 
         "lfo1.amp": 0.15, "lfo1.dc":  0.70, "lfo1.fre":  0.30, "lfo1.wave": 1,
         "lfo2.amp": 0.10, "lfo2.dc":  0.00, "lfo2.fre":  0.60, "lfo2.wave": 1,
 
-        "env1.amp": 1.00, "env1.dc":  0.00, "env1.atk":  0.00, "env1.dec": 0.01, "env1.sus": 0.20, "env1.rel": 0.01,
-        "env2.amp": 0.40, "env2.dc":  0.00, "env2.atk":  0.00, "env2.dec": 0.90, "env2.sus": 0.80, "env2.rel": 0.40,
-        "env3.amp": 0.50, "env3.dc":  0.00, "env3.atk":  0.00, "env3.dec": 0.02, "env3.sus": 0.50, "env3.rel": 0.20,
+        "env1.amp": 1.00, "env1.dc":  0.00, "env1.atk":  0.001, "env1.dec": 0.02, "env1.sus": 0.30, "env1.rel": 0.02,
+        "env2.amp": 0.00, "env2.dc":  0.00, "env2.atk":  0.001, "env2.dec": 0.40, "env2.sus": 0.20, "env2.rel": 0.12,
+        "env3.amp": 1.00, "env3.dc":  0.00, "env3.atk":  0.002, "env3.dec": 0.02, "env3.sus": 0.40, "env3.rel": 0.12,
 
         "osc1.amp": 0.60, "osc1.fre": 0.00, "osc1.tune":  0.00, "osc1.psw": 0.30, "osc1.wave": 4,
-        "osc2.amp": 0.20, "osc2.fre": 0.50, "osc2.tune": 12.00, "osc2.psw": 0.50, "osc2.wave": 8,
+        "osc2.amp": 0.20, "osc2.fre": 0.50, "osc2.tune": 12.00, "osc2.psw": 0.50, "osc2.wave": 4,
 
-        "flt1.cut": 0.0, "flt1.res": 0.1, "flt1.mod": 0.6, "flt1.mode": 1
+        "flt1.cut": 0.0, "flt1.res": 0.2, "flt1.mod": 0.4, "flt1.mode": 1
     }
 };
 

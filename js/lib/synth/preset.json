@@ -12,6 +12,6 @@
         "osc1.amp": 0.60, "osc1.fre": 0.00, "osc1.tune":  0.00, "osc1.psw": 0.30, "osc1.wave": 4,
         "osc2.amp": 0.20, "osc2.fre": 0.50, "osc2.tune": 12.00, "osc2.psw": 0.50, "osc2.wave": 4,
 
-        "flt1.cut": 0.0, "flt1.res": 0.8, "flt1.mod": 0.6, "flt1.mode": 1
+        "flt1.cut": 0.0, "flt1.res": 0.2, "flt1.mod": 0.4, "flt1.mode": 1
     }
 }
