@@ -58,105 +58,103 @@ include('glui/glui-lib.js');
         'width': '10em'
     };
 
-    var renderer = null;
-
     var controls = [
-        // {
-        //     'type': 'Label',
-        //     'style': style,
-        //     'value': 'label'
-        // },
-        // {
-        //     'type': 'Label',
-        //     'style': style,
-        //     'data-source': 'data',
-        //     'data-field': 'label1'
-        // },
-        // {
-        //     'type': 'Label',
-        //     'style': style,
-        //     'data-type': 'int',
-        //     'decimal-digits': 2,
-        //     'data-source': 'data',
-        //     'data-field': 'label2'
-        // },
-
-        // {
-        //     'type': 'Textbox',
-        //     'style': style,
-        //     'look': 'textbox',
-        //     'decimal-digits': 3,
-        //     'value': 'textbox'
-        // },
-        // {
-        //     'type': 'Textbox',
-        //     'style': style,
-        //     'look': 'textbox',
-        //     'decimal-digits': 3,
-        //     'data-source': 'data',
-        //     'data-field': 'textbox1'
-        // },
-        // {
-        //     'type': 'Textbox',
-        //     'style': style,
-        //     'look': 'potmeter',
-        //     'data-type': 'int',
-        //     'decimal-digits': 1,
-        //     'data-source': 'data',
-        //     'data-field': 'textbox2'
-        // },
-
-        // {
-        //     'type': 'Button',
-        //     'style': buttonStyle,
-        //     'value': 'Complete'
-        // },
-        // {
-        //     'type': 'Button',
-        //     'style': buttonStyle,
-        //     'data-source': 'data',
-        //     'data-field': 'button'
-        // },
-
-        // {
-        //     'type': 'Image',
-        //     'style': {
-        //         'width':'128px', 'height':'96px',
-        //         'border':'#805020 2px inset',
-        //         'background': '#102040'
-        //     },
-        //     'source': 'glui/res/test.png'
-        // },
         {
-            'type': 'Grid',
-            'style': gridStyle,
-            'title': 'Default'
+            'type': 'Label',
+            'style': style,
+            'value': 'label'
         },
         {
-            'type': 'Grid',
-            'style': gridStyle,
-            'title': 'Empty 3x2',
-            'rows': 2,
-            'cols': 3
-        },
-        {
-            'type': 'Grid',
-            'style': gridStyle,
-            'title': 'Characters 4x2',
+            'type': 'Label',
+            'style': style,
             'data-source': 'data',
-            'data-field': 'grid',
-            'rows': 4,
-            'cols': 2,
-            'header': false,
-            'row-template': {
-                'name': { 'type': 'Label', 'column': '$Key', 'style': {
-                    'width':'65%', 'background': '#60c0a0', 'border':'#60c0a0 1px inset'
-                } },
-                'age': { 'type': 'Textbox', 'data-type': 'int', 'column': '$Key', 'style': {
-                    'width':'35%', 'background': '#d0fff0', 'border':'#608078 1px inset'
-                } }
-            }
+            'data-field': 'label1'
         },
+        {
+            'type': 'Label',
+            'style': style,
+            'data-type': 'int',
+            'decimal-digits': 2,
+            'data-source': 'data',
+            'data-field': 'label2'
+        },
+
+        {
+            'type': 'Textbox',
+            'style': style,
+            'look': 'textbox',
+            'decimal-digits': 3,
+            'value': 'textbox'
+        },
+        {
+            'type': 'Textbox',
+            'style': style,
+            'look': 'textbox',
+            'decimal-digits': 3,
+            'data-source': 'data',
+            'data-field': 'textbox1'
+        },
+        {
+            'type': 'Textbox',
+            'style': style,
+            'look': 'potmeter',
+            'data-type': 'int',
+            'decimal-digits': 1,
+            'data-source': 'data',
+            'data-field': 'textbox2'
+        },
+
+        {
+            'type': 'Button',
+            'style': buttonStyle,
+            'value': 'Complete'
+        },
+        {
+            'type': 'Button',
+            'style': buttonStyle,
+            'data-source': 'data',
+            'data-field': 'button'
+        },
+
+        {
+            'type': 'Image',
+            'style': {
+                'width':'128px', 'height':'96px',
+                'border':'#805020 2px inset',
+                'background': '#102040'
+            },
+            'source': 'glui/res/test.png'
+        },
+        // {
+        //     'type': 'Grid',
+        //     'style': gridStyle,
+        //     'title': 'Default'
+        // },
+        // {
+        //     'type': 'Grid',
+        //     'style': gridStyle,
+        //     'title': 'Empty 3x2',
+        //     'rows': 2,
+        //     'cols': 3
+        // },
+        // {
+        //     'type': 'Grid',
+        //     'style': gridStyle,
+        //     'title': 'Characters 4x2',
+        //     'data-source': 'data',
+        //     'data-field': 'grid',
+        //     'rows': 4,
+        //     'cols': 2,
+        //     'header': false,
+        //     'row-template': {
+        //         'name': { 'type': 'Label', 'column': '$Key', 'style': {
+        //             'width':'65%', 'background': '#60c0a0', 'border':'#60c0a0 1px inset'
+        //         } },
+        //         'age': { 'type': 'Textbox', 'data-type': 'int', 'column': '$Key', 'style': {
+        //             'width':'35%', 'background': '#d0fff0', 'border':'#608078 1px inset'
+        //         } }
+        //     }
+        // },
         // {
         //     'type': 'Grid',
         //     'style': gridStyle,
@@ -198,16 +196,16 @@ include('glui/glui-lib.js');
         "textbox2": 20,
         "button": "Button",
         "grid": [
-            { "name": "James", "age": 38 },
-            { "name": "Ivy", "age": 32 },
-            { "name": "Alfred", "age": 61 },
-            { "name": "Henry", "age": 17 },
-            { "name": "Blange", "age": 60 },
-            { "name": "Wilson", "age": 62 },
-            { "name": "George", "age": 67 },
-            { "name": "Teddy", "age": 52 },
-            { "name": "Sissy", "age": 29 },
-            { "name": "Poppy", "age": 27 }
+            { "name": "James", "age": 38, "rank": 8 },
+            { "name": "Ivy", "age": 32, "rank": 9 },
+            { "name": "Alfred", "age": 61, "rank": 6 },
+            { "name": "Henry", "age": 17, "rank": 10 },
+            { "name": "Blange", "age": 60, "rank": 7 },
+            { "name": "Wilson", "age": 62, "rank": 5 },
+            { "name": "George", "age": 67, "rank": 1 },
+            { "name": "Teddy", "age": 52, "rank": 2 },
+            { "name": "Sissy", "age": 29, "rank": 3 },
+            { "name": "Poppy", "age": 27, "rank": 4 }
         ],
         "combobox": "James"
     };
@@ -241,7 +239,6 @@ include('glui/glui-lib.js');
 
     function teardown() {
         glui.shutdown();
-        renderer = null;
     }
 
     async function createControls() {
@@ -290,9 +287,8 @@ include('glui/glui-lib.js');
         //     //     }
         //     // }
         // }
-        //glui.render();
         glui.resize(true);
-        glui.animate();
+        //glui.render();
     }
 
     async function test_construct() {
@@ -303,7 +299,7 @@ include('glui/glui-lib.js');
             test(`Should create <b><i>${control.type}</i></b> from template`, ctx => {                
                 ctx.assert(control, '!=', null);
                 if (control instanceof glui.ValueControl) {
-                    ctx.assert(control.id, '=', `ctrl${i}`);
+                    ctx.assert(control.id, '=', `${control.constructor.name}${i}`);
                     ctx.assert(control instanceof glui[controls[i].type], '=', true);
                     if (control.dataSource != null) {
                         ctx.assert(control.value, '=', data[controls[i]['data-field']]);
@@ -321,8 +317,147 @@ include('glui/glui-lib.js');
         await setup();
         await createControls();
         renderUI();
+        isComplete = false;
         await poll( () => isComplete, 100);
         glui.renderingContext2d.fillRect(0, 0, glui.canvas.width, glui.canvas.height);
+        teardown();
+    }
+
+    async function test_grid() {
+        message('Test grid creation', 1);
+        await setup();
+
+        var gridTemplate1 = {
+            'type': 'Grid',
+            'style': gridStyle,
+            'title': 'Default'
+        };
+        var grid1 = await glui.create('grid1', gridTemplate1, null, App); await grid1.build();
+        test('Default grid should have 2 colums and 2 rows', ctx => {
+            ctx.assert(grid1.rowCount, '=', 2);
+            ctx.assert(grid1.columnCount, '=', 2);
+            ctx.assert(grid1.rowKeys, ':=', [0,1]);
+            ctx.assert(grid1.columnKeys, ':=', [0,1]);
+            ctx.assert(grid1.rows[0].constructor.name, '=', 'Row');
+            ctx.assert(grid1.rows[1].constructor.name, '=', 'Row');
+            ctx.assert(grid1.getCell(0, 0).constructor, '=', glui.Label);
+            ctx.assert(grid1.getCell(0, 1).constructor, '=', glui.Label);
+            ctx.assert(grid1.getCell(1, 0).constructor, '=', glui.Label);
+            ctx.assert(grid1.getCell(1, 1).constructor, '=', glui.Label);
+        });
+        grid1.getCell(0, 0).setValue('0');
+        grid1.getCell(0, 1).setValue('1');
+        grid1.getCell(1, 0).setValue('2');
+        grid1.getCell(1, 1).setValue('3');
+        grid1.move(60, 90);
+        grid1.render();
+
+        var gridTemplate2 = {
+            'type': 'Grid',
+            'style': gridStyle,
+            'title': '3x4',
+            'cols': 3,
+            'rows': 4
+        };
+        var grid2 = await glui.create('grid2', gridTemplate2, null, App); await grid2.build();
+        test('3x4 grid should have 3 colums and 4 rows', ctx => {
+            ctx.assert(grid2.rowCount, '=', 4);
+            ctx.assert(grid2.columnCount, '=', 3);
+            ctx.assert(grid2.rowKeys, ':=', [0,1,2,3]);
+            ctx.assert(grid2.columnKeys, ':=', [0,1,2]);
+            for (var ri=0; ri<grid2.rowCount; ri++) {
+                ctx.assert(grid2.rows[ri].constructor.name, '=', 'Row');
+                for (var ci=0; ci<grid2.columnCount; ci++) {
+                    var cell = grid2.getCell(ri, ci);
+                    ctx.assert(cell.constructor, '=', glui.Label);
+                    cell.setValue(ri+'_'+ci);
+                }
+            }
+        });
+        grid2.move(240, 90);
+        grid2.render();
+
+        var gridTemplate3 = {
+            'type': 'Grid',
+            'style': gridStyle,
+            'title': 'Data-source (table)',
+            'data-source': 'data',
+            'data-field': 'grid'
+        };
+        var grid3 = await glui.create('grid3', gridTemplate3, null, App); await grid3.build();
+        test('Grid build from datasource should have 2 columns and datasource.length rows', ctx => {
+            ctx.assert(grid3.rowCount, '=', Object.keys(data.grid).length);
+            ctx.assert(grid3.columnCount, '=', 3);
+            ctx.assert(grid3.rowKeys, ':=', Object.keys(data.grid));
+            ctx.assert(grid3.columnKeys, ':=', ['name', 'age', 'rank']);
+            for (var ri=0; ri<grid3.rowCount; ri++) {
+                ctx.assert(grid3.rows[ri].constructor.name, '=', 'Row');
+                for (var ci=0; ci<grid3.columnCount; ci++) {
+                    var cell = grid3.getCell(ri, ci);
+                    ctx.assert(cell.constructor, '=', glui.Label);
+                }
+            }
+        });
+        grid3.move(420, 90);
+        grid3.render();
+
+        // var gridTemplate4 = {
+        //     'type': 'Grid',
+        //     'style': gridStyle,
+        //     'title': 'Data-source (list)',
+        // };
+        // var grid4 = await glui.create('grid4', gridTemplate4, null, App); grid4.dataBind(data.grid.map(x => x.name)); await grid4.build();
+        // test('Grid build from datasource should have 3 columns and 4 rows', ctx => {
+        //     ctx.assert(grid4.rowCount, '=', 5);
+        //     ctx.assert(grid4.columnCount, '=', 2);
+        //     ctx.assert(grid4.rowKeys, ':=', [0,1,2,3,4]);
+        //     ctx.assert(grid4.columnKeys, ':=', [0,1]);
+        //     for (var ri=0; ri<grid4.rowCount; ri++) {
+        //         ctx.assert(grid4.rows[ri].constructor.name, '=', 'Row');
+        //         for (var ci=0; ci<grid4.columnCount; ci++) {
+        //             var cell = grid4.getCell(ri, ci);
+        //             ctx.assert(cell.constructor, '=', glui.Label);
+        //         }
+        //     }
+        // });
+        // grid4.move(600, 90);
+        // grid4.render();
+
+        // var gridTemplate5 = {
+        //     'type': 'Grid',
+        //     'style': gridStyle,
+        //     'title': 'Data-source',
+        //     'data-source': 'data',
+        //     'data-field': 'list',
+        //     'cols': 2,
+        //     'rows': 4
+        // };
+        // var grid5 = await glui.create('grid5', gridTemplate5, null, App); await grid5.build();
+        // test('2x4 grid build from datasource should have 2 columns and 4 rows', ctx => {
+        //     ctx.assert(grid5.rowCount, '=', 4);
+        //     ctx.assert(grid5.columnCount, '=', 2);
+        //     ctx.assert(grid5.rowKeys, ':=', Object.keys(data.grid).slice(0, 4).map(x => parseInt(x)));
+        //     ctx.assert(grid5.columnKeys, ':=', [0,1]);
+        //     for (var ri=0; ri<grid5.rowCount; ri++) {
+        //         ctx.assert(grid5.rows[ri].constructor.name, '=', 'Row');
+        //         for (var ci=0; ci<grid5.columnCount; ci++) {
+        //             var cell = grid5.getCell(ri, ci);
+        //             ctx.assert(cell.constructor, '=', glui.Label);
+        //         }
+        //     }
+        // });
+        // grid5.move(600, 90);
+        // grid5.render();
+
+        var tmpl = controls.find(x => x.type == 'Button' && x.value == 'Complete');
+        var ctrl = await glui.create(`btn`, tmpl, null, App);
+        ctrl.move(10, 300);
+        ctrl.render();
+
+        glui.animate();
+
+        isComplete = false;
+        await poll( () => isComplete, 100);
         teardown();
     }
 
@@ -450,8 +585,9 @@ include('glui/glui-lib.js');
         //test_mergeObjects,
         //test_getObjectAt,
         //test_construct,
+        test_grid,
         //test_valueControls,
-        test_render
+        //test_render
     ];
     publish(tests, 'glUi tests');
 })();

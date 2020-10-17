@@ -567,7 +567,7 @@ function lock(token, action) {
             if (request == locks__[token][1]) {
                 locks__[token][0]++;
                 if (locks__[token][0] == request + 1) {
-                    debug_('locked: ' + locks__[token], 1);
+                    debug_('locked: ' + locks__[token], 4);
                     return true;
                 }
             }
@@ -576,7 +576,7 @@ function lock(token, action) {
             await action();
             locks__[token][1] = locks__[token][0];
             resolve();
-            debug_('unlocked: ' + locks__[token], 1);
+            debug_('unlocked: ' + locks__[token], 4);
         });
     });
 }

@@ -9,7 +9,7 @@ include('renderer2d.js');
 
     LabelRenderer2d.prototype.renderControl = function renderControl() {
         if (this.backgroundImage) {
-            this.drawImage(this.backgroundImage, 0, 0, this.backgroundImage.width, this.backgroundImage.height);
+            this.drawImage(this.backgroundImage, 0, 0);
         }
         var lines = null;
         var value = this.control.getValue();
@@ -17,7 +17,7 @@ include('renderer2d.js');
             if (this.control.isNumeric) {
                 lines = [value.toFixed(this.control.decimalDigits)];
             } else {
-                lines = value.split('\n');
+                lines = value.toString().split('\n');
             }
         } else {
             lines = [];

@@ -1,7 +1,7 @@
 include('icontrol.js');
 include('data/datalink.js');
 
-const DEBUG_EVENT = 'click';
+const DEBUG_EVENT = 'baka';
 
 (function() {
 
@@ -133,28 +133,26 @@ const DEBUG_EVENT = 'click';
         }
     };
     Control.prototype.callHandler = async function(eventName, event) {
-        //setTimeout( () => {
-            var control = this;
-            if (eventName == DEBUG_EVENT) {
-                debug_(`${DEBUG_EVENT} on ${getObjectPath(control, 'parent').map(x=>x.id)}::${control.id} (${event.control ? `${getObjectPath(event.control, 'parent').map(x=>x.id)}::${event.control.id}` : 'null'})`, 2);
-            }
-                
-            while (control) {
-                var handlers = control.handlers[eventName];
-                if (handlers) {
-                    for (var i=0; i<handlers.length; i++) {
-                        var handler = handlers[i];
-                        if (eventName == DEBUG_EVENT) debug_(` - ${handler.obj}`, 2);
-                        if (handler.fn.call(handler.obj, event, control) == true) {
-                            return true;
-                        }
+        var control = this;
+        if (eventName == DEBUG_EVENT) {
+            debug_(`${DEBUG_EVENT} on ${getObjectPath(control, 'parent').map(x=>x.id)}::${control.id} (${event.control ? `${getObjectPath(event.control, 'parent').map(x=>x.id)}::${event.control.id}` : 'null'})`, 2);
+        }
+            
+        while (control) {
+            var handlers = control.handlers[eventName];
+            if (handlers) {
+                for (var i=0; i<handlers.length; i++) {
+                    var handler = handlers[i];
+                    if (eventName == DEBUG_EVENT) debug_(` - ${handler.obj.constructor.name}`, 2);
+                    if (handler.fn.call(handler.obj, event, control) == true) {
+                        return true;
                     }
-                    break;
-                } else {
-                    control = control.parent;
                 }
+                break;
+            } else {
+                control = control.parent;
             }
-        //}, 0);
+        }
     };
     Control.prototype.getTemplate = function getTemplate() {
         var template = {
@@ -162,7 +160,7 @@ const DEBUG_EVENT = 'click';
             'label': false,
             'disabled': false,
             'data-source': '',
-            'data-field': '',
+            'data-field': null,
             'z-index': '',
             // styling
             'style': Control.getStyleTemplate()
@@ -217,17 +215,17 @@ const DEBUG_EVENT = 'click';
         // }
     };
     Control.prototype.render = function render() {
+        // mark control to render in the next requestAnimationFrame
         if (this.renderer && this.style.visible) {
-            // this.getBoundingBox();
-            this.renderer.render();
+            glui.markForRendering(this);
         }
     };
-    Control.prototype.highlight = function hightlight() {
+    Control.prototype.highlight = function highlight() {
         if (!this.isHighlighted) {
             this.renderer.backgroundColor_ = this.renderer.backgroundColor;
             this.renderer.backgroundColor = this.renderer.calculateColor(this.renderer.backgroundColor, 1.2);
             var node = this;
-            while (node.parent) node = node.parent;
+            //while (node.parent) node = node.parent;
             node.render();
 
             this.isHighlighted = true;
@@ -237,7 +235,7 @@ const DEBUG_EVENT = 'click';
         if (this.isHighlighted && !this.isFocused) {
             this.renderer.backgroundColor = this.renderer.backgroundColor_;
             var node = this;
-            while (node.parent) node = node.parent;
+            //while (node.parent) node = node.parent;
             node.render();
 
             this.isHighlighted = false;
@@ -260,24 +258,27 @@ const DEBUG_EVENT = 'click';
         if (mode == glui.Render2d) {
             if (this.renderer2d == null) {
                 this.renderer2d = this.createRenderer(mode);
-                await this.renderer2d.initialize(this, context);
-            } else await Promise.resolve();
+                this.renderer2d.initialize(this, context);
+            } else Promise.resolve();
             this.renderer = this.renderer2d;
         } else if (mode == glui.Render3d) {
             if (this.renderer3d == null) {
                 this.renderer3d = this.createRenderer(mode);
-                await this.renderer3d.initialize(this, context);
-            } else await Promise.resolve();
+                this.renderer3d.initialize(this, context);
+            } else Promise.resolve();
             this.renderer = this.renderer3d;
         }
         return this.renderer;
     };
 
-    Control.create = function create(id, template, parent, context) {
+    Control.create = async function create(id, template, parent, context) {
         var type = template.type;
         if (typeof glui[type] === 'function') {
             var ctrl = Reflect.construct(glui[type], [id, template, parent, context]);
             if (ctrl instanceof glui.Control) {
+                if (parent.renderer) {
+                    await ctrl.setRenderer(parent.renderer.mode, parent.renderer.context);
+                }
                 return ctrl;
             }
         }

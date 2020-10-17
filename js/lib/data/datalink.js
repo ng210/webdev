@@ -30,7 +30,7 @@
 
     DataLink.prototype.add = function add(field) {
         if (this.obj[field] !== undefined) {
-            if (!Object.keys(this).includes(field)) {
+            if (!Object.keys(this).includes(field.toString())) {
                 Object.defineProperty(this, field, {
                     enumerable: true,
                     configurable: false,

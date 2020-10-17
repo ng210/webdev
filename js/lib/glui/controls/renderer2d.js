@@ -3,6 +3,7 @@ include('renderer.js');
 
     function Renderer2d() {
         Renderer2d.base.constructor.call(this);
+        this.mode = glui.Render2d;
     }
     extend(glui.Renderer, Renderer2d);
 
@@ -97,11 +98,11 @@ include('renderer.js');
         //this.context.translate(ctrl.offsetLeft, ctrl.offsetTop);
         region.rect(0, 0, ctrl.width, ctrl.height);
         this.context.clip(region);
-        if (this.backgroundColor) this.drawRect(0, 0, this.control.width, this.control.height, this.backgroundColor);
+        if (this.backgroundColor) this.drawRect(0, 0, ctrl.width, ctrl.height, this.backgroundColor);
         var width = ctrl.width;
         var height = ctrl.height;
         if (this.border.style) {
-            this.drawBorder(0, 0, this.control.width, this.control.height);
+            this.drawBorder(0, 0, ctrl.width, ctrl.height);
             width -= 2*this.border.width;
             height -= 2*this.border.width;
         }
@@ -117,7 +118,7 @@ include('renderer.js');
         region = new Path2D();
         region.rect(this.border.width, this.border.width, width, height);
         this.context.clip(region);
-        if (this.control.style.font) this.setFont(this.control.style.font);
+        if (ctrl.style.font) this.setFont(ctrl.style.font);
         this.renderControl();
         this.context.restore();
     };

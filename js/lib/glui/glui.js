@@ -17,6 +17,8 @@
         width: 0,
         height: 0,
 
+        markedForRendering: {},
+
         animations: [],
         animateId: 0,
 
@@ -42,13 +44,11 @@
         },
         create: async function create(id, tmpl, parent, context) {
             context = context;
-            var ctrl = glui.Control.create(id, tmpl, parent || this.screen, context);
+            var ctrl = await glui.Control.create(id, tmpl, parent || this.screen, context);
             ctrl.addHandlers();
             if (parent == null) {
-                this.screen.add(ctrl);
-                await ctrl.setRenderer(this.mode, this.renderingContext);
+                 this.screen.add(ctrl);
             }
-            //ctrl.setRenderer(this.mode, this.mode == glui.Render2d ? this.renderingContext2d : this.renderingContext3d);
             return ctrl;
         },
         remove: function remove(control) {
@@ -78,8 +78,10 @@
             this.frontBuffer = new glui.Buffer(this.canvas);
             this.backBuffer = new glui.Buffer(this.canvas.width, this.canvas.height);
             this.screen = new glui.Container('screen', null, null, app);
+            this.screen.onmouseover = () => true;
+            this.screen.onmouseout = () => true;
+            this.screen.addHandlers();
             this.setRenderingMode(glui.Render2d);
-
             document.addEventListener('keydown', glui.onevent);
             document.addEventListener('keyup', glui.onevent);
             document.addEventListener('mouseup', glui.onevent);
@@ -100,6 +102,7 @@
             // remove animations
             // for (var i=0; i<glui.animations.length; i++) {
             // }
+            cancelAnimationFrame(glui.animateId);
             glui.animations.splice(0, glui.animations.length);
             
             // remove event handlers
@@ -135,9 +138,19 @@
             glui.resize(false);
             return this.renderingContext;
         },
-        render: function render() {
-            //this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            this.screen.render();
+        // render: function render() {
+        //     //this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        //     this.screen.render();
+        // },
+        markForRendering: function markForRendering(ctrl) {
+            while (ctrl != this.screen) {
+                if (ctrl.parent == this.screen) {
+                    debug_(ctrl.id + 'marked for rendering', 2);
+                    this.markedForRendering[ctrl.id] = ctrl;
+                    break;
+                }
+                ctrl = ctrl.parent;
+            }            
         },
         repaint: function repaint() {
             this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -150,8 +163,8 @@
             glui.screen.height = glui.canvas.height = glui.height;
             for (var i=0; i<glui.screen.items.length; i++) {
                 var ctrl = glui.screen.items[i];
-                var left = ctrl.left, top = ctrl.top;
                 ctrl.renderer.initialize(ctrl, glui.renderingContext);
+                ctrl.getBoundingBox();
                 //ctrl.move(left, top);
             }
             if (repaint) glui.render();
@@ -177,7 +190,7 @@
             var anim = glui.animations.find(x => x.id == animationId);
             anim.counter = anim.timeout;
         },
-        animate: function animate() {
+        render: function render() {
             for (var i=0; i<glui.animations.length; i++) {
                 var anim = glui.animations[i];
                 anim.counter -= 50;
@@ -186,10 +199,18 @@
                     anim.fn.call(anim.obj, anim.args);
                 }
             }
-            if (this.animateId) cancelAnimationFrame(this.animateId);
-            this.animateId = requestAnimationFrame(glui.animate);
+            var marks = Object.values(glui.markedForRendering);
+            glui.markedForRendering = {};
+            for (var i=0; i<marks.length; i++) {
+                debug_('render ' + marks[i].id, 2);
+                marks[i].renderer.render();
+            }
         },
-
+        animate: function animate() {
+            if (glui.animateId) cancelAnimationFrame(glui.animateId);
+            glui.render();
+            glui.animateId = requestAnimationFrame(glui.animate);
+        },
         onevent: function(e) {
             // get control by coordinates
             var event = e.type;
@@ -260,10 +281,10 @@
                 }
             }
     
-            if (!control && (event == 'keydown' || event == 'keyup')) {
+            if (control == glui.screen && (event == 'keydown' || event == 'keyup')) {
                 control = glui.focusedControl;
             }
-    
+
             if (control) {
                 e.control = control;
                 control.callHandler(e.type, e);

@@ -29,8 +29,8 @@ include('glui/glui.js');
         this.control.height = this.convertToPixel(this.control.style.height, true);
         this.control.offsetLeft = this.control.offsetLeft != -1 ? this.control.offsetLeft : this.convertToPixel(this.control.style.left);
         this.control.offsetTop = this.control.offsetTop != -1 ? this.control.offsetTop : this.convertToPixel(this.control.style.top, true);
-        this.color = this.toColor(this.control.style.color) || this.color;
-        this.backgroundColor = this.control.style.background != undefined ? this.toColor(this.control.style.background) : this.backgroundColor;
+        if (this.control.style.color != undefined) this.color = this.toColor(this.control.style.color);
+        if (this.control.style.background != undefined) this.backgroundColor = this.toColor(this.control.style.background);
         if (this.control.style['background-image'] != 'none') {
             var res = await load(this.control.style['background-image']);
             this.backgroundImage = !res.error ? res.node : null;
@@ -96,6 +96,7 @@ if (!parent.renderer) debugger;
         return color;
     };
     Renderer.prototype.calculateColor = function calculateColor(color, factor) {
+        if (!color) debugger
         var r = color[0] * factor;
         var g = color[1] * factor;
         var b = color[2] * factor;

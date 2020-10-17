@@ -53,9 +53,8 @@ include('renderer2d.js');
     };
 
     Button.prototype.onmouseout = function onmouseout(e) {
-        Button.base.onmouseout.call(this, e);
         this.state = false;
-        this.render();
+        Button.base.onmouseout.call(this, e);
     };
 
     Button.prototype.onmousedown = function onmousedown(e) {

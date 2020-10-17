@@ -19,13 +19,20 @@ include('container.js');
 	extend(glui.Renderer2d, GridRowRenderer2d);
 
 	GridRowRenderer2d.prototype.renderControl = function renderRow() {
-		var ctrl = this.control;
+		var row = this.control;
+		var grid = row.parent;
 		var left = 0;
-		for (var i=0; i<ctrl.items.length; i++) {
-			var cell = ctrl.items[i];
+		for (var i=0; i<row.items.length; i++) {
+			var cell = row.items[i];
+			cell.width = grid.columns[i].width;
 			cell.move(left, 0);
-			cell.render();
-			left += cell.width + 2*cell.renderer.border.width;
+			var bgColor = cell.renderer.backgroundColor;
+			if (row.hightlit) {
+				cell.renderer.backgroundColor = cell.renderer.calculateColor(cell.renderer.backgroundColor, 1.2);
+			}
+			cell.renderer.render();
+			cell.renderer.backgroundColor = bgColor;
+			left += cell.width;
 		}
 	};
 
@@ -36,6 +43,14 @@ include('container.js');
 	}
 	extend(glui.Container, Row);
 
+	Row.prototype.dataBind = function dataBind(source, field) {
+		glui.Control.prototype.dataBind.call(this, source, field);
+		var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
+		for (var i=0; i<this.parent.columnKeys.length; i++) {
+			var key = this.parent.columnKeys[i];
+			this.cells[key].dataBind(dataSource, key);
+		}
+	};
 	Row.prototype.add = function add(ctrl, name) {
 		ctrl.id = this.id + '#' + ctrl.id;
 		Row.base.add.call(this, ctrl);
@@ -77,37 +92,31 @@ include('container.js');
 	};
 	Row.prototype.createRenderer = mode => mode == glui.Render2d ? new GridRowRenderer2d() : 'GridRowRenderer3d';
 
+	Row.prototype.onmouseover = function onmouseover(e) {
+		if (this.parent.mode == Grid.modes.TABLE) {
+			this.hightlit = true;
+			this.render();
+		}
+	};
+	Row.prototype.onmouseout = function onmouseout(e) {
+		if (this.parent.mode == Grid.modes.TABLE) {
+			this.hightlit = false;
+			this.render();
+		}
+	};
+
 	function Column(name, parent) {
 		this.id = `${parent.id}#${name}`;
 		this.name = name;
 		this.parent = parent;
 		this.cells = [];
+		this.width = '100%';
 	};
 	Column.prototype.add = function add(ctrl, ix) {
 		if (ix != undefined) this.cells.splice(ix, 0, ctrl);
 		else this.cells.push(ctrl);
 		ctrl.column = this;
-	}
-
-
-// Grid
-//  - getTemplate/applyTemplate:
-//		- determine row and column count
-//		- create row-template from cell-template/row-template
-//  - build
-//		- create titlebar
-//		- create rows and columns including header
-//  - update
-//		- add/remove rows/columns
-//		- update data bindings
-//  - dataBind
-//		- determine row and column count if in template unspecified
-//		- bind data items to rows
-//  - getBoundingBox
-//		- calculate width and height
-//  - render
-//		- render titlebar
-//		- render rows
+	};
 
 	const headKey = '__head';
 
@@ -121,49 +130,59 @@ include('container.js');
 		var top = 0;
 		// draw titlebar
 		if (grid.title) {
-			grid.titlebar.render();
+			grid.titlebar.renderer.render();
 			top += grid.titlebar.height + grid.titlebar.renderer.border.width;
 		}
+
+		// calculate cell widths
+		// var headerHeight = 0, height = 0;
+		var width = grid.width - 2*this.border.width;
+		var columnWidths = [];
+		var percentage = 0;
+		var absolute = 0;
+		// sum percentage (undefined = 100%)
+		// sum absolute values
+		// rest = total - absolute
+		// distribute rest among percentage
+		for (var ci=0; ci<grid.columnCount; ci++) {
+			var column = grid.columns[ci];
+			column.width = -1;
+			if (column.style.width == undefined) {
+				percentage += 100; columnWidths.push(100);
+			} else if (column.style.width.endsWith('%')) {
+				var w = parseFloat(column.style.width);
+				percentage += w; columnWidths.push(w);
+			} else {
+				// per row: cells[0] should be cells[rowIndex]
+				absolute += column.width = column.cells[0].renderer.convertToPixel(column.style.width, 0);
+				columnWidths.push(-1);
+			}
+			// if (grid.rowTemplate) {
+			// 	headerHeight = Math.max(grid.rows[headKey].cells[ci].height, height);
+			// }
+			// per row: grid.rows[..] => row
+			// height = Math.max(grid.rows[grid.rowKeys[1]].cells[ci].height, height);
+		}
+		var restWidth = width - absolute;
+		for (var ci=0; ci<grid.columnCount; ci++) {
+			var column = grid.columns[ci];
+			if (column.width == -1) {
+				column.width = Math.ceil(restWidth/percentage*columnWidths[ci]);
+				restWidth -= column.width;
+				percentage -= columnWidths[ci];
+			}
+		}
+
 		// draw rows
-		for (var i=0; i<grid.rowKeys.length; i++) {
+		for (var i=0; i<grid.rowCount; i++) {
 			var row = grid.rows[grid.rowKeys[i]];
 			if (row.style.visible) {
 				row.move(0, top);
-				row.render();
+				row.renderer.render();
 				top += row.height;
 			}
 		}
 
-		// var width = ctrl.width - 2*this.border.width;
-		// var widthPercent = 0;
-		// var columnWithoutWidth = 0;
-		// var columns = [];
-		// var headerHeight = 0, height = 0;
-		// for (var ci=0; ci<ctrl.columnCount; ci++) {
-		// 	var column = ctrl.columns[ci];
-		// 	if (!column.style.width) {
-		// 		columnWithoutWidth++;
-		// 		columns.push(column);
-		// 	} else if (column.style.width.endsWith('%')) {
-		// 		widthPercent += parseFloat(column.style.width);
-		// 		columns.push(column);
-		// 	} else {
-		// 		width -= column.width = column.cells[0].renderer.convertToPixel(column.style.width, 0);
-		// 	}
-		// 	if (ctrl.rowTemplate) {
-		// 		headerHeight = Math.max(ctrl.rows[headKey].cells[ci].height, height);
-		// 	}
-		// 	height = Math.max(ctrl.rows[ctrl.rowKeys[1]].cells[ci].height, height);
-		// }
-		// var restWidth = (100 - widthPercent)/columnWithoutWidth + '%';
-		// for (var ci=0; ci<columns.length; ci++) {
-		// 	var column = columns[ci];
-		// 	var colWidth = column.style.width;
-		// 	if (!colWidth) {
-		// 		colWidth = restWidth;
-		// 	}
-		// 	column.width = this.convertToPixel(colWidth, width);
-		// }
 		// var left = 0;
 		// var startRow = 0;
 		// if (ctrl.rowTemplate) {
@@ -198,7 +217,6 @@ include('container.js');
 		// }
 	};
 
-
 	function Grid(id, template, parent, context) {
 		this.rowCount = 0;
 		this.columnCount = 0;
@@ -208,6 +226,7 @@ include('container.js');
 		this.columns = {};
 		this.isDirty = true;
 		this.titlebar = null;
+		this.mode = Grid.modes.TABLE;
 		Grid.base.constructor.call(this, id, template, parent, context);
 	};
 	extend(glui.Container, Grid);
@@ -223,13 +242,14 @@ include('container.js');
 		template.cols = 0;
 		template.header = false;
 		template['row-template'] = null;
-		template['cell-item'] = 'Label';
+		template['cell-template'] = glui.Label.prototype.getTemplate();
+		template['cell-template'].style.width = '100%';
+		template['cell-template'].style.border = '#000000 1px solid';
 		return template;
 	};
 	Grid.prototype.applyTemplate = function applyTemplate(tmpl) {
 		if (tmpl.style.width == undefined) tmpl.style.width = 0;
 		var template = Grid.base.applyTemplate.call(this, tmpl);
-
 		// Build cell style: merge(grid.style, grid.style.cell, tmpl.style.cell);
 		this.cellStyle = mergeObjects(template.style, template.style.cell);
 
@@ -256,6 +276,7 @@ include('container.js');
 		// this.columnCount = this.columnKeys.length;
 
 		this.rowTemplate = template['row-template'];
+		this.cellTemplate = template['cell-template'];
 
 		this.style.header = mergeObjects(this.cellStyle, template.style.header);
 		this.style.title = mergeObjects(this.cellStyle, template.style.title);
@@ -264,11 +285,29 @@ include('container.js');
 
 		this.showHeader = !!template.header;
 
-        if (this.dataSource && this.dataField) {
-            this.dataBind();
-		}
-
 		return template;
+	};
+	Grid.prototype.dataBind = function(source, field) {
+		//glui.Control.prototype.dataBind.call(this, source, field);
+		this.dataSource = source || this.dataSource;
+		this.dataField = field || this.dataField;
+		var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
+		if (this.mode == Grid.modes.TABLE) {
+			for (var i=0; i<this.rowCount; i++) {
+				this.rows[this.rowKeys[i]].dataBind(dataSource, this.rowKeys[i]);
+			}
+		} else {
+			var keys = Object.keys(dataSource);
+			var fi = 0;
+			for (var i=0; i<this.rowCount; i++) {
+				var row = this.rows[this.rowKeys[i]];
+				for (var j=0; j<this.columnCount; j++) {
+					if (fi < keys.length) {
+						row.cells[j].dataBind(dataSource, keys[fi++]);
+					}
+				}				
+			}
+		}
 	};
     Grid.prototype.getHandlers = function getHandlers() {
         var handlers = Grid.base.getHandlers.call(this);
@@ -281,7 +320,7 @@ include('container.js');
 	Grid.prototype.createRenderer = mode => mode == glui.Render2d ? new GridRenderer2d() : 'GridRenderer3d';
 	Grid.prototype.setRenderer = async function setRenderer(mode, context) {
 		await Grid.base.setRenderer.call(this, mode, context);
-		this.update();
+		await this.update();
 	};
 	Grid.prototype.getBoundingBox = function getBoundingBox() {
 		if (this.height == 0) {
@@ -292,9 +331,10 @@ include('container.js');
 				this.renderer.setFont(this.style.header.font);
 				this.height += this.renderer.convertToPixel(this.style.header.height, true);
 			}
-
-			var style = this.rowTemplate[this.columnKeys[0]].style;
-			this.height += this.rowCount * this.renderer.convertToPixel(style.height, true);
+			for (var i=0; i<this.rowCount; i++) {
+				var row = this.rows[this.rowKeys[i]];
+				this.height += row.height;
+			}
 
 			// if (rowCount > 0) {
 
@@ -311,28 +351,64 @@ include('container.js');
 		}
 		return Grid.base.getBoundingBox.call(this);
     };
-	Grid.prototype.update = function update() {
+	Grid.prototype.update = async function update() {
 		// titlebar
 		if (this.titlebar) {
 			this.titlebar.setVisible(this.title);
 			this.titlebar.setValue(this.title);
 		}
-		if (this.dataSource) {
-			var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
-debugger;
-			this.rowKeys = Object.keys(dataSource);
-			this.columnKeys = Object.keys(dataSource[this.rowKeys[0]]);
-			this.build();
-		}
+
+		// if (this.dataSource) {
+		// 	var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
+		// 	this.rowKeys = Object.keys(dataSource);
+		// 	this.columnKeys = Object.keys(dataSource[this.rowKeys[0]]);
+		// await this.build();
+		// }
 		this.isDirty = false;
 	};
-	Grid.prototype.insertColumnAt = async function insertColumnAt(ix) {
-		console.log('insert column at ' + ix);
+	Grid.prototype.insertColumnAt = async function insertColumnAt(name, ix) {
+		if (ix != undefined && ix < this.columnCount) {
+			this.columnKeys.splice(ix, 0, name);
+			for (var i=0; i<this.columnCount; i++) {
+				this.columns[i+1] = this.columns[i];
+			}
+		} else {
+			this.columnKeys.push(name);
+			ix = this.columnCount;
+		}
+
+		var column = this.columns[ix] = this.columns[name] = new Column(name, this);
+		var template = this.rowTemplate ? this.rowTemplate[name] : this.cellTemplate;
+		column.style = template.style;
+		// update rows
+		for (var ri=0; ri<this.rowCount; ri++) {
+			var ctrl = await glui.create(name, template, this);
+			this.rows[this.rowKeys[ri]].add(ctrl, name);
+			this.columns[name].add(ctrl, ri);
+		}		
+
 		this.columnCount++;
+		return this.columns[name];
 	};
-	Grid.prototype.insertRowAt = async function insertRowAt(ix) {
-		console.log('insert row at ' + ix);
+	Grid.prototype.insertRowAt = async function insertRowAt(name, ix) {
+		if (ix != undefined) this.rowKeys.splice(ix, 0, name);
+		else this.rowKeys.push(name);
+		var row = this.rows[name] = new Row(name, {style:{width:'100%'}}, this);
+		this.add(row);
+		// update columns
+		var height = 0;
+		for (var ci=0; ci<this.columnCount; ci++) {
+			var name = this.columnKeys[ci];
+			var template = this.rowTemplate ? this.rowTemplate[name] : this.cellTemplate;
+			var ctrl = await glui.create(name, template, row);
+			row.add(ctrl, name);
+			this.columns[name].add(ctrl, ix);
+			height = Math.max(height, ctrl.height);
+		}
+		row.height = height;
+
 		this.rowCount++;
+		return this.rows[name];
 	};
 	Grid.prototype.removeColumnAt = async function removeColumnAt(ix) {
 		console.log('remove column at ' + ix);
@@ -358,11 +434,11 @@ debugger;
 			rowKeys = [];
 			for (var i=0; i<rowCount; i++) rowKeys.push(i);
 		}
-console.log(`${rowCount}: ${rowKeys}`);
 		return rowKeys;
 	};
-	Grid.prototype.updateColumnInfo = function updateColumnInfo() {
+	Grid.prototype.updateColumnInfo = function updateColumnInfo(rowKeys) {
 		var columnCount = parseInt(this.template.cols);
+		var columnKeys = null;
 		if (columnCount) {
 			if (this.rowTemplate) {
 				columnKeys = [];
@@ -375,15 +451,17 @@ console.log(`${rowCount}: ${rowKeys}`);
 					var dataSource = this.dataField != null ? this.dataSource[this.dataField] : this.dataSource;
 					if (dataSource) {
 						columnKeys = [];
-						var keys = Object.keys(dataSource);
+						var keys = Object.keys(dataSource[rowKeys[0]]);
 						for (var i=0; i<columnCount; i++) {
 							columnKeys.push(i < keys.length ? keys[i] : i);
-						}			
+						}
 					} else {
-						columnKeys = [];
-						for (var i=0; i<columnCount; i++) {
-							columnKeys.push(i);
-						}			
+						throw new Error('Datasource is invalid!');
+					}
+				} else {
+					columnKeys = [];
+					for (var i=0; i<columnCount; i++) {
+						columnKeys.push(i);
 					}
 				}
 			}
@@ -394,7 +472,8 @@ console.log(`${rowCount}: ${rowKeys}`);
 			} else {
 				var dataSource = this.dataSource ? (this.dataField != null ? this.dataSource[this.dataField] : this.dataSource) : null;
 				if (dataSource) {
-					columnKeys = Object.keys(dataSource);
+					rowKeys = Object.keys(dataSource);
+					columnKeys = Object.keys(dataSource[rowKeys[0]]);
 					columnCount = columnKeys.length;
 				} else {
 					columnCount = 2;
@@ -405,8 +484,6 @@ console.log(`${rowCount}: ${rowKeys}`);
 				}
 			}
 		}
-
-console.log(`${columnCount}: ${columnKeys}`);
 		return columnKeys;
 	};
 	Grid.prototype.build = async function build() {
@@ -416,70 +493,75 @@ console.log(`${columnCount}: ${columnKeys}`);
 			this.titlebar.setValue(this.title);
 			this.add(this.titlebar);
 		}
-debugger
-		var rowKeys = this.updateRowInfo();
-		var columnKeys = this.updateColumnInfo();
-
-		// todo: update columns
-		if (this.columnCount < columnKeys.length) {
-			// add columns
-			for (var i=this.columnCount; i<columnKeys.length; i++) {
-				this.insertColumnAt(i, columnKeys[i]);
+		var cc = parseInt(this.template.cols);
+		var rc = parseInt(this.template.rows);
+		var ck = [];
+		var rk = [];
+		var rt = this.rowTemplate;
+		var ds = this.dataSource ? (this.dataField != null ? this.dataSource[this.dataField] : this.dataSource) : null;
+		var ic = ds != undefined && typeof Object.values(ds)[0] === 'object';
+		this.mode = ic ? Grid.modes.TABLE : Grid.modes.BOARD;
+		// calculate column count and create column keys
+		if (!cc) {
+			if (rt) {
+				ck = Object.keys(rt);
+				cc = ck.length;
+			} else if (ic) {
+				rk = Object.keys(ds);
+				ck = Object.keys(ds[rk[0]]);
+				cc = ck.length;
+			} else {
+				cc = 2;	// default
 			}
-		} else if (this.columnCount > columnKeys.length) {
+		}
+		for (var i=ck.length; i<cc; i++) ck.push(i);
+
+		// calculate row count and create row keys
+		if (!rc) {
+			if (ds) {
+				if (ic) {
+					rk = Object.keys(ds);
+					rc = rk.length;
+				} else {
+					rc = Math.ceil(ds.length / cc);
+				}
+			} else {
+				rc = 2;	// default
+			}
+		}
+		for (var i=rk.length; i<rc; i++) rk.push(i);
+
+		// update columns
+		if (this.columnCount < cc) {
+			for (var i=this.columnCount; i<ck.length; i++) {
+				await this.insertColumnAt(ck[i], i);
+			}
+		} else if (this.columnCount > ck.length) {
 			// remove columns
-			var i = columnKeys.length-1;
+			var i = ck.length-1;
 			while (i != this.columnCount) {
 				this.removeColumnAt(i);
 			}
 		}
 
-		// todo: update rows
-		if (this.rowCount < rowKeys.length) {
+		// update rows
+		if (this.rowCount < rc) {
 			// add rows
-			for (var i=this.rowCount; i<rowKeys.length; i++) {
-				this.insertRowAt(i, rowKeys[i]);
+			for (var i=this.rowCount; i<rk.length; i++) {
+				await this.insertRowAt(rk[i], i);
 			}
-		} else if (this.rowCount > rowKeys.length) {
+		} else if (this.rowCount > rk.length) {
 			// remove rows
-			var i=rowKeys.length-1
+			var i=rk.length-1
 			while (i != this.rowCount) {
 				this.removeRowAt(i);
 			}
 		}
-console.log(this.rowCount);
 
-		// for (var ci=0; ci<this.columnCount; ci++) {
-		// 	var name = this.columnKeys[ci].toString();
-		// 	var column = new Column(name, this);
-		// 	column.style = this.rowTemplate[name].style;
-		// 	this.columns[ci] = column;
-		// 	this.columns[name] = column;
-		// }
-		// // create rows
-		// var rowStyle = mergeObjects(this.style, null);
-		// rowStyle.width = '100%';
-		// rowStyle.height = this.cellStyle.height;
-		// var isHead = true;
-		// for (var ri=0; ri<this.rowKeys.length; ri++) {
-		// 	var rowKey = this.rowKeys[ri];
-		// 	var row = new Row(`${this.id}#${rowKey}`, { 'style': !isHead ? rowStyle : this.style.header}, this, this.context);
-		// 	await row.setRenderer(glui.mode, glui.renderingContext);
-		// 	row.addHandlers();
-		// 	this.add(row);
-		// 	this.rows[rowKey] = row;
-		// 	for (var ci=0; ci<this.columnCount; ci++) {
-		// 		var key = this.columnKeys[ci];
-		// 		var column = this.columns[key];
-		// 		var template = !isHead ? this.rowTemplate[key] : { 'type': 'Label', 'style':this.style.header };
-		// 		var cell = row.add(await glui.create(ci, template, row, row.context), key);
-		// 		cell.setValue(Grid.resolveReference(this.rowTemplate[key].column, key));
-		// 		column.add(cell);
-		// 	}
-		// 	row.setVisible(!isHead ? true : this.showHeader);
-		// 	isHead = false;
-		// }
-		return;
+		if (this.dataSource) {
+			this.dataBind();
+		}
+
 	};
     Grid.prototype.replace = function replace(item, newItem) {
 		var result = Grid.base.replace.call(this, item, newItem);
@@ -519,9 +601,8 @@ console.log(this.rowCount);
 		return row ? row.cells[ci] : null;
 	};
 	Grid.prototype.render = function render() {
-		//this.updateRows();
-		//Grid.base.render.call(this);
-		if (this.isDirty) this.update();
+		//if (this.isDirty) await this.update();
+		this.getBoundingBox();
 		glui.Control.prototype.render.call(this);
 	};
 	Grid.resolveReference = function resolveReference(reference, key) {
@@ -536,6 +617,11 @@ console.log(this.rowCount);
 			result = key.toString();
 		}
 		return result;
+	};
+
+	Grid.modes = {
+		TABLE: 0,
+		BOARD: 1
 	};
 
 	publish(Grid, 'Grid', glui);

@@ -10,10 +10,9 @@ include('control.js');
     ContainerRenderer2d.prototype.renderControl = function renderControl() {
         var ctrl = this.control;
         for (var i=0; i<ctrl.items.length; i++) {
-            ctrl.items[i].render();
+            ctrl.items[i].renderer.render();
         }
     };
-
 
     function Container(id, template, parent, context) {
         this.items = [];
@@ -41,6 +40,7 @@ include('control.js');
         } else {
             this.items.push(ctrl);
         }
+        ctrl.setRenderer(this.renderer.mode, this.renderer.context);
         return ctrl;
     };
     Container.prototype.replace = function replace(item, newItem) {
@@ -93,7 +93,7 @@ include('control.js');
 		// }
 	};
     Container.prototype.getControlAt = function getControlAt(cx, cy, recursive) {
-        var res = null;
+        var res = this; //null;
         cx -= this.renderer.border.width + this.offsetLeft;
         cy -= this.renderer.border.width + this.offsetTop;
 		for (var i=0; i<this.items.length; i++) {
