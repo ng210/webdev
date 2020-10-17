@@ -85,10 +85,9 @@ include('glui/glui-lib.js');
             }
             glui.frontBuffer.blit(this.buffer);
         },
-        onchange: function onchange(setting) {
-            var label = setting.control.dataSource.label;
-            switch (label) {
-                case 'Count': this.resetNodes(); break;
+        onchange: function onchange(e, setting) {
+            switch (setting.parent.id) {
+                case 'count': this.resetNodes(); break;
             }
             this.update(0, 0);
         },

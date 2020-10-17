@@ -23,8 +23,8 @@ include('math/fn.js');
 			this.buffer = new glui.Buffer(glui.width/4, glui.height/4);
 		},
 
-		onchange: function onchange(e, ctrl) {
-			switch (ctrl.row.name) {
+		onchange: function onchange(e, setting) {
+			switch (setting.parent.id) {
 				case 'shape':
 					this.updateVelocity();
 					break;

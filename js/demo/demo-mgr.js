@@ -31,7 +31,7 @@ var DemoMgr = {
         
         // create demo list
         console.log('create demo list');
-        var demoList = this.demoList = glui.create('list', {
+        var demoList = this.demoList = await glui.create('list', {
             'type': 'Grid',
             'style': {
                 'font': 'Arial 18',
@@ -65,34 +65,39 @@ var DemoMgr = {
             // }
         }, null, this);
         demoList.onclick = function demoList_onclick (e, ctrl) {
-            if (ctrl.dataSource) DemoMgr.selectDemo(ctrl.dataSource.obj.path);
+            if (ctrl.dataSource) {
+                DemoMgr.selectDemo(DemoMgr.demos[ctrl.dataField].path);
+            }
         };
-        demoList.dataBind(this.demos);
+        demoList.dataBind(this.demos.map(x => x.label));
+        await demoList.build();
+
         //glui.buildUI();
-        await glui.setRenderingMode(glui.Render2d);
-        for (var i=0; i<demoList.rowKeys.length; i++) {
+        //await glui.setRenderingMode(glui.Render2d);
+        for (var i=0; i<demoList.rowCount; i++) {
             var row = demoList.rows[demoList.rowKeys[i]];
             for (var j=0; j<demoList.columnCount; j++) {
                 var cell = row.cells[j];
                 if (cell.dataSource) {
-                    cell.renderer.backgroundImage = cell.dataSource.obj.image;
+                    cell.renderer.backgroundImage = DemoMgr.demos[cell.dataField].image;
                 }                
             }
         }
         demoList.collapsed = false;
         demoList.setVisible(true);
-        glui.render();
-        glui.animate();
+        demoList.render();
+
+        // glui.animate();
+
+        glui.screen.renderer.render();
 
         glui.canvas.addEventListener('mousemove', e => DemoMgr.onmousemove(e));
-        glui.canvas.addEventListener('click', e => {
-            if (!glui.getControlAt(e.clientX, e.clientY)) {
-                DemoMgr.onclick(e);
-            }
-        });
+        //glui.canvas.addEventListener('click', e => DemoMgr.onclick(e));
+
+        this.run();
     },
-    buildUI: function buildUI(demo) {
-        this.controls.title = glui.create('title', {
+    buildUI: async function buildUI(demo) {
+        this.controls.title = await glui.create('title', {
             'type': 'Label',
             'style': {
                 'font': 'Arial 24',
@@ -103,7 +108,7 @@ var DemoMgr = {
             },
             'value': demo.name
         }, null, demo);
-        this.controls.settings = glui.create('settings', {
+        this.controls.settings = await glui.create('settings', {
             'type': 'Grid',
             'style': {
                 'font': 'Arial 12',
@@ -133,14 +138,15 @@ var DemoMgr = {
             }
         }, null, demo);
         this.controls.settings.dataBind(demo.settings);
-        for (var ri=1; ri<this.controls.settings.rowKeys.length; ri++) {
+        await this.controls.settings.build();
+        for (var ri=0; ri<this.controls.settings.rowKeys.length; ri++) {
             var key = this.controls.settings.rowKeys[ri];
             demo.settings[key].control = this.controls.settings.rows[key].cells.value;
             if (demo.settings[key].normalized) {
                 demo.settings[key].control.normalize();
             }
         }
-        this.controls.start = glui.create('start', {
+        this.controls.start = await glui.create('start', {
             'type': 'Button',
             'style': {
                 'width':'8em',
@@ -160,8 +166,8 @@ var DemoMgr = {
         }
         var demo = Object.values(Resource.cache[res.url].symbols)[0];
         demo.context = this;
-        DemoMgr.buildUI(demo);
-        await glui.setRenderingMode(glui.Render2d);
+        await DemoMgr.buildUI(demo);
+        // await glui.setRenderingMode(glui.Render2d);
         this.demo = demo;
         if (typeof demo.initialize === 'function') {
             await demo.initialize();
@@ -175,22 +181,23 @@ var DemoMgr = {
         return demo;
     },
     run: async function run() {
-        if (this.isRunning) {
-            await lock('RUN', () => {
+        await lock('RUN', () => {
+            if (this.isRunning) {
                 var dt = new Date().getTime() - this.time;
                 this.totalTime += dt;
                 this.render(this.frame, dt/1000);
                 this.time = new Date().getTime();
                 this.frame++;
-                this.animationId = requestAnimationFrame(() => this.run());
-            });
+                this.animationId = requestAnimationFrame( () => DemoMgr.run());
+            }
             if (this.fpsCounter == 20) {
                 this.fpsCounter = 0;
                 this.fps = 1000*this.frame / this.totalTime;
                 //console.log(this.fps);
             }
             this.fpsCounter++;
-        }
+        });
+        glui.screen.renderer.render();
     },
     render: function render(frame, dt) {
         if (this.demo) {
@@ -199,7 +206,6 @@ var DemoMgr = {
         } else {
             glui.renderingContext2d.clearRect(0, 0, glui.width, glui.height);   //fillRect(0, 0, glui.width, glui.height);
         }
-        glui.render();
     },
     stop: async function stop() {
         return lock('RUN', () => {
@@ -221,7 +227,7 @@ var DemoMgr = {
             this.controls.start.move(left + (width - this.controls.start.width)/2, top);
         }
         //this.demoList.height = this.demoList.collapsed ? this.demoList.titlebar.height : 0;
-        glui.render();
+        //glui.render();
     },
     toggleDemoList: function toggleDemoList() {
         if (!this.demoList.collapsed) {
@@ -270,15 +276,16 @@ var DemoMgr = {
                 case 'start':
                     this.start();
                     break;
-                case 'list':
+                case 'list#title':
                     this.toggleDemoList();
                     break;
-            }
-        } else {
-            if (this.demo && this.demo.onclick) {
-                var x = e.clientX/glui.canvas.clientWidth;
-                var y = e.clientY/glui.canvas.clientHeight;
-                this.demo.onclick(x, y, e);
+                case 'screen':
+                    if (this.demo && this.demo.onclick) {
+                        var x = e.clientX/glui.canvas.clientWidth;
+                        var y = e.clientY/glui.canvas.clientHeight;
+                        this.demo.onclick(x, y, e);
+                    }
+                    break;
             }
         }
     },
@@ -299,7 +306,7 @@ async function onpageload(e) {
     }
     glui.scale.x = 0.6;
     glui.scale.y = 0.6;
-    glui.initialize();
+    glui.initialize(DemoMgr);
     console.log('glui initialize');
     var cvs = glui.canvas;
     cvs.style.backgroundColor = '203040';

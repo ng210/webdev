@@ -118,14 +118,13 @@ include('glui/glui-lib.js');
         render: function render(frame, dt) {
             glui.frontBuffer.blit(this.buffer);
         },
-        onchange: function onchange(setting) {
-			var label = setting.control.dataSource.label;
-			switch (label) {
-                case 'Width':
-                case 'Height':
+		onchange: function onchange(e, setting) {
+			switch (setting.parent.id) {
+                case 'width':
+                case 'height':
                     this.resizeBuffer();
                     break;
-                case 'Radius':
+                case 'radius':
                     this.resize();
                     break;
                 default:

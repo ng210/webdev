@@ -74,10 +74,10 @@ include('glui/glui-lib.js');
                 ctx.stroke();
             }
         },
-        onchange: function onchange(e, ctrl) {
-            switch (ctrl.row.name) {
+		onchange: function onchange(e, setting) {
+			switch (setting.parent.id) {
                 case 'count':
-                    this.settings.times.control.max = ctrl.getValue()-1;
+                    this.settings.times.control.max = setting.getValue()-1;
                     this.settings.times.control.setValue(this.settings.times.value);
                     break;
             }

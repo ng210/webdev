@@ -112,20 +112,19 @@ include('glui/glui-lib.js');
 			glui.frontBuffer.blit(this.frontBuffer);
 			//glui.frontBuffer.update(true);
 		},
-		onchange: function onchange(setting) {
-			var label = setting.control.dataSource.label;
-			switch (label) {
-				case 'Radius':
+		onchange: function onchange(e, setting) {
+			switch (setting.parent.id) {
+				case 'radius':
 					this.radius = 0.2 * setting.value * this.backBuffer.width;
 					this.rsize = this.radius * this.settings.size.value;
 					break;
-				case 'Size':
+				case 'size':
 					this.rsize = this.radius * setting.value;
 					break;
-				case 'Interpolation':
+				case 'interpolation':
 					this.settings.size.control.disabled = this.interpolations[setting.value] == 'none';
 					break;
-				case 'Image':
+				case 'image':
 					this.setImage();
 					break;
 			}

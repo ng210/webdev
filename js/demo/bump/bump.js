@@ -97,10 +97,9 @@ include('glui/glui-lib.js');
         render: function render(frame, dt) {
 			glui.frontBuffer.blit(this.buffer);
         },
-		onchange: function onchange(setting) {
-			var label = setting.control.dataSource.label;
-			switch (label) {
-				case 'Image':
+		onchange: function onchange(e, setting) {
+			switch (setting.parent.id) {
+				case 'image':
 					this.setImage();
 					break;
 				default:

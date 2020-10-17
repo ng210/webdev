@@ -179,15 +179,15 @@ include('math/noise.js');
 			this.cursor[1] = e.clientY*this.ratio[1];
 		},
 		colors: null,
-		onchange: function onchange(setting) {
-			var label = setting.control.dataSource.label;
-			switch (label) {
-				case 'Image':
+		onchange: function onchange(e, setting) {
+			var id = setting.parent.id;
+			switch (id) {
+				case 'image':
 					this.setImage();
 					break;
 			}
-			if (label && label.startsWith('Color')) {
-				var ix = label.charCodeAt(5) - 48;
+			if (id && id.startsWith('Color')) {
+				var ix = id.charCodeAt(5) - 48;
 				if (ix) {
 					this.adjustColors();
 				}

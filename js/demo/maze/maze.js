@@ -311,9 +311,9 @@ include('glui/glui-lib.js');
         score: 0,
         dots: 0,
     
-        initialize: function initialize() {
+        initialize: async function initialize() {
             this.buffer = new glui.Buffer(glui.width/2, glui.height/2);
-            this.scoreLabel = glui.create('score', {
+            this.scoreLabel = await glui.create('score', {
                 'type': 'Label',
                 'style': {
                     'font': 'Consolas 24',
@@ -355,25 +355,24 @@ include('glui/glui-lib.js');
             glui.frontBuffer.blit(this.buffer);
             ctx.restore();
         },
-        onchange: function onchange(e) {
-			var label = e.control.dataSource.label;
-			switch (label) {
-                case 'Width':
-                case 'Height':
+		onchange: function onchange(e, setting) {
+			switch (setting.parent.id) {
+                case 'width':
+                case 'height':
                     this.resetMaze(true);
-                case 'Randomness':
+                case 'randomness':
                     this.resetMaze();
                     break;
-                case 'Thickness':
+                case 'thickness':
                     this.maze.thickness = this.settings.thickness.value;
                     break;
-                case 'Speed':
+                case 'speed':
                     this.player.velocity = this.settings.speed.value;
                     break;
             }
         },
-        onclick: function onclick(x, y) {
-            if (!(y instanceof glui.Control)) {
+        onclick: function onclick(x, y, e) {
+            if (!(x instanceof Event)) {
                 var bx = Math.floor(this.maze.width*x);
                 var by = Math.floor(this.maze.height*y);
                 this.maze.selectAt(bx, by);

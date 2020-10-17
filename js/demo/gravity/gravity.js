@@ -116,7 +116,7 @@ include('star.js');
             ctx.fillText(`Centre: ${this.massCentre[0].toFixed(3)} | ${this.massCentre[1].toFixed(3)}`, 200, glui.height - 18);
             ctx.restore();
         },
-        onchange: function onchange(setting) {
+		onchange: function onchange(e, setting) {
             this.initialize();
         },
 

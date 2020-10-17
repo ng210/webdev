@@ -55,12 +55,11 @@ include('glui/glui-lib.js');
             ctx.restore();
         },
 
-		onchange: function onchange(setting) {
-			var label = setting.control.dataSource.label;
-			switch (label) {
-				case 'Size':
+		onchange: function onchange(e, setting) {
+            switch (setting.parent.id) {
+				case 'size':
                     break;
-                case 'Levels':
+                case 'levels':
                     this.quadTree = this.buildQuadTree(this.settings.levels.value);
                     break;
 				default:
