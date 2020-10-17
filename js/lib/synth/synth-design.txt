@@ -1,0 +1,22 @@
+Synth design
+- LFOs
+    - FM
+    - AM
+    - PM
+    - CM
+- Envelopes
+    - AM
+    - PM?
+    - CM
+- 2 Oscillators
+- Filter
+
+LFO(amp, dc, fre)
+    LFO.amp = ctrl
+    LFO.dc = ctrl
+    LFO.fre = ctrl
+
+Envelope(amp, dc, atk,dec,ses,rel)
+Oscillator(fre, tune, note, psw, wav)
+Filter(cut, res, mod, mode)
+

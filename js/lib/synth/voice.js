@@ -1,5 +1,6 @@
-include('env.js')
-include('osc.js')
+include('env.js');
+include('osc.js');
+include('lfo.js');
 include('filter.js')
 (function() {
     function Voice(parent) {
@@ -12,8 +13,8 @@ include('filter.js')
             new psynth.Env(parent, parent.controls.env3)
         ];
         this.lfos = [
-            new psynth.Osc(parent, parent.controls.lfo1),
-            new psynth.Osc(parent, parent.controls.lfo2)
+            new psynth.LFO(parent, parent.controls.lfo1),
+            new psynth.LFO(parent, parent.controls.lfo2)
         ];
         parent.controls.osc1.note = this.note;
         parent.controls.osc2.note = this.note;
@@ -35,8 +36,8 @@ include('filter.js')
     };
     Voice.prototype.run = function() {
         // run LFOs
-        var lfo1 = this.lfos[0].run(1.0, 0.0, 0.0);
-        var lfo2 = this.lfos[1].run(1.0, 0.0, 0.0);
+        var lfo1 = this.lfos[0].run();
+        var lfo2 = this.lfos[1].run();
         // run main oscillators
         var amp = this.envelopes[0].run(lfo1);
         var psw = this.envelopes[1].run(1.0);

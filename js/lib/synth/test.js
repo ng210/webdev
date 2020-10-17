@@ -160,16 +160,15 @@ include('/synth/synth-adapter.js');
         voice.velocity.set(1.0);
         voice.note.set(0);
         var osc = voice.oscillators[0];
-        osc.amp.value = 10.0;
-        osc.dc.value = 10.0;
+        osc.amp.value = 1.0;
         osc.fre.value = 480.0;
         osc.note = voice.note;
         osc.tune.set(0.0);
         osc.psw.set(0.5);
-        osc.wave.set(psynth.Osc.waveforms.SINUS);
 
+        osc.wave.set(psynth.Osc.waveforms.SINUS);
         // generate 1 sec of sample
-        var expected = { 0: 10, 25: 20, 50: 10, 75: 0 };
+        var expected = { 0: 0, 25: 1, 50: 0, 75: -1 };
         var errors = [];
         for (var i=0; i<SAMPLE_RATE/100; i++) {
             var sample = osc.run(1.0, 0.0, 0.0);
@@ -181,9 +180,8 @@ include('/synth/synth-adapter.js');
 
         osc.reset();
         osc.wave.set(psynth.Osc.waveforms.TRIANGLE);
-        osc.psw.set(0.5);
         // generate 1 sec of sample
-        expected = { 0: 0, 25: 10, 50: 20, 75: 10 };
+        expected = { 0: -1, 25: 0, 50: 1, 75: 0 };
         errors = [];
         for (var i=0; i<SAMPLE_RATE/100; i++) {
             var sample = osc.run(1.0, 0.0, 0.0);
@@ -195,9 +193,9 @@ include('/synth/synth-adapter.js');
 
         osc.reset();
         osc.wave.set(psynth.Osc.waveforms.SAW);
-        osc.psw.set(0.8);
+        osc.psw.set(0.5);
         // generate 1 sec of sample
-        expected = { 0: 0, 20: 5, 40: 10, 60: 15, 79: 20 };
+        expected = { 0: -1, 25: 0, 50: -1, 75: -1 };
         errors = [];
         for (var i=0; i<SAMPLE_RATE/100; i++) {
             var sample = osc.run(1.0, 0.0, 0.0);
@@ -210,7 +208,7 @@ include('/synth/synth-adapter.js');
         osc.reset();
         osc.wave.set(psynth.Osc.waveforms.PULSE);
         // generate 1 sec of sample
-        expected = { 0: 20, 50: 20, 80: 0 };
+        expected = { 0: 1, 25: 1, 50: -1, 75: -1 };
         errors = [];
         for (var i=0; i<SAMPLE_RATE/100; i++) {
             var sample = osc.run(1.0, 0.0, 0.0);
@@ -231,11 +229,10 @@ include('/synth/synth-adapter.js');
     }
     var _isDone = false;
     async function run(callback) {
-        var timer = 0;
+        _isDone = false;
         sound.init(SAMPLE_RATE,
             function fillBuffer(left, right, bufferSize, channel) {
                 _isDone = !callback(left, right, bufferSize, channel);
-                timer += bufferSize;
             }
         );
 
@@ -268,7 +265,7 @@ include('/synth/synth-adapter.js');
         await run((left, right, bufferSize) => {
             for (var i=0; i<bufferSize; i++) left[i] = right[i] = 0.0;
             synth.run(left, right, 0, bufferSize)
-            return false;
+            return true;
         });
     }
 
@@ -406,7 +403,7 @@ include('/synth/synth-adapter.js');
         frame = new Ps.Frame(); frame.delta = 2;
         frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 41, 0));
         frames.push(frame);
-        // frame #16-off
+        // frame #17-end
         frame = new Ps.Frame(); frame.delta = 2;
         frames.push(frame);
         
@@ -422,7 +419,7 @@ include('/synth/synth-adapter.js');
         sequence.stream.writeStream(player.makeCommand(Ps.Player.ASSIGN, 1, 1, 0, 4));
         sequence.writeEOF();
         // Frame #2
-        sequence.writeDelta(16);
+        sequence.writeDelta(4*64);
         sequence.writeEOS();
         sequences.push(sequence);
 
@@ -529,8 +526,8 @@ include('/synth/synth-adapter.js');
         var player = Ps.Player.create();
         var adapter = player.addAdapter(psynth.SynthAdapter);
         var frames = createFrames(adapter);
-        test('Sequence should contain 7 frames', ctx => ctx.assert(frames.length, '=', 7));
-        for (var i=1; i<6; i++) {
+        test('Sequence should contain 33 frames', ctx => ctx.assert(frames.length, '=', 33));
+        for (var i=1; i<32; i++) {
             test(`Frame #${i} should contain a SETNOTE command`, ctx => {
                 ctx.assert(frames[i].commands.length, '=', 1);
                 ctx.assert(frames[i].commands[0].readUint8(), '=', psynth.SynthAdapter.SETNOTE);
@@ -654,45 +651,6 @@ include('/synth/synth-adapter.js');
         // player.start();
         // await poll( () => !player.isActive, 100);
     }
-
-    // 
-
-    // function createSequence() {
-    //     var seq = new Ps.Sequence(synthAdapter);
-    //     seq.writeHeader();
-    //     // #00: frame(0, on(17, 127))
-    //     seq.writeDelta(0); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(17); seq.writeUint8(127); seq.writeEOF();
-    //     // #02: frame(2, off(17))
-    //     seq.writeDelta(2); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(17); seq.writeUint8(0); seq.writeEOF();
-    //     // #04: frame(2, on(29, 127))
-    //     seq.writeDelta(2); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(29); seq.writeUint8(127); seq.writeEOF();
-    //     // #06: frame(2, off(29))
-    //     seq.writeDelta(2); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(29); seq.writeUint8(0); seq.writeEOF();
-    //     // #08: frame(2, on(17, 127))
-    //     seq.writeDelta(2); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(17); seq.writeUint8(127); seq.writeEOF();
-    //     // #09: frame(1, off(17))
-    //     seq.writeDelta(1); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(17); seq.writeUint8(0); seq.writeEOF();
-    //     // #10: frame(1, on(17, 127))
-    //     seq.writeDelta(1); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(17); seq.writeUint8(127); seq.writeEOF();
-    //     // #11: frame(1, off(17))
-    //     seq.writeDelta(1); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(17); seq.writeUint8(0); seq.writeEOF();
-    //     // #12: frame(1, on(29, 127))
-    //     seq.writeDelta(1); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(29); seq.writeUint8(127); seq.writeEOF();
-    //     // #14: frame(2, off(29))
-    //     seq.writeDelta(2); seq.writeCommand(psynth.SynthAdapter.SETNOTE); seq.writeUint8(29); seq.writeUint8(0); seq.writeEOF();
-    //     // #16: frame(2, end)
-    //     seq.writeDelta(2); seq.writeEOS();
-    //     return seq;
-    // }
-
-    // function compare(a1, a2) {
-    //     var a = a1, b = a2;
-    //     if (a1.length < a2.length) { a = a2; b = a1; }
-    //     for (var i=0; i<a.length; i++) {
-    //         if (a[i] != b[i]) return i+1;
-    //     }
-    //     return 0;
-    // }
 
     // function test_synthAdapterToDataSeries() {
     //     message('Test SynthAdapter.toDataSeries');
@@ -855,17 +813,17 @@ include('/synth/synth-adapter.js');
     // }
 
     var tests = () => [
-        // test_freqTable,
-        // test_control_labels,
-        // test_create_synth,
-        // test_run_env,
-        // test_osc_run,
-        // test_generate_sound_simple,
-        // test_synthAdapter_makeSetCommandForContoller,
-        // test_synthAdapter_prepareContext,
-        // test_synthAdapter_makeCommands,
+        test_freqTable,
+        //test_control_labels,
+        test_create_synth,
+        test_run_env,
+        test_osc_run,
+        test_generate_sound_simple,
+        test_synthAdapter_makeSetCommandForContoller,
+        test_synthAdapter_prepareContext,
+        test_synthAdapter_makeCommands,
         test_run_channel,
-        // test_complete_player,
+        test_complete_player,
         //test_synthAdapterToDataSeries/*, test_synthAdapterFromDataSeries, test_synth_Ui_binding, test_synth_fromPreset*/
     ];
 

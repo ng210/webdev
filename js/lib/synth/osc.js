@@ -3,14 +3,14 @@ include('input.js');
     function Osc(parent, controls) {
         this.parent = parent;
         this.reset();
-        
-        this.amp = controls.amp;
-        this.dc  = controls.dc;
-        this.fre  = controls.fre;
-        this.note = controls.note;
-        this.tune = controls.tune;
-        this.psw  = controls.psw;
-        this.wave = controls.wave;
+        if (controls) {
+            this.amp = controls.amp;
+            this.fre  = controls.fre;
+            this.note = controls.note;
+            this.tune = controls.tune;
+            this.psw  = controls.psw;
+            this.wave = controls.wave;
+        }
     }
 
     Osc.prototype.reset = function reset() {
@@ -39,8 +39,8 @@ include('input.js');
             wfc++;
         }
         if ((wf & psynth.Osc.waveforms.SAW) != 0) {
-            out += (this.timer <= psw) ? 2.0 * this.timer/psw : 0.0;
-            out -= 1.0;
+            var tmp = (this.timer <= psw) ? this.timer/psw : 0.0;
+            out += 2*tmp - 1.0;
             wfc++;
         }
         if ((wf & psynth.Osc.waveforms.PULSE) != 0) {
@@ -60,13 +60,12 @@ include('input.js');
         if ((this.timer += delta) > 1.0) {
             this.timer -= 1.0;
         }
-        return this.amp.value*am*out + this.dc.value;
+        return this.amp.value*am*out;
     };
 
     Osc.createControls = function createControls() {
         return {
-            amp: new psynth.PotF32(0, 100, 1.0),
-            dc:  new psynth.PotF32(0, 100, .0),
+            amp: new psynth.PotF32(0, 1, .6),
             fre: new psynth.PotF32(0, 1000, .5),
             note: new psynth.Pot(0, 127, 0),
             tune: new psynth.Pot(0, 24, .0),
