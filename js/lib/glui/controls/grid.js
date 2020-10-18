@@ -44,12 +44,13 @@ include('container.js');
 	extend(glui.Container, Row);
 
 	Row.prototype.dataBind = function dataBind(source, field) {
-		glui.Control.prototype.dataBind.call(this, source, field);
+		glui.Control.prototype.dataBind.call(this, source[field]);
 		var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
 		for (var i=0; i<this.parent.columnKeys.length; i++) {
 			var key = this.parent.columnKeys[i];
-			this.cells[key].dataBind(dataSource, key);
+			this.cells[key].dataBind(dataSource, this.parent.rowTemplate[key]['data-field'] || key);
 		}
+		
 	};
 	Row.prototype.add = function add(ctrl, name) {
 		ctrl.id = this.id + '#' + ctrl.id;
@@ -294,7 +295,8 @@ include('container.js');
 		var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
 		if (this.mode == Grid.modes.TABLE) {
 			for (var i=0; i<this.rowCount; i++) {
-				this.rows[this.rowKeys[i]].dataBind(dataSource, this.rowKeys[i]);
+				var key = this.rowKeys[i];
+				this.rows[key].dataBind(dataSource, key);
 			}
 		} else {
 			var keys = Object.keys(dataSource);

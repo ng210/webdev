@@ -27,7 +27,10 @@ include('renderer2d.js');
             this.drawText(lines[i], offs+boxes[i][0], offs+boxes[i][1], boxes[i][2], this.color);
         }
     };
-
+    ButtonRenderer2d.prototype.render = function render() {
+        this.control.renderer.border.style = this.control.state ? 'inset' : 'outset';
+        ButtonRenderer2d.base.render.call(this);
+    };
 
     function Button(id, template, parent, context) {
         Button.base.constructor.call(this, id, template, parent, context);
@@ -35,11 +38,6 @@ include('renderer2d.js');
         //this.renderer3d = new ButtonRenderer3d()
     }
     extend(glui.Label, Button);
-
-    Button.prototype.render = function render() {
-        this.renderer.border.style = this.state ? 'inset' : 'outset';
-        Button.base.render.call(this);
-    };
 
     Button.prototype.createRenderer = mode => mode == glui.Render2d ? new ButtonRenderer2d() : 'ButtonRenderer3d';
 

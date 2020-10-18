@@ -174,19 +174,27 @@ const DEBUG_EVENT = 'baka';
         this.type = this.template.type;
         this.disabled = this.template.disabled;
         var source = this.template['data-source'];
-        if (typeof source === 'string') {
-            var obj = null;
+        if (source && typeof source === 'string') {
+            while (true) {
             // move to glui.js <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            if (glui.screen && glui.screen.items) {
-                var ctrl = glui.screen.items.find(x => x.id == source);
-                if (ctrl) {
-                    obj = ctrl;
+                if (glui.screen && glui.screen.items) {
+                    var ctrl = glui.screen.items.find(x => x.id == source);
+                    if (ctrl) {
+                        this.dataSource = ctrl;
+                        break;
+                    }
                 }
+                if (this.context && this.context[source]) {
+                    this.dataSource = this.context[source];
+                    break;
+                }
+                this.dataSource = window[source];
+                break;
             }
-            source = obj ? obj : window[source];
             // move to glui.js <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        } else {
+            this.dataSource = source;
         }
-        this.dataSource = source;
         this.dataField = this.template['data-field'];
         this.zIndex = parseInt(this.template['z-index']) || 0;
         this.style = mergeObjects(this.template.style, null);
@@ -198,7 +206,9 @@ const DEBUG_EVENT = 'baka';
         if (source) {
             this.dataSource = source instanceof DataLink ? source : new DataLink(source);
             this.dataField = field !== undefined ? field : this.dataField;
-            this.dataSource.add(this.dataField);
+            if (this.dataField) {
+                this.dataSource.add(this.dataField);
+            }
         }
     };
     Control.prototype.getBoundingBox = function getBoundingBox() {

@@ -147,8 +147,8 @@ include('control.js');
 			if (this.dataSource.obj instanceof glui.Control) {
 				this.dataLink.addHandler('value', glui.Control.prototype.render, this.dataSource.obj);
 			}
-			//this.setValue(fromDataSource ? fromDataSource.call(this.dataSource.obj, value, 0, {target:this, field:'value'}) : value);
-			this.value = fromDataSource ? fromDataSource.call(this.dataSource.obj, value, 0, {target:this, field:'value'}) : value;
+			this.setValue(fromDataSource ? fromDataSource.call(this.dataSource.obj, value, 0, {target:this, field:'value'}) : value);
+			//this.value = fromDataSource ? fromDataSource.call(this.dataSource.obj, value, 0, {target:this, field:'value'}) : value;
 		}
         return this.dataSource;
 	};

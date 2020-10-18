@@ -88,39 +88,41 @@ include('renderer.js');
     };
     Renderer2d.prototype.render = function render() {
         var ctrl = this.control;
-        // set clipping area
-        this.context.save();
-        var region = new Path2D();
-        // var borderWidth = ctrl.parent && ctrl.parent.renderer ? ctrl.parent.renderer.border.width : 0;
-        // var left = ctrl.left + borderWidth;
-        // var top = ctrl.top + borderWidth;
-        this.context.setTransform(1, 0, 0, 1, ctrl.left, ctrl.top);
-        //this.context.translate(ctrl.offsetLeft, ctrl.offsetTop);
-        region.rect(0, 0, ctrl.width, ctrl.height);
-        this.context.clip(region);
-        if (this.backgroundColor) this.drawRect(0, 0, ctrl.width, ctrl.height, this.backgroundColor);
-        var width = ctrl.width;
-        var height = ctrl.height;
-        if (this.border.style) {
-            this.drawBorder(0, 0, ctrl.width, ctrl.height);
-            width -= 2*this.border.width;
-            height -= 2*this.border.width;
+        if (ctrl.style.visible) {
+            // set clipping area
+            this.context.save();
+            var region = new Path2D();
+            // var borderWidth = ctrl.parent && ctrl.parent.renderer ? ctrl.parent.renderer.border.width : 0;
+            // var left = ctrl.left + borderWidth;
+            // var top = ctrl.top + borderWidth;
+            this.context.setTransform(1, 0, 0, 1, ctrl.left, ctrl.top);
+            //this.context.translate(ctrl.offsetLeft, ctrl.offsetTop);
+            region.rect(0, 0, ctrl.width, ctrl.height);
+            this.context.clip(region);
+            if (this.backgroundColor) this.drawRect(0, 0, ctrl.width, ctrl.height, this.backgroundColor);
+            var width = ctrl.width;
+            var height = ctrl.height;
+            if (this.border.style) {
+                this.drawBorder(0, 0, ctrl.width, ctrl.height);
+                width -= 2*this.border.width;
+                height -= 2*this.border.width;
+            }
+            if (ctrl.innerWidth > ctrl.width) {
+                // draw x-scrollbar
+                width -= 16;
+            }
+            if (ctrl.innerHeight > ctrl.height) {
+                // draw y-scrollbar
+                height -= 16;
+            }
+            // render control
+            region = new Path2D();
+            region.rect(this.border.width, this.border.width, width, height);
+            this.context.clip(region);
+            if (ctrl.style.font) this.setFont(ctrl.style.font);
+            this.renderControl();
+            this.context.restore();
         }
-        if (ctrl.innerWidth > ctrl.width) {
-            // draw x-scrollbar
-            width -= 16;
-		}
-        if (ctrl.innerHeight > ctrl.height) {
-            // draw y-scrollbar
-            height -= 16;
-		}
-        // render control
-        region = new Path2D();
-        region.rect(this.border.width, this.border.width, width, height);
-        this.context.clip(region);
-        if (ctrl.style.font) this.setFont(ctrl.style.font);
-        this.renderControl();
-        this.context.restore();
     };
 
     publish(Renderer2d, 'Renderer2d', glui);
