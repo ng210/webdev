@@ -100,6 +100,7 @@ include('glui/glui-lib.js');
         this.graph = null;
         this.selected = null;
         this.timer = 0;
+        this.delta = 0.4;
     }
     Maze.prototype.link = function link(a, b, direction) {
         var link1 = this.graph.addEdge(a, b, {direction: direction, status: LinkStatus.Free});
@@ -184,7 +185,7 @@ include('glui/glui-lib.js');
         return link;
     };
     Maze.prototype.render = function render(ctx) {
-        this.timer -= 0.04;
+        this.timer -= this.delta;
         if (this.timer < 0) {
             this.timer = 1;
         }
@@ -296,8 +297,8 @@ include('glui/glui-lib.js');
             width: { label: 'Width', value: 10, min:1, max:100, step: 1, type: 'int', link: null },
             height: { label: 'Height', value: 5, min:1, max:100, step: 1, type: 'int', link: null },
             randomness: { label: 'Randomness', value: 0.5, min:0.0, max:1.0, step: 0.01, type: 'float', link: null },
-            thickness: { label: 'Thickness', value: 0.1, min:0.02, max:0.4, step: 0.001, normalized: true, type: 'float', link: null },
-            speed: { label: 'Speed', value: 2.0, min:1.0, max:5.0, step: 0.01, normalized:true, type: 'float', link: null },
+            thickness: { label: 'Thickness', value: 0.1, min:0.02, max:0.08, step: 0.001, normalized: true, type: 'float', link: null },
+            speed: { label: 'Speed', value: 1.0, min:0.5, max:2.5, step: 0.1, normalized:true, type: 'float', link: null },
         },
 
         maze: null,
@@ -364,10 +365,11 @@ include('glui/glui-lib.js');
                     this.resetMaze();
                     break;
                 case 'thickness':
-                    this.maze.thickness = this.settings.thickness.value;
+                    this.maze.thickness = setting.value;
                     break;
                 case 'speed':
                     this.player.velocity = this.settings.speed.value;
+                    this.maze.delta = this.settings.speed.value/14;
                     break;
             }
         },
@@ -395,6 +397,7 @@ include('glui/glui-lib.js');
             var y = Math.floor(this.maze.height*Math.random());
             this.player = new Sprite(x, y, [255, 160, 144], this);
             this.player.velocity = this.settings.speed.value;
+            this.maze.delta = this.settings.speed.value/14;
             this.maze.graph.vertices[x + this.maze.width*y].data.stores = 0;
             //this.player.setDestination(this.player.destination.x, this.player.destination.y);
             this.resize();

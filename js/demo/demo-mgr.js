@@ -64,9 +64,9 @@ var DemoMgr = {
             //     } }
             // }
         }, null, this);
-        demoList.onclick = function demoList_onclick (e, ctrl) {
+        demoList.onclick = async function demoList_onclick (e, ctrl) {
             if (ctrl.dataSource) {
-                DemoMgr.selectDemo(DemoMgr.demos[ctrl.dataField].path);
+                await DemoMgr.selectDemo(DemoMgr.demos[ctrl.dataField].path);
             }
         };
         demoList.dataBind(this.demos.map(x => x.label));
@@ -104,10 +104,12 @@ var DemoMgr = {
                 'width':'12em', 'height':'1.5em',
                 'align':'center middle',
                 'border':'#406080 2px outset',
-                'background': '#406080'
+                'background': '#406080',
+                'visible': false
             },
             'value': demo.name
         }, null, demo);
+
         this.controls.settings = await glui.create('settings', {
             'type': 'Grid',
             'style': {
@@ -154,7 +156,8 @@ var DemoMgr = {
                 'font':'Arial 15',
                 'align':'center middle',
                 'border':'#406080 2px',
-                'background':'#406080'
+                'background':'#406080',
+                'visible': true
             },
             'value': this.isRunning ? 'Stop' : 'Start'
         }, null, demo);
@@ -169,6 +172,7 @@ var DemoMgr = {
         await DemoMgr.buildUI(demo);
         // await glui.setRenderingMode(glui.Render2d);
         this.demo = demo;
+
         if (typeof demo.initialize === 'function') {
             await demo.initialize();
         }
@@ -188,7 +192,6 @@ var DemoMgr = {
                 this.render(this.frame, dt/1000);
                 this.time = new Date().getTime();
                 this.frame++;
-                this.animationId = requestAnimationFrame( () => DemoMgr.run());
             }
             if (this.fpsCounter == 20) {
                 this.fpsCounter = 0;
@@ -196,7 +199,9 @@ var DemoMgr = {
                 //console.log(this.fps);
             }
             this.fpsCounter++;
+            this.animationId = requestAnimationFrame( () => DemoMgr.run());
         });
+
         glui.screen.renderer.render();
     },
     render: function render(frame, dt) {
@@ -207,13 +212,6 @@ var DemoMgr = {
             glui.renderingContext2d.clearRect(0, 0, glui.width, glui.height);   //fillRect(0, 0, glui.width, glui.height);
         }
     },
-    stop: async function stop() {
-        return lock('RUN', () => {
-            this.isRunning = false
-            cancelAnimationFrame(this.animationId);
-        });
-    },
-
     resize: function resize(e) {
         if (this.demo) {
             this.demo.resize();
@@ -231,11 +229,12 @@ var DemoMgr = {
     },
     toggleDemoList: function toggleDemoList() {
         if (!this.demoList.collapsed) {
+            this.demoList.height_ = this.demoList.height;
             this.demoList.height = this.demoList.titlebar.height;
             this.demoList.titlebar.renderer.border.style = 'outset';
             this.demoList.collapsed = true;
         } else {
-            this.demoList.height = 0;
+            this.demoList.height = this.demoList.height_;
             this.demoList.titlebar.renderer.border.style = 'inset';
             this.demoList.collapsed = false;
         }
@@ -243,9 +242,9 @@ var DemoMgr = {
     },
 
     selectDemo: async function(path) {
+        await lock('RUN', () => cancelAnimationFrame(this.animationId));
         if (this.demo) {
             // destroy demo
-            await this.stop();
             for (var i in this.controls) {
                 glui.remove(this.controls[i]);
             }
@@ -255,26 +254,20 @@ var DemoMgr = {
         if (demo instanceof Error) {
             alert(demo.message);
         } else {
-            DemoMgr.time = new Date().getTime();
-            //this.isRunning = true;
-            await DemoMgr.run(demo);
-            this.start();
+            this.time = new Date().getTime();
+            this.run();
         }
-    },
-    start: function start() {
-        this.isRunning = !this.isRunning;
-        var ctrl = this.controls.start;
-        ctrl.value = this.isRunning ? 'Stop' : 'Start';
-        ctrl.render();
-        this.time = new Date().getTime();
-        this.run();
-
     },
     onclick: function(e, ctrl) {
         if (ctrl) {
             switch (ctrl.id) {
                 case 'start':
-                    this.start();
+                    if (!this.isRunning) {
+                        this.time = new Date().getTime();
+                    }
+                    this.isRunning = !this.isRunning;
+                    ctrl.value = this.isRunning ? 'Stop' : 'Start';
+                    ctrl.render();
                     break;
                 case 'list#title':
                     this.toggleDemoList();
