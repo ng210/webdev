@@ -46,13 +46,13 @@ function error(text) {
     println(`<span style="color:#ff4040">${text}</text>`);
 }
 
-function test(lbl, action) {
+async function test(lbl, action) {
     println(lbl + '..[result]');
     _indent++;
     var result = null;
     var context = new test_context(lbl);
     try {
-        result = action(context);
+        result = action.constructor.name != 'AsyncFunction' ? action(context) : await action(context);
     } catch (err) {
         result = err;
     }
