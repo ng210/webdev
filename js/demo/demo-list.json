@@ -8,5 +8,6 @@
     { "label": "Lens", "path": "lens/lens.js" },
     { "label": "Bump\nmapping", "path": "bump/bump.js" },
     { "label": "Mesh", "path": "mesh/mesh.js" },
-    { "label": "Maze", "path": "maze/maze.js" }
+    { "label": "Maze", "path": "maze/maze.js" },
+    { "label": "Heroes", "path": "heroes/heroes.js" }
 ]

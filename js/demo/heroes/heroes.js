@@ -1,16 +1,34 @@
 (function(){
+    include('glui/glui-lib.js');
+
+    function Hero(name, race, cls, woe, wits, will) {
+        this.name = name;
+        this.race = race;
+        this.class = cls;
+        this.woe = woe;
+        this.wits = wits;
+        this.will = will;
+    }
+
+    Object.defineProperties(Hero.prototype, {
+        'type': {
+            enumerable: true,
+            configurable: false,
+            get: function() { return `${this.race} ${this.class}`}
+        }
+    });
+
+    // Hero.prototype.getInfo = function getInfo() {
+    //     return `${this.name}(${this.race} ${this.class})\n - woe:${this.woe}\n - wits:${this.wits}\n - will:${this.will}`;
+    // };
 
     var Heroes = {
-        Hero: function Hero(name, race, cls, woe, wits, will) {
-            this.name = name;
-            this.race = race;
-            this.class = cls;
-            this.woe = woe;
-            this.wits = wits;
-            this.will = will;
-        },
+		name: 'Heroes',
+		settings: {
+		},
 
         heroes: [],
+        table: null,
 
         letters: [
             ['a',.6, 'e',.5, 'i',.7, 'o',.5, 'u',.8],
@@ -40,12 +58,13 @@
                     li = 1 - li;
                     we -= 1;
                 }
-                var lt = (Math.floor((letters[li].length>>1)*Math.random())<<1);
-                name[j] = letters[li][lt];
-                we += letters[li][lt+1]
+                var lt = (Math.floor((this.letters[li].length>>1)*Math.random())<<1);
+                var ch = this.letters[li][lt];
+                name[j] = j == 0 ? ch.toUpperCase() : ch;
+                we += this.letters[li][lt+1]
                 we += Math.random()*0.5;
             }
-            var cls = classes[Math.floor(Math.random()*classes.length)];
+            var cls = this.classes[Math.floor(Math.random()*this.classes.length)];
             var clsSum = 2*(cls.woe + cls.wits + cls.will);
             var woe = Math.floor(cls.woe*(1+Math.random()));
             var wits = Math.floor(cls.wits*(1+Math.random()));
@@ -57,17 +76,81 @@
 
             return new Hero(
                     name.join(''),
-                    races[Math.floor(Math.random()*races.length)],
+                    this.races[Math.floor(Math.random()*this.races.length)],
                     cls.name,
                     woe,
                     wits,
                     will
             );
-        }
-    };
+        },
 
-    Heroes.Hero.prototype.getInfo = function getInfo() {
-        return `${this.name}(${this.race} ${this.class})\n - woe:${this.woe}\n - wits:${this.wits}\n - will:${this.will}`;
+        initialize: async function initialize() {
+            this.heroes = [];
+            for (var i=0; i<10; i++) {
+                this.heroes.push(this.create());
+            }
+            this.table = await glui.create('heroes', {
+                'type': 'Grid',
+                'style': {
+                    'font': 'Arial 14',
+                    'width':'40em',
+                    'align':'right middle',
+                    'border':'#406080 1px inset',
+                    'background': '#c0e0ff',
+                    'color':'#101820',
+                    'cell': {
+                        'height': '1.5em'
+                    },
+                    'title': {
+                        'font': 'Arial 18', 'height':'1.8em',
+                        'align':'center middle',
+                        'border':'#406080 1px inset',
+                        'background': '#a0c0ff'
+                    },
+                    'header': {
+                        'font': 'Arial 12', 'height':'1.6em',
+                        'align':'center middle',
+                        'border':'#80a0d0 1px outset',
+                        'background': '#80a0d0'
+                    }
+                },
+                'header': true,
+                'title': 'Heroes',
+                'row-template': {
+                    'name': { 'type': 'Textbox', 'column': '$Key', 'style': {
+                        'width':'40%', 'background': '#d0e0f0', 'border':'#80a890 1px outset'
+                    } },
+                    'type': { 'type': 'Label', 'column': '$Key', 'style': {
+                        'width':'30%', 'background': '#406080', 'border':'#406080 1px inset'
+                    } },
+                    'Wits': { 'type': 'Textbox', 'column': '$Key', 'data-type': 'int', 'data-field': 'wits', 'style': {
+                        'width':'10%', 'background': '#d0e0f0', 'border':'#80a890 1px outset'
+                    } },
+                    'Will': { 'type': 'Textbox', 'column': '$Key', 'data-type': 'int', 'data-field': 'will', 'style': {
+                        'width':'10%', 'background': '#d0e0f0', 'border':'#80a890 1px outset'
+                    } },
+                    'Woe': { 'type': 'Textbox', 'column': '$Key', 'data-type': 'int', 'data-field': 'woe', 'style': {
+                        'width':'10%', 'background': '#d0e0f0', 'border':'#80a890 1px outset'
+                    } },
+                },
+                'data-source': 'heroes'
+            }, null, this);
+            DemoMgr.controls.heroesTable = this.table;
+
+            await this.table.build();
+            this.resize();
+        },
+        update: function update() {
+
+        },
+        render: function render() {
+
+        },
+        resize: function resize() {
+            this.table.move((glui.screen.width - this.table.width)/2, (glui.screen.height - this.table.height)/2);
+            this.table.render();
+            glui.repaint();
+        }
     };
 
     publish(Heroes, 'Heroes')    

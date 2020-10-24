@@ -37,7 +37,7 @@ var DemoMgr = {
                 'font': 'Arial 18',
                 'left': '1em',
                 'top': '1em',
-                'width':'16em',
+                'width':'130px',
                 'align':'right middle',
                 'border':'#406080 1px inset',
                 'background': '#c0e0ff',
@@ -53,7 +53,7 @@ var DemoMgr = {
             'title': 'Demo List',
             'cols': 2,
             'cell-template': { 'type': 'Label', 'data-field': 'label', 'style': {
-                'height':'64px', 'align':'center middle', 'background': '#406080', 'border':'#406080 1px outset'
+                'width':'64px', 'height':'64px', 'font': 'Arial 14', 'align':'center middle', 'background': '#406080', 'border':'#406080 1px outset'
             } }
             // 'row-template': {
             //     'label': { 'type': 'Label', 'column': '$Key', 'style': {
@@ -131,17 +131,17 @@ var DemoMgr = {
             },
             'title': 'Settings',
             'row-template': {
-                'label': { 'type': 'Label', 'column': '$Key', 'style': {
+                'label': { 'type': 'Label', 'style': {
                     'width':'60%', 'background': '#406080', 'border':'#406080 1px outset'
                 } },
-                'value': { 'type': 'Textbox', 'look': 'potmeter', 'data-type': 'float', 'decimal-digits': 3, 'data-field': 'value', 'column': '$Key', 'style': {
+                'value': { 'type': 'Textbox', 'look': 'potmeter', 'data-type': 'float', 'decimal-digits': 3, 'style': {
                     'width':'40%', 'background': '#d0e0f0', 'border':'#80a890 1px inset'
                 } }
             }
         }, null, demo);
         this.controls.settings.dataBind(demo.settings);
         await this.controls.settings.build();
-        for (var ri=0; ri<this.controls.settings.rowKeys.length; ri++) {
+        for (var ri=0; ri<this.controls.settings.rowCount; ri++) {
             var key = this.controls.settings.rowKeys[ri];
             demo.settings[key].control = this.controls.settings.rows[key].cells.value;
             if (demo.settings[key].normalized) {
