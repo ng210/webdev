@@ -45,10 +45,11 @@ include('container.js');
 
 	Row.prototype.dataBind = function dataBind(source, field) {
 		glui.Control.prototype.dataBind.call(this, source[field]);
+		var grid = this.parent;
 		var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
-		for (var i=0; i<this.parent.columnKeys.length; i++) {
-			var key = this.parent.columnKeys[i];
-			this.cells[key].dataBind(dataSource, this.parent.rowTemplate[key]['data-field'] || key);
+		for (var i=0; i<grid.columnKeys.length; i++) {
+			var dataField = grid.columns[i].dataField || grid.columns[i].key;
+			this.cells[i].dataBind(dataSource, dataField);
 		}
 		
 	};
@@ -78,12 +79,13 @@ include('container.js');
 		for (var k in this.cells) {
 			if (this.cells.hasOwnProperty(k) && this.cells[k] == item) {
 				delete this.cells[k];
+				break;
 			}
 		}
 		for (var i=0; i<this.cellCount; i++) {
 			if (this.cells[i] == undefined) {
 				this.cells[i] = this.cells[i+1];
-				delete this.cells[i+1];
+				this.cells[i+1] = undefined;
 			}
 		}
 		this.cellCount--;
@@ -106,12 +108,21 @@ include('container.js');
 		}
 	};
 
-	function Column(name, parent) {
-		this.id = `${parent.id}#${name}`;
+	function Column(name, key, parent) {
+		this.id = `${parent.id}#${key}`;
 		this.name = name;
+		this.key = key;
 		this.parent = parent;
 		this.cells = [];
 		this.width = '100%';
+
+		this.template = null;
+		this.style = parent.cellTemplate;
+		this.dataField = null;
+		if (parent.rowTemplate && parent.rowTemplate[key]) {
+			this.style = parent.rowTemplate[key].style;
+			this.dataField = parent.rowTemplate[key]['data-field'];
+		}
 	};
 	Column.prototype.add = function add(ctrl, ix) {
 		if (ix != undefined) this.cells.splice(ix, 0, ctrl);
@@ -174,6 +185,13 @@ include('container.js');
 			}
 		}
 
+		// draw header
+		if (grid.showHeader) {
+			grid.header.move(0, top);
+			grid.header.renderer.render();
+			top += grid.header.height;
+		}
+
 		// draw rows
 		for (var i=0; i<grid.rowCount; i++) {
 			var row = grid.rows[grid.rowKeys[i]];
@@ -221,6 +239,7 @@ include('container.js');
 	function Grid(id, template, parent, context) {
 		this.rowCount = 0;
 		this.columnCount = 0;
+		this.header = null;
 		this.rowKeys = [];
 		this.rows = {};
 		this.columnKeys = [];
@@ -236,7 +255,7 @@ include('container.js');
 		var template = Grid.base.getTemplate.call(this);
 		template.style.cell = glui.Control.getStyleTemplate();
 		template.style.title = null;
-		template.style.header = null;
+		template.style.header = glui.Control.getStyleTemplate();
 		template.style.height = undefined;
 		template.title = this.id;
 		template.rows = 0;
@@ -330,8 +349,10 @@ include('container.js');
 				this.height += this.titlebar.height;
 			}
 			if (this.showHeader) {
-				this.renderer.setFont(this.style.header.font);
-				this.height += this.renderer.convertToPixel(this.style.header.height, true);
+				//this.renderer.setFont(this.style.header.font);
+				//this.height += this.renderer.convertToPixel(this.style.header.height, true);
+				this.height += this.header.renderer.convertToPixel(this.header.style.height, true);
+				this.height += this.header.renderer.convertToPixel(this.header.renderer.border.width, true);
 			}
 			for (var i=0; i<this.rowCount; i++) {
 				var row = this.rows[this.rowKeys[i]];
@@ -368,7 +389,10 @@ include('container.js');
 		// }
 		this.isDirty = false;
 	};
-	Grid.prototype.insertColumnAt = async function insertColumnAt(name, ix) {
+	Grid.prototype.insertColumnAt = async function insertColumnAt(key, ix) {
+		var rt = this.rowTemplate;
+		var reference = rt && rt[key] && rt[key].column ? rt[key].column : null;
+		var name = Grid.resolveReference(reference, key);
 		if (ix != undefined && ix < this.columnCount) {
 			this.columnKeys.splice(ix, 0, name);
 			for (var i=0; i<this.columnCount; i++) {
@@ -379,12 +403,10 @@ include('container.js');
 			ix = this.columnCount;
 		}
 
-		var column = this.columns[ix] = this.columns[name] = new Column(name, this);
-		var template = this.rowTemplate ? this.rowTemplate[name] : this.cellTemplate;
-		column.style = template.style;
+		this.columns[ix] = this.columns[name] = new Column(name, key, this);
 		// update rows
 		for (var ri=0; ri<this.rowCount; ri++) {
-			var ctrl = await glui.create(name, template, this);
+			var ctrl = await glui.create(key, template, this);
 			this.rows[this.rowKeys[ri]].add(ctrl, name);
 			this.columns[name].add(ctrl, ri);
 		}		
@@ -400,11 +422,12 @@ include('container.js');
 		// update columns
 		var height = 0;
 		for (var ci=0; ci<this.columnCount; ci++) {
-			var name = this.columnKeys[ci];
-			var template = this.rowTemplate ? this.rowTemplate[name] : this.cellTemplate;
+			var column = this.columns[ci];
+			var name = column.name;
+			var template = this.rowTemplate && this.rowTemplate[column.key] ? this.rowTemplate[column.key] : this.cellTemplate;
 			var ctrl = await glui.create(name, template, row);
 			row.add(ctrl, name);
-			this.columns[name].add(ctrl, ix);
+			column.add(ctrl, ix);
 			height = Math.max(height, ctrl.height);
 		}
 		row.height = height;
@@ -544,6 +567,27 @@ include('container.js');
 			while (i != this.columnCount) {
 				this.removeColumnAt(i);
 			}
+		}
+
+		// update header
+		if (this.showHeader) {
+			if (this.header == null) this.header = new Row('header', {style:this.template.style.header}, this);
+			this.header.style.width = '100%';
+			this.add(this.header);
+			for (var i=0; i<ck.length; i++) {
+				var name = this.columns[i].name;
+				if (!this.header.cells[i]) {
+					var cell = await glui.create(name, { 'type':'Label', 'style': this.template.style.header }, this.header);
+					// set header style
+					this.header.add(cell);
+				}
+				this.header.cells[i].setValue(name);
+			}
+			while (this.header.cellCount > ck.length) {
+				this.header.remove(this.header.cells[ck.length]);
+			}
+		} else {
+			delete this.header;
 		}
 
 		// update rows
