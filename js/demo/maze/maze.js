@@ -329,6 +329,7 @@ include('glui/glui-lib.js');
                 'data-field': 'score',
                 'data-type': 'int'
             });
+            DemoMgr.controls['mazeScore'] = this.scoreLabel;
             this.scoreLabel.setRenderer(glui.mode, glui.renderingContext);
             this.resetMaze(true);
         },
