@@ -9,5 +9,6 @@
     { "label": "Bump\nmapping", "path": "bump/bump.js" },
     { "label": "Mesh", "path": "mesh/mesh.js" },
     { "label": "Maze", "path": "maze/maze.js" },
-    { "label": "Heroes", "path": "heroes/heroes.js" }
+    { "label": "Heroes", "path": "heroes/heroes.js" },
+    { "label": "Morph", "path": "morph/morph.js" }
 ]

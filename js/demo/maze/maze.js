@@ -374,7 +374,7 @@ include('glui/glui-lib.js');
             }
         },
         onclick: function onclick(x, y, e) {
-            if (!(x instanceof Event)) {
+            if (typeof x === 'number') {
                 var bx = Math.floor(this.maze.width*x);
                 var by = Math.floor(this.maze.height*y);
                 this.maze.selectAt(bx, by);

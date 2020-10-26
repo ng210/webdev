@@ -92,7 +92,11 @@ var DemoMgr = {
         glui.screen.renderer.render();
 
         glui.canvas.addEventListener('mousemove', e => DemoMgr.onmousemove(e));
-        //glui.canvas.addEventListener('click', e => DemoMgr.onclick(e));
+        // glui.canvas.addEventListener('mousedown', e => DemoMgr.onmousedown(e));
+        // glui.canvas.addEventListener('mouseup', e => DemoMgr.onmouseup(e));
+        glui.screen.addHandler('mousedown', false);
+        glui.screen.addHandler('mouseup', false);
+        glui.screen.addHandler('dragging', false);
 
         this.run();
     },
@@ -144,6 +148,7 @@ var DemoMgr = {
         for (var ri=0; ri<this.controls.settings.rowCount; ri++) {
             var key = this.controls.settings.rowKeys[ri];
             demo.settings[key].control = this.controls.settings.rows[key].cells.value;
+            demo.settings[key].link = this.controls.settings.rows[key].cells[1].dataLink;
             if (demo.settings[key].normalized) {
                 demo.settings[key].control.normalize();
             }
@@ -241,12 +246,15 @@ var DemoMgr = {
         this.render(0, 0);
     },
 
-    selectDemo: async function(path) {
+    selectDemo: async function selectDemo(path) {
         await lock('RUN', () => cancelAnimationFrame(this.animationId));
         if (this.demo) {
             // destroy demo
             for (var i in this.controls) {
                 glui.remove(this.controls[i]);
+            }
+            if (typeof this.demo.destroy === 'function') {
+                this.demo.destroy();
             }
         }
         // load and run demo
@@ -258,7 +266,7 @@ var DemoMgr = {
             this.run();
         }
     },
-    onclick: function(e, ctrl) {
+    onclick: function onclick(e, ctrl) {
         if (ctrl) {
             switch (ctrl.id) {
                 case 'start':
@@ -279,6 +287,33 @@ var DemoMgr = {
                         this.demo.onclick(x, y, e);
                     }
                     break;
+            }
+        }
+    },
+    ondragging: function ondragging(e, ctrl) {
+        if (!ctrl || ctrl.id == 'screen') {
+            if (this.demo && this.demo.ondragging) {
+                var x = e.clientX/glui.canvas.clientWidth;
+                var y = e.clientY/glui.canvas.clientHeight;
+                this.demo.ondragging(x, y, e);
+            }
+        }
+    },
+    onmousedown: function onmousedown(e, ctrl) {
+        if (!ctrl || ctrl.id == 'screen') {
+            if (this.demo && this.demo.onmousedown) {  
+                var x = e.clientX/glui.canvas.clientWidth;
+                var y = e.clientY/glui.canvas.clientHeight;
+                this.demo.onmousedown(x, y, e);
+            }
+        }
+    },
+    onmouseup: function onmouseup(e, ctrl) {
+        if (!ctrl || ctrl.id == 'screen') {
+            if (this.demo && this.demo.onmouseup) {
+                var x = e.clientX/glui.canvas.clientWidth;
+                var y = e.clientY/glui.canvas.clientHeight;
+                this.demo.onmouseup(x, y, e);
             }
         }
     },
