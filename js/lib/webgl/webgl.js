@@ -34,7 +34,8 @@
 				'offset': attrib.offset || this.size
 			};
 			this.size += size;
-        }
+		}
+
         for (var uk in uniforms) {
 			var uniform = uniforms[uk];
 			uniform.ref = gl.getUniformLocation(this.prg, uk);
@@ -65,7 +66,6 @@
 			}
 		}
 	};
-
 
 	var webGL = {
 		INT: 0x00,
@@ -126,6 +126,16 @@
 			p.setUniforms(uniforms);
 		}
 	};
+	webGL.createTexture = function createTexture(image) {
+		var texture = gl.createTexture();
+		gl.bindTexture(gl.TEXTURE_2D, texture);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+		// gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+		// gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+		gl.generateMipmap(gl.TEXTURE_2D);
+		return texture;
+	};
+
 	webGL.uniformUpdaters = (function() {
 		var map = {};
 		map[webGL.INT] = uniform => gl.uniform1i(uniform.ref, uniform.value);
