@@ -68,9 +68,9 @@ include('glui/glui-lib.js');
 			}
 		},
 
-		onmousemove: function onmousemove(e) {
-			this.cursor[0] = e.clientX/glui.canvas.clientWidth;
-            this.cursor[1] = e.clientY/glui.canvas.clientHeight;
+		onmousemove: function onmousemove(x, y, e) {
+			this.cursor[0] = x;
+            this.cursor[1] = y;
             this.selectedQuad = this.getQuadAt(this.quadTree, this.cursor[0], this.cursor[1], this.cursor[0]+this.settings.size.value, this.cursor[1]+this.settings.size.value);
 		},
 

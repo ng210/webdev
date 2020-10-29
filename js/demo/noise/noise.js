@@ -131,7 +131,7 @@ include('glui/glui-lib.js');
                     this.update(0, 0);
             }            
         },
-		onmousemove: function onmousemove(e) {
+		onmousemove: function onmousemove(x, y, e) {
 			this.cursor[0] = this.ratio[0] * e.clientX;
 			this.cursor[1] = this.ratio[1] * e.clientY;
 		},

@@ -276,6 +276,9 @@ var DemoMgr = {
                     this.isRunning = !this.isRunning;
                     ctrl.value = this.isRunning ? 'Stop' : 'Start';
                     ctrl.render();
+                    if (this.demo && this.demo.onstartstop) {
+                        this.demo.onstartstop();
+                    }
                     break;
                 case 'list#title':
                     this.toggleDemoList();
@@ -323,7 +326,9 @@ var DemoMgr = {
     },
     onmousemove: function onmousemove(e) {
         if (this.demo && typeof this.demo.onmousemove === 'function') {
-            this.demo.onmousemove.call(this.demo, e);
+            var x = e.clientX/glui.canvas.clientWidth;
+            var y = e.clientY/glui.canvas.clientHeight;
+            this.demo.onmousemove(x, y, e);
         }
     },
 };

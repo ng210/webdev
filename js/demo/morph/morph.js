@@ -36,6 +36,8 @@ include('webgl/webgl.js');
         vertexData: null,
         trisCount: 0,
         lineCount: 0,
+        imageWidth: 0,
+        imageHeight: 0,
 
         texture1: null,
         texture2: null,
@@ -116,13 +118,11 @@ include('webgl/webgl.js');
         // required by the framework
         initialize: async function initialize() {
             this.canvas = document.createElement('canvas');
-            this.canvas.width = glui.canvas.width;
-            this.canvas.height = glui.canvas.height;
             this.canvas.style.zIndex = 100;
             glui.canvas.style.zIndex = 1000;
             document.body.appendChild(this.canvas);
             this.originalBackgroundColor = glui.canvas.style.background;
-            glui.canvas.style.background = 'transparent';
+            //glui.canvas.style.background = 'transparent';
             glui.renderingContext2d.clearRect(0, 0, glui.width, glui.height)
 
             gl = this.canvas.getContext('webgl');
@@ -146,14 +146,24 @@ include('webgl/webgl.js');
             this.createBuffers();
 
             // create texture1
+            // res = await load('/demo/morph/tilda.png');
             res = await load('/demo/morph/mrbean.png');
             if (res.error) throw new Error(res.error);
             this.texture1 = webGL.createTexture(res.node);
+            this.imageWidth = res.node.width;
+            this.imageHeight = res.node.height;
             // create texture2
+            // res = await load('/demo/morph/gabor.png');
             res = await load('/demo/morph/gollum.png');
             if (res.error) throw new Error(res.error);
             this.texture2 = webGL.createTexture(res.node);
 
+            this.canvas.width = this.imageWidth;
+            this.canvas.height = this.imageHeight;
+            this.canvas.style.width = this.imageWidth + 'px';
+            this.canvas.style.height = this.imageHeight + 'px';
+
+            //this.loadPositions('/demo/morph/tildagabor.json');
             this.loadPositions('/demo/morph/beangollum.json');
         },
         getVertexIndexAt: function getVertexIndexAt(x, y) {
@@ -181,6 +191,18 @@ include('webgl/webgl.js');
             gl.deleteBuffer(this.indices2);
         },
         resize: function resize(e) {
+            var aspect = glui.width / glui.height;
+            this.width = 0.8*glui.width;
+            this.height = 0.8*glui.height;
+            if (glui.width > glui.height) {
+                this.width /= aspect;
+            } else {
+                this.height *= aspect;
+            }
+            this.width = Math.floor(this.width), this.height = Math.floor(this.height);
+            this.left = Math.floor(0.5*(glui.width - this.width));
+            this.top = Math.floor(0.5*(glui.height - this.height));
+            gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         },
         update: function update(frame, dt) {
             var delta = this.settings.delta.value + this.settings.speed.value * dt;
@@ -226,6 +248,7 @@ include('webgl/webgl.js');
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices2);
                 gl.drawElements(gl.LINES, this.lineCount, gl.UNSIGNED_SHORT, 0);
             }
+            glui.renderingContext.drawImage(this.canvas, this.left, this.top, this.width, this.height);
         },
         refresh: function refresh() {
             var width = this.settings.resolution.value + 2;
@@ -289,23 +312,24 @@ include('webgl/webgl.js');
         onmousedown: function onmousedown(x, y, e) {
             if (typeof x === 'number') {
                 this.vertexData[VERTEX_SIZE * this.selected+VERTEX_SIZE-1] = 0.0;
+                x = (x - this.left/glui.width)*glui.width/this.width;
+                y = (y - this.top/glui.height)*glui.height/this.height;
+
                 this.selected = this.getVertexIndexAt(x, y);
                 var ix = VERTEX_SIZE * this.selected;
                 this.vertexData[ix+VERTEX_SIZE-1] = 1.0;
                 this.refresh();
             }
         },
-        onmouseup: function onmouseup(x, y, e) {
-        },
         ondragging: function ondragging(x, y, e) {
             if (typeof x === 'number') {
+                x = (x - this.left/glui.width)*glui.width/this.width;
+                y = (y - this.top/glui.height)*glui.height/this.height;
                 this.positions[this.image][2*this.selected] = 2*x - 1;
                 this.positions[this.image][2*this.selected+1] = 1 - 2*y;
                 this.refresh();
             }
         }
-        // custom functions
-
     };
 
     publish(Demo, 'Demo');
