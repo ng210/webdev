@@ -143,9 +143,10 @@ include('iadapter-ext.js');
         return this.channels[0].isActive;
     };
     Player.prototype.reset = function reset() {
-        for (var i=0; i<this.channels.length; i++) {
-            this.channels[i].reset();
-        }
+        this.masterChannel.assign(0, this.sequences[0]);
+        this.masterChannel.loopCount = 0;
+        this.masterChannel.isActive = true;
+
     };
     Object.defineProperties(Player.prototype, {
         isActive: {

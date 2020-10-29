@@ -35,7 +35,6 @@ include('sequence.js');
         this.cursor = 0;
         if (--this.loopCount > 0) {
             this.currentTick = 0;
-            this.loopCount;
             this.isActive = true;
         } else {
             this.isActive = false;

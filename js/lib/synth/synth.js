@@ -136,6 +136,9 @@ include('voice.js');
         //console.log(`${this.label}.off ???: ${note}`);
         //throw new Error('voice not found!');
     };
+    Synth.prototype.setControl = function(controlId, value) {
+        this.getControl(controlId).set(value);
+    };
     Synth.prototype.run = function(left, right, start, end) {
         if (this.isActive) {
             for (var i=start; i<end; i++) {
