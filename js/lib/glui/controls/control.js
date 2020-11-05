@@ -281,6 +281,21 @@ const DEBUG_EVENT = 'baka';
         return this.renderer;
     };
 
+    Control.prototype.click = function click() {
+        var x = (this.left + this.width/2)/glui.scale.x;
+        var y = (this.top + this.height/2)/glui.scale.y;
+        glui.onevent({
+            'type': 'mousedown',
+            'clientX': x,
+            'clientY': y
+        });
+        glui.onevent({
+            'type': 'mouseup',
+            'clientX': x,
+            'clientY': y
+        });
+    };
+
     Control.create = async function create(id, template, parent, context) {
         var type = template.type;
         if (typeof glui[type] === 'function') {

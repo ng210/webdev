@@ -7,7 +7,7 @@ include('voice.js');
     function Synth(smpRate, voiceCount) {
         this.smpRate = smpRate;
         this.omega = psynth.theta / smpRate;
-        this.isActive = true;
+        this.isActive = false;
         this.nextVoice = 0;
         this.label = '';
         // create controls
@@ -138,13 +138,14 @@ include('voice.js');
     };
     Synth.prototype.setControl = function(controlId, value) {
         this.getControl(controlId).set(value);
+        //console.log('setcontrol:', controlId, value);
     };
     Synth.prototype.run = function(left, right, start, end) {
         if (this.isActive) {
             for (var i=start; i<end; i++) {
                 var smp = 0;
                 for (var j=0; j<this.voices.length; j++) {
-                    smp += this.voices[j].run(1);
+                    smp += this.controls.amp.value*this.voices[j].run(1);
                 }
                 left[i] += smp;
                 right[i] += smp;
@@ -154,12 +155,13 @@ include('voice.js');
     };
     Synth.prototype.setProgram = function setProgram(id) {
         var sb = this.soundBank;
+        this.isActive = true;
         var count = sb.readUint8(0);
         if (id < count) {
             offset = 1 + 16*id;
             // this.selectedProgram = sb.readString(offset);
             offset = sb.readUint16(offset + 14);
-            count = sb.readUint8();
+            count = sb.readUint8(offset);
             for (var i=0; i<count; i++) {
                 var id = sb.readUint8();
                 this.getControl(id).setFromStream(sb);

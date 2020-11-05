@@ -48,7 +48,7 @@ include('/ge/sound.js');
 			// 	device.setControl(sequence.getUint8(cursor++), sequence.getUint16(cursor));
 			// 	cursor += 2;
 			// 	break;
-			case psynth.SynthAdapter.SETFLOAT32:
+			case psynth.SynthAdapter.SETFLOAT:
 				device.setControl(sequence.getUint8(cursor++), sequence.getFloat32(cursor));
 				cursor += 4;
 				break;
@@ -89,12 +89,12 @@ include('/ge/sound.js');
             //         stream.writeUint16(arguments[2]);
             //     }
             //     break;
-            case psynth.SynthAdapter.SETFLOAT32:	// uint8 controllerId, float32 value
+			case psynth.SynthAdapter.SETFLOAT:		// uint8 controllerId, float32 value
                 if (arguments[1] instanceof Ps.Sequence) {
                     stream.writeStream(arguments[1].stream, arguments[2], 5);
                 } else {
                     stream.writeUint8(arguments[1]);
-                    stream.writeFloat32(arguments[2]);
+					stream.writeFloat32(arguments[2]);
                 }
                 break;
 			case psynth.SynthAdapter.SETPROGRAM:
@@ -140,9 +140,8 @@ include('/ge/sound.js');
 			case psynth.Synth.controls.env3sus:
 			case psynth.Synth.controls.env3rel:
 			case psynth.Synth.controls.osc1psw:
-			case psynth.Synth.controls.osc1tune:
 			case psynth.Synth.controls.osc2psw:
-			case psynth.Synth.controls.osc2tune:
+			case psynth.Synth.controls.flt1cut:
 			case psynth.Synth.controls.flt1res:
 			case psynth.Synth.controls.flt1mod:
 				var uint8 = Math.floor(value*255);
@@ -168,11 +167,12 @@ include('/ge/sound.js');
 			case psynth.Synth.controls.osc1amp:
 			case psynth.Synth.controls.osc1dc:
 			case psynth.Synth.controls.osc1fre:
+			case psynth.Synth.controls.osc1tune:
 			case psynth.Synth.controls.osc2amp:
 			case psynth.Synth.controls.osc2dc:
 			case psynth.Synth.controls.osc2fre:
+			case psynth.Synth.controls.osc2tune:
 			case psynth.Synth.controls.flt1amp:
-			case psynth.Synth.controls.flt1cut:
 				command = this.makeCommand(psynth.SynthAdapter.SETFLOAT32, controlId, value);
 				break;
 

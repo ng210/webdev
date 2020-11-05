@@ -214,7 +214,7 @@
         onevent: function(e) {
             // get control by coordinates
             var event = e.type;
-            var control = glui.screen.getControlAt(glui.scale.x*e.x, glui.scale.y*e.y, true);
+            var control = glui.screen.getControlAt(glui.scale.x*e.clientX, glui.scale.y*e.clientY, true);
             e.control = control;
             //console.log(`${event} for target=${e.target}, this=${this}, control=${this.control ? this.control : e.target.control ? e.target.control : 'none'}, Control.focused=${Control.focused}`);
             if (control && control.disabled) {
@@ -260,8 +260,8 @@
                 if (glui.dragging) {
                     var draggingEvent = {
                         type: "dragging",
-                        x: e.screenX,
-                        y: e.screenY,
+                        // x: e.screenX,
+                        // y: e.screenY,
                         screenX: e.screenX,
                         screenY: e.screenY,
                         clientX: e.clientX,

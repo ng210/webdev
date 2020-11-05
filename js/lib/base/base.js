@@ -766,7 +766,7 @@ function getObjectAt(path, obj) {
     var tokens = path.split('.');
     for (var i=0; i<tokens.length; i++) {
         obj = obj[tokens[i]];
-        if (typeof obj !== 'object' || obj == null) {
+        if (typeof obj !== 'object' && typeof obj !== 'function' || obj == null) {
             if (i != tokens.length-1) obj = null;
             break;
         }

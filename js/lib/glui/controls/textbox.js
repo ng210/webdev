@@ -94,6 +94,7 @@ include('renderer2d.js');
         var template = Textbox.base.getTemplate.call(this);
         template.value = '';
         template.look = Textbox.Look.Textbox;
+        template.isMultiline = true;
         return template;
     };
 
@@ -102,6 +103,7 @@ include('renderer2d.js');
         if (template.normalize) {
             this.normalize();
         }
+        this.isMultiline = template.isMultiline;
         this.look = template.look;
         return template;
     };
@@ -152,7 +154,7 @@ include('renderer2d.js');
         );
         return handlers;
     };
-    Textbox.prototype.onfocus = function onmouseover() {
+    Textbox.prototype.onfocus = function onfocus() {
         //Textbox.base.onmouseover.call(this);
         // set cursor
         this.cursorAnimation = glui.addAnimation(this.renderer.animateCursor, this.renderer, 500);
@@ -176,7 +178,7 @@ include('renderer2d.js');
         if (this.value === '') {
             if (this.lines.length > 0) this.lines.splice(0, this.lines.length);
         }
-        this.renderer.render();
+        this.render();
         if (this.value != oldValue) {
             this.callHandler('change', {'type':'change','oldValue': oldValue, 'value':value, 'control':this});
         }
@@ -246,19 +248,24 @@ include('renderer2d.js');
         switch (char) {
             case 13:    // ENTER
                 if (!this.isNumeric) {
-                    this.cursorPos[1]++;
-                    if (this.lines.length == 0) {
-                        this.lines.push('');
-                    }
-                    if (this.cursorPos[0] < this.lines[row].length) {
-                        var line = this.lines[row];
-                        this.lines[row] = line.substr(0, this.cursorPos[0]);
-                        this.lines.push(line.substr(this.cursorPos[0]));
+                    if (this.isMultiline) {
+                        this.cursorPos[1]++;
+                        if (this.lines.length == 0) {
+                            this.lines.push('');
+                        }
+                        if (this.cursorPos[0] < this.lines[row].length) {
+                            var line = this.lines[row];
+                            this.lines[row] = line.substr(0, this.cursorPos[0]);
+                            this.lines.push(line.substr(this.cursorPos[0]));
+                        } else {
+                            this.lines.push('');
+                        }
+                        isChanged = true;
                     } else {
-                        this.lines.push('');
+                        this.setValue(this.lines[0]);
+                        this.callHandler('change', {'type':'change','oldValue': oldValue, 'value':value, 'control':this});
                     }
                     this.cursorPos[0] = 0;
-                    isChanged = true;
                 } else {
                     var oldValue = this.getValue();
                     var value = parseFloat(this.lines[0]);
@@ -411,13 +418,13 @@ include('renderer2d.js');
         if (isChanged) {
             this.renderer.cursorVisible = true;
             glui.resetAnimation(this.cursorAnimation);
-            this.renderer.render();
+            this.render();
         }
     };
     Textbox.prototype.onmouseup = function onmouseup(e) {
         // get cursor position
         this.isFocused = true;
-        this.renderer.render();
+        this.render();
     };
     Textbox.prototype.createRenderer = mode => mode == glui.Render2d ? new TextboxRenderer2d() : 'TextboxRenderer3d';
     Textbox.prototype.setRenderer = async function(mode, context) {

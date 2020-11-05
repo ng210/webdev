@@ -27,7 +27,7 @@ include('container.js');
 			cell.width = grid.columns[i].width;
 			cell.move(left, 0);
 			var bgColor = cell.renderer.backgroundColor;
-			if (row.hightlit) {
+			if (row.highlit) {
 				cell.renderer.backgroundColor = cell.renderer.calculateColor(cell.renderer.backgroundColor, 1.2);
 			}
 			cell.renderer.render();
@@ -39,6 +39,7 @@ include('container.js');
 	function Row(id, template, parent, context) {
 		this.cells = {};
 		this.cellCount = 0;
+		this.index = 0;
 		Row.base.constructor.call(this, id, template, parent, context);
 	}
 	extend(glui.Container, Row);
@@ -97,13 +98,13 @@ include('container.js');
 
 	Row.prototype.onmouseover = function onmouseover(e) {
 		if (this.parent.mode == Grid.modes.TABLE) {
-			this.hightlit = true;
+			this.highlit = true;
 			this.render();
 		}
 	};
 	Row.prototype.onmouseout = function onmouseout(e) {
 		if (this.parent.mode == Grid.modes.TABLE) {
-			this.hightlit = false;
+			this.highlit = false;
 			this.render();
 		}
 	};
@@ -418,6 +419,8 @@ include('container.js');
 		if (ix != undefined) this.rowKeys.splice(ix, 0, name);
 		else this.rowKeys.push(name);
 		var row = this.rows[name] = new Row(name, {style:{width:'100%'}}, this);
+		row.index = ix;
+		for (var i=ix+1; i<this.rowKeys.length; i++) this.rows[this.rowKeys[i]].index++;
 		this.add(row);
 		// update columns
 		var height = 0;
@@ -438,10 +441,12 @@ include('container.js');
 	Grid.prototype.removeColumnAt = async function removeColumnAt(ix) {
 		console.log('remove column at ' + ix);
 		this.columnCount--;
+		throw new Error('Not Implemented!')
 	};
 	Grid.prototype.removeRowAt = async function removeRowAt(ix) {
 		console.log('remove row at ' + ix);
 		this.rowCount--;
+		throw new Error('Not Implemented!')
 	};
 	Grid.prototype.updateRowInfo = function updateRowInfo() {
 		var rowCount = parseInt(this.template.rows);
@@ -673,4 +678,3 @@ include('container.js');
 	publish(Grid, 'Grid', glui);
 
 })();
-

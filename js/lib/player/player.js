@@ -84,7 +84,9 @@ include('iadapter-ext.js');
                 stream.writeUint8(Player.EOS);
                 break;
         }
-        return new Stream(stream);
+
+        stream.buffer = stream.buffer.slice(0, stream.length);
+        return stream;
     };
 
     // Player methods
@@ -137,8 +139,10 @@ include('iadapter-ext.js');
         return sequence;
     };
     Player.prototype.run = function run(ticks) {
-        for (var i=0; i<this.channels.length; i++) {
-            this.channels[i].run(ticks);
+        if (this.channels[0].isActive) {
+            for (var i=0; i<this.channels.length; i++) {
+                this.channels[i].run(ticks);
+            }
         }
         return this.channels[0].isActive;
     };
