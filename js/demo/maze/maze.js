@@ -291,28 +291,29 @@ include('glui/glui-lib.js');
         }
     };
 
-    var MazeDemo = {
-        name: 'Maze',
-        settings: {
+    function MazeDemo() {
+        Demo.call(this, 'Maze', {
             width: { label: 'Width', value: 10, min:1, max:100, step: 1, type: 'int', link: null },
             height: { label: 'Height', value: 5, min:1, max:100, step: 1, type: 'int', link: null },
             randomness: { label: 'Randomness', value: 0.5, min:0.0, max:1.0, step: 0.01, type: 'float', link: null },
             thickness: { label: 'Thickness', value: 0.1, min:0.02, max:0.08, step: 0.001, normalized: true, type: 'float', link: null },
             speed: { label: 'Speed', value: 1.0, min:0.5, max:2.5, step: 0.1, normalized:true, type: 'float', link: null },
-        },
+        });
 
-        maze: null,
-        remaining: null,
-        buffer: null,
-        cursor: [0, 0],
-        backgroundColor: [16, 40, 80],
-        counter: 0,
-        complete: false,
-        selectedBlock: null,
-        score: 0,
-        dots: 0,
-    
-        initialize: async function initialize() {
+        this.maze = null;
+        this.remaining = null;
+        this.buffer = null;
+        this.cursor = [0, 0];
+        this.backgroundColor = [16, 40, 80];
+        this.counter = 0;
+        this.complete = false;
+        this.selectedBlock = null;
+        this.score = 0;
+        this.dots = 0;
+    };
+    extend(Demo, MazeDemo);
+
+    MazeDemo.prototype.initialize = async function initialize() {
             this.buffer = new glui.Buffer(glui.width/2, glui.height/2);
             this.scoreLabel = await glui.create('score', {
                 'type': 'Label',
@@ -332,78 +333,76 @@ include('glui/glui-lib.js');
             DemoMgr.controls['mazeScore'] = this.scoreLabel;
             this.scoreLabel.setRenderer(glui.mode, glui.renderingContext);
             this.resetMaze(true);
-        },
-        resize: function resize(e) {
-            var w = glui.frontBuffer.width/2;
-            var h = glui.frontBuffer.height/2;
-            this.buffer.resize(w, h);
-            this.buffer.context.setTransform(w/this.settings.width.value, 0, 0, h/this.settings.height.value, 0, 0);
-        },
-        update: function update(frame, dt) {
-            this.player.update(dt);
-            if (this.dots == 0) {
-                this.resetMaze();
-            }
-        },
-        render: function render(frame, dt) {
-            var ctx = this.buffer.context;
-            ctx.save();
-            ctx.fillStyle = `rgb(${this.backgroundColor})`;
-            //ctx.globalAlpha = 0.1;
-            ctx.fillRect(0, 0, this.settings.width.value, this.settings.height.value);
-            this.maze.render(ctx);
-            //ctx.globalAlpha = 1.0;
-            this.player.render(ctx);
-            glui.frontBuffer.blit(this.buffer);
-            ctx.restore();
-        },
-		onchange: function onchange(e, setting) {
-			switch (setting.parent.id) {
-                case 'width':
-                case 'height':
-                    this.resetMaze(true);
-                case 'randomness':
-                    this.resetMaze();
-                    break;
-                case 'thickness':
-                    this.maze.thickness = setting.value;
-                    break;
-                case 'speed':
-                    this.player.velocity = this.settings.speed.value;
-                    this.maze.delta = this.settings.speed.value/14;
-                    break;
-            }
-        },
-        onclick: function onclick(x, y, e) {
-            if (typeof x === 'number') {
-                var bx = Math.floor(this.maze.width*x);
-                var by = Math.floor(this.maze.height*y);
-                this.maze.selectAt(bx, by);
-                this.player.setDestination(bx, by);
-            }
-        },
-
-        resetMaze: function resetMaze(recreate) {
-            //var selected = [this.maze.selected.data.x, this.maze.selected.data.y];
-            if (recreate) {
-                this.maze = new Maze(this.settings.width.value, this.settings.height.value);
-            }
-            this.maze.build(this.settings.randomness.value);
-            this.maze.thickness = this.settings.thickness.value;
-            this.dots = this.maze.graph.vertices.length;
-            this.score = 0;
-            this.complete = false;
-            
-            var x = Math.floor(this.maze.width*Math.random());
-            var y = Math.floor(this.maze.height*Math.random());
-            this.player = new Sprite(x, y, [255, 160, 144], this);
-            this.player.velocity = this.settings.speed.value;
-            this.maze.delta = this.settings.speed.value/14;
-            this.maze.graph.vertices[x + this.maze.width*y].data.stores = 0;
-            //this.player.setDestination(this.player.destination.x, this.player.destination.y);
-            this.resize();
+    };
+    MazeDemo.prototype.resize = function resize(e) {
+        var w = glui.frontBuffer.width/2;
+        var h = glui.frontBuffer.height/2;
+        this.buffer.resize(w, h);
+        this.buffer.context.setTransform(w/this.settings.width.value, 0, 0, h/this.settings.height.value, 0, 0);
+    };
+    MazeDemo.prototype.update = function update(frame, dt) {
+        this.player.update(dt);
+        if (this.dots == 0) {
+            this.resetMaze();
         }
     };
+    MazeDemo.prototype.render = function render(frame, dt) {
+        var ctx = this.buffer.context;
+        ctx.save();
+        ctx.fillStyle = `rgb(${this.backgroundColor})`;
+        //ctx.globalAlpha = 0.1;
+        ctx.fillRect(0, 0, this.settings.width.value, this.settings.height.value);
+        this.maze.render(ctx);
+        //ctx.globalAlpha = 1.0;
+        this.player.render(ctx);
+        glui.frontBuffer.blit(this.buffer);
+        ctx.restore();
+    };
+    MazeDemo.prototype.onchange = function onchange(e, setting) {
+        switch (setting.parent.id) {
+            case 'width':
+            case 'height':
+                this.resetMaze(true);
+            case 'randomness':
+                this.resetMaze();
+                break;
+            case 'thickness':
+                this.maze.thickness = setting.value;
+                break;
+            case 'speed':
+                this.player.velocity = this.settings.speed.value;
+                this.maze.delta = this.settings.speed.value/14;
+                break;
+        }
+    };
+    MazeDemo.prototype.onclick = function onclick(x, y, e) {
+        if (typeof x === 'number') {
+            var bx = Math.floor(this.maze.width*x);
+            var by = Math.floor(this.maze.height*y);
+            this.maze.selectAt(bx, by);
+            this.player.setDestination(bx, by);
+        }
+    };
+    MazeDemo.prototype.resetMaze = function resetMaze(recreate) {
+        //var selected = [this.maze.selected.data.x, this.maze.selected.data.y];
+        if (recreate) {
+            this.maze = new Maze(this.settings.width.value, this.settings.height.value);
+        }
+        this.maze.build(this.settings.randomness.value);
+        this.maze.thickness = this.settings.thickness.value;
+        this.dots = this.maze.graph.vertices.length;
+        this.score = 0;
+        this.complete = false;
+        
+        var x = Math.floor(this.maze.width*Math.random());
+        var y = Math.floor(this.maze.height*Math.random());
+        this.player = new Sprite(x, y, [255, 160, 144], this);
+        this.player.velocity = this.settings.speed.value;
+        this.maze.delta = this.settings.speed.value/14;
+        this.maze.graph.vertices[x + this.maze.width*y].data.stores = 0;
+        //this.player.setDestination(this.player.destination.x, this.player.destination.y);
+        this.resize();
+    };
 
-    publish(MazeDemo, 'MazeDemo');
+    publish(new MazeDemo(), 'MazeDemo');
 })();

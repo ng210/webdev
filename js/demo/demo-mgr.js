@@ -1,4 +1,5 @@
 include('glui/glui-lib.js');
+include('demo-base.js');
 
 var DemoMgr = {
     demos: null,
@@ -37,7 +38,7 @@ var DemoMgr = {
                 'font': 'Arial 18',
                 'left': '1em',
                 'top': '1em',
-                'width':'130px',
+                'width':'194px',
                 'align':'right middle',
                 'border':'#406080 1px inset',
                 'background': '#c0e0ff',
@@ -51,7 +52,7 @@ var DemoMgr = {
                 'visible': false
             },
             'title': 'Demo List',
-            'cols': 2,
+            'cols': 3,
             'cell-template': { 'type': 'Label', 'data-field': 'label', 'style': {
                 'width':'64px', 'height':'64px', 'font': 'Arial 14', 'align':'center middle', 'background': '#406080', 'border':'#406080 1px outset'
             } }
@@ -86,10 +87,6 @@ var DemoMgr = {
         demoList.collapsed = false;
         demoList.setVisible(true);
         demoList.render();
-
-        // glui.animate();
-
-        glui.screen.renderer.render();
 
         glui.canvas.addEventListener('mousemove', e => DemoMgr.onmousemove(e));
         // glui.canvas.addEventListener('mousedown', e => DemoMgr.onmousedown(e));
@@ -147,7 +144,7 @@ var DemoMgr = {
         await this.controls.settings.build();
         for (var ri=0; ri<this.controls.settings.rowCount; ri++) {
             var key = this.controls.settings.rowKeys[ri];
-            demo.settings[key].control = this.controls.settings.rows[key].cells.value;
+            demo.settings[key].control = this.controls.settings.rows[key].cells[1];
             demo.settings[key].link = this.controls.settings.rows[key].cells[1].dataLink;
             if (demo.settings[key].normalized) {
                 demo.settings[key].control.normalize();
@@ -172,7 +169,7 @@ var DemoMgr = {
         if (res.error) {
             return res.error;
         }
-        var demo = Object.values(Resource.cache[res.url].symbols)[0];
+        var demo = Object.values(Resource.cache[res.url].symbols).find( x => x instanceof Demo);
         demo.context = this;
         await DemoMgr.buildUI(demo);
         // await glui.setRenderingMode(glui.Render2d);
@@ -206,8 +203,8 @@ var DemoMgr = {
             this.fpsCounter++;
             this.animationId = requestAnimationFrame( () => DemoMgr.run());
         });
-
         glui.screen.renderer.render();
+        glui.render();
     },
     render: function render(frame, dt) {
         if (this.demo) {
@@ -294,11 +291,13 @@ var DemoMgr = {
         }
     },
     ondragging: function ondragging(e, ctrl) {
-        if (!ctrl || ctrl.id == 'screen') {
-            if (this.demo && this.demo.ondragging) {
+        if (this.demo && this.demo.ondragging) {
+            if (!ctrl || ctrl.id == 'screen') {
                 var x = e.clientX/glui.canvas.clientWidth;
                 var y = e.clientY/glui.canvas.clientHeight;
                 this.demo.ondragging(x, y, e);
+            } else {
+                this.demo.ondragging(e, ctrl);
             }
         }
     },
@@ -337,8 +336,8 @@ async function onpageload(e) {
     if (e.length) {
         alert(e.join('\n'));
     }
-    glui.scale.x = 0.6;
-    glui.scale.y = 0.6;
+    glui.scale.x = 0.8;
+    glui.scale.y = 0.8;
     glui.initialize(DemoMgr);
     console.log('glui initialize');
     var cvs = glui.canvas;
