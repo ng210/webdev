@@ -146,11 +146,6 @@ include('renderer2d.js');
         return res;
     };
 
-    Container.prototype.render = function render() {
-        Container.base.render.call(this);
-console.log(this.id, this.left, this.top, this.width, this.height);
-    };
-
     publish(Container, 'Container', glui);
     publish(ContainerRenderer2d, 'ContainerRenderer2d', glui);
 })();

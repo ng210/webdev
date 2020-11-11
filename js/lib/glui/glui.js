@@ -43,12 +43,8 @@
             return control;
         },
         create: async function create(id, tmpl, parent, context) {
-            context = context;
             var ctrl = await glui.Control.create(id, tmpl, parent || this.screen, context);
             ctrl.addHandlers();
-            if (parent == null) {
-                 this.screen.add(ctrl);
-            }
             return ctrl;
         },
         remove: function remove(control) {
@@ -90,21 +86,7 @@
             document.addEventListener('dragging', glui.onevent);
         },
         shutdown: function shutdown() {
-            // remove controls
-            this.screen.destroy();
-            // for (var i=0; i<glui.controls.length; i++) {
-            //     delete glui.controls[i];
-            // }
-            // glui.controls.splice(0, glui.controls.length);
-            glui.focusedControl = null;
-            glui.controlAtCursor = null;
-            glui.dragging = null;
-            // remove animations
-            // for (var i=0; i<glui.animations.length; i++) {
-            // }
-            cancelAnimationFrame(glui.animateId);
-            glui.animations.splice(0, glui.animations.length);
-            
+            this.reset();
             // remove event handlers
             document.removeEventListener('keydown', glui.onevent);
             document.removeEventListener('keyup', glui.onevent);
@@ -112,20 +94,34 @@
             document.removeEventListener('mousedown', glui.onevent);
             document.removeEventListener('mousemove', glui.onevent);
             document.removeEventListener('dragging', glui.onevent);
-            window.removeEventListener('resize', glui.resize);
+            //window.removeEventListener('resize', glui.resize);
+        },
+        reset: function reset() {
+            this.focusedControl = null;
+            this.controlAtCursor = null;
+            this.dragging = null;
 
+            cancelAnimationFrame(this.animateId);
+            this.animations.splice(0, this.animations.length);
+
+            for (var i=0; i<this.screen.items.length; i++) {
+                this.screen.items[i].destroy();
+            }
+            this.screen.items.splice(0, this.screen.items.length);
         },
         buildUI: async function buildUI(context) {
             var nodes = document.body.querySelectorAll('*');
+            var p = [];
             for (var i=0; i<nodes.length; i++) {
                 if (nodes[i].tagName.toLowerCase().startsWith('gl-')) {
                     var control = this.fromNode(nodes[i], context || this.context);
                     if (control) {
-                        this.screen.add(control);
+                        p.push(this.screen.add(control));
                     }
                     document.body.removeChild(nodes[i]);
                 }
             }
+            await Promise.all(p);
         },
         setRenderingMode: async function setRenderingMode(mode) {
             this.mode = mode || glui.Render2d;
@@ -135,7 +131,7 @@
                 this.renderingContext = this.renderingContext3d = this.renderingContext3d || glui.canvas.getContext('webgl');
             }
             await this.screen.setRenderer(mode, this.renderingContext);
-            glui.resize(false);
+            glui.resize();
             return this.renderingContext;
         },
         // render: function render() {
@@ -154,9 +150,9 @@
         },
         repaint: function repaint() {
             this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            this.render();
+            this.screen.renderer.render();
         },
-        resize: function resize(repaint) {
+        resize: function resize() {
             glui.width = Math.floor(glui.scale.x * glui.canvas.clientWidth);
             glui.height = Math.floor(glui.scale.y * glui.canvas.clientHeight);
             glui.screen.width = glui.canvas.width = glui.width;
@@ -167,7 +163,7 @@
                 ctrl.getBoundingBox();
                 //ctrl.move(left, top);
             }
-            if (repaint) glui.render();
+            glui.repaint();
         },
         getControlAt: function getControlAt(x, y, recursive) {
             var cx = x*glui.scale.x, cy = y*glui.scale.y;
@@ -246,17 +242,6 @@
                     glui.dragStart[1] = e.screenY;
                 }
             } else if (event == 'mousemove') {
-                if (control != glui.controlAtCursor) {
-                    if (glui.controlAtCursor) {
-                        e.control = glui.controlAtCursor;
-                        glui.controlAtCursor.callHandler('mouseout', e);
-                    }
-                    glui.controlAtCursor = control;
-                    if (control) {
-                        e.control = control;
-                        control.callHandler('mouseover', e);
-                    }
-                }
                 if (glui.dragging) {
                     var draggingEvent = {
                         type: "dragging",
@@ -273,10 +258,22 @@
                     glui.dragging.callHandler('dragging', draggingEvent);
                     glui.dragStart[0] = e.screenX;
                     glui.dragStart[1] = e.screenY;
+                    return;
+                }
+                if (control != glui.controlAtCursor) {
+                    if (glui.controlAtCursor) {
+                        e.control = glui.controlAtCursor;
+                        glui.controlAtCursor.callHandler('mouseout', e);
+                    }
+                    glui.controlAtCursor = control;
+                    if (control) {
+                        e.control = control;
+                        control.callHandler('mouseover', e);
+                    }
                 }
             } else if (event == 'mouseup') {
                 glui.dragging = null;
-                if (control) {
+                if (control && control == glui.focusedControl) {
                     setTimeout( () => control.callHandler('click', e), 0);
                 }
             }

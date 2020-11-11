@@ -103,6 +103,7 @@ function debug_(txt, lvl) {
 }
 
 function extend(b, e) {
+    debug_('EXTEND @' + (b ? b.name :'?') + ' by ' + (e ? e.name : '?'), 1);
     e.prototype = Reflect.construct(b, []);
     e.prototype.constructor = e;
     e.base = b.prototype;
@@ -259,13 +260,14 @@ function Resource(url) {
 }
 Resource.load = async function(options) {
     // check resource cache
-    var resource = Resource.cache[options.url];
+    var url = new Url(options.url).normalize();
+    var resource = Resource.cache[url];
     if (!resource) {
         // resource not found in cache
-        resource = new Resource(options.url);
+        resource = new Resource(url);
         // it will be loaded
         resource.status = Resource.LOADING;
-        Resource.cache[options.url] = resource;
+        Resource.cache[url] = resource;
         // load
         debug_('LOAD ' + resource.toString(), 1);
         await ajax.send(options);
@@ -279,7 +281,7 @@ Resource.load = async function(options) {
             if (options.process) {
                 await resource.processContent(options);
                 // update resource
-                resource = Resource.cache[options.url];
+                resource = Resource.cache[url];
             }
         }
     } else {

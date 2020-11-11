@@ -202,8 +202,8 @@ var _assertion_operators = {
        ":=": { "term": "match", "action": (a, b) => deepCompare(a, b) },
     "empty": { "term": "be empty", "action": a => isEmpty(a) },
    "!empty": { "term": "have an element", "action": a => !isEmpty(a) },
-   "true":   { "term": "have an element", "action": a => a == true },
-   "false":  { "term": "have an element", "action": a => a == false }
+   "true":   { "term": "be true", "action": a => a == true },
+   "false":  { "term": "be false", "action": a => a == false }
 };
 
 test_context.prototype.assert = function assert(value, operator, expected) {

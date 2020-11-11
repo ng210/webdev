@@ -22,7 +22,7 @@ include('container.js');
 		var row = this.control;
 		var grid = row.parent;
 		var left = 0;
-console.log(getObjectPath(this.control, 'parent', glui.screen).map(x => x.id).join('.'));
+//console.log(getObjectPath(this.control, 'parent', glui.screen).map(x => x.id).join('.'));
 		for (var i=0; i<row.items.length; i++) {
 			var cell = row.items[i];
 			cell.width = grid.columns[i].width;
