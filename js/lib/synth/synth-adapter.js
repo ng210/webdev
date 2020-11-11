@@ -113,11 +113,11 @@ include('/ge/sound.js');
 		var command = null;
 		switch (controlId) {
 		// out = uint8
-			case psynth.Synth.controls.lfo1wave:
-			case psynth.Synth.controls.lfo2wave:
 			case psynth.Synth.controls.osc1note:
+			case psynth.Synth.controls.osc1tune:
 			case psynth.Synth.controls.osc1wave:
 			case psynth.Synth.controls.osc2note:
+			case psynth.Synth.controls.osc2tune:
 			case psynth.Synth.controls.osc2wave:
 			case psynth.Synth.controls.flt1mode:
 				var uint8 = Math.floor(value);
@@ -139,6 +139,10 @@ include('/ge/sound.js');
 			case psynth.Synth.controls.env3dec:
 			case psynth.Synth.controls.env3sus:
 			case psynth.Synth.controls.env3rel:
+			case psynth.Synth.controls.env4atk:
+			case psynth.Synth.controls.env4dec:
+			case psynth.Synth.controls.env4sus:
+			case psynth.Synth.controls.env4rel:
 			case psynth.Synth.controls.osc1psw:
 			case psynth.Synth.controls.osc2psw:
 			case psynth.Synth.controls.flt1cut:
@@ -164,16 +168,14 @@ include('/ge/sound.js');
 			case psynth.Synth.controls.env2dc:
 			case psynth.Synth.controls.env3amp:
 			case psynth.Synth.controls.env3dc:
+			case psynth.Synth.controls.env4amp:
+			case psynth.Synth.controls.env4dc:
 			case psynth.Synth.controls.osc1amp:
-			case psynth.Synth.controls.osc1dc:
 			case psynth.Synth.controls.osc1fre:
-			case psynth.Synth.controls.osc1tune:
 			case psynth.Synth.controls.osc2amp:
-			case psynth.Synth.controls.osc2dc:
 			case psynth.Synth.controls.osc2fre:
-			case psynth.Synth.controls.osc2tune:
 			case psynth.Synth.controls.flt1amp:
-				command = this.makeCommand(psynth.SynthAdapter.SETFLOAT32, controlId, value);
+				command = this.makeCommand(psynth.SynthAdapter.SETFLOAT, controlId, value);
 				break;
 
 			default:

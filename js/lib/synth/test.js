@@ -1,9 +1,10 @@
-include('synth.js');
 include('/player/player-lib.js');
 include('/ge/sound.js');
-include('/synth/synth-adapter.js');
+include('synth.js');
+include('synth-adapter.js');
+include('glui/glui-lib.js');
+include('synth-control.js');
 // include('/synth/synth-adapter-ext.js');
-// include('/synth/ui/synth-ui.js');
 // include('/utils/syntax.js');
 // include('/synth/grammar.js');
 
@@ -11,6 +12,15 @@ include('/synth/synth-adapter.js');
 
     const SAMPLE_RATE = 48000;
     const MEASURE = false;
+
+    async function loadPreset(synth, url) {
+        var preset = await load(url);
+        var data = Object.values(preset.data)[0];
+        for (var i in data) {
+            var ctrl = getObjectAt(i, synth.controls);
+            ctrl.set(data[i]);
+        }
+    }
 
     async function test_freqTable() {
         message('Check frequency table', 1);
@@ -252,16 +262,10 @@ include('/synth/synth-adapter.js');
 
     async function test_generate_sound_simple() {
         message('Test generate sound', 1);
-
         var synth = new psynth.Synth(SAMPLE_RATE, 1);
-        var preset = await load('synth/preset.json');
-        var data = Object.values(preset.data)[0];
-        for (var i in data) {
-            var ctrl = getObjectAt(i, synth.controls);
-            ctrl.set(data[i]);
-        }
-
-        synth.setNote(33, 1.0);
+        loadPreset(synth, 'synth/preset.json');
+        synth.isActive = true;
+        synth.setNote(36, 1.0);
         await run((left, right, bufferSize) => {
             for (var i=0; i<bufferSize; i++) left[i] = right[i] = 0.0;
             synth.run(left, right, 0, bufferSize)
@@ -273,7 +277,7 @@ include('/synth/synth-adapter.js');
         var frames = [];
         // frame #1-on
         var frame = new Ps.Frame(); frame.delta = 0;
-        frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETPROGRAM, 0));
+        //frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETPROGRAM, 0));
         frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 36, 240));
         frames.push(frame);
         // frame #1-off
@@ -470,10 +474,10 @@ include('/synth/synth-adapter.js');
                 offset++;
                 var command = adapter.makeSetCommandForController(controlId, instrument[key]);
                 instrumentData.writeStream(command, 2);
-                offset += command.length;
+                offset += command.length - 2;
             }
-            synthPreset.writeStream(instrumentData);
         }
+        synthPreset.writeStream(instrumentData);
 
         return [
             playerAdapterInit,
@@ -504,7 +508,7 @@ include('/synth/synth-adapter.js');
         test("Command for 'env1atk' should be correct", ctx => ctx.assert(command, ':=', expected));
 
         command = adapter.makeSetCommandForController(psynth.Synth.controls.lfo1dc, 123.5);
-        var expected = new Stream(16).writeUint8(psynth.SynthAdapter.SETFLOAT32).writeUint8(psynth.Synth.controls.lfo1dc).writeFloat32(123.5);
+        var expected = new Stream(16).writeUint8(psynth.SynthAdapter.SETFLOAT).writeUint8(psynth.Synth.controls.lfo1dc).writeFloat32(123.5);
         test("Command for 'lfo1dc' should be correct", ctx => ctx.assert(command, ':=', expected));
     }
 
@@ -551,7 +555,9 @@ include('/synth/synth-adapter.js');
             if (frameInt == 0) {
                 if (!channel.run(1)) {
                     // reset
+                    channel.loopCount = 2;
                     channel.reset();
+                    channel.run(1)
                 }
                 _frame += _samplePerFrame;
             }
@@ -601,7 +607,7 @@ include('/synth/synth-adapter.js');
         message('Test run channelwith SynthAdapter', 1);
         var player = await createPlayer();
         var adapter = player.adapters[psynth.SynthAdapter.getInfo().id];
-        // player.dataBlocks = await createDataBlocks(_adapter);
+        //player.dataBlocks = await createDataBlocks(_adapter);
         adapter.prepareContext(player.dataBlocks[1]);
 
         // create test channel
@@ -651,180 +657,87 @@ include('/synth/synth-adapter.js');
         // player.start();
         // await poll( () => !player.isActive, 100);
     }
+    
+    var App = {
+    };
 
-    // function test_synthAdapterToDataSeries() {
-    //     message('Test SynthAdapter.toDataSeries');
-    //     var series = synthAdapter.toDataSeries(createSequence());
-    //     var channelCount = Object.keys(series).length;
-    //     var notes = series[psynth.SynthAdapter.SETNOTE];
-    //     var velocity = series[psynth.SynthAdapter.SETVELOCITY];
-    //     test('Should have 2 channels', context => context.assert(channelCount, '=', 2));
-    //     test('Should have a notes channel', context => context.assert(notes, '!=', undefined));
-    //     test('Should have 5 note commands', context => context.assert(notes.data.length, '=', 5));
-    //     // test('Should have a velocity channel', context => context.assert(velocity, '!=', undefined));
-    //     // test('Should have 5 velocity commands', context => context.assert(velocity.data.length, '=', 5));
-    //     test('Should have correct note commands', context => {
-    //         var expected = {
-    //             0: [ 0, 17, 127, 2],
-    //             4: [ 4, 29, 127, 2],
-    //             10: [10, 17, 127, 1]
-    //         };
-    //         context.assert(notes.getRange([0,], [10,]), ':=', expected);
-    //     });
-    // }
+    async function test_synth_control() {
+        Dbg.con.style.top = '50vh';
+        Dbg.con.style.height = '50vh';
+        message('Test synth ui', 1);
+        glui.scale.x = 0.8;
+        glui.scale.y = 0.8
 
-    // function test_synthAdapterFromDataSeries() {
-    //     var sequence = createSequence();
-    //     var expected = new Uint8Array(sequence.stream.buffer);
-    //     var series = synthAdapter.toDataSeries(sequence);
-    //     var received =  new Uint8Array(synthAdapter.fromDataSeries(series).stream.buffer);
-    //     return [
-    //         'SynthAdapter.fromDataSeries',
-    //         test('Convert all channels', () => {
-    //             var result = compare(expected, received);
-    //             if (result != 0) {
-    //                 var start = result-2 >= 0 ? result-2 : 0;
-    //                 var a1 = expected.slice(start, start+4);
-    //                 var a2 = received.slice(start, start+4);
-    //                 return [`Mismatch at ${result-1}!\n expected: ${a1}\n received: ${a2}`];
-    //             }
-    //         })
-    //     ];
-    // }
+        glui.initialize(App, true);
+        await glui.setRenderingMode(glui.Render2d);
+        glui.buildUI(App);
 
-    // function test_synth_controls(synth, expected) {
-    //     var errors = [];
-    //     for (var i in psynth.Ctrl) {
-    //         var ctrl = synth.getControl(psynth.Ctrl[i]);
-    //         var value = ctrl.value;
-    //         //if (value == expected || expected < ctrl.min && value == ctrl.min || expected > ctrl.max && value == ctrl.max)
-    //         if (value != expected && (expected >= ctrl.min || value != ctrl.min) && (expected <= ctrl.max || value != ctrl.max))
-    //         {
-    //             errors.push(`Value of ${i}=${value} should be ${expected} or minimum or maximum`);
-    //         }
-    //     }
-    //     return errors.length ? errors : false;
-    // }
+        var res = await load('synth/ui/synth.layout.json');
+        if (res.error) throw res.error;
+        var template = res.data;
+        template.type = 'Synth';
 
-    // function test_ui_controls(pots, expected) {
-    //     var errors = [];
-    //     for (var i=0; i<pots.length; i++) {
-    //         if (pots[i].value != expected) {
-    //             errors.push(`Value of ${pots[i].id}=${value} should be ${expected}`);
-    //         }
-    //     }
-    //     return errors.length ? errors : false;
-    // }
+        var player = await createPlayer();
+        var adapter = player.adapters[psynth.SynthAdapter.getInfo().id];
+        adapter.prepareContext(player.dataBlocks[1]);
 
-    // function setupSynth() {
-    //     _synth = new psynth.Synth(SAMPLE_RATE, 6);
-    //     _ui = new Ui.Synth('Synth1');
-    //     _ui.addClass('synth');
-    //     _ui.dataBind(_synth);
-    //     _ui.render({element: document.body});
+        var channel = player.createDevice(Ps.Player.Device.CHANNEL, null);
+        channel.assign(0, player.sequences[1]);
+        channel.loopCount = 16;
 
-    //     return _ui;
-    // }
+        var synth = adapter.devices[0]; //new psynth.Synth(SAMPLE_RATE, 1);
+        loadPreset(synth, 'synth/preset.json');
+        synth.isActive = true;
+        synth.setNote(36, 1.0);
+        var synthUi = await glui.create('synth1', template, null, null);
+        await synthUi.build(synth);
+        synthUi.move(10, 10);
+        synthUi.render();
+        
+        test('Should create and bind all UI controls', ctx => {
+            for (var i in psynth.Synth.controls) {
+                var ctrl = synth.getControl(psynth.Synth.controls[i]);
+                var ui = synthUi.items.find(x => x.id == i);
+                if (!ui) {
+                    var grp = synthUi.items.find(x => i.startsWith(x.id));
+                    ui = grp.items.find(x => i.endsWith(x.id));
+                }
+                if (!ui) continue;
+                ctx.assert(ui && ui.dataSource instanceof DataLink && ui.dataSource.obj == ctrl && ui.dataField == 'value', 'true');
+            }
+        });
 
-    // function test_synth_Ui_binding() {
-    //     var results = ['Synth Ui binding'];
+        glui.animate();
 
-    //     if (!_synth) setupSynth();
-    //     var ui = _ui;
-    //     var synth = _synth;
+        await run((left, right, bufferSize) => channelBasedFillBuffer(left, right, bufferSize, channel));
+        // var frame = 0;
+        // await run((left, right, bufferSize) => {
+        //     for (var i=0; i<bufferSize; i++) left[i] = right[i] = 0.0;
+        //     if ((frame % 40) == 0) synth.setNote(36, 1.0);
+        //     if ((frame % 40) == 2) synth.setNote(36, 0.0);
+        //     synth.run(left, right, 0, bufferSize)
+        //     frame++;
+        //     return true;
+        // });
 
-    //     var inputs = [ui.modules];
-    //     var pots = [];
-
-    //     while (inputs.length > 0) {
-    //         var control = inputs.pop();
-    //         if (control instanceof Ui.ValueControl) {
-    //             pots.push(control);
-    //         } else {
-    //             var collection = control instanceof Ui.Board ? control.items : control;
-    //             for (var i in collection) {
-    //                 inputs.push(collection[i]);
-    //             }
-    //         }
-    //     }
-    //     for (var i=0; i<pots.length; i++) {
-    //         pots[i].setValue(500.0);
-    //         // if (pots[i] instanceof Ui.Pot) {
-    //         //     pots[i].setValue(500.0);
-    //         // } else if (pots[i] instanceof Ui.Select) {
-    //         //     console.log(pots[i].id);
-    //         // }
-    //     }
-
-    //     results.push(
-    //         test('All ui controls set to 500', () => {
-    //             return test_synth_controls(synth, 500.0)
-    //         })
-    //     );
-
-    //     for (var i=0; i<pots.length; i++) {
-    //         pots[i].setValue(0.0);
-    //     }
-    //     results.push(
-    //         test('All ui controls set to 0.0', () => {
-    //             return test_synth_controls(synth, 0.0)
-    //         })
-    //     );
-
-    //     for (var i in psynth.Ctrl) {
-    //         synth.getControl(psynth.Ctrl[i]).set(1.0);
-    //     }
-    //     results.push(
-    //         test('All synth controls set to 1.0', () => {
-    //             return test_ui_controls(synth, 1.0)
-    //         })
-    //     );
-
-    //     for (var i in psynth.Ctrl) {
-    //         synth.getControl(psynth.Ctrl[i]).set(0.0);
-    //     }
-    //     results.push(
-    //         test('All synth controls set to 0.0', () => {
-    //             return test_ui_controls(synth, 0.0)
-    //         })
-    //     );
-
-    //     return results;
-    // }
-
-    // async function test_synth_fromPreset() {
-    //     var results = ['Test presets'];
-    //     if (!_synth) setupSynth();
-    //     var ui = _ui;
-    //     var synth = _synth;
-
-    //     await Ui.Synth.loadPresets();
-    //     ui.render({force:true});
-    //     results.push(
-    //         test('Creates a new preset', () => {
-    //             ui.createPreset('blank');        
-    //         }),
-    //         test('Setting a preset changes the controls', () => {
-    //             ui.toolbar.items.preset.select('default');
-    //         }),
-    //     );
-
-    //     return results;
-    // }
+        glui.shutdown();
+    }
 
     var tests = () => [
-        test_freqTable,
+        // test_freqTable,
         //test_control_labels,
-        test_create_synth,
-        test_run_env,
-        test_osc_run,
-        test_generate_sound_simple,
-        test_synthAdapter_makeSetCommandForContoller,
-        test_synthAdapter_prepareContext,
-        test_synthAdapter_makeCommands,
-        test_run_channel,
-        test_complete_player,
-        //test_synthAdapterToDataSeries/*, test_synthAdapterFromDataSeries, test_synth_Ui_binding, test_synth_fromPreset*/
+        // test_create_synth,
+        // test_run_env,
+        // test_osc_run,
+        // test_generate_sound_simple,
+        // test_synthAdapter_makeSetCommandForContoller,
+        // test_synthAdapter_prepareContext,
+        // test_synthAdapter_makeCommands,
+        // test_run_channel,
+        // test_complete_player,
+        // test_synthAdapterToDataSeries/*, test_synthAdapterFromDataSeries, test_synth_Ui_binding, test_synth_fromPreset*/
+
+        test_synth_control
     ];
 
     publish(tests, 'Synth tests');
