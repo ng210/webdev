@@ -38,69 +38,6 @@ include('voice.js');
         var ctrl = this.idToControl[controlId];
         if (!ctrl) console.log('The control id ' + controlId + ' is invalid!');
         return ctrl;
-        // var pot = null;
-        // switch (controlId) {
-        //     case psynth.Synth.controls.amp: pot = this.controls.amp; break;
-        //     // LFO
-        //     case psynth.Synth.controls.lfo1amp: pot = this.controls.lfo1.amp; break;
-        //     case psynth.Synth.controls.lfo1dc: pot = this.controls.lfo1.dc; break;
-        //     case psynth.Synth.controls.lfo1fre: pot = this.controls.lfo1.fre; break;
-        //     case psynth.Synth.controls.lfo1wave: pot = this.controls.lfo1.wave; break;
-
-        //     case psynth.Synth.controls.lfo2fre: pot = this.controls.lfo2.fre; break;
-        //     case psynth.Synth.controls.lfo2dc: pot = this.controls.lfo2.dc; break;
-        //     case psynth.Synth.controls.lfo2amp: pot = this.controls.lfo2.amp; break;
-        //     case psynth.Synth.controls.lfo2wave: pot = this.controls.lfo2.wave; break;
-
-        //     // ENV
-        //     case psynth.Synth.controls.env1amp: pot = this.controls.env1.amp; break;
-        //     case psynth.Synth.controls.env1dc:  pot = this.controls.env1.dc; break;
-        //     case psynth.Synth.controls.env1atk: pot = this.controls.env1.atk; break;
-        //     case psynth.Synth.controls.env1dec: pot = this.controls.env1.dec; break;
-        //     case psynth.Synth.controls.env1sus: pot = this.controls.env1.sus; break;
-        //     case psynth.Synth.controls.env1rel: pot = this.controls.env1.rel; break;
-
-        //     case psynth.Synth.controls.env2amp: pot = this.controls.env2.amp; break;
-        //     case psynth.Synth.controls.env2dc:  pot = this.controls.env2.dc; break;
-        //     case psynth.Synth.controls.env2atk: pot = this.controls.env2.atk; break;
-        //     case psynth.Synth.controls.env2dec: pot = this.controls.env2.dec; break;
-        //     case psynth.Synth.controls.env2sus: pot = this.controls.env2.sus; break;
-        //     case psynth.Synth.controls.env2rel: pot = this.controls.env2.rel; break;
-
-        //     case psynth.Synth.controls.env3amp: pot = this.controls.env3.amp; break;
-        //     case psynth.Synth.controls.env3dc:  pot = this.controls.env3.dc; break;
-        //     case psynth.Synth.controls.env3atk: pot = this.controls.env3.atk; break;
-        //     case psynth.Synth.controls.env3dec: pot = this.controls.env3.dec; break;
-        //     case psynth.Synth.controls.env3sus: pot = this.controls.env3.sus; break;
-        //     case psynth.Synth.controls.env3rel: pot = this.controls.env3.rel; break;
-
-        //     // OSC
-        //     case psynth.Synth.controls.osc1amp: pot = this.controls.osc1.amp; break;
-        //     case psynth.Synth.controls.osc1dc:  pot = this.controls.osc1.dc; break;
-        //     case psynth.Synth.controls.osc1fre: pot = this.controls.osc1.fre; break;
-        //     case psynth.Synth.controls.osc1note: pot = this.controls.osc1.note; break;
-        //     case psynth.Synth.controls.osc1tune: pot = this.controls.osc1.tune; break;
-        //     case psynth.Synth.controls.osc1psw: pot = this.controls.osc1.psw; break;
-        //     case psynth.Synth.controls.osc1wave: pot = this.controls.osc1.wave; break;
-
-        //     case psynth.Synth.controls.osc2amp: pot = this.controls.osc2.amp; break;
-        //     case psynth.Synth.controls.osc2dc:  pot = this.controls.osc2.dc; break;
-        //     case psynth.Synth.controls.osc2fre: pot = this.controls.osc2.fre; break;
-        //     case psynth.Synth.controls.osc2note: pot = this.controls.osc2.note; break;
-        //     case psynth.Synth.controls.osc2tune: pot = this.controls.osc2.tune; break;
-        //     case psynth.Synth.controls.osc2psw: pot = this.controls.osc2.psw; break;
-        //     case psynth.Synth.controls.osc2wave: pot = this.controls.osc2.wave; break;
-
-        //     // FILTER
-        //     case psynth.Synth.controls.flt1amp: pot = this.controls.flt1.amp; break;
-        //     case psynth.Synth.controls.flt1cut:  pot = this.controls.flt1.cut; break;
-        //     case psynth.Synth.controls.flt1res: pot = this.controls.flt1.res; break;
-        //     case psynth.Synth.controls.flt1mod: pot = this.controls.flt1.mod; break;
-        //     case psynth.Synth.controls.flt1mode: pot = this.controls.flt1.mode; break;
-
-        //     default: console.log('The control id ' + controlId + ' is invalid!'); break
-        // }
-        return pot;
     };
     Synth.prototype.setNote = function(note, velocity) {
         var voice = null;
@@ -175,6 +112,7 @@ include('voice.js');
             env1: psynth.Env.createControls(),
             env2: psynth.Env.createControls(),
             env3: psynth.Env.createControls(),
+            env4: psynth.Env.createControls(),
             lfo1: psynth.LFO.createControls(),
             lfo2: psynth.LFO.createControls(),
             osc1: psynth.Osc.createControls(),

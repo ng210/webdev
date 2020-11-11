@@ -26,9 +26,9 @@ include('osc.js');
 
     LFO.createControls = function createControls() {
         return {
-            amp: new psynth.PotF32(0, 100, 1.0),
-            dc:  new psynth.PotF32(0, 100, .0),
-            fre: new psynth.PotF32(0, 1000, .5)
+            amp: new psynth.PotF32(0, 12000, 1.0),
+            dc:  new psynth.PotF32(0, 100, 1.0),
+            fre: new psynth.PotF32(0, 12000, .5)
         };
     };
 

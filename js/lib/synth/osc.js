@@ -50,7 +50,7 @@ include('input.js');
         if ((wf & psynth.Osc.waveforms.NOISE) != 0) {
             if (this.timer < delta ||
                 this.timer > 0.5 && this.timer < 0.5 + delta)
-                this.smp = Math.random();
+                this.smp = 2*Math.random() - 1;
             out += this.smp;
             wfc++;
         }
@@ -66,7 +66,7 @@ include('input.js');
     Osc.createControls = function createControls() {
         return {
             amp: new psynth.PotF32(0, 1, .6),
-            fre: new psynth.PotF32(0, 1000, .5),
+            fre: new psynth.PotF32(0, 12000, .5),
             note: new psynth.Pot(0, 127, 0),
             tune: new psynth.Pot(-24, 24, .0),
             psw: new psynth.PotF8(0, 1, .5),
