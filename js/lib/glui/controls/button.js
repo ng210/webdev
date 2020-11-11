@@ -1,5 +1,5 @@
 include('value-control.js');
-include('renderer2d.js');
+include('label.js');
 
 (function() {
     function ButtonRenderer2d(control, context) {

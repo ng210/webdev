@@ -105,7 +105,7 @@ if (!parent.renderer) debugger;
         if (b > 255) b = 255;
         return [r, g, b];
     };
-    Renderer.prototype.mixColors = function mixColorsa(color1, color2, factor) {
+    Renderer.prototype.mixColors = function mixColors(color1, color2, factor) {
         var r = color1[0] * (1 - factor) + color2[0] * factor;
         var g = color1[1] * (1 - factor) + color2[1] * factor;
         var b = color1[2] * (1 - factor) + color2[2] * factor;

@@ -161,7 +161,6 @@ const DEBUG_EVENT = 'baka';
             'disabled': false,
             'data-source': '',
             'data-field': null,
-            'z-index': '',
             // styling
             'style': Control.getStyleTemplate()
         };
@@ -196,7 +195,7 @@ const DEBUG_EVENT = 'baka';
             this.dataSource = source;
         }
         this.dataField = this.template['data-field'];
-        this.zIndex = parseInt(this.template['z-index']) || 0;
+        this.zIndex = parseInt(this.template.style) || 0;
         this.style = mergeObjects(this.template.style, null);
         this.label = null;
         return this.template;
@@ -268,14 +267,14 @@ const DEBUG_EVENT = 'baka';
         if (mode == glui.Render2d) {
             if (this.renderer2d == null) {
                 this.renderer2d = this.createRenderer(mode);
-                this.renderer2d.initialize(this, context);
-            } else Promise.resolve();
+                await this.renderer2d.initialize(this, context);
+            };
             this.renderer = this.renderer2d;
         } else if (mode == glui.Render3d) {
             if (this.renderer3d == null) {
                 this.renderer3d = this.createRenderer(mode);
-                this.renderer3d.initialize(this, context);
-            } else Promise.resolve();
+                await this.renderer3d.initialize(this, context);
+            };
             this.renderer = this.renderer3d;
         }
         return this.renderer;
@@ -299,11 +298,27 @@ const DEBUG_EVENT = 'baka';
     Control.create = async function create(id, template, parent, context) {
         var type = template.type;
         if (typeof glui[type] === 'function') {
+            parent = parent || glui.screen;
             var ctrl = Reflect.construct(glui[type], [id, template, parent, context]);
             if (ctrl instanceof glui.Control) {
-                if (parent.renderer) {
+                if (ctrl instanceof glui.Container) {
+                    var p = [];
+                    for (var i in ctrl.template.items) {
+                        if (ctrl.template.items.hasOwnProperty(i)) {
+                            await glui.create(i, ctrl.template.items[i], ctrl);
+                        }
+                    }
+                    //await Promise.all(p);
+            
+                } else if (ctrl instanceof glui.Image) {
+                    await ctrl.load();
+                }// else if (ctrl instanceof glui.Grid) {
+                //     await ctrl.build();
+                // }
+                if (!ctrl.renderer && parent.renderer) {
                     await ctrl.setRenderer(parent.renderer.mode, parent.renderer.context);
                 }
+                await parent.add(ctrl);
                 return ctrl;
             }
         }
@@ -315,7 +330,7 @@ const DEBUG_EVENT = 'baka';
             'top': 0,
             'width': '2em',
             'height': '1.2em',
-            'z-index': 0,
+            'z-index': NaN,
             'background': '#c0c0c0',
             'background-image': 'none',
             'color': '#000000',

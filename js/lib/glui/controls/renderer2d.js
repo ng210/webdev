@@ -20,6 +20,7 @@ include('renderer.js');
         if (this.border.style == 'none') return;
         var ctx = this.context;
         var bw = this.border.width;
+        if (bw == 0) return;
         var bw2 = Math.floor(this.border.width/2);
         var x1 = x+bw2, x2 = x+w, x3 = x+w-bw2;
         var y1 = y+bw2, y2 = y+h;

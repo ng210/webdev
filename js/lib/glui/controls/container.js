@@ -1,4 +1,5 @@
 include('control.js');
+include('renderer2d.js');
 
 (function() {
 
@@ -9,6 +10,11 @@ include('control.js');
 
     ContainerRenderer2d.prototype.renderControl = function renderControl() {
         var ctrl = this.control;
+
+        if (this.backgroundImage) {
+            this.drawImage(this.backgroundImage, 0, 0);
+        }
+
         for (var i=0; i<ctrl.items.length; i++) {
             ctrl.items[i].renderer.render();
         }
@@ -25,22 +31,32 @@ include('control.js');
         for (var i=0; i<this.items.length; i++) {
             this.items[i].destroy();
         }
-        delete this.items
+        delete this.items;
     };
     Container.prototype.getTemplate = function getTemplate() {
         var tmpl = Container.base.getTemplate.call(this);
         tmpl.style.background = 'none';
         tmpl.style.border = 'none';
+        tmpl.items = {};
         return tmpl;
     };
-    Container.prototype.add = function add(ctrl) {
+    Container.prototype.add = async function add(ctrl) {
+        // if (ctrl.parent != this) {
+        //     if (ctrl.parent) ctrl.parent.remove(ctrl);
+        var zIndex = parseInt(ctrl.template.style['z-index']);
+        if (isNaN(zIndex)) {
+            ctrl.zIndex = this.zIndex + 100;
+        }
         var ix = this.items.findIndex(x => x.zIndex < ctrl.zIndex);
         if (ix != -1) {
             this.items.splice(ix, 0, ctrl);
         } else {
             this.items.push(ctrl);
         }
-        ctrl.setRenderer(this.renderer.mode, this.renderer.context);
+
+        if (this.renderer) {
+            await ctrl.setRenderer(this.renderer.mode, this.renderer.context);
+        }
         return ctrl;
     };
     Container.prototype.replace = function replace(item, newItem) {
@@ -89,14 +105,15 @@ include('control.js');
     Container.prototype.move = function move(dx, dy) {
 		Container.base.move.call(this, dx, dy);
 		// for (var i=0; i<this.items.length; i++) {
-		// 	this.items[i].move(0, 0);
+        //     this.items[i].getBoundingBox();
+        //     this.items[i].move(dx, dy);
 		// }
 	};
     Container.prototype.getControlAt = function getControlAt(cx, cy, recursive) {
         var res = this; //null;
         cx -= this.renderer.border.width + this.offsetLeft;
         cy -= this.renderer.border.width + this.offsetTop;
-		for (var i=0; i<this.items.length; i++) {
+		for (var i=this.items.length-1; i>=0; i--) {
             var ctrl = this.items[i];
             if (ctrl.style.visible && ctrl.offsetLeft < cx  && cx < ctrl.offsetLeft + ctrl.width && ctrl.offsetTop < cy  && cy < ctrl.offsetTop + ctrl.height) {
                 res = ctrl;
@@ -129,5 +146,11 @@ include('control.js');
         return res;
     };
 
+    Container.prototype.render = function render() {
+        Container.base.render.call(this);
+console.log(this.id, this.left, this.top, this.width, this.height);
+    };
+
     publish(Container, 'Container', glui);
+    publish(ContainerRenderer2d, 'ContainerRenderer2d', glui);
 })();

@@ -2,39 +2,29 @@ include('control.js');
 include('renderer2d.js');
 
 (function() {
-    function TemplateRenderer2d(control, context) {
-        TemplateRenderer2d.base.constructor.call(this, control, context);
+    function _CONTROL_Renderer2d(control, context) {
+        _CONTROL_Renderer2d.base.constructor.call(this, control, context);
     }
-    extend(glui.Renderer2d, TemplateRenderer2d);
+    extend(glui.Renderer2d, _CONTROL_Renderer2d);
 
-    TemplateRenderer2d.prototype.renderControl = function renderControl() {
+    _CONTROL_Renderer2d.prototype.renderControl = function renderControl() {
     };
 
 
-    function Template(id, template, parent, context) {
-        Template.base.constructor.call(this, id, template, parent, context);
-        //this.renderer3d = new TemplateRenderer3d()
+    function _CONTROL_(id, template, parent, context) {
+        _CONTROL_.base.constructor.call(this, id, template, parent, context);
     }
-    extend(glui.Control, Template);
+    extend(glui.Control, _CONTROL_);
 
-    Template.prototype.getTemplate = function getTemplate() {
-        var template = Template.base.getTemplate.call(this);
+    _CONTROL_.prototype.getTemplate = function getTemplate() {
+        var template = _CONTROL_.base.getTemplate.call(this);
         return template;
     };
-    Template.prototype.setRenderer = function(mode, context) {
-        if (mode == glui.Render2d) {
-            if (this.renderer2d == null) {
-                this.renderer2d = new TemplateRenderer2d(this, context);
-            }
-            this.renderer = this.renderer2d;
-        } else if (mode == glui.Render3d) {
-            if (this.renderer3d == null) {
-                this.renderer3d = new TemplateRenderer3d(this, context);
-            }
-            this.renderer = this.renderer3d;
-        }
+    _CONTROL_.prototype.createRenderer = mode => mode == glui.Render2d ? new _CONTROL_Renderer2d() : '_CONTROL_Renderer3d';
+    _CONTROL_.prototype.setRenderer = async function(mode, context) {
+        await _CONTROL_.base.setRenderer.call(this, mode, context);
     };
 
-    publish(Template, 'Template', glui);
-    publish(TemplateRenderer2d, 'TemplateRenderer2d', glui);
+    publish(_CONTROL_, '_CONTROL_', glui);
+    publish(_CONTROL_Renderer2d, '_CONTROL_Renderer2d', glui);
 })();

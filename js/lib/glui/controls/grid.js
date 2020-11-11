@@ -22,6 +22,7 @@ include('container.js');
 		var row = this.control;
 		var grid = row.parent;
 		var left = 0;
+console.log(getObjectPath(this.control, 'parent', glui.screen).map(x => x.id).join('.'));
 		for (var i=0; i<row.items.length; i++) {
 			var cell = row.items[i];
 			cell.width = grid.columns[i].width;
@@ -54,7 +55,7 @@ include('container.js');
 		}
 		
 	};
-	Row.prototype.add = function add(ctrl, name) {
+	Row.prototype.add = async function add(ctrl, name) {
 		ctrl.id = this.id + '#' + ctrl.id;
 		Row.base.add.call(this, ctrl);
 		this.cells[this.cellCount] = ctrl;
@@ -406,11 +407,14 @@ include('container.js');
 
 		this.columns[ix] = this.columns[name] = new Column(name, key, this);
 		// update rows
+		var p = [];
+		var template = this.rowTemplate && this.rowTemplate[key] ? this.rowTemplate[key] : this.cellTemplate;
 		for (var ri=0; ri<this.rowCount; ri++) {
-			var ctrl = await glui.create(key, template, this);
-			this.rows[this.rowKeys[ri]].add(ctrl, name);
+			var row = this.rows[this.rowKeys[ri]];
+			var ctrl = await glui.create(key, template, row);
 			this.columns[name].add(ctrl, ri);
-		}		
+		}
+		await Promise.all(p);
 
 		this.columnCount++;
 		return this.columns[name];
@@ -421,7 +425,6 @@ include('container.js');
 		var row = this.rows[name] = new Row(name, {style:{width:'100%'}}, this);
 		row.index = ix;
 		for (var i=ix+1; i<this.rowKeys.length; i++) this.rows[this.rowKeys[i]].index++;
-		this.add(row);
 		// update columns
 		var height = 0;
 		for (var ci=0; ci<this.columnCount; ci++) {
@@ -429,13 +432,13 @@ include('container.js');
 			var name = column.name;
 			var template = this.rowTemplate && this.rowTemplate[column.key] ? this.rowTemplate[column.key] : this.cellTemplate;
 			var ctrl = await glui.create(name, template, row);
-			row.add(ctrl, name);
+			//await row.add(ctrl, name);
 			column.add(ctrl, ix);
 			height = Math.max(height, ctrl.height);
 		}
 		row.height = height;
-
 		this.rowCount++;
+		await this.add(row);
 		return this.rows[name];
 	};
 	Grid.prototype.removeColumnAt = async function removeColumnAt(ix) {
@@ -517,11 +520,11 @@ include('container.js');
 		return columnKeys;
 	};
 	Grid.prototype.build = async function build() {
+		var p = [];
 		// titlebar
 		if (!this.titlebar) {
 			this.titlebar = await glui.create(`${this.id}#title`, { 'type': 'Label', 'style': this.style.title, 'z-index': this.zIndex + 1 }, this);
 			this.titlebar.setValue(this.title);
-			this.add(this.titlebar);
 		}
 		var cc = parseInt(this.template.cols);
 		var rc = parseInt(this.template.rows);
@@ -576,15 +579,15 @@ include('container.js');
 
 		// update header
 		if (this.showHeader) {
-			if (this.header == null) this.header = new Row('header', {style:this.template.style.header}, this);
+			if (this.header == null) {
+				this.header = new Row('header', {style:this.template.style.header}, this);
+				await this.header.setRenderer(this.renderer.mode, this.renderer.context);
+			}
 			this.header.style.width = '100%';
-			this.add(this.header);
 			for (var i=0; i<ck.length; i++) {
 				var name = this.columns[i].name;
 				if (!this.header.cells[i]) {
-					var cell = await glui.create(name, { 'type':'Label', 'style': this.template.style.header }, this.header);
-					// set header style
-					this.header.add(cell);
+					await glui.create(name, { 'type':'Label', 'style': this.template.style.header }, this.header);
 				}
 				this.header.cells[i].setValue(name);
 			}
@@ -594,12 +597,11 @@ include('container.js');
 		} else {
 			delete this.header;
 		}
-
 		// update rows
 		if (this.rowCount < rc) {
 			// add rows
 			for (var i=this.rowCount; i<rk.length; i++) {
-				await this.insertRowAt(rk[i], i);
+				p.push(this.insertRowAt(rk[i], i));
 			}
 		} else if (this.rowCount > rk.length) {
 			// remove rows
@@ -609,10 +611,10 @@ include('container.js');
 			}
 		}
 
+		await Promise.all(p);
 		if (this.dataSource) {
 			this.dataBind();
 		}
-
 	};
     Grid.prototype.replace = function replace(item, newItem) {
 		var result = Grid.base.replace.call(this, item, newItem);
