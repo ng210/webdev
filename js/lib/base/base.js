@@ -668,7 +668,7 @@ async function include(path, parentPath) {
 }
 
 /*****************************************************************************/
-Array.prototype.binSearch = function(item, cmp, min, max) {
+Array.prototype.binSearch = function binSearch(item, cmp, min, max) {
     if (this.length == 0) {
         return 0;
     }
@@ -688,47 +688,79 @@ Array.prototype.binSearch = function(item, cmp, min, max) {
 	}
 	return -max;
 };
+Array.prototype.select = function select(filter) {
+    var res = [];
+    for (var i=0; i<this.length; i++) {
+        if (filter(this[i], i, this)) {
+            res.push(this[i]);
+        }
+    }
+    return res;
+}
 
 function mergeObjects(src, dst, sourceOnly) {
     var res = {};
     if (src == undefined || src == null) {
         src = {};
     }
-    var srcKeys = Object.keys(src);
-    if (dst == undefined || dst == null) {
-        dst = {};
-    }
-    var dstKeys = Object.keys(dst);
-    // add src
-    for (var i=0; i<srcKeys.length; i++) {
-        var key = srcKeys[i];
-        var s = src[key];
-        var d = dst[key];
-        if (d != undefined) {
-            var ix = dstKeys.findIndex(x => x == key);
-            dstKeys.splice(ix, 1);
-        }
-        var isObjectSource = s != null && typeof s === 'object';
-        var isObjectDestination = d != null && typeof d === 'object';
-        if (isObjectSource && isObjectDestination) {
-            res[key] = mergeObjects(s, d);
-        } else if (isObjectSource && !isObjectDestination) {
-            res[key] = d != undefined ? d : mergeObjects(s, null);
-        } else if (!isObjectSource && isObjectDestination) {
-            res[key] = mergeObjects(d, null);
+    var isArraySource = Array.isArray(src);
+    var isArrayDestination = Array.isArray(dst);
+    if (isArraySource && isArrayDestination) {
+        res = [];
+        for (var i=0; i<src.length; i++) res[i] = mergeObjects(src[i], dst[i]);
+        for (var i=src.length; i<dst.length; i++) res[i] = mergeObjects(dst[i]);
+    } else if (isArraySource && !isArrayDestination) {
+        if (dst == undefined) {
+            res = [];
+            for (var i=0; i<src.length; i++) res[i] = mergeObjects(src[i]);
         } else {
-            res[key] = d != undefined ? d : s;
+            res = mergeObjects(dst);
         }
-    }
-    if (!sourceOnly) {
-        // add dst
-        for (var i=0; i<dstKeys.length; i++) {
-            var key = dstKeys[i];
-            var d = dst[key];
-            if (typeof d === 'object') {
-                res[key] = mergeObjects(d, null);
-            } else {
-                res[key] = d;
+    } else if (!isArraySource && isArrayDestination) {
+        res = mergeObjects(d);
+    } else {
+        var isObjectSource = src != null && typeof src === 'object';
+        var isObjectDestination = dst != null && typeof dst === 'object';
+        if (!isObjectSource && !isObjectDestination) {
+            res = dst != undefined ? dst : src;
+        } else {
+            var srcKeys = Object.keys(src);
+            if (dst == undefined || dst == null) {
+                dst = {};
+            }
+            var dstKeys = Object.keys(dst);
+            // add src
+            for (var i=0; i<srcKeys.length; i++) {
+                var key = srcKeys[i];
+                var s = src[key];
+                var d = dst[key];
+                if (d != undefined) {
+                    var ix = dstKeys.findIndex(x => x == key);
+                    dstKeys.splice(ix, 1);
+                }
+                isObjectSource = s != null && typeof s === 'object';
+                isObjectDestination = d != null && typeof d === 'object';
+                if (isObjectSource && isObjectDestination) {
+                    res[key] = mergeObjects(s, d);
+                } else if (isObjectSource && !isObjectDestination) {
+                    res[key] = d != undefined ? d : mergeObjects(s, null);
+                } else if (!isObjectSource && isObjectDestination) {
+                    res[key] = mergeObjects(d, null);
+                } else {
+                    res[key] = d != undefined ? d : s;
+                }
+            }
+            if (!sourceOnly) {
+                // add dst
+                for (var i=0; i<dstKeys.length; i++) {
+                    var key = dstKeys[i];
+                    var d = dst[key];
+                    if (typeof d === 'object') {
+                        res[key] = mergeObjects(d, null);
+                    } else {
+                        res[key] = d;
+                    }
+                }
             }
         }
     }
@@ -755,7 +787,7 @@ function getCommonParent(obj1, obj2, parentAttributeName) {
 function getObjectPath(obj, parentAttributeName, ancestor) {
     var res = [];
     ancestor = ancestor || self;
-    while (obj!= null) {
+    while (obj != null) {
         res.unshift(obj);
         if (obj == ancestor) break;
         obj = obj[parentAttributeName];

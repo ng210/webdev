@@ -8,8 +8,6 @@
 
 	Fn.Filter = function(coeffs) {
 		this.coeffs = coeffs;
-
-		
 	};
 	Fn.Filter.prototype.apply = function(data, width, height, stride, x, y, z) {
 		var n1 = Math.floor(this.coeffs[0].length/2);
@@ -41,6 +39,13 @@
 			ix = ixb + swidth;
 		}
 		return w != 0 ? v/w : 0;
+	};
+	Fn.intersectRect = function intersectRect(r1, r2) {
+		var left = Math.max(r1[0], r2[0]);
+		var top = Math.max(r1[1], r2[1]);
+		var right = Math.min(r1[0]+r1[2], r2[0]+r2[2]);
+		var bottom = Math.min(r1[1]+r1[3], r2[1]+r2[3]);
+		return (left < right && bottom > top) ? [left, top, right-left, bottom-top] : null;
 	};
 
 	publish(Fn, 'Fn');

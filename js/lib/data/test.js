@@ -408,10 +408,10 @@ include('graph.js');
 
     var tests = () => [
         test_Stream,
-        // test_DataSeries,
-        // test_DataSeriesCompare,
-        // test_DataLink,
-        // test_Graph
+        test_DataSeries,
+        test_DataSeriesCompare,
+        test_DataLink,
+        test_Graph
     ];
     
     publish(tests, 'Data tests');

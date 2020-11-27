@@ -3,6 +3,7 @@ include('v3.js');
 include('v4.js');
 include('m33.js');
 include('m44.js');
+include('fn.js');
 
 (function(){
 
@@ -168,11 +169,13 @@ include('m44.js');
         var o44 = new M44(new Float64Array(arr));
         var p44 = M44.identity();
         var q44 = new M44(p44);
+        var r44 = new M44([1,2,3,4, 1,2,3,4, 1,2,3,4, 1,2,3,4]);
         test('Should create M44 from array', context => context.assert(m44, ':=', arr));
         test('Should create M44 from Float32Array', context => context.assert(n44, ':=', arr));
         test('Should create M44 from Float64Array', context => context.assert(o44, ':=', arr));
         test('Should create M44 from identity', context => context.assert(p44, ':=', [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]));
         test('Should create M44 from M44', context => context.assert(q44, ':=', p44));
+        test('Should transpose M44', context => context.assert(r44.transpose(), ':=', [1,1,1,1, 2,2,2,2, 3,3,3,3, 4,4,4,4]));
 
         test('Should multiply by identity matrix', context => context.assert(m44.mul(p44), ':=', m44));
         test('Should multiply by a matrix', context => context.assert(m44.mul(n44), ':=', [
@@ -195,6 +198,7 @@ include('m44.js');
     }
 
     async function test_performance() {
+        message('Test performance of matrix calculations', 1);
         var m44 = new M44();
         var n44 = new M44();
         for (var i=0; i<16; i++) {
@@ -204,10 +208,90 @@ include('m44.js');
         await measure('Matrix multiplication', () => m44.mul(n44), 10000);
     }
 
+    async function test_intersect() {
+        message('Test intersecting rectangles');
+
+        var canvas = document.createElement('canvas');
+        canvas.width = 300; canvas.height = 300;
+        canvas.style.left = '20px'; canvas.style.top = '10px';
+        canvas.style.width = '300px'; canvas.style.height = '300px';
+        canvas.style.backgroundColor = '#405060'
+        Dbg.con.appendChild(canvas); Dbg.prln('');
+        var ctx = canvas.getContext('2d');
+        ctx.globalCompositeOperation = 'difference';
+
+        var r1 = [100, 100, 100, 100];
+        ctx.fillStyle = '#e0f0ff';
+        ctx.fillRect(...r1);
+
+        var r2 = [ 10, 10, 80, 280];
+        ctx.fillStyle = '#8080f0';
+        ctx.fillRect(...r2);
+        var r = Fn.intersectRect(r1, r2);
+        test('Rects should not intersect', ctx => ctx.assert(r, 'null'));
+
+        r2 = [10, 10, 280, 80];
+        ctx.fillStyle = '#f08080';
+        ctx.fillRect(...r2);
+        r = Fn.intersectRect(r1, r2);
+        test('Rects should not intersect', ctx => ctx.assert(r, 'null'));
+
+        r2 = [210, 10, 80, 280];
+        ctx.fillStyle = '#80f080';
+        ctx.fillRect(...r2);
+        r = Fn.intersectRect(r1, r2);
+        test('Rects should not intersect', ctx => ctx.assert(r, 'null'));
+
+        r2 = [10, 210, 280, 80];
+        ctx.fillStyle = '#f0f080';
+        ctx.fillRect(...r2);
+        r = Fn.intersectRect(r1, r2);
+        test('Rects should not intersect', ctx => ctx.assert(r, 'null'));
+
+        canvas = canvas.cloneNode();
+        Dbg.con.appendChild(canvas); Dbg.prln('');
+        ctx = canvas.getContext('2d');
+        ctx.globalCompositeOperation = 'difference';
+        ctx.fillStyle = '#e0f0ff';
+        ctx.fillRect(...r1);
+
+        r2 = [10, 30, 120, 240];
+        ctx.fillStyle = '#8080f0';
+        ctx.fillRect(...r2);
+        r = Fn.intersectRect(r1, r2);
+        var e = [100, 100, 30, 100];
+        test(`Rects should intersect at [${e}]`, ctx => ctx.assert(r, ':=', e));
+
+        r2 = [30, 10, 240, 120];
+        ctx.fillStyle = '#f08080';
+        ctx.fillRect(...r2);
+        r = Fn.intersectRect(r1, r2);
+        var e = [100, 100, 100, 30];
+        test(`Rects should intersect at [${e}]`, ctx => ctx.assert(r, ':=', e));
+
+        r2 = [170, 30, 120, 240];
+        ctx.fillStyle = '#80f080';
+        ctx.fillRect(...r2);
+        r = Fn.intersectRect(r1, r2);
+        var e = [170, 100, 30, 100];
+        test(`Rects should intersect at [${e}]`, ctx => ctx.assert(r, ':=', e));
+
+        r2 = [30, 170, 240, 120];
+        ctx.fillStyle = '#f0f080';
+        ctx.fillRect(...r2);
+        r = Fn.intersectRect(r1, r2);
+        var e = [100, 170, 100, 30];
+        test(`Rects should intersect at [${e}]`, ctx => ctx.assert(r, ':=', e));
+
+        
+    }
+
     var tests = () => [
-        test_v2, test_v3, test_v4,
-        test_m33, test_m44,
-        test_performance
+        // test_v2, test_v3, test_v4,
+        // test_m33,
+        test_m44,
+        // test_performance,
+        test_intersect
     ];
 
     publish(tests, 'Math tests');

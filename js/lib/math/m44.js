@@ -36,7 +36,6 @@
         }
         return r44;
     };
-
     M44.prototype.mulV = function mulV(v4, r4, o) {
         var k = 0;
         r4 = r4 || new V4();
@@ -61,7 +60,20 @@
             r[o+i] = this[i];
         }
         return r;
-    }
+    };
+    M44.prototype.transpose = function transpose(r44, o) {
+        r44 = r44 || this;
+        o = o || 0;
+        for (var i=0; i<4; i++) {
+            for (var j=i+1; j<4; j++) {
+                var m1 = r44[i*4+j];
+                var m2 = r44[j*4+i];
+                r44[i*4+j] = m2;
+                r44[j*4+i] = m1;
+            }
+        }
+        return r44;
+    };
     
     M44.identity = function identity(r44, o) {
         // 1, 0, 0, 0

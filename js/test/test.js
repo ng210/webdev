@@ -26,10 +26,10 @@ function print_result(context, result) {
     if (result instanceof Error) {
         errorText += ' => <div class="error-details"><pre>ERROR: ' + result.stack.replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v])) + '</pre></div>';
     };
-    if (context.errors == 0 && !result) {
-        Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..[result]`, `${lbl}..<span style="color:#40ff40">Ok</span>`);
-    } else {
-        Dbg.con.innerHTML = Dbg.con.innerHTML.replace(`${lbl}..[result]`, `${lbl}..<span style="color:#ff4040">${errorText}</span>`);
+    var text = (context.errors == 0 && !result) ? `${lbl}..<span style="color:#40ff40">Ok</span>` : `${lbl}..<span style="color:#ff4040">${errorText}</span>`;
+    var spans = Dbg.con.getElementsByTagName('span');
+    for (var i=0; i<spans.length; i++) {
+        spans[i].innerHTML = spans[i].innerHTML.replace(`${lbl}..[result]`, text);
     }
 }
 
@@ -44,6 +44,22 @@ function message(text, indent) {
 
 function error(text) {
     println(`<span style="color:#ff4040">${text}</text>`);
+}
+
+var _buttonCount = 0;
+function addButton(text, handler) {
+    var id = 'btn_' + _buttonCount++;
+    Dbg.prln(`<button id="${id}">${text}</button>`);
+    var button = document.getElementById(id);
+    button.onclick = handler;
+    return button;
+}
+
+async function button(text) {
+    var isDone = false;
+    var btn = addButton(text, e => isDone = true);
+    await poll( () => isDone, 10);
+    btn.innerHTML = 'Done';
 }
 
 async function test(lbl, action) {
@@ -203,7 +219,9 @@ var _assertion_operators = {
     "empty": { "term": "be empty", "action": a => isEmpty(a) },
    "!empty": { "term": "have an element", "action": a => !isEmpty(a) },
    "true":   { "term": "be true", "action": a => a == true },
-   "false":  { "term": "be false", "action": a => a == false }
+   "false":  { "term": "be false", "action": a => a == false },
+   "null":   { "term": "is null", "action": a => a == null },
+   "!null":  { "term": "is not null", "action": a => a != null }
 };
 
 test_context.prototype.assert = function assert(value, operator, expected) {

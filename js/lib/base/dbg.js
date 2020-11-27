@@ -11,13 +11,15 @@
 					this.clicked = true;
 					this.con.style.opacity = 0.75;
 				};
-				this.con.style.opacity = 0.02;
+				this.con.style.opacity = 0.2;
 				this.con.style.zIndex = 100;
 				//this.con.style.width = window.clientWidth;
 			};
 			Dbg.pr = function pr(txt) {
 				if (this.con != null) {
-					this.con.innerHTML += txt || '';
+					var span = document.createElement('span');
+					span.innerHTML += txt || '';
+					this.con.appendChild(span);
 				} else {
 					console.debug(txt);
 				}
