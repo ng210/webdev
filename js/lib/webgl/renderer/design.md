@@ -1,78 +1,46 @@
-# Rendering process
-- iterate through pass types (opaque, translucent, transparent)
-- select mesh by viewport culling, material (shader), texture, LOD
+# Concept
+A scene consists of items (static models), actors (dynamic, animated models) using a logic to control animation.
+Effects can be applied on the whole scene or on particular components.
 
-- mesh selection is cached
-  - define triggers to discard selection
-- vertex data (VBO)
-- parameters: uniforms (UBO)
-- lights?
-- shadows?
-- ambient occlusion?
-- post processing?
-
-# Management
-- math
-- repository
-  - fast queryable: indexed, sorted
-  - stores entities
-
-# Repository
-
-- repository items have a reference
-
-## Scene
-- passes
-- meshes
-- materials
-- post processings
-
-## Pass
-- type
-- selectors (material)
-- target (framebuffer, render-target)
-
-## Actor
-- meshes
-- bones/joints
-- materials
+Scene
+- models
+  - items
+  - actors
+- effects
 - logic
 
-## Mesh
-- LOD
-- vertices (VBO)
-- indices (IBO)
+---
 
-## Material
-- program
-- texture
-- parameters
+## Components
 
-## Program
-- shaders
-- uniforms
+### Models
+- hierarchic structure: consist of sub-models or parts
+- defines parent-child relations
 
-## Post processing
-- source
-- target
-- shader
-- resources
+### Parts
+- associates a mesh and a material
 
-## Resource
-- type (static, pre-generate, generate)
+### Items
+- models that are not animated (skybox, terrain, fully static objects)
 
-## Logic
+### Actors
+- animated models (player, NPC, moveable/destuctible objects)
 
+### Materials
+- describe surface features
+  - modelling by programs
+  - textures
 
-# Process
-- load repository
-- repository items load/generate additional resources
+### Meshes
+- set of vertices
 
-- select scene
-  - select pass by type
-    - select mesh by
-      - viewport culling
-      - material
-      - LOD
-    - render pass to its target
-- apply post-processing
+### Textures
+- 2d images or videos
+
+### Effects
+- 2D (fragment shader) effects applied on components (DoF, AA, color mapping)
+- 3D effects?
+
+### Logic
+- formulas and constraints of character parameters
+- conditions to control rendering of components

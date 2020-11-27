@@ -1,0 +1,6 @@
+{
+    "image": "webgl/sprite/ball.png",
+    "frames": [
+      [  0, 0, 64, 64 ]
+    ]
+}

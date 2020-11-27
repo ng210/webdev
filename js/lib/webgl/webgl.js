@@ -8,9 +8,11 @@
     	this.prg = gl.createProgram();
 		this.attributes = {};
 		this.uniforms = {};
+		this.shaders = [];
 
 	    for (var type in shaders) {
-            var shader = webGL.createShader(type, shaders[type]);
+			var shader = webGL.createShader(type, shaders[type]);
+			this.shaders.push(shader);
             gl.attachShader(this.prg, shader);
         }
         gl.linkProgram(this.prg);
@@ -18,7 +20,7 @@
         if (!gl.getProgramParameter(this.prg, gl.LINK_STATUS)) {
             throw new Error('Error linking shader program: ' + gl.getProgramInfoLog(this.prg));
         }
-        this.size = 0;
+		this.size = 0;
         for (var ak in attributes) {
             var ref = gl.getAttribLocation(this.prg, ak);
 			var attrib = attributes[ak];
@@ -26,14 +28,20 @@
 			sizem[gl.BYTE] = 1;
 			sizem[gl.SHORT] = 2;
 			sizem[gl.FLOAT] = 4;
-			var size = sizem[attrib.type] * attrib.size;
-        	this.attributes[ak] = {
+			var sizeInBytes = sizem[attrib.type] * attrib.size;
+			if (attrib.type == webGL.FLOAT4x4M) {
+				sizeInBytes = 4*16;
+				attrib.size = 4;
+			}
+			this.attributes[ak] = {
 				'ref': ref,
 				'type': attrib.type,
 				'size': attrib.size,
-				'offset': attrib.offset || this.size
+				'sizeInBytes': sizeInBytes,
+				'offset': attrib.offset != undefined ? attrib.offset : this.size,
+				'indexed': attrib.indexed || false
 			};
-			this.size += size;
+			this.size += sizeInBytes;
 		}
 
         for (var uk in uniforms) {
@@ -44,6 +52,12 @@
 		}
         
 	}
+	Program.prototype.destroy = function destroy() {
+		for (var i=0; i<this.shaders.length; i++) {
+			gl.deleteShader(this.shaders[i]);
+		}
+		gl.deleteProgram(this.prg);
+	};
 	Program.prototype.updateUniform = function(name) {
 		var uniform = this.uniforms[name];
 		if (uniform) {
@@ -82,7 +96,9 @@
 		VERTEX_ATTRIB_NORMAL:  0x02,
 		VERTEX_ATTRIB_COLOR:  0x04,
 		VERTEX_ATTRIB_TEXTURE1:  0x08,
-		VERTEX_ATTRIB_TEXTURE2:  0x10
+		VERTEX_ATTRIB_TEXTURE2:  0x10,
+
+		extensions: {}
 	};
 
 	webGL.createShader = function(type, code) {
@@ -118,8 +134,15 @@
 		for (var ai in p.attributes) {
 			var a = p.attributes[ai];
 			if (a.ref != -1) {
-				gl.enableVertexAttribArray(a.ref);
-				gl.vertexAttribPointer(a.ref, a.size, a.type, false, p.size, a.offset);
+				var count = a.type == webGL.FLOAT4x4M ? 4 : 1;
+				var offset = a.offset;
+				for (var i=0; i<count; i++) {
+					var ref = a.ref + i;
+					gl.enableVertexAttribArray(a.ref);
+					gl.vertexAttribPointer(a.ref, a.size, a.type, false, p.size, offset);
+					if (a.indexed) webGL.extensions['ANGLE_instanced_arrays'].vertexAttribDivisorANGLE(ref, 1);
+					offset += a.sizeInBytes;
+				}
 			}
 		}
 		if (uniforms) {
@@ -135,6 +158,12 @@
 		gl.generateMipmap(gl.TEXTURE_2D);
 		return texture;
 	};
+
+	webGL.useExtension = function useExtension(extensionName) {
+		var ext = gl.getExtension(extensionName);
+		if (ext) webGL.extensions[extensionName] = ext;
+		return ext;
+	}
 
 	webGL.uniformUpdaters = (function() {
 		var map = {};

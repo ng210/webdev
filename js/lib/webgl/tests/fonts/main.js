@@ -132,7 +132,7 @@ App.prototype.preparePass1 = function preparePass1() {
 	var shaders = {};
 	shaders[gl.VERTEX_SHADER] = this.resources[0];
 	shaders[gl.FRAGMENT_SHADER] = this.resources[1];
-	this.program = webGL.createProgram(gl, shaders, { position:{type:gl.FLOAT, size:4} }, this.uniforms);
+	this.program = webGL.createProgram(shaders, { position:{type:gl.FLOAT, size:4} }, this.uniforms);
 	gl.useProgram(this.program.prg);
 	// set initial uniforms
 	this.program.setUniforms();
