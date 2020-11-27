@@ -1,0 +1,334 @@
+{
+    "adapters": [ "SynthAdapter", 1 ],
+    "data-blocks": [
+        {
+            "namespace": "Ps.Player.Device",
+            "data": [
+                "b:12", "CHANNEL", "CHANNEL", "CHANNEL", "CHANNEL",
+                       "CHANNEL", "CHANNEL", "CHANNEL", "CHANNEL",
+                       "CHANNEL", "CHANNEL", "CHANNEL", "CHANNEL"
+            ]
+        },
+        {
+            "namespace": "psynth.SynthAdapter.Device",
+            "data": [
+                "w:48000", "b:5",
+                "SYNTH", "b:1", "b:2",
+                "SYNTH", "b:6", "b:2",
+                "SYNTH", "b:1", "b:2",
+                "SYNTH", "b:1", "b:2",
+                "SYNTH", "b:1", "b:2"
+            ]
+        },
+        {
+            "namespace": "psynth.Synth.controls",
+            "data": [
+                6,
+                "default......", "w:97",
+                "synth1.......", "w:190",
+                "bass1........", "w:313",
+                "kick.........", "w:406",
+                "snare........", "w:495",
+                "hihat........", "w:584",
+                31,
+                "amp",         120,
+                "env1amp", "f:1.0", "env1dc",  "f:0.0", "env1atk",       0, "env1dec", 20, "env1sus",  40, "env1rel",  20,
+                "env3amp", "f:0.4", "env3dc",  "f:0.3", "env3atk",       0, "env3dec", 20, "env3sus",  80, "env3rel",  50,
+                "env4amp", "f:1.0", "env4dc",  "f:0.0", "env4atk",       1, "env4dec", 10, "env4sus",  20, "env4rel",  10,
+                "osc1amp", "f:0.4", "osc1fre", "f:0.0", "osc1tune",      0,
+                "osc2amp", "f:0.3", "osc2fre", "f:0.1", "osc2tune",     12,
+                "flt1cut",      10, "flt1res",      40, "flt1mod",      40,
+                "osc2wave", "psynth.Osc.waveforms.SAW",
+                "osc1wave", "psynth.Osc.waveforms.SAW",
+                "flt1mode", "psynth.Filter.modes.BANDPASS",
+
+                37,
+                "amp",         50,
+                "lfo1amp", "f:0.1", "lfo1dc",  "f:0.8", "lfo1fre", "f:4.0",
+                "lfo2amp", "f:4.0", "lfo2dc",  "f:0.0", "lfo2fre", "f:6.0",
+                "env1amp", "f:1.0", "env1dc",  "f:0.0", "env1atk",      10, "env1dec", 20, "env1sus",  80, "env1rel",  80,
+                "env3amp", "f:0.4", "env3dc",  "f:0.3", "env3atk",       1, "env3dec", 40, "env3sus", 128, "env3rel",  50,
+                "env4amp", "f:1.0", "env4dc",  "f:0.0", "env4atk",       2, "env4dec", 10, "env4sus",  40, "env4rel", 100,
+                "osc1amp", "f:0.5", "osc1fre", "f:0.0", "osc1tune",      0,
+                "osc2amp", "f:0.4", "osc2fre", "f:1.0", "osc2tune",     12,
+                "flt1cut",      10, "flt1res",     140, "flt1mod",     180,
+                "osc1wave", "psynth.Osc.waveforms.PULSE",
+                "osc2wave", "psynth.Osc.waveforms.SAW",
+                "flt1mode", "psynth.Filter.modes.HIGHPASS",
+
+                31,
+                "amp",        60,
+                "env1amp", "f:1.0", "env1dc",  "f:0.0", "env1atk",       2, "env1dec", 10, "env1sus",  80, "env1rel",  20,
+                "env3amp", "f:0.1", "env3dc",  "f:0.4", "env3atk",       0, "env3dec", 20, "env3sus", 100, "env3rel",  60,
+                "env4amp", "f:1.0", "env4dc",  "f:0.0", "env4atk",       0, "env4dec", 10, "env4sus",  10, "env4rel",  40,
+                "osc1amp", "f:0.5", "osc1fre", "f:0.0", "osc1tune",      0,
+                "osc2amp", "f:0.4", "osc2fre", "f:0.0", "osc2tune",     12,
+                "flt1cut",     10, "flt1res",      20, "flt1mod",       40,
+                "osc1wave", "psynth.Osc.waveforms.PULSE",
+                "osc2wave", "psynth.Osc.waveforms.PULSE",
+                "flt1mode", "psynth.Filter.modes.LOWPASS",
+
+                29,
+                "amp",       200,
+                "env1amp",   "f:1.0", "env1dc",     "f:0.0", "env1atk",      0, "env1dec",  2, "env1sus", 120, "env1rel",   4,
+                "env2amp", "f:200.0", "env2dc",    "f:20.0", "env2atk",      0, "env2dec",  1, "env2sus",  20, "env2rel",  10,
+                "env4amp",   "f:1.0", "env4dc",     "f:0.0", "env4atk",      0, "env4dec",  0, "env4sus",   0, "env4rel",   0,
+                "osc1amp",   "f:0.8", "osc1fre",    "f:0.0",
+                "osc2amp",   "f:0.3", "osc2fre", "f:6000.0",
+                "flt1cut",        15, "flt1res",         20, "flt1mod",    250,
+                "osc1wave", "psynth.Osc.waveforms.SINUS",
+                "osc2wave", "psynth.Osc.waveforms.NOISE",
+                "flt1mode", "psynth.Filter.modes.LOWPASS",
+
+                29,
+                "amp",      180,
+                "env1amp",    "f:1.0", "env1dc",     "f:0.0", "env1atk",       0, "env1dec",  2, "env1sus", 80, "env1rel",  12,
+                "env2amp",  "f:400.0", "env2dc",     "f:0.0", "env2atk",       0, "env2dec",  1, "env2sus",  4, "env2rel",  20,
+                "env4amp",    "f:1.0", "env4dc",     "f:0.0", "env4atk",       0, "env4dec",  4, "env4sus", 10, "env4rel",  10,
+                "osc1amp",    "f:0.4", "osc1fre",   "f:40.0",
+                "osc2amp",    "f:0.6", "osc2fre", "f:8000.0",
+                "flt1cut",        140, "flt1res",        100, "flt1mod",    140,
+                "osc1wave", "psynth.Osc.waveforms.SINUS",
+                "osc2wave", "psynth.Osc.waveforms.NOISE",
+                "flt1mode", "psynth.Filter.modes.LOWPASS",
+
+                35,
+                "amp",     120,
+                "lfo1amp",    "f:0.5", "lfo1dc",     "f:0.5", "lfo1fre", "f:3000.0",
+                "lfo2amp", "f:2000.0", "lfo2dc",     "f:0.0", "lfo2fre", "f:3000.0",
+                "env1amp",    "f:1.0", "env1dc",     "f:0.0", "env1atk",          0, "env1dec",  2, "env1sus",  80, "env1rel",  20,
+                "env2amp", "f:0000.0", "env2dc",     "f:0.0", "env2atk",          0, "env2dec",  0, "env2sus",   0, "env2rel",   0,
+                "env4amp",    "f:1.0", "env4dc",     "f:0.0", "env4atk",          0, "env4dec",  1, "env4sus",  40, "env4rel",  20,
+                "osc1amp",    "f:0.2", "osc1fre", "f:4000.0",
+                "osc2amp",    "f:0.6", "osc2fre", "f:8000.0",
+                "flt1cut",       220, "flt1res",        20, "flt1mod",       80,
+                "osc1wave", "psynth.Osc.waveforms.SINUS",
+                "osc2wave", "psynth.Osc.waveforms.NOISE",
+                "flt1mode", "psynth.Filter.modes.HIGHPASS"
+            ]
+        }
+    ],
+    "sequences": [
+        {
+            "adapter": "Player",
+            "frames": [
+                [  0, [
+                        ["ASSIGN", 1, 1, 0, 4], ["ASSIGN", 2, 4, 0, 1],
+                        ["ASSIGN", 3, 3, 2, 4],
+                        ["ASSIGN", 5, 2, 1, 4],
+                        ["ASSIGN", 6, 6, 3, 2],
+                        ["ASSIGN", 7, 7, 4, 2]
+                    ]
+                ],
+                [256, [["EOS"]]]
+            ]
+        },
+        {
+            "adapter": "SynthAdapter",
+            "frames": [
+                [0, [["SETNOTE", "E-3", 80], ["SETPROGRAM", 0]]],
+                [2, [["SETNOTE", "E-3",  0]]],
+                [2, [["SETNOTE", "G-3",100]]],
+                [2, [["SETNOTE", "G-2",  0]]],
+                [2, [["SETNOTE", "E-2",100]]],
+                [2, [["SETNOTE", "E-2",  0]]],
+                [2, [["SETNOTE", "E-4", 60]]],
+                [2, [["SETNOTE", "E-4",  0]]],
+        
+                [2, [["SETNOTE", "E-3", 90]]],
+                [2, [["SETNOTE", "E-3",  0]]],
+                [2, [["SETNOTE", "E-4", 60]]],
+                [2, [["SETNOTE", "E-4",  0]]],
+                [2, [["SETNOTE", "E-2",120]]],
+                [2, [["SETNOTE", "E-2",  0]]],
+                [2, [["SETNOTE", "G-4",100]]],
+                [2, [["SETNOTE", "G-3",  0]]],
+
+                [2, [["SETNOTE", "E-4", 60]]],
+                [2, [["SETNOTE", "E-4",  0]]],
+                [2, [["SETNOTE", "E-3", 60]]],
+                [2, [["SETNOTE", "E-3",  0]]],
+                [2, [["SETNOTE", "E-2",100]]],
+                [2, [["SETNOTE", "E-2",  0]]],
+                [2, [["SETNOTE", "E-3", 60]]],
+                [2, [["SETNOTE", "E-3",  0]]],
+        
+                [2, [["SETNOTE", "E-4", 90]]],
+                [2, [["SETNOTE", "E-4",  0]]],
+                [2, [["SETNOTE", "E-3", 60]]],
+                [2, [["SETNOTE", "E-3",  0]]],
+                [2, [["SETNOTE", "E-2",120]]],
+                [2, [["SETNOTE", "E-2",  0]]],
+                [2, [["SETNOTE", "D-4",100]]],
+                [2, [["SETNOTE", "D-3",  0]]],
+        
+                [2, [["EOS"]]]
+            ]
+        },
+        {
+            "adapter": "SynthAdapter",
+            "frames": [
+                [24, [["SETPROGRAM", 1],
+                      ["SETNOTE", "E-5", 80], ["SETNOTE", "G-5", 80], ["SETNOTE", "D-5", 60]]],
+                [ 4, [["SETNOTE", "E-5",  0], ["SETNOTE", "G-5",  0], ["SETNOTE", "D-5",  0]]],
+        
+                [36, [["EOS"]]]
+            ]
+        },
+        {
+            "adapter": "SynthAdapter",
+            "frames": [
+                [  0, [["SETPROGRAM",   2],
+                       ["SETNOTE", "E-2",  20]]],
+                [  4, [["SETNOTE", "E-2",   0]]],
+                [  4, [["SETNOTE", "E-2", 120]]],
+                [  4, [["SETNOTE", "E-2",   0]]],
+
+                [  4, [["SETNOTE", "E-2",  20]]],
+                [  4, [["SETNOTE", "E-2",   0]]],
+                [  4, [["SETNOTE", "E-2", 120]]],
+                [  4, [["SETNOTE", "E-2",   0]]],
+
+                [  4, [["SETNOTE", "E-2",  20]]],
+                [  4, [["SETNOTE", "E-2",   0]]],
+                [  4, [["SETNOTE", "E-2", 100]]],
+                [  2, [["SETNOTE", "E-2",   0]]],
+                [  2, [["SETNOTE", "E-2",  80]]],
+                [  2, [["SETNOTE", "E-2",   0]]],
+
+                [  2, [["SETNOTE", "E-2",  20]]],
+                [  4, [["SETNOTE", "E-2",   0]]],
+                [  4, [["SETNOTE", "E-2", 120]]],
+                [  4, [["SETNOTE", "E-2",   0]]],
+                [  4, [["EOS"]]]
+            ]
+        },
+        {
+            "adapter": "SynthAdapter",
+            "frames": [
+                [  0, [["SETFLOAT8", "flt1cut",  0]]],
+                [ 64, [["SETFLOAT8", "flt1cut", 60]]],
+                [ 64, [["SETFLOAT8", "flt1cut", 10]]],
+                [ 64, [["SETFLOAT8", "flt1cut", 90]]],
+                [ 64, [["EOS"]]]
+            ]
+        },
+        {
+            "adapter": "SynthAdapter",
+            "frames": [
+                [  0, [["SETFLOAT", "osc1tune",  0], ["SETFLOAT", "osc2tune", 12]]],
+                [ 64, [["SETFLOAT", "osc1tune",  3], ["SETFLOAT", "osc2tune", 15]]],
+                [ 64, [["SETFLOAT", "osc1tune",  7], ["SETFLOAT", "osc2tune", 19]]],
+                [ 64, [["SETFLOAT", "osc1tune",  7], ["SETFLOAT", "osc2tune", 19]]],
+                [ 48, [["SETFLOAT", "osc1tune",  5], ["SETFLOAT", "osc2tune", 17]]],
+                [ 16, [["EOS"]]]
+            ]
+        },
+        {
+            "adapter": "SynthAdapter",
+            "frames": [
+                [ 0, [["SETPROGRAM", 3],
+                      ["SETNOTE", "E-2",120]]],
+                [ 2, [["SETNOTE", "E-2",  0]]],
+                [14, [["SETPROGRAM", 4],
+                      ["SETNOTE", "C-4",150]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
+                [10, [["SETPROGRAM", 3],
+                      ["SETNOTE", "E-2",120]]],
+                [ 2, [["SETNOTE", "E-2",  0]]],
+                [ 2, [["SETPROGRAM", 3],
+                      ["SETNOTE", "E-2", 80]]],
+                [ 2, [["SETNOTE", "E-2",  0]]],
+                [14, [["SETPROGRAM", 4],
+                      ["SETNOTE", "C#4",150]]],
+                [ 2, [["SETNOTE", "C#4",  0]]],
+
+                [14, [["SETPROGRAM", 3],
+                      ["SETNOTE", "E-2",120]]],
+                [ 2, [["SETNOTE", "E-2",  0]]],
+                [14, [["SETPROGRAM", 4],
+                      ["SETNOTE", "C-4",150]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
+                [10, [["SETPROGRAM", 3],
+                      ["SETNOTE", "E-2",120]]],
+                [ 2, [["SETNOTE", "E-2",  0]]],
+                [ 2, [["SETPROGRAM", 3],
+                      ["SETNOTE", "E-2", 80]]],
+                [ 2, [["SETNOTE", "E-2",  0]]],
+                [14, [["SETPROGRAM", 4],
+                      ["SETNOTE", "C-4",150]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
+                [10, [["SETPROGRAM", 4],
+                      ["SETNOTE", "D-4",120]]],
+                [ 2, [["SETNOTE", "D-4",  0]]],
+
+                [ 2, [["EOS"]]]
+            ]
+        },
+        {
+            "adapter": "SynthAdapter",
+            "frames": [
+                [ 0, [["SETPROGRAM", 5],
+                      ["SETNOTE", "C-5",180]]],
+                [ 2, [["SETNOTE", "C-5",  0]]],
+
+                [ 6, [["SETNOTE", "C-5",120]]],
+                [ 2, [["SETNOTE", "C-5",  0]]],
+
+                [ 6, [["SETNOTE", "C-5",180]]],
+                [ 2, [["SETNOTE", "C-5",  0]]],
+
+                [ 6, [["SETNOTE", "C-5",120]]],
+                [ 2, [["SETNOTE", "C-5",  0]]],
+
+                [ 6, [["SETNOTE", "C-5",180]]],
+                [ 2, [["SETNOTE", "C-5",  0]]],
+
+                [ 6, [["SETNOTE", "C-5",120]]],
+                [ 2, [["SETNOTE", "C-5",  0]]],
+
+                [ 6, [["SETNOTE", "C-5",180]]],
+                [ 2, [["SETNOTE", "C-5",  0]]],
+
+                [ 6, [["SETNOTE", "C-5",120]]],
+                [ 2, [["SETNOTE", "C-5",  0]]],
+
+                [ 2, [["SETNOTE", "E-5", 80]]],
+                [ 2, [["SETNOTE", "E-5",  0]]],
+
+
+                [ 2, [["SETNOTE", "C-5",180]]],
+                [ 2, [["SETNOTE", "C-5",  0]]],
+
+                [ 6, [["SETNOTE", "C-5",120]]],
+                [ 2, [["SETNOTE", "C-5",  0]]],
+
+                [ 6, [["SETNOTE", "C-5",180]]],
+                [ 2, [["SETNOTE", "C-5",  0]]],
+
+                [ 6, [["SETNOTE", "C-5",120]]],
+                [ 2, [["SETNOTE", "C-5",  0]]],
+
+                [ 6, [["SETNOTE", "C-5",180]]],
+                [ 2, [["SETNOTE", "C-5",  0]]],
+
+                [ 6, [["SETNOTE", "C-5",200]]],
+                [ 6, [["SETNOTE", "C-5",  0]]],
+
+                [ 2, [["SETNOTE", "C-6",180]]],
+                [ 2, [["SETNOTE", "C-6",  0]]],
+
+                [ 2, [["SETNOTE", "C-5", 80]]],
+                [ 2, [["SETNOTE", "c-5",  0]]],
+
+                [ 2, [["SETNOTE", "C-6",120]]],
+                [ 2, [["SETNOTE", "C-6",  0]]],
+                
+                [ 2, [["SETNOTE", "C-5", 80]]],
+                [ 2, [["SETNOTE", "C-5",  0]]],
+
+                [ 2, [["EOS"]]]
+            ]
+        }      
+    ]
+}

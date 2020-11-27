@@ -33,7 +33,7 @@ var DemoMgr = {
         // create demo list
         console.log('create demo list');
         var demoList = this.demoList = await glui.create('list', {
-            'type': 'Grid',
+            'type': 'Table',
             'style': {
                 'font': 'Arial 18',
                 'left': '1em',
@@ -112,7 +112,7 @@ var DemoMgr = {
         }, null, demo);
 
         this.controls.settings = await glui.create('settings', {
-            'type': 'Grid',
+            'type': 'Table',
             'style': {
                 'font': 'Arial 12',
                 'width':'20em',
@@ -194,6 +194,7 @@ var DemoMgr = {
                 this.render(this.frame, dt/1000);
                 this.time = new Date().getTime();
                 this.frame++;
+                glui.screen.renderer.render();
             }
             if (this.fpsCounter == 20) {
                 this.fpsCounter = 0;
@@ -203,7 +204,6 @@ var DemoMgr = {
             this.fpsCounter++;
             this.animationId = requestAnimationFrame( () => DemoMgr.run());
         });
-        glui.screen.renderer.render();
         glui.render();
     },
     render: function render(frame, dt) {

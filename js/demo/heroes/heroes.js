@@ -88,7 +88,7 @@
             this.heroes.push(this.create());
         }
         this.table = await glui.create('heroes', {
-            'type': 'Grid',
+            'type': 'Table',
             'style': {
                 'font': 'Arial 14',
                 'width':'40em',
@@ -136,6 +136,7 @@
         DemoMgr.controls.heroesTable = this.table;
 
         await this.table.build();
+debugger
         this.resize();
     };
     Heroes.prototype.update = function update() {

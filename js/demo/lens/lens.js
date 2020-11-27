@@ -134,7 +134,7 @@ include('glui/glui-lib.js');
 		this.cursor[1] = e.clientY*this.ratio[1];
 	};
 	Lens.prototype.setImage = function setImage() {
-		var ix = DemoMgr.controls.settings.rows['image'].cells['value'].getValue();
+		var ix = this.settings.image.value;
 		var img = this.images[ix].value;
 		if (this.backBuffer.width != img.width || this.backBuffer.height != img.height) {
 			this.backBuffer.resize(img.width, img.height);

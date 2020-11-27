@@ -67,9 +67,9 @@ include('math/fn.js');
 		this.vx = this.settings.shape.value;
 		this.vy = this.settings.shape.value * this.buffer.height/this.buffer.width;
 	};
-	Plasma.prototype.resize = function resize(e) {
-		this.updateVelocity();
-	};
+	// Plasma.prototype.resize = function resize(e) {
+	// 	this.updateVelocity();
+	// };
 	Plasma.prototype.getColor = function getColor(v) {
 		var color = [0, 0, 0];
 		switch (this.settings.color.value) {
