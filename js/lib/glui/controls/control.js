@@ -1,7 +1,7 @@
 include('icontrol.js');
 include('data/datalink.js');
 
-const DEBUG_EVENT = 'baka';
+const DEBUG_EVENT = 'mouseout_|mouseover_';
 
 (function() {
 
@@ -20,6 +20,9 @@ const DEBUG_EVENT = 'baka';
 
         this.handlers = {};
         this.applyTemplate(template);
+        // cache for left and top
+        this.left_ = 0;
+        this.top_ = 0;
 
         this.offsetLeft = -1;
         this.offsetTop = -1;
@@ -39,6 +42,7 @@ const DEBUG_EVENT = 'baka';
                 if (this.parent) {
                     left += this.parent.left + this.parent.renderer.border.width;
                 }
+                this.left_ = left;
                 return left;
             }
         },
@@ -50,6 +54,7 @@ const DEBUG_EVENT = 'baka';
                 if (this.parent) {
                     top += this.parent.top + this.parent.renderer.border.width;
                 }
+                this.top_ = top;
                 return top;
             }
         }
@@ -91,29 +96,34 @@ const DEBUG_EVENT = 'baka';
             { name: 'blur', topDown: false }
         ];
     };
-    Control.prototype.addHandler = function addHandler(eventName, topDown) {
+    Control.prototype.addHandler = function addHandler(eventName, obj, handler) {
+        if (handler !== undefined) {
+            var handlerType = this.getHandlers().find(x => x.name == eventName);
+            if (handlerType && typeof handler === 'function') {
+                if (this.handlers[eventName] === undefined) {
+                    this.handlers[eventName] = [];
+                }
+                if (this.handlers[eventName].findIndex(x => x.obj == obj && x.fn == handler) == -1) {
+                    if (eventName.match(DEBUG_EVENT)) debug_(`Add handler of ${eventName} '${obj.id}::${handler.name} to ${this.id}`, 1);
+                    handlerType.topDown ? this.handlers[eventName].unshift({obj:obj, fn:handler}) : this.handlers[eventName].push({obj:obj, fn:handler});
+                }
+            }
+        }
+    };
+    Control.prototype.addEventHandlers = function addEventHandlers(eventName, topDown) {
         var nodes = [];
         var node = this;
-        if (eventName == DEBUG_EVENT) debug_(`addHandler for ${node.id} (${node.constructor.name})`, 2);
+        if (eventName.match(DEBUG_EVENT)) debug_(`addHandler for ${node.id} (${node.constructor.name})`, 2);
         while (node) {
-            topDown ? nodes.unshift(node) : nodes.push(node);
+            nodes.push(node);
             node = node.context;
         }
         for (var i=0; i<nodes.length; i++) {
             node = nodes[i];
             var handler = node['on'+eventName];
-            if (eventName == DEBUG_EVENT) debug_(node, 2);
-            if (handler !== undefined) {
-                if (typeof handler === 'function') {
-                    if (this.handlers[eventName] === undefined) {
-                        this.handlers[eventName] = [];
-                    }
-                    if (this.handlers[eventName].findIndex(x => x.obj == node && x.fn == handler) == -1) {
-                        this.handlers[eventName].push({obj:node, fn:handler});
-                    }
-                }
-            }
+            this.addHandler(eventName, node, handler);
         }
+        if (eventName.match(DEBUG_EVENT)) debug_(`${this.id}.${eventName} = ${this.handlers[eventName].map(x => x.obj.id + '::' + x.fn.name)}`, 1);
     };
     Control.prototype.addHandlers = function addHandlers(template) {
         if (template) {
@@ -128,22 +138,20 @@ const DEBUG_EVENT = 'baka';
         } else {
             var handlers = this.getHandlers();
             for (var i=0; i<handlers.length; i++) {
-                this.addHandler(handlers[i].name, handlers[i].topDown);
+                this.addEventHandlers(handlers[i].name, handlers[i].topDown);
             }
         }
     };
     Control.prototype.callHandler = async function(eventName, event) {
         var control = this;
-        if (eventName == DEBUG_EVENT) {
-            debug_(`${DEBUG_EVENT} on ${getObjectPath(control, 'parent').map(x=>x.id)}::${control.id} (${event.control ? `${getObjectPath(event.control, 'parent').map(x=>x.id)}::${event.control.id}` : 'null'})`, 2);
-        }
+        if (eventName.match(DEBUG_EVENT)) debug_(`${eventName} on ${getObjectPath(control, 'parent').map(x=>x.id).join('.')} (${event.control ? `${getObjectPath(event.control, 'parent').map(x=>x.id).join('.')}` : 'null'})`, 0);
             
         while (control) {
             var handlers = control.handlers[eventName];
             if (handlers) {
                 for (var i=0; i<handlers.length; i++) {
                     var handler = handlers[i];
-                    if (eventName == DEBUG_EVENT) debug_(` - ${handler.obj.constructor.name}`, 2);
+                    if (eventName.match(DEBUG_EVENT)) debug_(` - ${handler.obj.id}::${handler.fn.name}`, 0);
                     if (handler.fn.call(handler.obj, event, control) == true) {
                         return true;
                     }
@@ -215,6 +223,19 @@ const DEBUG_EVENT = 'baka';
         // this.top = this.renderer.accumulate('offsetTop', true);
         return [this.left, this.top, this.width, this.height];
     };
+    Control.prototype.getClippingRect = function getClippingRect() {
+        // get intersection of clipping rectangles
+        var rect = this.getBoundingBox();
+        if (this != glui.screen) {
+            var ctrl = this.parent;
+            while (true) {
+                if (ctrl == glui.screen) break;
+                rect = Fn.intersectRect(rect, ctrl.getBoundingBox());
+                ctrl = ctrl.parent;
+            }
+        }
+        return rect;
+    };
     Control.prototype.move = function move(dx, dy) {
         this.offsetLeft = dx;
         this.offsetTop = dy;
@@ -230,7 +251,7 @@ const DEBUG_EVENT = 'baka';
         }
     };
     Control.prototype.highlight = function highlight() {
-        if (!this.isHighlighted) {
+        if (!this.isHighlighted && this.renderer.backgroundColor) {
             this.renderer.backgroundColor_ = this.renderer.backgroundColor;
             this.renderer.backgroundColor = this.renderer.calculateColor(this.renderer.backgroundColor, 1.2);
             var node = this;
@@ -241,7 +262,7 @@ const DEBUG_EVENT = 'baka';
         }
     };
     Control.prototype.dehighlight = function dehighlight() {
-        if (this.isHighlighted && !this.isFocused) {
+        if (this.isHighlighted && !this.isFocused && this.renderer.backgroundColor_) {
             this.renderer.backgroundColor = this.renderer.backgroundColor_;
             var node = this;
             //while (node.parent) node = node.parent;
@@ -278,6 +299,10 @@ const DEBUG_EVENT = 'baka';
             this.renderer = this.renderer3d;
         }
         return this.renderer;
+    };
+    Control.prototype.isDescendant = function isDescendant(ancestor) {
+        var path = getObjectPath(this, 'parent', ancestor);
+        return path[0] == ancestor;
     };
 
     Control.prototype.click = function click() {

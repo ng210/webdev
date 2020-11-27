@@ -1,6 +1,6 @@
 include('glui.js');
 (function() {
-    function Buffer(width, height) {
+    function Buffer(width, height, noContext) {
         if (width instanceof HTMLCanvasElement) {
             this.canvas = width;
         } else {
@@ -13,12 +13,13 @@ include('glui.js');
                 this.canvas.height = width.height;
             }
         }
-
-        this.context = this.canvas.getContext('2d');
-        if (width instanceof Image) {
-            this.context.drawImage(width, 0, 0);
+        if (!noContext) {
+            this.context = this.canvas.getContext('2d');
+            if (width instanceof Image) {
+                this.context.drawImage(width, 0, 0);
+            }
+            this.imgData = this.context.getImageData(0, 0, this.width, this.height);
         }
-        this.imgData = this.context.getImageData(0, 0, this.width, this.height);
     }
 	Buffer.prototype = {
 	    get width() { return this.canvas.width; },
@@ -36,7 +37,12 @@ include('glui.js');
         this.blit_(source.canvas, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
 	};
 	Buffer.prototype.update = function update(getData) {
-        !getData ? this.context.putImageData(this.imgData, 0, 0) : this.imgData = this.context.getImageData(0, 0, this.width, this.height);
+        if (getData) {
+            delete this.imageData;
+            this.imgData = this.context.getImageData(0, 0, this.width, this.height);
+        } else {
+            this.context.putImageData(this.imgData, 0, 0);
+         }
     };
     Buffer.prototype.resize = function resize(width, height) {
         this.canvas.width = width;
@@ -47,16 +53,79 @@ include('glui.js');
     Buffer.prototype.blitImage = function blitImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
         this.blit_(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
     };
+    Buffer.prototype.setPixel = function setPixel(x, y, color) {
+        var ix = 4*(Math.floor(x) + this.width*(Math.floor(this.height - y)));
+        this.imgData.data[ix+0] = color[0];
+        this.imgData.data[ix+1] = color[1];
+        this.imgData.data[ix+2] = color[2];
+        //this.imgData[] = ;
+    };
+    Buffer.prototype.drawLine = function drawLine(x1, y1, x2, y2, color) {
+        var dx = Math.abs(x2 - x1), dy = Math.abs(y2 - y1);
+        if (dx > dy) {
+            if (x1 > x2) {
+                var tx = x1; x1 = x2; x2 = tx;
+                var ty = y1; y1 = y2; y2 = ty;
+            }
+            dy = y2 - y1;
+            for (var x=0; x<dx; x++) {
+                var y = Math.floor(dy*x/dx + y1);
+                this.setPixel(x+x1, y, color);
+            }
+        } else {
+            if (y1 > y2) {
+                var tx = x1; x1 = x2; x2 = tx;
+                var ty = y1; y1 = y2; y2 = ty;
+            }
+            dx = x2 - x1;
+            for (var y=0; y<dy; y++) {
+                var x = Math.floor(dx*y/dy + x1);
+                this.setPixel(x, y+y1, color);
+            }
+        }
+    };
+    Buffer.prototype.drawCurve = function drawCurve(points, color) {
+        var n = points.length;
+        for (var x = points[0].x; x < points[n-1].x; x++) {
+            var y = 0;
+            for (var i=0; i<n; i++) {
+                var prod = 1;
+                for (var j=0; j<n; j++) {
+                    if (j != i) {
+                        prod *= (x - points[j].x)/(points[i].x - points[j].x);
+                    }
+                }
+                y += points[i].y*prod;
+            }
+            this.setPixel(x, y, color);
+        }
+    };
+    // Buffer.prototype.drawSegments = function drawSegments(points, color) {
+    //     for (var p = 0; p < points.length - 1; p++) {
+    //         var p1 = points[p], p2 = points[p+1];
+    //         var dx1 = p2.x - p1.x, dy1 = p2.y - p1.y;
+    //         var dx2 = dx1, dy2 = dy1;
+    //         if (p < points.length - 2) {
+    //             var p3 = points[p+2];
+    //             dx2 = p3.x - p2.x, dy2 = p3.y - p2.y;
+    //         }
+    //         var m1 = dy1/dx1, m2 = dy2/dx1;
+    //         var y = p1.y;
+    //         for (var x=0; x<dx1; x++) {
+    //             var f = x/dx1;
+    //             var y = (1-f)*m1*x + f*m2*x;
+    //             this.setPixel(x + p1.x, y + p1.y, color);
+    //         }
+    //     }
+    // };
 	Buffer.prototype.clear = function clear() {
 		this.context.clearRect(0, 0, this.width, this.height);
-	};
-	// Buffer.dispose = function(buffer) {
-	// 	for (var i=0; i<GE.managedBuffers.length; i++) {
-	// 		if (GE.managedBuffers[i] === buffer) {
-	// 			GE.managedBuffers.splice(i, 1);
-	// 		}
-	// 	}
-	// 	delete buffer;
-    // }
+    };
+	Buffer.dispose = function(buffer) {
+        delete this.imgData;
+		delete this.canvas;
+		delete buffer;
+    }
+
     publish(Buffer, 'Buffer', glui);
 })();

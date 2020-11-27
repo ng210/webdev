@@ -17,7 +17,7 @@ include('control.js');
 		template.min = 0;
 		template.max = 100;
 		template.step = 1;
-		template.numeric = false;
+		template.numeric = null;
 		template.normalized = false;
 		template.value = '';
 		template.blank = '';

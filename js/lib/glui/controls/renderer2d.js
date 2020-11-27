@@ -24,6 +24,7 @@ include('renderer.js');
         var bw2 = Math.floor(this.border.width/2);
         var x1 = x+bw2, x2 = x+w, x3 = x+w-bw2;
         var y1 = y+bw2, y2 = y+h;
+        var lw = ctx.lineWidth;
         ctx.lineWidth = bw;
         var color1 = this.border.colorLight;
         var color2 = this.border.colorDark;
@@ -43,6 +44,8 @@ include('renderer.js');
         ctx.strokeStyle = this.toCssColor(color2);
         ctx.moveTo(x2-bw2, y1+bw2); ctx.lineTo(x3, y2-bw2); ctx.lineTo(x1-1, y2-bw2);
         ctx.stroke();
+       
+        ctx.lineWidth = lw;
     };
     Renderer2d.prototype.drawRect = function drawRect(x, y, w, h, color) {
         var ctx = this.context;
@@ -90,17 +93,18 @@ include('renderer.js');
     Renderer2d.prototype.render = function render() {
         var ctrl = this.control;
         if (ctrl.style.visible) {
-            // set clipping area
             this.context.save();
+            // set clipping area
             var region = new Path2D();
-            // var borderWidth = ctrl.parent && ctrl.parent.renderer ? ctrl.parent.renderer.border.width : 0;
-            // var left = ctrl.left + borderWidth;
-            // var top = ctrl.top + borderWidth;
-            this.context.setTransform(1, 0, 0, 1, ctrl.left, ctrl.top);
-            //this.context.translate(ctrl.offsetLeft, ctrl.offsetTop);
-            region.rect(0, 0, ctrl.width, ctrl.height);
+            var rect = ctrl.getClippingRect();
+            this.context.setTransform(1, 0, 0, 1, rect[0], rect[1]);
+            region.rect(0, 0, rect[2], rect[3]);
             this.context.clip(region);
             if (this.backgroundColor) this.drawRect(0, 0, ctrl.width, ctrl.height, this.backgroundColor);
+            if (this.backgroundImage) {
+                this.drawImage(this.backgroundImage, 0, 0);
+            }
+
             var width = ctrl.width;
             var height = ctrl.height;
             if (this.border.style) {
@@ -117,10 +121,14 @@ include('renderer.js');
                 height -= 16;
             }
             // render control
-            region = new Path2D();
-            region.rect(this.border.width, this.border.width, width, height);
-            this.context.clip(region);
             if (ctrl.style.font) this.setFont(ctrl.style.font);
+            var bw = this.border.width;
+            rect[0] += bw; rect[1] += bw;
+            rect[2] -= 2*bw; rect[3] -= 2*bw;
+            this.context.setTransform(1, 0, 0, 1, rect[0], rect[1]);
+            region = new Path2D();
+            region.rect(0, 0, rect[2], rect[3]);
+            this.context.clip(region);
             this.renderControl();
             this.context.restore();
         }

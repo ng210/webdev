@@ -74,8 +74,8 @@
             this.frontBuffer = new glui.Buffer(this.canvas);
             this.backBuffer = new glui.Buffer(this.canvas.width, this.canvas.height);
             this.screen = new glui.Container('screen', null, null, app);
-            this.screen.onmouseover = () => true;
-            this.screen.onmouseout = () => true;
+            delete this.screen.onmouseover; // = function onmouseover() { return true; };
+            delete this.screen.onmouseout;  // = function onmouseout() { return true; };
             this.screen.addHandlers();
             this.setRenderingMode(glui.Render2d);
             document.addEventListener('keydown', glui.onevent);
@@ -139,14 +139,15 @@
         //     this.screen.render();
         // },
         markForRendering: function markForRendering(ctrl) {
-            while (ctrl != this.screen) {
-                if (ctrl.parent == this.screen) {
-                    debug_(ctrl.id + 'marked for rendering', 2);
+            // while (ctrl != this.screen) {
+            //     if (ctrl.parent == this.screen) {
+            //         debug_(ctrl.id + 'marked for rendering', 2);
+            //         // get region
                     this.markedForRendering[ctrl.id] = ctrl;
-                    break;
-                }
-                ctrl = ctrl.parent;
-            }            
+            //         break;
+            //     }
+            //     ctrl = ctrl.parent;
+            // }            
         },
         repaint: function repaint() {
             this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -216,6 +217,8 @@
             if (control && control.disabled) {
                 return false;
             }
+            e.controlX = Math.round(glui.scale.x*e.clientX - control.left_);
+            e.controlY = Math.round(glui.scale.y*e.clientY - control.top_);
             if (event == 'mousedown') {
                 // check onfocus/onblur
                 if (control != glui.focusedControl) {
@@ -245,12 +248,13 @@
                 if (glui.dragging) {
                     var draggingEvent = {
                         type: "dragging",
-                        // x: e.screenX,
-                        // y: e.screenY,
+                        control: control,
                         screenX: e.screenX,
                         screenY: e.screenY,
                         clientX: e.clientX,
                         clientY: e.clientY,
+                        controlX: Math.round(glui.scale.x*e.clientX - control.left_),
+                        controlY: Math.round(glui.scale.y*e.clientY - control.top_),
                         deltaX: e.screenX - glui.dragStart[0],
                         deltaY: e.screenY - glui.dragStart[1]
                     };
@@ -260,14 +264,14 @@
                     glui.dragStart[1] = e.screenY;
                     return;
                 }
+
                 if (control != glui.controlAtCursor) {
-                    if (glui.controlAtCursor) {
-                        e.control = glui.controlAtCursor;
+                    if (glui.controlAtCursor && !e.control.isDescendant(glui.controlAtCursor)) {
                         glui.controlAtCursor.callHandler('mouseout', e);
                     }
+                    e.control = glui.controlAtCursor;
                     glui.controlAtCursor = control;
-                    if (control) {
-                        e.control = control;
+                    if (control && (!e.control || !e.control.isDescendant(glui.controlAtCursor))) {
                         control.callHandler('mouseover', e);
                     }
                 }

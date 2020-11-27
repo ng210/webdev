@@ -8,9 +8,6 @@ include('renderer2d.js');
     extend(glui.Renderer2d, LabelRenderer2d);
 
     LabelRenderer2d.prototype.renderControl = function renderControl() {
-        if (this.backgroundImage) {
-            this.drawImage(this.backgroundImage, 0, 0);
-        }
         var lines = null;
         var value = this.control.getValue();
         if (value != undefined) {

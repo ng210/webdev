@@ -50,7 +50,7 @@ include('renderer2d.js');
         var fillColor = this.mixColors(this.color, bgColor, 0.5);
         var bw = this.border.width;
         var width = (this.control.value - this.control.min)*(this.control.width - 2*bw)/(this.control.max - this.control.min);
-        this.drawRect(bw, bw, width, this.control.height-2*bw, fillColor);
+        this.drawRect(0, 0, width, this.control.height, fillColor);
         var lines = this.control.getLines();
         var line = lines[0];
         var boxes = this.getTextBoundingBoxes(lines);

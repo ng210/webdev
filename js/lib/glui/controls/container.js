@@ -10,11 +10,6 @@ include('renderer2d.js');
 
     ContainerRenderer2d.prototype.renderControl = function renderControl() {
         var ctrl = this.control;
-
-        if (this.backgroundImage) {
-            this.drawImage(this.backgroundImage, 0, 0);
-        }
-
         for (var i=0; i<ctrl.items.length; i++) {
             ctrl.items[i].renderer.render();
         }
@@ -144,6 +139,15 @@ include('renderer2d.js');
             if ((res = containers[i].getControlById(id)) != null) break;
         }
         return res;
+    };
+
+    Container.prototype.onmouseover = function onmouseover(e) {
+//debug_(`Container.onmouseover: ${e.control.id} => ${this.id}`, 0);
+        if (!e.control || !e.control.isDescendant(this)) this.highlight();
+    };
+    Container.prototype.onmouseout = function onmouseout(e) {
+//debug_(`Container.onmouseout: ${this.id} => ${e.control.id}`, 0);
+        if (!e.control || !e.control.isDescendant(this)) this.dehighlight();
     };
 
     publish(Container, 'Container', glui);

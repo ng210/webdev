@@ -1,13 +1,16 @@
 include('glui/glui.js');
+include('math/fn.js');
 (function() {
 
     function Renderer() {
+        this.mode = 0;
         this.context = null;
         this.control = null;
         this.font = { face:null, size:0, weight:null, em:0 };
         this.border = { color: null, colorLight: null, colorDark: null,width: 0, style: null };
         this.color = [0, 0, 0];
         this.backgroundColor = [192, 192, 192];
+        this.backgroundImage = null;
     }
     // Renderer.prototype.accumulate = function accumulate(property, isVertical) {
     //     var node = this.control;
