@@ -547,7 +547,7 @@ include('synth-control.js');
 //     }
     async function createMatrix() {
         var template = {
-            'type': 'Grid',
+            'type': 'Table',
             'cols': 16,
             'rows': 4,
             'style': {
