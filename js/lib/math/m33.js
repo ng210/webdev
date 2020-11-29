@@ -30,7 +30,7 @@
             for (var bi=0; bi<3; bi++) {
                 r33[o+3*aj+bi] = 0;
                 for (var k=0; k<3; k++) {
-                    r33[o+3*aj+bi] += this[3*k+bi] * m33[3*aj+k];
+                    r33[o+3*aj+bi] += this[k+3*aj] * m33[bi+3*k];
                 }
             }
         }
@@ -55,6 +55,26 @@
             this[i] = m33[i];
         }
         return this;
+    };
+    M33.prototype.put = function put(r, o) {
+        o = o || 0;
+        for (var i=0; i<9; i++) {
+            r[o+i] = this[i];
+        }
+        return r;
+    };
+    M33.prototype.transpose = function transpose(r33, o) {
+        r33 = r33 || this;
+        o = o || 0;
+        for (var i=0; i<3; i++) {
+            for (var j=i+1; j<3; j++) {
+                var m1 = r33[i*3+j];
+                var m2 = r33[j*3+i];
+                r33[i*3+j] = m2;
+                r33[j*3+i] = m1;
+            }
+        }
+        return r33;
     };
 
     M33.identity = function(r33, o) {

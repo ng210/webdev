@@ -30,7 +30,7 @@
             for (var bi=0; bi<4; bi++) {
                 r44[o+4*aj+bi] = 0;
                 for (var k=0; k<4; k++) {
-                    r44[o+4*aj+bi] += this[4*k+bi] * m44[4*aj+k];
+                    r44[o+4*aj+bi] += this[k+4*aj] * m44[bi + 4*k];
                 }
             }
         }
@@ -173,11 +173,11 @@
         //  -1,   1,   0,   1
         o = o || 0;
         r44 = M44.identity(r44, o);
-        r44[o+0] = 1/width;
-        r44[o+5] = 1/height;
-        r44[o+10] = 1/depth;
-        r44[o+12] = 0;
-        r44[o+13] = 0;
+        // r44[o+0] = 2/width;
+        // r44[o+5] = 2/height;
+        // // r44[o+10] = 2/depth;
+        // r44[o+12] = -1;
+        // r44[o+13] = 1;
         return r44;
     };
 

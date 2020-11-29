@@ -138,17 +138,17 @@ include('fn.js');
         var o33 = new M33(new Float64Array(arr));
         var p33 = M33.identity();
         var q33 = new M33(p33);
+        var r33 = new M33([1,0,0, 0,2,0, 0,0,3]);
+        var s33 = new M33([1,2,3, 4,5,6, 7,8,9]);
         test('Should create M33 from array', context => context.assert(m33, ':=', arr));
         test('Should create M33 from Float32Array', context => context.assert(n33, ':=', arr));
         test('Should create M33 from Float64Array', context => context.assert(o33, ':=', arr));
         test('Should create M33 from identity', context => context.assert(p33, ':=', [1,0,0, 0,1,0, 0,0,1]));
         test('Should create M33 from M33', context => context.assert(q33, ':=', p33));
+        test('Should transpose M33', context => context.assert(s33.transpose(), ':=', [ 1,4,7, 2,5,8, 3,6,9 ]));
         test('Should multiply by identity matrix', context => context.assert(m33.mul(p33), ':=', m33));
-        test('Should multiply by a matrix', context => context.assert(m33.mul(n33), ':=', [
-            1+ 4+ 9,  2+ 8+18,  3+12+27,
-            2+ 8+18,  4+16+36,  6+24+54,
-            3+12+27,  6+24+54,  9+36+81
-        ]));
+        test('Should multiply by a matrix', context => context.assert(m33.mul(r33), ':=', [ 1,4,9, 2,8,18, 3,12,27 ]));
+        test('Should multiply by a matrix', context => context.assert(r33.mul(m33), ':=', [ 1,2,3, 4,8,12, 9,18,27 ]));
         test('Should multiply by a vector', context => context.assert(n33.mulV(new V3(1, 2, 3)), ':=', [1+4+9, 2+8+18, 3+12+27]));
         var buffer = new Float32Array(9);
         test('Should multiply by a matrix into a buffer', context => {
@@ -169,21 +169,17 @@ include('fn.js');
         var o44 = new M44(new Float64Array(arr));
         var p44 = M44.identity();
         var q44 = new M44(p44);
-        var r44 = new M44([1,2,3,4, 1,2,3,4, 1,2,3,4, 1,2,3,4]);
+        var r44 = new M44([1,0,0,0, 0,2,0,0, 0,0,3,0, 0,0,0,4]);
+        var s44 = new M44([1,2,3,4, 5,6,7,8, 9,10,11,12, 13,14,15,16]);
         test('Should create M44 from array', context => context.assert(m44, ':=', arr));
         test('Should create M44 from Float32Array', context => context.assert(n44, ':=', arr));
         test('Should create M44 from Float64Array', context => context.assert(o44, ':=', arr));
         test('Should create M44 from identity', context => context.assert(p44, ':=', [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]));
         test('Should create M44 from M44', context => context.assert(q44, ':=', p44));
-        test('Should transpose M44', context => context.assert(r44.transpose(), ':=', [1,1,1,1, 2,2,2,2, 3,3,3,3, 4,4,4,4]));
-
+        test('Should transpose M44', context => context.assert(s44.transpose(), ':=', [ 1,5,9,13, 2,6,10,14, 3,7,11,15, 4,8,12,16 ]));
         test('Should multiply by identity matrix', context => context.assert(m44.mul(p44), ':=', m44));
-        test('Should multiply by a matrix', context => context.assert(m44.mul(n44), ':=', [
-            1+ 4+ 9+16,  2+ 8+18+32,  3+12+ 27+ 48,  4+16+ 36+ 64,
-            2+ 8+18+32,  4+16+36+64,  6+24+ 54+ 96,  8+32+ 72+128,
-            3+12+27+48,  6+24+54+96,  9+36+ 81+144, 12+48+108+192,
-            4+16+36+64, 8+32+72+128, 12+48+108+192, 16+64+144+256
-        ]));
+        test('Should multiply by a matrix', context => context.assert(m44.mul(r44), ':=', [1,4,9,16, 2,8,18,32, 3,12,27,48, 4,16,36,64]));
+        test('Should multiply by a matrix', context => context.assert(r44.mul(m44), ':=', [1,2,3,4, 4,8,12,16, 9,18,27,36, 16,32,48,64]));
         test('Should multiply by a vector', context => context.assert(n44.mulV(new V4(1, 2, 3, 4)), ':=', [1+4+9+16, 2+8+18+32, 3+12+27+48, 4+16+36+64]));
         var buffer = new Float32Array(16);
         test('Should multiply by a matrix into a buffer', context => {
@@ -288,10 +284,10 @@ include('fn.js');
 
     var tests = () => [
         // test_v2, test_v3, test_v4,
-        // test_m33,
+        test_m33,
         test_m44,
         // test_performance,
-        test_intersect
+        // test_intersect
     ];
 
     publish(tests, 'Math tests');
