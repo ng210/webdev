@@ -15,9 +15,9 @@ function Model(data) {
 }
 
 Model.prototype.update = function(p, r, s) {
-	this.matrix.ranslate(p);
+	this.matrix.translate(s);
 	this.matrix.multiply(r);
-	this.matrix.multiply(s);
+	this.matrix.multiply(p);
 };
 
 Model.prototype.render = function() {

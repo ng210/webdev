@@ -83,13 +83,11 @@
             this.position.y = BOX.max.y;
         }
 
+        var matrix = M44.scale(this.scale).mul(M44.translate(this.position));
         var dRot = this.rot[2].prodC(dt);
         dRot[3] /= dt;
         this.rot[3] = this.rot[3].mul(dRot);
-        M44.translate(this.position)
-            .mul(M44.scale(this.scale))
-            .mul(this.rot[3].norm().toMatrix(), this.model);
-
+        this.rot[3].norm().toMatrix().mul(matrix, this.model);
         this.rot[2].w *= 1.001;
         //this.velocity.scale(0.998);
     };
@@ -122,11 +120,11 @@
             this.position.z = BOX.max.z;
         }
 
-        var matrix = M44.translate(this.position).mul(M44.scale(this.scale));
+        var matrix = M44.scale(this.scale).mul(M44.translate(this.position));
         var dRot = this.rot[0].mul(this.rot[1]).mul(this.rot[2]);
         dRot[3] /= dt;
         this.rot[3] = this.rot[3].mul(dRot).norm();
-        matrix.mul(this.rot[3].toMatrix(), this.model);
+        this.rot[3].toMatrix().mul(matrix, this.model);
 
         this.rot[0].w *= 1.001;
         this.rot[1].w *= 1.001;
