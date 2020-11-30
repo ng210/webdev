@@ -28,6 +28,16 @@ include('renderer2d.js');
         }
         delete this.items;
     };
+    Container.prototype.getHandlers = function getHandlers() {
+        var handlers = Container.base.getHandlers.call(this);
+        handlers.push(
+            { name: 'mousemove', topDown: true },
+            { name: 'dragging', topDown: true },
+            { name: 'mousedown', topDown: true },
+            { name: 'mouseup', topDown: true }
+        );
+        return handlers;
+    };
     Container.prototype.getTemplate = function getTemplate() {
         var tmpl = Container.base.getTemplate.call(this);
         tmpl.style.background = 'none';

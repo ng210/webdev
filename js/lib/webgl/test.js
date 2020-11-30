@@ -83,11 +83,13 @@
             this.position.y = BOX.max.y;
         }
 
-        var matrix = M44.scale(this.scale).mul(M44.translate(this.position));
         var dRot = this.rot[2].prodC(dt);
         dRot[3] /= dt;
         this.rot[3] = this.rot[3].mul(dRot);
-        this.rot[3].norm().toMatrix().mul(matrix, this.model);
+        this.rot[3].norm().toMatrix()
+            .mul(M44.scale(this.scale))
+            .mul(M44.translate(this.position), this.model);
+
         this.rot[2].w *= 1.001;
         //this.velocity.scale(0.998);
     };
@@ -125,7 +127,6 @@
         dRot[3] /= dt;
         this.rot[3] = this.rot[3].mul(dRot).norm();
         this.rot[3].toMatrix().mul(matrix, this.model);
-
         this.rot[0].w *= 1.001;
         this.rot[1].w *= 1.001;
         this.rot[2].w *= 1.001;
@@ -176,27 +177,23 @@
             n = rot.rotate([0,0,1,0]);
             n.x = Math.round(n.x); n.y = Math.round(n.y); n.z = Math.round(n.z);
         }
-        _vbo = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, _vbo);
-        gl.bufferData(gl.ARRAY_BUFFER, vb, gl.STATIC_DRAW);
-        _ibo = gl.createBuffer();
+        _vbo = webGL.createBuffer(gl.ARRAY_BUFFER, vb, gl.STATIC_DRAW);
         var ib = new Uint8Array(36);
         ix = 0;
         for (var i=0; i<6; i++) {
             ib[ix++] = i*4; ib[ix++] = i*4+1; ib[ix++] = i*4+2;
             ib[ix++] = i*4; ib[ix++] = i*4+2; ib[ix++] = i*4+3;
         }
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, _ibo);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, ib, gl.STATIC_DRAW);
+        _ibo = webGL.createBuffer(gl.ELEMENT_ARRAY_BUFFER, ib, gl.STATIC_DRAW);
 
         var ix = 0;
         for (var i=0; i<6; i++) {
-            console.log(`Side #${i}`);
+            //console.log(`Side #${i}`);
             for (var j=0; j<6; j++) {
                 var ix = ib[6*i+j];
                 var p = new V3(vb, 6*ix);
                 var n = new V3(vb, 6*ix+3);
-                console.log(` ${ix}: p=${p.toString()}, n=${n}`);
+                //console.log(` ${ix}: p=${p.toString()}, n=${n}`);
             }
         }
     }
@@ -403,25 +400,23 @@
     }
 
     function onResize() {
-        _size.set([canvas.width, canvas.height, 200]).scale(0.5);
+        var aspect = canvas.width/canvas.height;
         _controlsElem.style.left = (window.innerWidth - _controlsElem.clientWidth - 10) + 'px';
-        //var aspect = _size.x/_size.y;
-        // _viewProjection2D = new M44([
-        //     1/_world.x, 0.0, 0.0, 0.0,
-        //     0.0, aspect/_world.y, 0.0, 0.0,
-        //     0, 0, 1/_world.z, 0.0,
-        //     0.0, 0.0, 0.0, 1.0
-        // ]);
-        M44.projection(_world.x, _size.y*_world.y/_size.x, _world.z, _viewProjection2D);
+        
+        new M44([
+            1/_world.x, 0.0, 0.0, 0.0,
+            0.0, aspect/_world.y, 0.0, 0.0,
+            0, 0, 1/_world.z, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        ]).put(_viewProjection2D);
+        //M44.projection(_world.x, aspect*_world.y, _world.z, _viewProjection2D);
 
         var fov = Math.PI*60/180;
-        var aspect = _size.x/_size.y;   //gl.canvas.clientWidth/gl.canvas.clientHeight;
         var zNear = 1;
         var zFar = 2000;    //_world.z;
         M44.perspective(fov, aspect, zNear, zFar, _viewProjection3D);
-        //M44.perspective(_size.x, _size.x, zNear, zFar, _viewProjection3D);
 
-        BOX.min.set([-_world.x, -_world.y/aspect, -10]);
+        BOX.min.set([-_world.x, -_world.y/aspect, _world.z]);
         BOX.max.set([_world.x, _world.y/aspect, -_world.z]);
     }
 

@@ -66,10 +66,7 @@ include('webgl/webgl.js');
         this.positions[0] = p1;
         this.positions[1] = p2;
         this.vertexData = vd;
-
-        this.vertices = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertices);
-        gl.bufferData(gl.ARRAY_BUFFER, this.vertexData, gl.STATIC_DRAW);
+        this.vertices = webGL.createBuffer(gl.ARRAY_BUFFER, this.vertexData, gl.STATIC_DRAW);
     }
     Morph.prototype.createIndices = function createIndices() {
         this.trisCount = 0;
@@ -87,9 +84,7 @@ include('webgl/webgl.js');
             }
             l += width;
         }
-        this.indices1 = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices1);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, ib, gl.STATIC_DRAW);
+        this.indices1 = webGL.createBuffer(gl.ELEMENT_ARRAY_BUFFER, ib, gl.STATIC_DRAW);
 
         var count = this.settings.resolution.value + 1;
         var width = count + 1;
@@ -105,16 +100,15 @@ include('webgl/webgl.js');
             }
             l += width;
         }
-        this.indices2 = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices2);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, ib, gl.STATIC_DRAW);
+        this.indices2 = webGL.createBuffer(gl.ELEMENT_ARRAY_BUFFER, ib, gl.STATIC_DRAW);
     };
     Morph.prototype.createBuffers = function createBuffers() {
-        this.createVertices();
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+        webGL.deleteBuffer(this.vertices);
+        webGL.deleteBuffer(this.indices1);
+        webGL.deleteBuffer(this.indices2);
 
+        this.createVertices();
         this.createIndices();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     };
     // required by the framework
     Morph.prototype.initialize = async function initialize() {
@@ -229,7 +223,6 @@ include('webgl/webgl.js');
     Morph.prototype.render = function render(frame, dt) {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertices);
         webGL.useProgram(this.program, {
             'u_texture1': 0,
             'u_texture2': 1,

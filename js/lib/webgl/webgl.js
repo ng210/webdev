@@ -10,6 +10,8 @@
 		this.uniforms = {};
 		this.shaders = [];
 
+		this.attributesByBufferId = [];
+
 	    for (var type in shaders) {
 			var shader = webGL.createShader(type, shaders[type]);
 			this.shaders.push(shader);
@@ -20,11 +22,16 @@
         if (!gl.getProgramParameter(this.prg, gl.LINK_STATUS)) {
             throw new Error('Error linking shader program: ' + gl.getProgramInfoLog(this.prg));
         }
-		this.size = 0;
+		//this.size = 0;
         for (var ak in attributes) {
             var ref = gl.getAttribLocation(this.prg, ak);
 			var attrib = attributes[ak];
-	        var sizem = {};
+			var bufferId = attrib.buffer || 0;
+			var aBucket = this.attributesByBufferId[bufferId];
+			if (aBucket == undefined) {
+				aBucket = this.attributesByBufferId[bufferId] = [0];	// first element is total size of attributes in bytes
+			}
+			var sizem = {};
 			sizem[gl.BYTE] = 1;
 			sizem[gl.SHORT] = 2;
 			sizem[gl.FLOAT] = 4;
@@ -38,10 +45,12 @@
 				'type': attrib.type,
 				'size': attrib.size,
 				'sizeInBytes': sizeInBytes,
-				'offset': attrib.offset != undefined ? attrib.offset : this.size,
-				'indexed': attrib.indexed || false
+				'offset': attrib.offset != undefined ? attrib.offset : aBucket[0],
+				'divisor': attrib.divisor || 0
 			};
-			this.size += sizeInBytes;
+			aBucket.push(this.attributes[ak]);
+			aBucket[0] += sizeInBytes; 
+			//this.size += 
 		}
 
         for (var uk in uniforms) {
@@ -98,9 +107,26 @@
 		VERTEX_ATTRIB_TEXTURE1:  0x08,
 		VERTEX_ATTRIB_TEXTURE2:  0x10,
 
+		buffers: [],
 		extensions: {}
 	};
 
+	webGL.createBuffer = function createBuffer(target, source, usage) {
+		var buffer = gl.createBuffer();
+		if (source != undefined) {
+			gl.bindBuffer(target, buffer);
+			gl.bufferData(target, source, usage);
+		}
+		this.buffers.push({'type':target, 'ref':buffer});
+		return buffer;
+	};
+	webGL.deleteBuffer = function deleteBuffer(ref) {
+		var ix = this.buffers.findIndex(x => x.ref == ref);
+		if (ix != -1) {
+			gl.deleteBuffer(ref);
+			this.buffers.splice(ix, 1);
+		}
+	};
 	webGL.createShader = function(type, code) {
 		var shader = gl.createShader(type);
 		gl.shaderSource(shader, code);
@@ -131,23 +157,19 @@
 	};
 	webGL.useProgram = function(p, uniforms) {
 		gl.useProgram(p.prg);
-		for (var ai in p.attributes) {
-			var a = p.attributes[ai];
-			if (a.ref != -1) {
-				var count = a.type == webGL.FLOAT4x4M ? 4 : 1;
-				var offset = a.offset;
-				for (var i=0; i<count; i++) {
-					var ref = a.ref + i;
-					gl.enableVertexAttribArray(a.ref);
-					gl.vertexAttribPointer(a.ref, a.size, a.type, false, p.size, offset);
-					if (a.indexed) webGL.extensions['ANGLE_instanced_arrays'].vertexAttribDivisorANGLE(ref, 1);
-					offset += a.sizeInBytes;
-				}
-			}
+        for (var i=0; i<p.attributesByBufferId.length; i++) {
+            gl.bindBuffer(webGL.buffers[i].type, webGL.buffers[i].ref);
+            for (var j=1; j<p.attributesByBufferId[i].length; j++) {
+                var a = p.attributesByBufferId[i][j];
+                gl.enableVertexAttribArray(a.ref);
+                gl.vertexAttribPointer(a.ref, a.size, gl.FLOAT, false, p.attributesByBufferId[i][0], a.offset);
+                if (a.divisor) webGL.extensions.ANGLE_instanced_arrays.vertexAttribDivisorANGLE(a.ref, a.divisor);
+            }
 		}
 		if (uniforms) {
 			p.setUniforms(uniforms);
 		}
+		return p;
 	};
 	webGL.createTexture = function createTexture(image) {
 		var texture = gl.createTexture();

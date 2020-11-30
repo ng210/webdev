@@ -88,12 +88,12 @@ var DemoMgr = {
         demoList.setVisible(true);
         demoList.render();
 
-        glui.canvas.addEventListener('mousemove', e => DemoMgr.onmousemove(e));
-        // glui.canvas.addEventListener('mousedown', e => DemoMgr.onmousedown(e));
-        // glui.canvas.addEventListener('mouseup', e => DemoMgr.onmouseup(e));
-        glui.screen.addHandler('mousedown', false);
-        glui.screen.addHandler('mouseup', false);
-        glui.screen.addHandler('dragging', false);
+        // glui.canvas.addEventListener('mousemove', e => DemoMgr.onmousemove(e));
+        // glui.canvas.addEventListener('mousedown', e => DemoMgr.onmousedown(e), true);
+        // glui.canvas.addEventListener('mouseup', e => DemoMgr.onmouseup(e), true);
+        // glui.screen.addEventHandlers('mousedown', false);
+        // glui.screen.addHandler('mouseup', false);
+        // glui.screen.addHandler('dragging', false);
 
         this.run();
     },
@@ -227,7 +227,7 @@ var DemoMgr = {
             this.controls.start.move(left + (width - this.controls.start.width)/2, top);
         }
         //this.demoList.height = this.demoList.collapsed ? this.demoList.titlebar.height : 0;
-        //glui.render();
+        glui.screen.renderer.render();
     },
     toggleDemoList: function toggleDemoList() {
         if (!this.demoList.collapsed) {
@@ -259,6 +259,9 @@ var DemoMgr = {
         if (demo instanceof Error) {
             alert(demo.message);
         } else {
+            glui.repaint();
+            this.render(this.frame, 0);
+            glui.screen.renderer.render();
             this.time = new Date().getTime();
             this.run();
         }
@@ -303,7 +306,7 @@ var DemoMgr = {
     },
     onmousedown: function onmousedown(e, ctrl) {
         if (!ctrl || ctrl.id == 'screen') {
-            if (this.demo && this.demo.onmousedown) {  
+            if (this.demo && typeof this.demo.onmousedown == 'function') {
                 var x = e.clientX/glui.canvas.clientWidth;
                 var y = e.clientY/glui.canvas.clientHeight;
                 this.demo.onmousedown(x, y, e);
@@ -323,13 +326,15 @@ var DemoMgr = {
         this.demo.render(this.frame, 0);
         glui.render();
     },
-    onmousemove: function onmousemove(e) {
-        if (this.demo && typeof this.demo.onmousemove === 'function') {
-            var x = e.clientX/glui.canvas.clientWidth;
-            var y = e.clientY/glui.canvas.clientHeight;
-            this.demo.onmousemove(x, y, e);
+    onmousemove: function onmousemove(e, ctrl) {
+        if (!ctrl || ctrl.id == 'screen') {
+            if (this.demo && typeof this.demo.onmousemove === 'function') {
+                var x = e.clientX/glui.canvas.clientWidth;
+                var y = e.clientY/glui.canvas.clientHeight;
+                this.demo.onmousemove(x, y, e);
+            }
         }
-    },
+    }
 };
 
 async function onpageload(e) {

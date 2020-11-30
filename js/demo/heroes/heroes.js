@@ -136,7 +136,6 @@
         DemoMgr.controls.heroesTable = this.table;
 
         await this.table.build();
-debugger
         this.resize();
     };
     Heroes.prototype.update = function update() {
