@@ -44,15 +44,16 @@ include('/player/player-lib.js');
         this.rotationZ = r;
         this.isDirty = true;
     };
-
     Sprite.prototype.setFrame = function setFrame(f) {
         this.frame = f;
         this.isDirty = true;
     };
 
     Sprite.Attributes = {
-        'matrix':       16,
-        'texCoords':     4
+        'position':     3,
+        'scale':        2,
+        'rotation':     1,
+        'texCoords':    4
     };
     Sprite.AttributeSize = Object.values(Sprite.Attributes).reduce((v, x) =>  v += x);
 
@@ -64,6 +65,8 @@ include('/player/player-lib.js');
         this.spriteAttributeBuffer = null;
         this.spriteAttributeData = null;
         this.angleExtension = null;
+
+        this.projection = new Float32Array(16);
     }
     extend(Ps.IAdapter, SpriteManager);
 
@@ -83,37 +86,37 @@ include('/player/player-lib.js');
         if (resources[1].error) errors.push(resources[1].error.message);
         await this.createMap(mapUrl, errors);
         if (errors.length > 0) throw new Error(`Could not load resources: ${errors.join()}`);
-
         // create shaders and  program
+        M44.projection(gl.canvas.width, gl.canvas.height, 1, this.projection);
         var shaders = {};
         shaders[gl.VERTEX_SHADER] = resources[0].data;
         shaders[gl.FRAGMENT_SHADER] = resources[1].data;
         this.program = webGL.createProgram(shaders, {
-            a_position: { type:gl.FLOAT, size:2, offset:0 },
-            a_vertexId: { type:gl.FLOAT, size:1, offset:8 },
-            a_matrix: { type:webGL.FLOAT4x4M, offset:0 },
-            a_texcoord: { type:gl.FLOAT, size:4, offset:64 },
+            a_position: { type:gl.FLOAT, size:2, buffer:0 },
+            a_vertexId: { type:gl.FLOAT, size:1, buffer:0 },
+            a_translate: { type:gl.FLOAT, size:3, divisor: 1, buffer:1 },
+            a_scale: { type:gl.FLOAT, size:2, divisor: 1, buffer:1 },
+            a_rotateZ: { type:gl.FLOAT, size:1, divisor: 1, buffer:1 },
+            a_texcoord: { type:gl.FLOAT, size:4, divisor: 1, buffer:1 },
         }, {
-            //u_texture: { type:gl.INT, value: 0 }            
+            u_projection: { type: webGL.FLOAT4x4M, value: this.projection }
         });
 
-        this.vertexBuffer = gl.createBuffer();
-        this.vertexData = new Float32Array([
-            -1.0,  1.0, 0.0,
-             1.0, -1.0, 3.0,
-            -1.0, -1.0, 2.0,
-            -1.0,  1.0, 0.0,
-             1.0,  1.0, 1.0,
-             1.0, -1.0, 3.0
-            
-        ]);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, this.vertexData, gl.STATIC_DRAW);
-
-        this.spriteAttributeBuffer = gl.createBuffer();
+        this.vertexData = new Float32Array([ -1.0, -1.0, 0.0,   1.0,  1.0, 3.0,  -1.0,  1.0, 2.0,  -1.0, -1.0, 0.0,   1.0, -1.0, 1.0,   1.0,  1.0, 3.0 ]);
+        this.vertexBuffer = webGL.createBuffer(gl.ARRAY_BUFFER, this.vertexData, gl.STATIC_DRAW);
         this.spriteAttributeData = new Float32Array(Sprite.AttributeSize*spriteCount);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteAttributeBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, this.spriteAttributeData.length*4, gl.DYNAMIC_DRAW);
+        this.spriteAttributeBuffer = webGL.createBuffer(gl.ARRAY_BUFFER, this.spriteAttributeData.length*4, gl.DYNAMIC_DRAW);
+
+    };
+
+    SpriteManager.prototype.onresize = function onresize() {
+        gl.canvas.width = window.innerWidth;
+        gl.canvas.height = window.innerHeight;
+        if (this.program) {
+            M44.projection(gl.canvas.width, gl.canvas.height, 1, this.projection);
+            this.program.uniforms.u_projection.value = this.projection;
+            this.program.updateUniform('u_projection');
+        }
     };
 
     SpriteManager.prototype.destroy = async function destroy() {
@@ -122,9 +125,9 @@ include('/player/player-lib.js');
         }
         delete this.sprites;
 
-        gl.deleteBuffer(this.vertices);
+        webGL.deleteBuffer(this.vertexBuffer);
         delete this.vertexData;
-        gl.deleteBuffer(this.spriteAttributeBuffer);
+        webGL.deleteBuffer(this.spriteAttributeBuffer);
         delete this.spriteAttributeData;
 
         gl.deleteTexture(this.map.texture);
@@ -142,18 +145,19 @@ include('/player/player-lib.js');
                 map.image = res.node;
                 this.map = map;
                 this.map.texture = webGL.createTexture(map.image);
-                map.data = new Float32Array(4*this.sprites.length);
+                map.data = new Float32Array(6*this.sprites.length);
                 var k = 0;
                 for (var i=0; i<map.frames.length; i++) {
                     map.data[k++] = map.frames[i][0]/map.image.width;
                     map.data[k++] = map.frames[i][1]/map.image.height;
                     map.data[k++] = map.frames[i][2]/map.image.width;
                     map.data[k++] = map.frames[i][3]/map.image.height;
+                    map.data[k++] = (map.frames[i][2] - map.frames[i][0]);
+                    map.data[k++] = (map.frames[i][3] - map.frames[i][1]);
                 }
-
-                map.buffer = gl.createBuffer();
-                gl.bindBuffer(gl.ARRAY_BUFFER, map.buffer);
-                gl.bufferData(gl.ARRAY_BUFFER, map.data, gl.STATIC_DRAW);
+                // map.buffer = gl.createBuffer();
+                // gl.bindBuffer(gl.ARRAY_BUFFER, map.buffer);
+                // gl.bufferData(gl.ARRAY_BUFFER, map.data, gl.STATIC_DRAW);
             }
         }
     };
@@ -176,17 +180,19 @@ include('/player/player-lib.js');
             var spr = this.sprites[i];
             if (spr.isDirty) {
                 // update matrix
-                var frameOffset = spr.frame*4;
-                var translate = M44.translate(spr.position);
-                var scale = M44.scale(spr.scale.prod([this.map.data[frameOffset+2], this.map.data[frameOffset+3], 1]));
-                var rotate = M44.rotateZ(spr.rotationZ);
-                translate.mul(rotate).mul(scale, this.spriteAttributeData, spr.offset);
+                var frameOffset = spr.frame*6;
+                this.spriteAttributeData[spr.offset+ 0] = spr.position.x;
+                this.spriteAttributeData[spr.offset+ 1] = spr.position.y;
+                this.spriteAttributeData[spr.offset+ 2] = spr.position.z;
+                this.spriteAttributeData[spr.offset+ 3] = spr.scale.x * this.map.data[frameOffset+4];
+                this.spriteAttributeData[spr.offset+ 4] = spr.scale.y * this.map.data[frameOffset+5];
+                this.spriteAttributeData[spr.offset+ 5] = spr.rotationZ
+                this.spriteAttributeData[spr.offset+ 6] = this.map.data[frameOffset+0];
+                this.spriteAttributeData[spr.offset+ 7] = this.map.data[frameOffset+1];
+                this.spriteAttributeData[spr.offset+ 8] = this.map.data[frameOffset+2];
+                this.spriteAttributeData[spr.offset+ 9] = this.map.data[frameOffset+3];
                 spr.isDirty = false;
-                this.spriteAttributeData[spr.offset+16] = this.map.data[frameOffset+0];
-                this.spriteAttributeData[spr.offset+17] = this.map.data[frameOffset+1];
-                this.spriteAttributeData[spr.offset+18] = this.map.data[frameOffset+2];
-                this.spriteAttributeData[spr.offset+19] = this.map.data[frameOffset+3];
-//console.log(this.spriteAttributeData.slice(spr.offset, Sprite.AttributeSize));
+//console.log(this.spriteAttributeData.slice(spr.offset, spr.offset+Sprite.AttributeSize));
             }
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteAttributeBuffer);
@@ -200,33 +206,12 @@ include('/player/player-lib.js');
         gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-        var p = this.program;
-        gl.useProgram(p.prg);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        var a = p.attributes.a_position;
-        gl.enableVertexAttribArray(a.ref);
-        gl.vertexAttribPointer(a.ref, 2, gl.FLOAT, false, 12, 0);
-        var a = p.attributes.a_vertexId;
-        gl.enableVertexAttribArray(a.ref);
-        gl.vertexAttribPointer(a.ref, 1, gl.FLOAT, false, 12, 8);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteAttributeBuffer);
-        a = p.attributes.a_texcoord;
-        gl.enableVertexAttribArray(a.ref);
-        gl.vertexAttribPointer(a.ref, 4, gl.FLOAT, false, Sprite.AttributeSize*4, 64);
-        this.angleExtension.vertexAttribDivisorANGLE(a.ref, 1);
-
-        a = p.attributes.a_matrix;
-        for (var i=0; i<4; i++) {
-            var ref = a.ref+i;
-            gl.enableVertexAttribArray(ref);
-            gl.vertexAttribPointer(ref, 4, gl.FLOAT, false, Sprite.AttributeSize*4, i*a.size*4);
-            this.angleExtension.vertexAttribDivisorANGLE(ref, 1);
-        }
+        webGL.useProgram(this.program).setUniforms();
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.map.texture);
+
         this.angleExtension.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, this.count);
     };
 
