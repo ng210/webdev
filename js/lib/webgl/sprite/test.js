@@ -81,6 +81,7 @@ include('webgl/sprite/sprite.js');
                 spr.position.x, spr.position.y, spr.position.z,
                 spr.scale.x*expectedFrame[4], spr.scale.y*expectedFrame[5],
                 spr.rotationZ,
+                spr.alpha,
                 expectedFrame[0], expectedFrame[1], expectedFrame[2], expectedFrame[3]
             ]));
         });
@@ -164,6 +165,7 @@ include('webgl/sprite/sprite.js');
         spr.setScale([scale, scale, 1.0]);
         spr.setRotationZ(2*Math.PI*Math.random());
         spr.velocity = V3.fromPolar(2*Math.PI*Math.random(), 0, 5*(0.6*Math.random() + 0.4));
+        spr.alpha = 0.3 + 0.7*Math.random();
     }
     async function test_animateSprites2() {
         message('Animate sprites #2', 1);

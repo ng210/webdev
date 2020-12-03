@@ -33,7 +33,8 @@ include('webgl/sprite/sprite.js');
         this.acc = new V3();
         this.velocity = new V3();
         this.lifeSpan = 0;
-    this.obj.setFrame(Math.floor(Math.random()*Emitter.sprMgr.map.frames.length));
+        this.initLifeSpan = 0;
+        this.obj.setFrame(Math.floor(Math.random()*Emitter.sprMgr.map.frames.length));
         this.set([0,0], [0,0], [0,0]);
     }
     Particle.prototype.set = function set(p, v, a, hp) {
@@ -42,6 +43,7 @@ include('webgl/sprite/sprite.js');
         this.obj.position.set(p);
         this.obj.setRotationZ(2);   //1.1*(Math.random() - 0.5));
         this.lifeSpan = hp;
+        this.initLifeSpan = hp;
         this.angularSpeed = 2*2*Math.PI*(Math.random() - 0.5);
     };
     Particle.prototype.update = function update(dt) {
@@ -54,6 +56,7 @@ include('webgl/sprite/sprite.js');
             this.obj.position.add(ds);
             this.obj.isDirty = true;
             this.obj.setRotationZ(this.obj.rotationZ + this.angularSpeed*dt);
+            this.obj.alpha = this.lifeSpan/this.initLifeSpan;
         } else {
             this.obj.position.x = -10000;
             this.obj.isDirty = true;
@@ -147,13 +150,13 @@ include('webgl/sprite/sprite.js');
     function EmitterDemo() {
         Demo.call(this, 'EmitterDemo', {
             count: { label: 'Count', value: 1000, min:1, max:4000, step: 20, type: 'int' },
-            alpha: { label: 'Alpha', value: 1, min:0, max:1, step: 0.05, type: 'float' },
+            //alpha: { label: 'Alpha', value: 1, min:0, max:1, step: 0.05, type: 'float' },
             //force: { label: 'Force', value: 0, min:-1, max:1, step: 0.01, type: 'float' },
             freq: { label: 'Frequency', value: 100.0, min:0.1, max:200, step: 10.0, type: 'float' },
             thrust: { label: 'Thrust', value: 20.0, min:10, max:400, normalized: true, step: 10.0, type: 'float' },
-            size: { label: 'Size', value: 0.3, min:0.01, max:0.5, step: 0.01, normalized: true, type: 'float' },
-            rotation: { label: 'rotation', value: 2.0, min:0, max:100, step: 1.0, type: 'float' },
-            lifeSpan: { label: 'Life', value: 10.0, min:1.0, max:100, step: 5, type: 'float' },
+            size: { label: 'Size', value: 0.25, min:0.01, max:0.5, step: 0.01, normalized: true, type: 'float' },
+            rotation: { label: 'rotation', value: 8.0, min:0, max:100, step: 1.0, type: 'float' },
+            lifeSpan: { label: 'Life', value: 4.0, min:1.0, max:100, step: 5, type: 'float' },
             emission: { label: 'Emission', value: 1, min:0, max:1, step: 1, type: 'int' },
             speed: { label: 'Speed', value: 0.2, min:0, max:1, step: 0.01, type: 'float' },
             variance: { label: 'Variance', value: 0.01, min:0, max:0.5, step: 0.01, normalized: true, type: 'float' }
@@ -222,7 +225,7 @@ include('webgl/sprite/sprite.js');
         }
     };
     EmitterDemo.prototype.render = function render(frame, dt) {
-        gl.clearColor(255, 255, 255, 255);
+        gl.clearColor(0.8, 0.8, 0.8, 1.0);
         Emitter.sprMgr.update();
         Emitter.sprMgr.render();
     };

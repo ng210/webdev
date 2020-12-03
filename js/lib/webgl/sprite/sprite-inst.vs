@@ -5,10 +5,12 @@ attribute float a_rotateZ;
 attribute vec2 a_scale;
 attribute vec3 a_translate;
 attribute vec4 a_texcoord;
+attribute float a_alpha;
 
 uniform mat4 u_projection;
 
 varying vec2 v_texcoord;
+varying float v_alpha;
  
 void main() {
   mat4 m = mat4(1.0);
@@ -30,4 +32,6 @@ void main() {
   else if (a_vertexId == 1.0) v_texcoord = a_texcoord.zy;
   else if (a_vertexId == 2.0) v_texcoord = a_texcoord.xw;
   else if (a_vertexId == 3.0) v_texcoord = a_texcoord.zw;
+
+  v_alpha = a_alpha;
 }

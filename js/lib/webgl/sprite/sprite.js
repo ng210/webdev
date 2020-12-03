@@ -27,6 +27,7 @@ include('/player/player-lib.js');
         this.position = new V3(0);
         this.scale = new V3(1.0);
         this.rotationZ = 0.0;
+        this.alpha = 1.0;
     }
     Sprite.prototype.setPosition = function setPosition(p) {
         this.position[0] = p[0];
@@ -53,7 +54,8 @@ include('/player/player-lib.js');
         'position':     3,
         'scale':        2,
         'rotation':     1,
-        'texCoords':    4
+        'texCoords':    4,
+        'alpha':        1
     };
     Sprite.AttributeSize = Object.values(Sprite.Attributes).reduce((v, x) =>  v += x);
 
@@ -97,6 +99,7 @@ include('/player/player-lib.js');
             a_translate: { type:gl.FLOAT, size:3, divisor: 1, buffer:1 },
             a_scale: { type:gl.FLOAT, size:2, divisor: 1, buffer:1 },
             a_rotateZ: { type:gl.FLOAT, size:1, divisor: 1, buffer:1 },
+            a_alpha: { type:gl.FLOAT, size:1, divisor: 1, buffer:1 },
             a_texcoord: { type:gl.FLOAT, size:4, divisor: 1, buffer:1 },
         }, {
             u_projection: { type: webGL.FLOAT4x4M, value: this.projection }
@@ -187,10 +190,11 @@ include('/player/player-lib.js');
                 this.spriteAttributeData[spr.offset+ 3] = spr.scale.x * this.map.data[frameOffset+4];
                 this.spriteAttributeData[spr.offset+ 4] = spr.scale.y * this.map.data[frameOffset+5];
                 this.spriteAttributeData[spr.offset+ 5] = spr.rotationZ;
-                this.spriteAttributeData[spr.offset+ 6] = this.map.data[frameOffset+0];
-                this.spriteAttributeData[spr.offset+ 7] = this.map.data[frameOffset+1];
-                this.spriteAttributeData[spr.offset+ 8] = this.map.data[frameOffset+2];
-                this.spriteAttributeData[spr.offset+ 9] = this.map.data[frameOffset+3];
+                this.spriteAttributeData[spr.offset+ 6] = spr.alpha;
+                this.spriteAttributeData[spr.offset+ 7] = this.map.data[frameOffset+0];
+                this.spriteAttributeData[spr.offset+ 8] = this.map.data[frameOffset+1];
+                this.spriteAttributeData[spr.offset+ 9] = this.map.data[frameOffset+2];
+                this.spriteAttributeData[spr.offset+10] = this.map.data[frameOffset+3];
                 spr.isDirty = false;
 //console.log(this.spriteAttributeData.slice(spr.offset, spr.offset+Sprite.AttributeSize));
             }
