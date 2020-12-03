@@ -4,18 +4,10 @@ include('glui/glui-lib.js');
     // internal variables and functions
 
     function Demo(name, settings) {
-        // Member variables
-        // required by the framework
         this.name = name;
         this.settings = settings;
-        // {
-        //     setting1: { label: 'Setting #1', value: 0, min:0, max:1, step: 0.01, type: 'float', link: null }
-        // };
-        // custom variables
-    
-        // Member functions
-        // required by the framework
     }
+    // functions required by the framework
     Demo.prototype.initialize = function initialize() { // optional
     };
     Demo.prototype.resize = function resize(e) {
