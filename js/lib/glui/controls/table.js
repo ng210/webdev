@@ -316,13 +316,20 @@ include('container.js');
 
 			this.height += 2*this.renderer.border.width;
 		}
+		if (this.width == 0) {
+			for (var i=0; i<this.columnCount; i++) {
+				var column = this.columns[this.columnKeys[i]];
+				this.width += this.renderer.convertToPixel(column.width, false);
+			}
+			this.width += 2*this.renderer.border.width;
+		}
 		return Table.base.getBoundingBox.call(this);
     };
 	Table.prototype.update = async function update() {
 		// titlebar
 		if (this.titlebar) {
-			this.titlebar.setVisible(this.title);
-			this.titlebar.setValue(this.title);
+			this.titlebar.setVisible(!!this.title);
+			this.titlebar.setValue(!!this.title);
 		}
 
 		this.isDirty = false;
@@ -368,6 +375,7 @@ include('container.js');
 			var column = this.columns[ci];
 			var name = column.name;
 			var template = this.rowTemplate && this.rowTemplate[column.key] ? this.rowTemplate[column.key] : this.cellTemplate;
+			template.style = mergeObjects(this.cellTemplate.style, template.style);
 			var ctrl = await glui.create(name, template, row);
 			//await row.add(ctrl, name);
 			column.add(ctrl, ix);
@@ -386,7 +394,10 @@ include('container.js');
 	Table.prototype.removeRowAt = async function removeRowAt(ix) {
 		console.log('remove row at ' + ix);
 		this.rowCount--;
-		throw new Error('Not Implemented!')
+		var row = this.rows[this.rowKeys[ix]];
+		delete this.rows[this.rowKeys[ix]];
+		this.rowKeys.splice(ix, 1);
+		Table.base.remove.call(this, row);
 	};
 	Table.prototype.updateRowInfo = function updateRowInfo() {
 		var rowCount = parseInt(this.template.rows);
@@ -460,7 +471,7 @@ include('container.js');
 		var p = [];
 		// titlebar
 		if (this.title && !this.titlebar) {
-			this.titlebar = await glui.create(`${this.id}#title`, { 'type': 'Label', 'style': this.style.title, 'z-index': this.zIndex + 1 }, this);
+			this.titlebar = await glui.create(`${this.id}#title`, { 'type': 'Label', 'style': this.style.title/*, 'z-index': this.zIndex + 1*/ }, this);
 			this.titlebar.setValue(this.title);
 		}
 		var cc = parseInt(this.template.cols);
@@ -503,7 +514,7 @@ include('container.js');
 		if (rk.length < rc) {
 			for (var i=rk.length; i<rc; i++) rk.push(i);
 		} else {
-			rk = rk.splice(0, rc);
+			rk = rk.splice(rk.length-rc, rc);
 		}
 
 		// update columns
@@ -546,9 +557,9 @@ include('container.js');
 			}
 		} else if (this.rowCount > rk.length) {
 			// remove rows
-			var i=rk.length-1
+			var i=rk.length;
 			while (i != this.rowCount) {
-				this.removeRowAt(i);
+				this.removeRowAt(i-1);
 			}
 		}
 
@@ -596,7 +607,6 @@ include('container.js');
 	};
 	Table.prototype.render = function render() {
 		//if (this.isDirty) await this.update();
-debug_(this.id + '.render', 0);
 		this.getBoundingBox();
 		glui.Control.prototype.render.call(this);
 	};

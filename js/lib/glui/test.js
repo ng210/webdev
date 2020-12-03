@@ -204,7 +204,7 @@ include('glui/glui-lib.js');
         if (!App.isInitialized) {
             glui.scale.x = 0.6;
             glui.scale.y = 0.6;
-            glui.initialize(App, true);
+            await glui.initialize(App, true);
             await glui.setRenderingMode(glui.Render2d);
             App.isInitialized = true;
         }
@@ -672,7 +672,7 @@ include('glui/glui-lib.js');
         // test_clipping,
         // test_construct,
         // test_container,
-        // test_table,
+        test_table,
         //test_valueControls,
         test_render
     ];

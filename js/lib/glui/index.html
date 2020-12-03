@@ -23,7 +23,7 @@
             Dbg.prln('glUI test');
             glui.scale.x = 0.5;
             glui.scale.y = 0.5;
-            glui.initialize(App, true);
+            await glui.initialize(App, true);
             await glui.buildUI(App);
             glui.setRenderingMode(glui.Render2d);
             glui.render();

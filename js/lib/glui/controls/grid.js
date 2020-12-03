@@ -16,8 +16,10 @@ include('renderer2d.js');
         var ctx = buffer.context;
 
         var stepX = this.convertToPixel(ctrl.unitX) || 0;
+        stepX *= ctrl.scaleX;
         var stepX2 = stepX*stepX;
         var stepY = this.convertToPixel(ctrl.unitY, true) || 0;
+        stepY *= ctrl.scaleY;
         var stepY2 = stepY*stepY;
 
         ctx.globalAlpha = 0.8;
@@ -58,16 +60,18 @@ include('renderer2d.js');
         buffer.update(true);
         ctx.strokeStyle = c1;
         if (ctrl.curveMode == Grid.curveModes.LINE) {
-            buffer.drawCurve(ctrl.points.map(p => { return {'x': stepX*p.x, 'y': stepY*p.y};}), this.color);
-            //buffer.drawSegments(ctrl.points.map(p => { return {'x': stepX*p.x, 'y': stepY*p.y};}).sort((a,b) => a.x - b.x), this.color);
+            if (ctrl.points.length) {
+                //buffer.drawCurve(ctrl.points.map(p => { return {'x': stepX*p.x, 'y': stepY*p.y};}), this.color);
+                buffer.drawSegments(ctrl.points.map(p => { return {'x': stepX*p.x, 'y': stepY*p.y};}).sort((a,b) => a.x - b.x), this.color);
+            }
         }
         buffer.update();
 
-        var dx = Math.round(stepX/2), dy = Math.round(stepX/2);
         ctx.globalAlpha = 1.0;
+        var side = Math.min(stepX, stepY);
         for (var i=0; i<ctrl.points.length; i++) {
             ctx.fillStyle = i != ctrl.selected ? (i != ctrl.current ? c1 : c2) : c3;
-            ctx.fillRect(ctrl.points[i].x*stepX-dx, height-ctrl.points[i].y*stepY-dy, stepX, stepY);
+            ctx.fillRect(ctrl.points[i].x*stepX-side, height-ctrl.points[i].y*stepY-side, 2*side, 2*side);
         }
 
         glui.renderingContext.drawImage(buffer.canvas, 0, 0);
@@ -87,26 +91,28 @@ include('renderer2d.js');
         var template = Grid.base.getTemplate.call(this);
         template['unit-x'] = '10px';
         template['unit-x'] = '10px';
-        template['insert-mode'] = Grid.insertModes.FREE;
-        template['drag-mode'] = Grid.insertModes.FREE;
+        template['scale-x'] = 1;
+        template['scale-y'] = 1;
+        template['insert-mode'] = Grid.interactionModes.FREE;
+        template['drag-mode'] = Grid.interactionModes.FREE;
         template['curve-mode'] = Grid.curveModes.LINE;
         return template;
     };
     Grid.prototype.applyTemplate = function applyTemplate(tmpl) {
         var template = Grid.base.applyTemplate.call(this, tmpl);
-        this.unitX = tmpl['unit-x'];
-        this.unitY = tmpl['unit-y'];
+        this.scaleX = parseFloat(template['scale-x']);
+        this.scaleY = parseFloat(template['scale-y']);
 
         this.insertMode = 0;
         var tokens = tmpl['insert-mode'].split(' ');
         for (var i=0; i<tokens.length; i++) {
-            var v = Grid.insertModes[tokens[i].toUpperCase()];
+            var v = Grid.interactionModes[tokens[i].toUpperCase()];
             if (v != undefined) this.insertMode |= v;
         }
         this.dragMode = 0;
         tokens = tmpl['drag-mode'].split(' ');
         for (var i=0; i<tokens.length; i++) {
-            var v = Grid.insertModes[tokens[i].toUpperCase()];
+            var v = Grid.interactionModes[tokens[i].toUpperCase()];
             if (v != undefined) this.dragMode |= v;
         }
 
@@ -118,9 +124,11 @@ include('renderer2d.js');
         return template;
     };
     Grid.prototype.createRenderer = mode => mode == glui.Render2d ? new GridRenderer2d() : 'GridRenderer3d';
-    // Grid.prototype.setRenderer = async function(mode, context) {
-    //     await Grid.base.setRenderer.call(this, mode, context);
-    // };
+    Grid.prototype.setRenderer = async function(mode, context) {
+        await Grid.base.setRenderer.call(this, mode, context);
+        this.unitX = this.renderer.convertToPixel(this.template['unit-x']);
+        this.unitY = this.renderer.convertToPixel(this.template['unit-y'], true);
+    };
     Grid.prototype.getHandlers = function getHandlers() {
         var handlers = Grid.base.getHandlers();
         handlers.push(
@@ -134,7 +142,7 @@ include('renderer2d.js');
         Grid.base.dataBind.call(this, dataSource, dataField);
         // create points
         //this.points = [];
-        var source = this.dataSource[this.dataField];
+        var source = this.dataField ? this.dataSource[this.dataField] : dataSource;
         if (source && Array.isArray(source)) {
             for (var i=0; i<source.length;) {
                 var point = { 'x': 0, 'y': 0, 'value': 0 };
@@ -200,26 +208,30 @@ include('renderer2d.js');
         this.render();
     };
     Grid.prototype.ondragging = function ondragging(e) {
-        var bw = this.renderer.border.width;
-        if (e.control == this && this.selected != -1) {
-            var p = this.points[this.selected];
-            p.x = (e.controlX - bw + this.selectionOffset[0])/this.unitX;
-            p.y = (this.height - (e.controlY + bw) - this.selectionOffset[1])/this.unitY;
-            this.validate(this.selected, p);
-            this.cursor[0] = e.controlX;
-            this.cursor[1] = e.controlY;
-            this.render();
+        if (this.dragMode != Grid.interactionModes.NONE) {
+            var bw = this.renderer.border.width;
+            if (e.control == this && this.selected != -1) {
+                var p = this.points[this.selected];
+                p.x = (e.controlX - bw + this.selectionOffset[0])/this.unitX;
+                p.y = (this.height - (e.controlY + bw) - this.selectionOffset[1])/this.unitY;
+                this.validate(this.selected, p);
+                this.cursor[0] = e.controlX;
+                this.cursor[1] = e.controlY;
+                this.render();
+            }
         }
     };
-
+    Grid.prototype.render = function render() {
+        Grid.base.render.call(this);
+    };
     Grid.prototype.validate = function validate(ix, p) {
-        if ((this.dragMode & Grid.insertModes["X-BOUND"]) != 0) {
+        if ((this.dragMode & Grid.interactionModes["X-BOUND"]) != 0) {
             var x1 = ix > 0 ? this.points[ix-1].x : 0;
             var x2 = ix < this.points.length-1 ? this.points[ix+1].x : 0;
             if (p.x < x1) p.x = x1;
             if (p.x > x2) p.x = x2;
         }
-        if ((this.dragMode & Grid.insertModes["Y-BOUND"]) != 0) {
+        if ((this.dragMode & Grid.interactionModes["Y-BOUND"]) != 0) {
             var y1 = ix > 0 ? this.points[ix-1].y : 0;
             var y2 = ix < this.points.length-1 ? this.points[ix+1].y : 0;
             if (p.y < y1) p.y = y1;
@@ -228,21 +240,21 @@ include('renderer2d.js');
     };
 
     Grid.prototype.insertPoint = function insertPoint(x, y) {
-        if (this.insertMode != Grid.insertModes.NONE) {
+        if (this.insertMode != Grid.interactionModes.NONE) {
             var insertMode = this.insertMode;
             var insertPosition = -1;
-            if ((this.insertMode & Grid.insertModes["Y-BOUND"]) != 0) {
-                insertMode -= Grid.insertModes["Y-BOUND"];
+            if ((this.insertMode & Grid.interactionModes["Y-BOUND"]) != 0) {
+                insertMode -= Grid.interactionModes["Y-BOUND"];
                 var pi = this.points.findIndex(p => p.y >= y);
                 insertPosition = pi;
             }
-            if ((this.insertMode & Grid.insertModes["X-BOUND"]) != 0) {
-                insertMode -= Grid.insertModes["X-BOUND"];
+            if ((this.insertMode & Grid.interactionModes["X-BOUND"]) != 0) {
+                insertMode -= Grid.interactionModes["X-BOUND"];
                 var pi = this.points.findIndex(p => p.x >= x);
                 insertPosition = pi;
             }
-            if ((this.insertMode & Grid.insertModes.FREE) != 0) {
-                insertMode -= Grid.insertModes["FREE"];
+            if ((this.insertMode & Grid.interactionModes.FREE) != 0) {
+                insertMode -= Grid.interactionModes["FREE"];
             }
             if (insertMode != 0) {
                 console.warn(`Invalid insert mode '${this.insertMode}'`);
@@ -252,7 +264,7 @@ include('renderer2d.js');
         }
     };
 
-    Grid.insertModes = {
+    Grid.interactionModes = {
         'NONE': 0,
         'FREE': 1,
         'X-BOUND': 2,

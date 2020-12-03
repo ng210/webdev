@@ -100,24 +100,14 @@ include('glui.js');
             this.setPixel(x, y, color);
         }
     };
-    // Buffer.prototype.drawSegments = function drawSegments(points, color) {
-    //     for (var p = 0; p < points.length - 1; p++) {
-    //         var p1 = points[p], p2 = points[p+1];
-    //         var dx1 = p2.x - p1.x, dy1 = p2.y - p1.y;
-    //         var dx2 = dx1, dy2 = dy1;
-    //         if (p < points.length - 2) {
-    //             var p3 = points[p+2];
-    //             dx2 = p3.x - p2.x, dy2 = p3.y - p2.y;
-    //         }
-    //         var m1 = dy1/dx1, m2 = dy2/dx1;
-    //         var y = p1.y;
-    //         for (var x=0; x<dx1; x++) {
-    //             var f = x/dx1;
-    //             var y = (1-f)*m1*x + f*m2*x;
-    //             this.setPixel(x + p1.x, y + p1.y, color);
-    //         }
-    //     }
-    // };
+    Buffer.prototype.drawSegments = function drawSegments(points, color) {
+        var p1 = points[0];
+        for (var i=1; i<points.length; i++) {
+            var p2 = points[i];
+            this.drawLine(p1.x, p1.y, p2.x, p2.y, color);
+            p1 = p2;
+        }
+    };
 	Buffer.prototype.clear = function clear() {
 		this.context.clearRect(0, 0, this.width, this.height);
     };

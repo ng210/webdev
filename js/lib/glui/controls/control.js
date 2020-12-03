@@ -60,27 +60,6 @@ const DEBUG_EVENT = 'mouseout_|mouseover_';
         }
     });
 
-    Control.prototype.fromNode = function fromNode(node) {
-        var template = {};
-        for (var i in node.attributes) {
-            if (node.attributes.hasOwnProperty(i)) {
-                var name = node.attributes[i].name;
-                var value = node.attributes[i].value;
-                if (name == 'style') {
-                    var lines = value.split(';');
-                    value = {};
-                    for (var li=0; li<lines.length; li++) {
-                        var tokens = lines[li].split(':');
-                        value[tokens[0].trim()] = tokens[1].trim();
-                    }
-                }
-                template[name] = value;
-            }
-        }
-        template = this.applyTemplate(template);
-        // add event handlers
-        this.addHandlers(template);
-    };
     Control.prototype.destroy = function destroy() {
         delete this.renderer;
     };
@@ -337,9 +316,7 @@ const DEBUG_EVENT = 'mouseout_|mouseover_';
             
                 } else if (ctrl instanceof glui.Image) {
                     await ctrl.load();
-                }// else if (ctrl instanceof glui.Grid) {
-                //     await ctrl.build();
-                // }
+                }
                 if (!ctrl.renderer && parent.renderer) {
                     await ctrl.setRenderer(parent.renderer.mode, parent.renderer.context);
                 }
@@ -348,6 +325,34 @@ const DEBUG_EVENT = 'mouseout_|mouseover_';
             }
         }
         throw new Error(`Unknown control type ${type}`);
+    };
+    Control.fromNode = async function fromNode(node, type, context) {
+        var id = node.getAttribute('id');
+        var template = {
+            'type': type.name,
+            'style': {}
+        };
+        for (var i in node.attributes) {
+            if (node.attributes.hasOwnProperty(i)) {
+                var name = node.attributes[i].name;
+                if (name == 'id') continue;
+                var value = node.attributes[i].value;
+                if (name == 'style') {
+                    var lines = value.split(';');
+                    value = {};
+                    for (var li=0; li<lines.length; li++) {
+                        var tokens = lines[li].split(':');
+                        value[tokens[0].trim()] = tokens[1].trim();
+                    }
+                }
+                template[name] = value;
+            }
+        }
+        var parent = node.parentNode.control || null;
+        var control = await glui.create(id, template, parent, context);
+        node.control = control;
+        control.addHandlers();
+        return control;
     };
     Control.getStyleTemplate = function getStyleTemplate() {
         return {

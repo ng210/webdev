@@ -104,7 +104,7 @@ include('renderer2d.js');
         if (template.normalize) {
             this.normalize();
         }
-        this.isMultiline = template.isMultiline;
+        this.isMultiline = template['multi-line'] !== false;
         this.look = template.look;
         return template;
     };

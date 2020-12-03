@@ -16,6 +16,7 @@
         top: 0,
         width: 0,
         height: 0,
+        controlCount: 0,
 
         markedForRendering: {},
 
@@ -31,31 +32,26 @@
             }
             return type;
         },
-        fromNode: function fromNode(node, context) {
+        fromNode: async function fromNode(node, context) {
             var control = null;
             var type = this.getType(node.tagName);
             if (type) {
-                var control = Reflect.construct(type, []);
-                control.context = context || this.context;
-                control.fromNode(node);
-                control.addHandlers();
+                node.id = node.id || 'ctrl' + glui.controlCount;
+                control = await glui.Control.fromNode(node, type, context);
+                if (type == glui.Table) {
+                    await control.build();
+                }
             }            
             return control;
         },
         create: async function create(id, tmpl, parent, context) {
             var ctrl = await glui.Control.create(id, tmpl, parent || this.screen, context);
             ctrl.addHandlers();
+            this.controlCount++;
             return ctrl;
         },
         remove: function remove(control) {
             this.screen.remove(control);
-            // for (var i=0; i<this.controls.length; i++) {
-            //     if (this.controls[i] == control) {
-            //         this.controls.splice(i, 1);
-            //         control.destroy();
-            //         delete control;
-            //     }
-            // }
         },
         initialize: function initialize(app, isFullscreen) {
             document.body.style.display = 'block';
@@ -114,10 +110,7 @@
             var p = [];
             for (var i=0; i<nodes.length; i++) {
                 if (nodes[i].tagName.toLowerCase().startsWith('gl-')) {
-                    var control = this.fromNode(nodes[i], context || this.context);
-                    if (control) {
-                        p.push(this.screen.add(control));
-                    }
+                    var control = await this.fromNode(nodes[i], context || this.context);
                     document.body.removeChild(nodes[i]);
                 }
             }
