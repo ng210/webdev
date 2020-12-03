@@ -44,9 +44,9 @@ App.prototype.createUi = async function createUi() {
         'row-template': {
             //'no': { 'type': 'Label', 'style': { 'width':'2em', 'background': '#406080' } },
             'datum': { 'type': 'Textbox', 'multi-line': false, 'data-type': 'string', 'style': { 'width':'16em' } },
-            'sis': { 'type': 'Textbox', 'multi-line': false, 'data-type': 'int', 'style': { 'width':'4em' } },
-            'dias': { 'type': 'Textbox', 'multi-line': false, 'data-type': 'int', 'style': { 'width':'4em' } },
-            'puls': { 'type': 'Textbox', 'multi-line': false, 'data-type': 'int', 'style': { 'width':'3em' } },
+            'sis': { 'type': 'Textbox', 'multi-line': false, 'max':300, 'data-type': 'int', 'style': { 'width':'4em' } },
+            'dias': { 'type': 'Textbox', 'multi-line': false, 'max':300, 'data-type': 'int', 'style': { 'width':'4em' } },
+            'puls': { 'type': 'Textbox', 'multi-line': false, 'max':300, 'data-type': 'int', 'style': { 'width':'3em' } },
         }
     }, this.ui, this);
 
