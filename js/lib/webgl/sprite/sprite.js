@@ -186,7 +186,7 @@ include('/player/player-lib.js');
                 this.spriteAttributeData[spr.offset+ 2] = spr.position.z;
                 this.spriteAttributeData[spr.offset+ 3] = spr.scale.x * this.map.data[frameOffset+4];
                 this.spriteAttributeData[spr.offset+ 4] = spr.scale.y * this.map.data[frameOffset+5];
-                this.spriteAttributeData[spr.offset+ 5] = spr.rotationZ
+                this.spriteAttributeData[spr.offset+ 5] = spr.rotationZ;
                 this.spriteAttributeData[spr.offset+ 6] = this.map.data[frameOffset+0];
                 this.spriteAttributeData[spr.offset+ 7] = this.map.data[frameOffset+1];
                 this.spriteAttributeData[spr.offset+ 8] = this.map.data[frameOffset+2];

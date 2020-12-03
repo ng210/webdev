@@ -38,6 +38,7 @@ include('syntax.js');
     };
 
     function test_syntax() {
+        message('Test syntax', 1);
         var results = [
             'Test syntax'
         ];

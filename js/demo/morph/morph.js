@@ -180,10 +180,10 @@ include('webgl/webgl.js');
     Morph.prototype.destroy = function destroy() {
         document.body.removeChild(this.canvas);
         delete this.canvas;
-        glui.canvas.style.background = this.originalBackgroundColor;
-        gl.deleteBuffer(this.vertices);
-        gl.deleteBuffer(this.indices1);
-        gl.deleteBuffer(this.indices2);
+        glui.canvas.style.backgroundColor = this.originalBackgroundColor;
+        webGL.deleteBuffer(this.vertices);
+        webGL.deleteBuffer(this.indices1);
+        webGL.deleteBuffer(this.indices2);
     };
     Morph.prototype.resize = function resize(e) {
         var aspect = glui.width / glui.height;
