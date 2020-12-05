@@ -194,7 +194,6 @@ var DemoMgr = {
                 this.render(this.frame, dt/1000);
                 this.time = new Date().getTime();
                 this.frame++;
-                glui.screen.renderer.render();
             }
             if (this.fpsCounter == 20) {
                 this.fpsCounter = 0;
@@ -204,20 +203,29 @@ var DemoMgr = {
             this.fpsCounter++;
             this.animationId = requestAnimationFrame( () => DemoMgr.run());
         });
-        glui.render();
+        glui.screen.renderer.render();
+        //glui.render();
     },
     render: function render(frame, dt) {
+
+        glui.clearRect();
         if (this.demo) {
             this.demo.update(frame, dt);
             this.demo.render(frame);
-        } else {
-            glui.renderingContext2d.clearRect(0, 0, glui.width, glui.height);   //fillRect(0, 0, glui.width, glui.height);
         }
+        glui.animate();
+        //glui.screen.renderer.render();
+
+        // if (this.demo) {
+        //     this.demo.update(frame, dt);
+        //     this.demo.render(frame);
+        // } else {
+        //     glui.renderingContext2d.clearRect(0, 0, glui.width, glui.height);   //fillRect(0, 0, glui.width, glui.height);
+        // }
     },
     resize: function resize(e) {
         if (this.demo) {
             this.demo.resize();
-            this.demo.render(this.frame, 0);
             var top = 20, left = glui.width - Math.max(this.controls.title.width, this.controls.settings.width) - 20;
             var width = Math.max(this.controls.title.width, this.controls.settings.width, this.controls.start.width);
             this.controls.title.move(left + (width - this.controls.title.width)/2, top);
@@ -227,7 +235,7 @@ var DemoMgr = {
             this.controls.start.move(left + (width - this.controls.start.width)/2, top);
         }
         //this.demoList.height = this.demoList.collapsed ? this.demoList.titlebar.height : 0;
-        glui.screen.renderer.render();
+        //this.render(this.frame, 0);
     },
     toggleDemoList: function toggleDemoList() {
         if (!this.demoList.collapsed) {

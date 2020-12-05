@@ -12,5 +12,6 @@
     { "label": "Heroes", "path": "heroes/heroes.js" },
     { "label": "Morph", "path": "morph/morph.js" },
     { "label": "Synth", "path": "synth/synth.js" },
-    { "label": "Emitter", "path": "emitter/emitter.js" }
+    { "label": "Emitter", "path": "emitter/emitter.js" },
+    { "label": "Mosaic", "path": "mosaic/mosaic.js" }
 ]

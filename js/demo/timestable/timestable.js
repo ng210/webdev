@@ -18,7 +18,7 @@ include('glui/glui-lib.js');
             count: { label: 'Count (N)', value: 200, min:10, max:5000, step: 1, type: 'int' },
             times: { label: 'Times (T)', value: 2, min:0, max:199, type: 'int' },
             radius: { label: 'Radius', value: 0.4, min:0.1, max:0.5, step: 0.01, type: 'float' },
-            delta: { label: 'Delta', value: 0.01, min:0.001, max:0.1, step: 0.001, type: 'float' },
+            delta: { label: 'Delta', value: 0.01, min:0.0, max:0.1, step: 0.001, type: 'float' },
             gradient: { label: 'Gradient', value: 0.2, min:0.01, max:2.0, step: 0.01, type: 'float' },
             range: { label: 'Range', value: 0.3, min:0.01, max:1.0, step: 0.01, type: 'float' }
         });
@@ -32,15 +32,15 @@ include('glui/glui-lib.js');
         this.min = Math.min(glui.canvas.width, glui.canvas.height);
         this.cx = 0.5*glui.canvas.width, this.cy = 0.5*glui.canvas.height;
     };
-    Timestable.prototype.update = function update(frame) {
+    Timestable.prototype.update = function update(frame, dt) {
         var gradient = this.settings.gradient.value + this.settings.delta.value;
         if (gradient > 2) gradient -= 2;
         this.settings.gradient.control.setValue(gradient);
-        var times = this.settings.times.value + this.settings.delta.value;
+        var times = this.settings.times.value + 20*this.settings.delta.value*dt;
         if (times > this.settings.count.value) times -= this.settings.count.value;
         this.settings.times.control.setValue(times);
     };
-    Timestable.prototype.render = function render(frame) {
+    Timestable.prototype.render = function render(frame, dt) {
         var ctx = glui.renderingContext2d;
         ctx.fillStyle = '#203040';
         ctx.globalAlpha = 0.2;

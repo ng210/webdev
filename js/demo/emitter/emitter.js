@@ -1,34 +1,12 @@
 include('glui/glui-lib.js');
+include('glui/misc/roaming-unit.js');
 include('webgl/sprite/sprite.js');
 (function() {
 
     const MAX_EMITTER_COUNT = 10;
 
-    function RoamingUnit(speed, variance) {
-        this.speed = speed;
-        this.variance = variance;
-        this.velocity = new V2();
-        this.velocity1 = new V2();
-        this.velocity2 = new V2();
-        this.ttl = 0;
-    }
-
-    RoamingUnit.prototype.update = function romaing_update(dt) {
-        if (this.ttl > 0) {
-            var f = this.ttl;    //Math.sin(0.5*Math.PI*ttl);
-            this.velocity.x = Fn.lerp(this.velocity2.x, this.velocity1.x, f);
-            this.velocity.y = Fn.lerp(this.velocity2.y, this.velocity1.y, f);
-            this.ttl -= this.variance;
-        } else {
-            this.ttl = 0.5 + 0.5*Math.random();
-            this.velocity1 = this.velocity2;
-            this.velocity2 = V2.fromPolar(2*Math.PI*Math.random(), this.speed*(1 + Math.random()));
-        }
-
-    };
-
     function Particle(obj) {
-        this.roaming = new RoamingUnit(1, 0.5);
+        this.roaming = new RoamingUnit(0, 0.0);
         this.obj = obj;
         this.acc = new V3();
         this.velocity = new V3();
@@ -55,8 +33,13 @@ include('webgl/sprite/sprite.js');
             var ds = this.velocity.prodC(dt);
             this.obj.position.add(ds);
             this.obj.isDirty = true;
-            this.obj.setRotationZ(this.obj.rotationZ + this.angularSpeed*dt);
-            this.obj.alpha = this.lifeSpan/this.initLifeSpan;
+            var f = this.lifeSpan/this.initLifeSpan;
+            this.obj.setRotationZ(this.obj.rotationZ + this.angularSpeed*dt*f);
+            f *= f;
+            this.obj.color[3] = f;
+            f = 40*(1 - f) + 1;
+            this.obj.scale[0] = f;
+            this.obj.scale[1] = f;
         } else {
             this.obj.position.x = -10000;
             this.obj.isDirty = true;
@@ -70,8 +53,6 @@ include('webgl/sprite/sprite.js');
         this.roaming = new RoamingUnit(0, 0);
         this.period = 1;
         this.thrust = 10;
-        this.speed = 0;
-        this.variance = 0;
         this.size = 1.0;
         this.lifeSpan = 100;
         this.count = count;
@@ -81,27 +62,31 @@ include('webgl/sprite/sprite.js');
             this.particles[i].obj.position.x = -10000;
         }
         this.time = 0;
+        this.lastTime = 0;
         this.totalTime = 0;
         this.runningIndex = 0;
     }
     Emitter.prototype.update = function update(frame, dt, setParticle) {
         this.time += dt;
-        this.totalTime += dt;
         if (this.isActive) {
             this.roaming.update(dt);
             this.position.add(this.roaming.velocity.prodC(dt));
             this.checkAndBounce();
+            var t = 0;
             while (this.time > this.period) {
                 this.time -= this.period;
+                t += this.period;
                 // emit (reset) particle
                 this.runningIndex = (this.runningIndex + 1) % this.count;
                 var p = this.particles[this.runningIndex];
                 p.obj.setScale([this.size, this.size, 1]);
-                setParticle(p, this.runningIndex, this, frame, dt)
+                setParticle(p, this.runningIndex, this, frame, t)
             }
         }
+        this.totalTime += dt;        
         for (var i=0; i<this.count; i++) {
             this.particles[i].update(dt);
+            this.particles[i].obj.scale.scale(this.size);
         }
     };
     Emitter.prototype.set = function emitter_set(updateParticles) {
@@ -110,7 +95,8 @@ include('webgl/sprite/sprite.js');
         if (updateParticles) {
             for (var j=0; j<this.particles.length; j++) {
                 this.particles[j].obj.setScale([this.size, this.size, 1]);
-                // variance2, speed2 ?
+                this.particles[j].roaming.speed = this.pspeed;
+                this.particles[j].roaming.variance = this.pvariance;
             }
         }
     };
@@ -149,17 +135,19 @@ include('webgl/sprite/sprite.js');
 
     function EmitterDemo() {
         Demo.call(this, 'EmitterDemo', {
-            count: { label: 'Count', value: 1000, min:1, max:4000, step: 20, type: 'int' },
+            count: { label: 'Count', value: 1500, min:1, max:4000, step: 20, type: 'int' },
             //alpha: { label: 'Alpha', value: 1, min:0, max:1, step: 0.05, type: 'float' },
             //force: { label: 'Force', value: 0, min:-1, max:1, step: 0.01, type: 'float' },
             freq: { label: 'Frequency', value: 100.0, min:0.1, max:200, step: 10.0, type: 'float' },
-            thrust: { label: 'Thrust', value: 20.0, min:10, max:400, normalized: true, step: 10.0, type: 'float' },
-            size: { label: 'Size', value: 0.25, min:0.01, max:0.5, step: 0.01, normalized: true, type: 'float' },
-            rotation: { label: 'rotation', value: 8.0, min:0, max:100, step: 1.0, type: 'float' },
-            lifeSpan: { label: 'Life', value: 4.0, min:1.0, max:100, step: 5, type: 'float' },
+            thrust: { label: 'Thrust', value: 40.0, min:10, max:200, normalized: true, step: 10.0, type: 'float' },
+            size: { label: 'Size', value: 0.05, min:0.01, max:0.3, step: 0.01, normalized: true, type: 'float' },
+            rotation: { label: 'Rotation', value: 8.0, min:0, max:100, step: 1.0, type: 'float' },
             emission: { label: 'Emission', value: 1, min:0, max:1, step: 1, type: 'int' },
-            speed: { label: 'Speed', value: 0.2, min:0, max:1, step: 0.01, type: 'float' },
-            variance: { label: 'Variance', value: 0.01, min:0, max:0.5, step: 0.01, normalized: true, type: 'float' }
+            espeed: { label: 'Emit. Speed', value: 0.2, min:0, max:1, step: 0.01, type: 'float' },
+            evariance: { label: 'Emit. Variance', value: 0.01, min:0, max:0.5, step: 0.01, normalized: true, type: 'float' },
+            lifeSpan: { label: 'Life', value: 10.0, min:1.0, max:30, step: 1, type: 'float' },
+            pspeed: { label: 'Part. Speed', value: 0.5, min:0, max:1, step: 0.01, type: 'float' },
+            pvariance: { label: 'Part. Variance', value: 0.4, min:0, max:0.5, step: 0.01, normalized: true, type: 'float' }
         });
         // custom variables
         this.emitters = null;
@@ -182,7 +170,8 @@ include('webgl/sprite/sprite.js');
         glui.canvas.style.backgroundColor = 'transparent';
         if (Emitter.sprMgr == null) {
             Emitter.sprMgr = new webGL.SpriteManager();
-            await Emitter.sprMgr.initialize('/demo/emitter/particles.spr.json', this.settings.count.max*MAX_EMITTER_COUNT);
+            //await Emitter.sprMgr.initialize('/demo/data/particles.spr.json', this.settings.count.max*MAX_EMITTER_COUNT);
+            await Emitter.sprMgr.initialize('/demo/data/particles.spr.json', this.settings.count.max*MAX_EMITTER_COUNT);
             M44.identity(Emitter.sprMgr.projection);
             Emitter.sprMgr.projection[0] = 1/gl.canvas.width;
             Emitter.sprMgr.projection[5] = 1/gl.canvas.height;
@@ -193,8 +182,8 @@ include('webgl/sprite/sprite.js');
             e.setCount(this.settings.count.value);
             e.position.set([0, 0, 0]);
             e.thrust = this.settings.thrust.value;
-            e.variance = this.settings.variance.value;
-            e.speed = this.settings.speed.value;
+            e.variance = this.settings.evariance.value;
+            e.speed = this.settings.espeed.value;
             e.period = 1/this.settings.freq.value;
             e.size = this.settings.size.value
             e.lifeSpan = this.settings.lifeSpan.value;
@@ -225,7 +214,7 @@ include('webgl/sprite/sprite.js');
         }
     };
     EmitterDemo.prototype.render = function render(frame, dt) {
-        gl.clearColor(0.8, 0.8, 0.8, 1.0);
+        gl.clearColor(0.01, 0.02, 0.1, 1.0);
         Emitter.sprMgr.update();
         Emitter.sprMgr.render();
     };
@@ -233,8 +222,10 @@ include('webgl/sprite/sprite.js');
         for (var i=0; i<MAX_EMITTER_COUNT; i++) {
             var e = this.emitters[i];
             e.thrust = this.settings.thrust.value;
-            e.variance = this.settings.variance.value;
-            e.speed = this.settings.speed.value * (gl.canvas.width + gl.canvas.height)/4;
+            e.variance = this.settings.evariance.value;
+            e.speed = this.settings.espeed.value * (gl.canvas.width + gl.canvas.height)/4;
+            e.pvariance = this.settings.pvariance.value;
+            e.pspeed = this.settings.pspeed.value * (gl.canvas.width + gl.canvas.height)/400;
             e.period = 1/this.settings.freq.value;
             e.lifeSpan = this.settings.lifeSpan.value;
             e.size = this.settings.size.value;
@@ -252,14 +243,16 @@ include('webgl/sprite/sprite.js');
             case 'rotation':
                 this.angularSpeed = 2*Math.PI*setting.value;
                 break;
+            case 'pvariance':
+            case 'pspeed':
             case 'size':
                 this.updateEmitters(true);
                 break;
             case 'freq':
             case 'thrust':
             case 'lifeSpan':
-            case 'variance':
-            case 'speed':
+            case 'evariance':
+            case 'espeed':
                 this.updateEmitters(false);
                 break;
         }
@@ -304,7 +297,7 @@ include('webgl/sprite/sprite.js');
             particle.set(emitter.position, V3.fromPolar(2*Math.PI*Math.random(), 0, emitter.thrust*0.5*Math.random()+0.5), [0,0], emitter.lifeSpan);
         },
         function radialEmission(particle, ix, emitter, frame, dt) {
-            particle.set(emitter.position, V3.fromPolar(this.angularSpeed*emitter.totalTime, 0, emitter.thrust), [0,0], emitter.lifeSpan);
+            particle.set(emitter.position, V3.fromPolar(this.angularSpeed*(emitter.totalTime+dt), 0, emitter.thrust), [0,0], emitter.lifeSpan);
         }
     ];
 

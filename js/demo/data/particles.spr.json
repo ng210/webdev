@@ -1,5 +1,5 @@
 {
-    "image": "/demo/emitter/particles.png",
+    "image": "/demo/data/noise.png",
     "frames": [
         [0,0, 63,63],
         [64,0, 127,63],
