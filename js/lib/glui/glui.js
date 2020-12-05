@@ -142,6 +142,13 @@
             //     ctrl = ctrl.parent;
             // }            
         },
+        clearRect: function clearRect(left, top, width, height) {
+            left = left || 0;
+            top = top || 0;
+            width = width || this.canvas.width;
+            height = height || this.canvas.height;
+            this.renderingContext2d.clearRect(left, top, width, height);
+        },
         repaint: function repaint() {
             this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
             this.screen.renderer.render();

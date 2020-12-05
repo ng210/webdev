@@ -93,44 +93,46 @@ include('renderer.js');
     Renderer2d.prototype.render = function render() {
         var ctrl = this.control;
         if (ctrl.style.visible) {
-            this.context.save();
-            // set clipping area
-            var region = new Path2D();
             var rect = ctrl.getClippingRect();
-            this.context.setTransform(1, 0, 0, 1, rect[0], rect[1]);
-            region.rect(0, 0, rect[2], rect[3]);
-            this.context.clip(region);
-            if (this.backgroundColor) this.drawRect(0, 0, ctrl.width, ctrl.height, this.backgroundColor);
-            if (this.backgroundImage) {
-                this.drawImage(this.backgroundImage, 0, 0);
-            }
+            if (rect != null) {
+                this.context.save();
+                // set clipping area
+                var region = new Path2D();
+                this.context.setTransform(1, 0, 0, 1, rect[0], rect[1]);
+                region.rect(0, 0, rect[2], rect[3]);
+                this.context.clip(region);
+                if (this.backgroundColor) this.drawRect(0, 0, ctrl.width, ctrl.height, this.backgroundColor);
+                if (this.backgroundImage) {
+                    this.drawImage(this.backgroundImage, 0, 0);
+                }
 
-            var width = ctrl.width;
-            var height = ctrl.height;
-            if (this.border.style) {
-                this.drawBorder(0, 0, ctrl.width, ctrl.height);
-                width -= 2*this.border.width;
-                height -= 2*this.border.width;
-            }
-            if (ctrl.innerWidth > ctrl.width) {
-                // draw x-scrollbar
-                width -= 16;
-            }
-            if (ctrl.innerHeight > ctrl.height) {
-                // draw y-scrollbar
-                height -= 16;
-            }
-            // render control
-            if (ctrl.style.font) this.setFont(ctrl.style.font);
-            var bw = this.border.width;
-            rect[0] += bw; rect[1] += bw;
-            rect[2] -= 2*bw; rect[3] -= 2*bw;
-            this.context.setTransform(1, 0, 0, 1, rect[0], rect[1]);
-            region = new Path2D();
-            region.rect(0, 0, rect[2], rect[3]);
-            this.context.clip(region);
-            this.renderControl();
-            this.context.restore();
+                var width = ctrl.width;
+                var height = ctrl.height;
+                if (this.border.style) {
+                    this.drawBorder(0, 0, ctrl.width, ctrl.height);
+                    width -= 2*this.border.width;
+                    height -= 2*this.border.width;
+                }
+                if (ctrl.innerWidth > ctrl.width) {
+                    // draw x-scrollbar
+                    width -= 16;
+                }
+                if (ctrl.innerHeight > ctrl.height) {
+                    // draw y-scrollbar
+                    height -= 16;
+                }
+                // render control
+                if (ctrl.style.font) this.setFont(ctrl.style.font);
+                var bw = this.border.width;
+                rect[0] += bw; rect[1] += bw;
+                rect[2] -= 2*bw; rect[3] -= 2*bw;
+                this.context.setTransform(1, 0, 0, 1, rect[0], rect[1]);
+                region = new Path2D();
+                region.rect(0, 0, rect[2], rect[3]);
+                this.context.clip(region);
+                this.renderControl();
+                this.context.restore();
+            }            
         }
     };
 
