@@ -62,30 +62,30 @@ include('glui.js');
         this.imgData.data[ix+2] = color[2];
         //this.imgData[] = ;
     };
-    Buffer.prototype.drawLine = function drawLine(x1, y1, x2, y2, color) {
-        var dx = Math.abs(x2 - x1), dy = Math.abs(y2 - y1);
-        if (dx > dy) {
-            if (x1 > x2) {
-                var tx = x1; x1 = x2; x2 = tx;
-                var ty = y1; y1 = y2; y2 = ty;
-            }
-            dy = y2 - y1;
-            for (var x=0; x<dx; x++) {
-                var y = Math.floor(dy*x/dx + y1);
-                this.setPixel(x+x1, y, color);
-            }
-        } else {
-            if (y1 > y2) {
-                var tx = x1; x1 = x2; x2 = tx;
-                var ty = y1; y1 = y2; y2 = ty;
-            }
-            dx = x2 - x1;
-            for (var y=0; y<dy; y++) {
-                var x = Math.floor(dx*y/dy + x1);
-                this.setPixel(x, y+y1, color);
-            }
-        }
-    };
+    // Buffer.prototype.drawLine = function drawLine(x1, y1, x2, y2, color) {
+    //     var dx = Math.abs(x2 - x1), dy = Math.abs(y2 - y1);
+    //     if (dx > dy) {
+    //         if (x1 > x2) {
+    //             var tx = x1; x1 = x2; x2 = tx;
+    //             var ty = y1; y1 = y2; y2 = ty;
+    //         }
+    //         dy = y2 - y1;
+    //         for (var x=0; x<dx; x++) {
+    //             var y = Math.floor(dy*x/dx + y1);
+    //             this.setPixel(x+x1, y, color);
+    //         }
+    //     } else {
+    //         if (y1 > y2) {
+    //             var tx = x1; x1 = x2; x2 = tx;
+    //             var ty = y1; y1 = y2; y2 = ty;
+    //         }
+    //         dx = x2 - x1;
+    //         for (var y=0; y<dy; y++) {
+    //             var x = Math.floor(dx*y/dy + x1);
+    //             this.setPixel(x, y+y1, color);
+    //         }
+    //     }
+    // };
     Buffer.prototype.drawCurve = function drawCurve(points, color) {
         var n = points.length;
         for (var x = points[0].x; x < points[n-1].x; x++) {
@@ -102,13 +102,19 @@ include('glui.js');
             this.setPixel(x, y, color);
         }
     };
-    Buffer.prototype.drawSegments = function drawSegments(points, color) {
-        var p1 = points[0];
+    Buffer.prototype.drawSegments = function drawSegments(points, col3) {
+        col3[3] = col3[3] != undefined ? col3[3] : 255;
+        var color = `rgb(${col3[0]}, ${col3[1]}, ${col3[2]}, ${col3[3]})`
+        this.context.strokeStyle = color;
+        var p = points[0];
+        this.context.lineWidth = 10;
+        this.context.moveTo(p.x, p.y);
         for (var i=1; i<points.length; i++) {
-            var p2 = points[i];
-            this.drawLine(p1.x, p1.y, p2.x, p2.y, color);
-            p1 = p2;
+            p = points[i];
+console.log(p.x, p.y, color);
+            this.context.lineTo(p.x, p.y);
         }
+        this.context.stroke();
     };
 	Buffer.prototype.clear = function clear() {
 		this.context.clearRect(0, 0, this.width, this.height);

@@ -23,6 +23,8 @@
         animations: [],
         animateId: 0,
 
+        keys: {},
+
         getType: function getType(tagName) {
             var type = null;
             var name = tagName.toLowerCase().split('gl-')[1];
@@ -241,8 +243,8 @@
                 }
                 if (glui.focusedControl) {
                     glui.dragging = glui.focusedControl;
-                    glui.dragStart[0] = e.screenX;
-                    glui.dragStart[1] = e.screenY;
+                    glui.dragStartX = glui.dragX = e.screenX;
+                    glui.dragStartY = glui.dragY = e.screenY;
                 }
             } else if (event == 'mousemove') {
                 if (glui.dragging) {
@@ -255,13 +257,17 @@
                         clientY: e.clientY,
                         controlX: Math.round(glui.scale.x*e.clientX - control.left_),
                         controlY: Math.round(glui.scale.y*e.clientY - control.top_),
-                        deltaX: e.screenX - glui.dragStart[0],
-                        deltaY: e.screenY - glui.dragStart[1]
+                        startX: glui.dragStartX,
+                        startY: glui.dragStartY,
+                        deltaX: e.screenX - glui.dragX,
+                        deltaY: e.screenY - glui.dragY
                     };
-    
+                    if (glui.keys[16]) draggingEvent.shiftKey = true;
+                    if (glui.keys[18]) draggingEvent.altKey = true;
+                    if (glui.keys[17]) draggingEvent.ctrlKey = true;
                     glui.dragging.callHandler('dragging', draggingEvent);
-                    glui.dragStart[0] = e.screenX;
-                    glui.dragStart[1] = e.screenY;
+                    glui.dragX = e.screenX;
+                    glui.dragY = e.screenY;
                     return;
                 }
 
@@ -282,8 +288,12 @@
                 }
             }
     
-            if (control == glui.screen && (event == 'keydown' || event == 'keyup')) {
-                control = glui.focusedControl;
+            if (event == 'keydown' || event == 'keyup') {
+                glui.keys[e.keyCode] = event == 'keydown';
+                // console.log(e.keyCode, e.key);
+                if (control == glui.screen) {
+                    control = glui.focusedControl;
+                }
             }
 
             if (control) {
@@ -297,7 +307,10 @@
         focused: null,
         atCursor: null,
         dragging: null,
-        dragStart: [0, 0],    
+        dragStartX: 0,
+        dragStartY: 0,    
+        dragX: 0,
+        dragY: 0,
 
         Alignment: {
             LEFT: 1,

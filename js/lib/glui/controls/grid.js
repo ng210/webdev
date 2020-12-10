@@ -9,73 +9,73 @@ include('renderer2d.js');
 
     GridRenderer2d.prototype.renderControl = function renderControl() {
         var ctrl = this.control;
+        var ctx = this.context;
+        var x0 = ctrl.scrollLeft;
+        var y0 = ctrl.scrollTop;
         var bw = this.border.width;
         var width = ctrl.width - 2*bw, height = ctrl.height - 2*bw;
-        var buffer = new glui.Buffer(width, height);
-        buffer.blit(glui, ctrl.left+bw, ctrl.top+bw, width, height);
-        var ctx = buffer.context;
+        var stepX = ctrl.stepX;
+        var stepX2 = ctrl.stepX2;
+        var stepY = ctrl.stepY;
+        var stepY2 = ctrl.stepY2;
 
-        var stepX = this.convertToPixel(ctrl.unitX) || 0;
-        stepX *= ctrl.scaleX;
-        var stepX2 = stepX*stepX;
-        var stepY = this.convertToPixel(ctrl.unitY, true) || 0;
-        stepY *= ctrl.scaleY;
-        var stepY2 = stepY*stepY;
-
-        ctx.globalAlpha = 0.8;
-        var c1 = this.toCssColor(this.calculateColor(this.backgroundColor, 1.2));
-        var c2 = this.toCssColor(this.calculateColor(this.backgroundColor, 1.4));
-        var c3 = this.toCssColor(this.calculateColor(this.backgroundColor, 1.6));
+        // draw grid
+        ctx.globalAlpha = 1.0;
+        var c1 = this.toCssColor(this.calculateColor(this.backgroundColor, 1.5));
+        var c2 = this.toCssColor(this.calculateColor(this.backgroundColor, 2.25));
+        var c3 = this.toCssColor(this.calculateColor(this.backgroundColor, 5.0));
         if (stepY) {
-            var iy = 0;
-            for (var y=0; y<height; y += stepY) {
-                ctx.strokeStyle = iy % stepY ? c1 : iy % stepY2 ? c2 : c3;
+            var y = -stepY - (y0 % stepY);
+            for (; y<height; y+=stepY) {
+                var dy = y + y0;
+                ctx.strokeStyle = dy != 0 ? (dy % stepY2 ? c1 : c2) : c3;
                 ctx.beginPath();
                 ctx.moveTo(0, height-y); ctx.lineTo(width, height-y);
                 ctx.stroke();
-                iy++;
             }
         }
         if (stepX) {
-            var ix = 0;
-            for (var x=0; x<width; x += stepX) {
-                ctx.strokeStyle = ix % stepX ? c1 : ix % stepX2 ? c2 : c3;
+            var x = x0 % stepX;
+            for (; x<width; x+=stepX) {
+                var dx = x - x0;
+                ctx.strokeStyle = dx != 0 ? (dx % stepX2 ? c1 : c2) : c3;
                 ctx.beginPath();
                 ctx.moveTo(x, 0); ctx.lineTo(x, height);
                 ctx.stroke();
-                ix++;
             }
         }
+
+        // draw cursor
         ctx.globalAlpha = 0.6;
         ctx.beginPath();
-        ctx.strokeStyle = this.toCssColor(this.calculateColor(this.backgroundColor, 2.0));
+        ctx.strokeStyle = this.toCssColor(this.calculateColor(this.backgroundColor, 2.0));;
         ctx.moveTo(ctrl.cursor[0], 0); ctx.lineTo(ctrl.cursor[0], height);
         ctx.moveTo(0, ctrl.cursor[1]); ctx.lineTo(width, ctrl.cursor[1]);
         ctx.stroke();
 
+        // draw lines
+        ctx.globalAlpha = 0.5;
+        var color =this.toCssColor(this.color);
+        ctx.strokeStyle = color;
+        var p = ctrl.points[0];
+        ctx.moveTo(x0+stepX*p.x, height + y0 - stepY*p.y);
+        for (var i=1; i<ctrl.points.length; i++) {
+            p = ctrl.points[i];
+            ctx.lineTo(x0+stepX*p.x, height + y0 - stepY*p.y);
+        }
+        ctx.stroke();
+
+        // draw points
+        ctx.globalAlpha = 0.8;
         c1 = this.toCssColor(this.color);
         c2 = this.toCssColor(this.calculateColor(this.color, 1.4));
-        c3 = this.toCssColor(this.calculateColor(this.color, 1.8));
-
-        buffer.update(true);
-        ctx.strokeStyle = c1;
-        if (ctrl.curveMode == Grid.curveModes.LINE) {
-            if (ctrl.points.length) {
-                //buffer.drawCurve(ctrl.points.map(p => { return {'x': stepX*p.x, 'y': stepY*p.y};}), this.color);
-                buffer.drawSegments(ctrl.points.map(p => { return {'x': stepX*p.x, 'y': stepY*p.y};}).sort((a,b) => a.x - b.x), this.color);
-            }
-        }
-        buffer.update();
-
-        ctx.globalAlpha = 1.0;
-        var side = Math.min(stepX, stepY);
+        var c3 = this.toCssColor(this.calculateColor(this.color, 1.8));
+        var size = 0.4*Math.min(stepX, stepY);
         for (var i=0; i<ctrl.points.length; i++) {
+            p = ctrl.points[i];
             ctx.fillStyle = i != ctrl.selected ? (i != ctrl.current ? c1 : c2) : c3;
-            ctx.fillRect(ctrl.points[i].x*stepX-side, height-ctrl.points[i].y*stepY-side, 2*side, 2*side);
+            ctx.fillRect(x0+stepX*p.x - size, height + y0 - stepY*p.y - size, 2*size, 2*size);
         }
-
-        glui.renderingContext.drawImage(buffer.canvas, 0, 0);
-        glui.Buffer.dispose(buffer);
     };
 
     function Grid(id, template, parent, context) {
@@ -83,6 +83,7 @@ include('renderer2d.js');
         this.points = [];
         this.selected = -1;
         this.selectionOffset = [];
+        this.lockedDirection = 0;
         Grid.base.constructor.call(this, id, template, parent, context);
     }
     extend(glui.Control, Grid);
@@ -128,10 +129,15 @@ include('renderer2d.js');
         await Grid.base.setRenderer.call(this, mode, context);
         this.unitX = this.renderer.convertToPixel(this.template['unit-x']);
         this.unitY = this.renderer.convertToPixel(this.template['unit-y'], true);
+        // set scale
+        this.setScale();
     };
     Grid.prototype.getHandlers = function getHandlers() {
         var handlers = Grid.base.getHandlers();
         handlers.push(
+            { name: 'keyup', topDown: false },
+            { name: 'keydown', topDown: false },
+            { name: 'mouseup', topDown: false },
             { name: 'mousedown', topDown: false },
             { name: 'dragging', topDown: false },
             { name: 'mousemove', topDown: false }
@@ -171,55 +177,24 @@ include('renderer2d.js');
             }
         }
     };
-    Grid.prototype.onmousemove = function onmousemove(e) {
-        this.cursor[0] = e.controlX;
-        this.cursor[1] = e.controlY;
-        var bw = this.renderer.border.width;
-        var pi = this.getPointIndexAt(e.controlX - bw, e.controlY + bw);
-        this.current = pi;
-        this.render();
-    };
     Grid.prototype.getPointIndexAt = function getPointIndexAt(x, y, offset) {
         var bw = this.renderer.border.width;
         var height = this.height - 0*bw;
-        var cx = x/this.unitX;
-        var cy = (height - y)/this.unitY;
+        var cx = x/this.stepX;
+        var cy = (height - y)/this.stepY;
         var x1 = cx - 0.5, x2 = cx + 0.5;
         var y1 = cy - 0.5, y2 = cy + 0.5;
         for (var i=0; i<this.points.length; i++) {
             var px = this.points[i].x, py = this.points[i].y;
             if (px > x1 && px < x2 && py > y1 && py < y2) {
                 if (offset) {
-                    offset[0] = px*this.unitX - x;
-                    offset[1] = height - py*this.unitY - y;
+                    offset[0] = px*this.stepX - x;
+                    offset[1] = height - py*this.stepY - y;
                 }
                 return i;
             }
         }
         return -1;
-    };
-    Grid.prototype.onmousedown = function onmousedown(e) {
-        var bw = this.renderer.border.width;
-        var x = e.controlX - bw, y = e.controlY + bw;
-        this.selected = this.getPointIndexAt(x, y, this.selectionOffset);
-        if (e.ctrlKey) {
-            this.insertPoint((e.controlX - bw)/this.unitX, (this.height - (e.controlY + bw))/this.unitY);
-        }
-        this.render();
-    };
-    Grid.prototype.ondragging = function ondragging(e) {
-        if (this.dragMode != Grid.interactionModes.NONE) {
-            var bw = this.renderer.border.width;
-            if (e.control == this && this.selected != -1) {
-                var p = this.points[this.selected];
-                p.x = (e.controlX - bw + this.selectionOffset[0])/this.unitX;
-                p.y = (this.height - (e.controlY + bw) - this.selectionOffset[1])/this.unitY;
-                this.validate(this.selected, p);
-                this.cursor[0] = e.controlX;
-                this.cursor[1] = e.controlY;
-                this.render();
-            }
-        }
     };
     Grid.prototype.render = function render() {
         Grid.base.render.call(this);
@@ -237,6 +212,14 @@ include('renderer2d.js');
             if (p.y < y1) p.y = y1;
             if (p.y > y2) p.y = y2;
         }
+    };
+    Grid.prototype.setScale = function setScale() {
+        this.stepX = this.renderer.convertToPixel(this.unitX) || 0;
+        this.stepX = Math.floor(this.stepX*this.scaleX);
+        this.stepX2 = this.stepX*this.stepX;
+        this.stepY = this.renderer.convertToPixel(this.unitY, true) || 0;
+        this.stepY = Math.floor(this.stepY*this.scaleY);
+        this.stepY2 = this.stepY*this.stepY;
     };
 
     Grid.prototype.insertPoint = function insertPoint(x, y) {
@@ -262,6 +245,84 @@ include('renderer2d.js');
             var point = { x: x, y: y, value: 1.0 };
             insertPosition == -1 ? this.points.push(point) : this.points.splice(insertPosition, 0, point);
         }
+    };
+
+    Grid.prototype.onmousemove = function onmousemove(e) {
+        this.cursor[0] = e.controlX;
+        this.cursor[1] = e.controlY;
+        var bw = this.renderer.border.width;
+        var x = e.controlX-this.scrollLeft - bw, y = e.controlY - this.scrollTop + bw;
+        var pi = this.getPointIndexAt(x, y);
+        this.current = pi;
+        this.render();
+    };
+    Grid.prototype.onmousedown = function onmousedown(e) {
+        var bw = this.renderer.border.width;
+        var x = e.controlX-this.scrollLeft - bw, y = e.controlY - this.scrollTop + bw;
+        this.selected = this.getPointIndexAt(x, y, this.selectionOffset);
+        if (this.selected == -1) {
+            if (e.ctrlKey) {
+                this.insertPoint(x/this.stepX, (this.height - y)/this.stepY);
+            }
+        } else {
+            if (e.ctrlKey) {
+                this.points.splice(this.selected, 1);
+            };
+        }
+        this.render();
+    };
+    Grid.prototype.onmouseup = function onmouseup(e) {
+        this.lockedDirection = 0;
+    };
+    Grid.prototype.onkeyup = function onkeyup(e) {
+        if (e.keyCode == 18) {
+            this.lockedDirection = 0;
+        }
+    };
+    Grid.prototype.ondragging = function ondragging(e) {
+        var bw = this.renderer.border.width;
+        var x = e.controlX - this.scrollLeft - bw, y = e.controlY - this.scrollTop + bw;
+        if (e.control == this && this.selected != -1 && this.dragMode != Grid.interactionModes.NONE) {
+            var p = this.points[this.selected];
+            var px = (x + this.selectionOffset[0])/this.stepX;
+            var py = (this.height - y - this.selectionOffset[1])/this.stepY;
+            if (e.ctrlKey) {
+                // snap to grid
+                px = Math.round(px);
+                py = Math.round(py);
+            }
+            if (e.altKey) {
+                // lock direction
+                if (this.lockedDirection == 0) this.lockedDirection = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? 1 : 2;
+                if (this.lockedDirection == 1) {
+                    py = p.y;
+                } else {
+                    px = p.x;
+                }
+            }
+            p.x = px; p.y = py;
+            this.validate(this.selected, p);
+            this.cursor[0] = e.controlX;
+            this.cursor[1] = e.controlY;
+        } else {
+            if (e.shiftKey) {
+                // scroll canvas
+                this.scrollLeft += e.deltaX;
+                this.scrollTop += e.deltaY;
+            } else if (e.altKey) {
+                if (e.deltaX < 0 && this.scaleX > 0.6 || e.deltaX > 0 && this.scaleX < 4.0) {
+                    var dx = 0.005*e.deltaX;
+                    this.scaleX += dx;
+                }
+                if (e.deltaY > 0 && this.scaleY > 0.6 || e.deltaY < 0 && this.scaleY < 4.0) {
+                    var dy = 0.005*e.deltaY;
+                    this.scaleY -= dy;
+                }
+                this.setScale();
+            }
+        }
+        // update cursor, trigger rendering like on mouse move
+        this.onmousemove(e);
     };
 
     Grid.interactionModes = {

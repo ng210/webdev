@@ -1,4 +1,5 @@
 include('glui/glui-lib.js');
+include('data/dataseries.js');
 (function() {
 
     var style = {
@@ -122,9 +123,9 @@ include('glui/glui-lib.js');
         {
             'type': 'Grid',
             'style': {
-                'color': '#a08060',
+                'color': '#ffd080',
                 'background': '#102040',
-                'width': '324px', 'height': '204px',
+                'width': '640px', 'height': '400px',
                 'border': '#102040 2px inset'
             },
             'unit-x': 8,
@@ -133,7 +134,9 @@ include('glui/glui-lib.js');
             'data-field': 'grid',
             'insert-mode': 'x-bound',
             'drag-mode': 'free',
-            'curve-mode': 'line'
+            'curve-mode': 'line',
+            'scale-x': 2.0,
+            'scale-y': 2.0
         }
 
         // {
@@ -172,10 +175,12 @@ include('glui/glui-lib.js');
         ],
         'list': [ 'James', 'Ivy',  'Alfred', 'Henry', 'Blange', 'Wilson', 'George', 'Teddy', 'Sissy', 'Poppy' ],
         'grid': [
-            { 'x': 8, 'y': 5, 'value': 0.1},
-            { 'x':16, 'y':11, 'value': 0.3},
-            { 'x':24, 'y':17, 'value': 0.4},
-            { 'x':32, 'y':23, 'value': 0.2}
+            { 'x': 5, 'y': 5, 'value': 0.1},
+            { 'x':15, 'y':11, 'value': 0.3},
+            { 'x':25, 'y': 6, 'value': 0.4},
+            { 'x':35, 'y':12, 'value': 0.2},
+            { 'x':45, 'y': 7, 'value': 0.4},
+            { 'x':55, 'y':13, 'value': 0.2}
         ],
         'combobox': 'James'
     };
@@ -631,6 +636,20 @@ include('glui/glui-lib.js');
         });
     }
 
+    async function test_grid() {
+        message('Test grid', 1);
+        await setup();
+
+        var tmpl = controls.find( x => x.type == 'Grid');
+        var grid = await glui.create('grid', tmpl, null, App);
+
+        grid.render();
+
+        glui.animate();
+
+        await button('Next');
+    }
+
     // function test_valueControls() {
     //     message('Test value-controls', 1);
     //     var i = 1;
@@ -667,14 +686,15 @@ include('glui/glui-lib.js');
     // }
 
     var tests = () => [
-        // test_mergeObjects,
-        // test_getObjectAt,
-        // test_clipping,
-        // test_construct,
-        // test_container,
+        test_mergeObjects,
+        test_getObjectAt,
+        test_clipping,
+        test_construct,
+        test_container,
         test_table,
-        //test_valueControls,
-        test_render
+        // test_render,
+
+        test_grid
     ];
     publish(tests, 'glUi tests');
 })();

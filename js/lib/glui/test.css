@@ -1,6 +1,6 @@
 #con {
 	position:absolute;
-	top:50vh;
+	top:60vh;
 	font-size:14pt;
 	font-family:Consolas;
 	text-align:left;
@@ -10,6 +10,6 @@
 	background-color:#102030;
 	color:#208040;
 	opacity:0.95;
-	height:50vh; width:100vw;
+	height:40vh; width:100vw;
 	overflow:hidden auto
 }

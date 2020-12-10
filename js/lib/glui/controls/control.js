@@ -26,6 +26,8 @@ const DEBUG_EVENT = 'mouseout_|mouseover_';
 
         this.offsetLeft = -1;
         this.offsetTop = -1;
+        this.scrollLeft = 0;
+        this.scrollTop = 0;
         this.innerHeight = 0;
         this.innerWidth = 0;
         this.width = 0;
