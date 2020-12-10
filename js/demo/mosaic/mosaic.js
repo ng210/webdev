@@ -1,12 +1,14 @@
 include('glui/glui-lib.js');
 include('glui/misc/roaming-unit.js');
 include('webgl/sprite/sprite.js');
+include('base/dbg.js');
 (function() {
 
     function Particle(obj) {
-        this.roaming = new RoamingUnit(1, 0.5);
+        this.roaming = new RoamingUnit(0, 0);
         this.obj = obj;
         this.acc = new V3();
+        this.damping = 1.0;
         this.velocity = new V3();
         this.lifeSpan = 0;
         this.initLifeSpan = 0;
@@ -22,13 +24,14 @@ include('webgl/sprite/sprite.js');
         this.initLifeSpan = hp;
         this.angularSpeed = 2*2*Math.PI*(Math.random() - 0.5);
     };
-    Particle.prototype.update = function update(dt) {
+    Particle.prototype.update = function update(dt, dt2) {
         this.lifeSpan -= dt;
         if (this.lifeSpan > 0) {
             this.roaming.update(dt);
             this.velocity.add(this.roaming.velocity);
-            this.velocity.add(this.acc.prodC(dt));
-            var ds = this.velocity.prodC(dt);
+            this.velocity.add(this.acc.prodC(dt2));
+            this.velocity.scale(this.damping);
+            var ds = this.velocity.prodC(dt2);
             this.obj.position.add(ds);
             this.obj.isDirty = true;
             this.obj.setRotationZ(this.obj.rotationZ + this.angularSpeed*dt);
@@ -47,18 +50,23 @@ include('webgl/sprite/sprite.js');
             image: { label: 'Image', value: 0, min:0, max:1, step: 1, type: 'int', link: null },
             pixel: { label: 'Pixel', value: 0, min:0, max:0, step: 1, type: 'int' },
             //freq: { label: 'Frequency', value: 100.0, min:0.1, max:200, step: 10.0, type: 'float' },
-            size: { label: 'Size', value: 0.3, min:0.1, max:0.9, step: 0.01, normalized: true, type: 'float' },
+            size: { label: 'Size', value: 0.8, min:0.1, max:1.0, step: 0.01, type: 'float' },
+            scale: { label: 'Scale', value: 0.25, min:0.1, max:1.0, step: 0.01, type: 'float' },
             //rotation: { label: 'Rotation', value: 8.0, min:0, max:100, step: 1.0, type: 'float' },
-            speed: { label: 'Speed', value: 5.0, min:0, max:10, step: 0.1, type: 'float' },
+            speed: { label: 'Speed', value: 0.0, min:0, max:10, step: 0.1, type: 'float' },
             variance: { label: 'Variance', value: 0.4, min:0, max:0.5, step: 0.01, normalized: true, type: 'float' },
-            lifeSpan: { label: 'Life', value: 10.0, min:1.0, max:10, step: 1, type: 'float' },
-            delta: { label: 'Delta', value: 5.0, min:1.0, max:8, step: 0.1, type: 'float' }
+            force: { label: 'Force', value: 0.0, min:-1000.0, max:1000, step: 10, normalized: true, type: 'float' },
+            damping: { label: 'Damping', value: 0.05, min:0.0, max:0.2, step: 0.001, normalized: true, type: 'float' },
+            radius: { label: 'Radius', value: 2.0, min:0.1, max:10, step: 0.01, normalized: true, type: 'int' },
+            lifeSpan: { label: 'Life', value: 20.0, min:1.0, max:30, step: 1, type: 'float' },
+            delta: { label: 'Delta', value: 3.0, min:0.0, max:10, step: 0.1, type: 'float' }
         });
         // custom variables
         this.originalBackgroundColor = null;
         this.period = 0;
-        this.count = 2;
-        this.scale = 4;
+        this.width = 0;
+        this.height = 0;
+        this.mouse = [-1000, -1000];
     }
     extend(Demo, MosaicDemo);
 
@@ -84,15 +92,19 @@ include('webgl/sprite/sprite.js');
             MosaicDemo.sprMgr.projection[5] = 1/gl.canvas.height;
         }
         this.settings.pixel.control.max = MosaicDemo.sprMgr.map.frames.length-1;
-        this.settings.pixel.control.setValue(3);
+        this.settings.pixel.control.setValue(1);
 
         // create particles
         this.particles = [];
-        for (var i=0; i<320*200; i+=this.count*this.count) {
+        for (var i=0; i<320*200; i++) {
             var spr = MosaicDemo.sprMgr.addSprite();
             spr.setPosition([-10000, 0, 0]);
-            this.particles.push(new Particle(spr));
+            var p = new Particle(spr);
+            spr.particle = p;
+            this.particles.push(p);
         }
+        this.particleCount = Math.floor(320*this.settings.scale.value)*Math.floor(200*this.settings.scale.value);
+        console.log(`Particle count: ${this.particleCount}/${this.particles.length}`);
 
         // load images
         var urls = [
@@ -117,7 +129,7 @@ include('webgl/sprite/sprite.js');
             }
         }
         this.settings.image.control.max = this.images.length-1;
-        this.settings.image.control.setValue(this.images.length-1);
+        this.settings.image.control.setValue(1);
         this.setImage(this.settings.image.control.value);
     };
     MosaicDemo.prototype.destroy = function destroy() {
@@ -130,8 +142,15 @@ include('webgl/sprite/sprite.js');
     };
     MosaicDemo.prototype.update = function update(frame, dt) {
         var t = dt*this.settings.delta.value;
+        var r = this.settings.radius.value * this.step;
+        var f = this.settings.force.value;
+        MosaicDemo.sprMgr.selectRadius(this.mouse[0], this.mouse[1], r, (spr, x,y, dx, dy, args) => {
+            // apply force - update acceleration
+            spr.particle.acc.set([f*dx, f*dy]);
+        }, r);
+
         this.updateParticles( p => {
-            p.update(t);
+            p.update(t, dt);
             p.obj.scale.scale(this.settings.size.value);
         });
     };
@@ -140,22 +159,85 @@ include('webgl/sprite/sprite.js');
         MosaicDemo.sprMgr.update();
         MosaicDemo.sprMgr.render();
     };
+    MosaicDemo.prototype.setParticle = function(p, pi, i,j, updatePosition) {
+        var ix = 4*pi;
+        if (this.buffer.imgData.data[ix+3]) {
+            var frame = MosaicDemo.sprMgr.map.frames[this.settings.pixel.value];
+            p.obj.setFrame(this.settings.pixel.value);
+            var size = this.settings.size.value;
+            if (updatePosition) {
+                this.step = 2*(frame[2] - frame[0])*size;
+                p.set([this.step*(i - this.width/2), this.step*(j - this.height/2), 1], [0,0,0], [0,0], this.settings.lifeSpan.value);
+            }
+            p.obj.setScale([size, size, 1]);
+            p.obj.color[0] = this.buffer.imgData.data[ix+0]/255;
+            p.obj.color[1] = this.buffer.imgData.data[ix+1]/255;
+            p.obj.color[2] = this.buffer.imgData.data[ix+2]/255;
+            p.obj.color[3] = this.buffer.imgData.data[ix+3]/255;
+            p.roaming.speed = this.settings.speed.value;
+            p.roaming.variance = this.settings.variance.value;
+            p.damping = 1 - this.settings.damping.value;
+        }
+    };
+    MosaicDemo.prototype.setImage = function setImage(ix) {
+        var src = this.images[ix];
+        var scale = this.settings.scale.value;
+        this.width = Math.floor(src.width*scale);
+        this.height = Math.floor(src.height*scale);        
+        this.particleCount = this.width * this.height;
+        console.log('w: ' + this.width);
+        this.buffer = new glui.Buffer(this.width, this.height);
+        this.buffer.blitImage(this.images[ix].canvas);
+        this.buffer.update(true);
+        //var x = -width/2, y = -height/2;
+        this.updateParticles( (p,pi,i,j) => this.setParticle(p, pi, i,j, true));
+        // (p, pi, i,j) => {
+        //     //var ix = 4*Math.floor(i + (199 - j)*320);
+        //     ix = 4*pi;
+        //     //var col = buffer.imgData.data[ix+0] + buffer.imgData.data[ix+1] + buffer.imgData.data[ix+2] + buffer.imgData.data[ix+3];
+        //     if (buffer.imgData.data[ix+3]) {
+        //         p.obj.setScale([size, size, 1]);
+        //         p.set([(x + i)/scale, (j + y)/scale, 1], [0,0,0], [0,0], this.settings.lifeSpan.value);
+        //         p.obj.setScale([size, size, 1]);
+        //         p.obj.setFrame(this.settings.pixel.value);
+        //         p.obj.color[0] = buffer.imgData.data[ix+0]/255;
+        //         p.obj.color[1] = buffer.imgData.data[ix+1]/255;
+        //         p.obj.color[2] = buffer.imgData.data[ix+2]/255;
+        //         p.obj.color[3] = buffer.imgData.data[ix+3]/255;
+        //         p.roaming.speed = this.settings.speed.value;
+        //         p.roaming.variance = this.settings.variance.value;
+        //     }
+        // });
+        glui.Buffer.dispose(this.buffer);
+    };
+    MosaicDemo.prototype.updateParticles = function(updater) {
+        var pi = 0;
+        var src = this.images[this.settings.image.value];
+        var scale = this.settings.scale.value;
+        var width = Math.floor(src.width*scale), height = Math.floor(src.height*scale);
+        for (var j=height-1; j>=0; j--) {
+            for (var i=0; i<width; i++) {
+                updater.call(this, this.particles[pi], pi++, i, j);
+            }
+        }
+        for (var pi=this.particleCount; pi<this.particles.length; pi++) {
+            this.particles[pi].lifeSpan = 0;
+            this.particles[pi].update(0);
+        }
+    };
+
     MosaicDemo.prototype.onchange = function onchange(e, setting) {
         switch (setting.parent.id) {
+            case 'scale':
             case 'image':
-                this.setImage(setting.value);
+                this.setImage(this.settings.image.value);
                 break;
             case 'variance':
             case 'speed':
             case 'size':
             case 'pixel':
-                this.updateParticles( (p, i,j,k) => {
-                    var size = this.settings.size.value;
-                    p.obj.setScale([size, size, 1]);
-                    p.obj.setFrame(this.settings.pixel.value);
-                    p.roaming.speed = this.settings.speed.value;
-                    p.roaming.variance = this.settings.variance.value;
-                });
+            case 'damping':
+                this.updateParticles( (p, pi, i,j) => this.setParticle(p,pi, i,j));
                 break;
             case 'freq':
                 this.period = 1/setting.value;
@@ -164,49 +246,27 @@ include('webgl/sprite/sprite.js');
                  break;
         }
     };
-    // MosaicDemo.prototype.onmousemove = function onmousemove(x, y, e) {
-    //     if (typeof(x) === 'number') {
-    //         var m = new V2(2*x - 1, 2*y - 1).prod([gl.canvas.width, gl.canvas.height]);
-    //         this.updateParticles( p => {
-    //             var d = [m.x - p.obj.position.x, m.y - p.obj.position.y];
-    //             new V2(m.diff(p.obj.position));
-    //             var l = Math.sqrt(d[0]*d[0] + d[1]*d[1]);
-    //             p.acc.x = 10*d[0]/l;
-    //             p.acc.y = 10*d[1]/l;
-    //         });
-    //         console.log(m, this.particles[0].obj.position);
-    //         //console.log(this.particles[0].acc.x.toFixed(2), this.particles[0].acc.y.toFixed(2));
-    //     }
-    // };
-    MosaicDemo.prototype.setImage = function setImage(ix) {
-        var buffer = this.images[ix];
-        var size = this.settings.size.value;
-        var x = -160, y = -100;
-        this.updateParticles( (p, pi, i,j) => {
-            var ix = 4*(i + (199 - j)*320);
-            var col = buffer.imgData.data[ix+0] + buffer.imgData.data[ix+1] + buffer.imgData.data[ix+2] + buffer.imgData.data[ix+3];
-            if (col) {
-                p.obj.setScale([this.settings.size.value, this.settings.size.value, 1]);
-                p.set([this.scale*(x + i), this.scale*(y + j), 1], [0,0,0], [0,0], this.settings.lifeSpan.value);
-                p.obj.setScale([size, size, 1]);
-                p.obj.setFrame(this.settings.pixel.value);
-                p.obj.color[0] = buffer.imgData.data[ix+0]/255;
-                p.obj.color[1] = buffer.imgData.data[ix+1]/255;
-                p.obj.color[2] = buffer.imgData.data[ix+2]/255;
-                p.obj.color[3] = buffer.imgData.data[ix+3]/255;
-                p.roaming.speed = this.settings.speed.value;
-                p.roaming.variance = this.settings.variance.value;
-            }
-        });
+    MosaicDemo.prototype.onclick = function onclick(x, y, e) {
+        if (typeof(x) === 'number') {
+            var f = -2000;
+            var r = this.settings.radius.value * this.step;
+            MosaicDemo.sprMgr.selectRadius(this.mouse[0], this.mouse[1], r, (spr, x,y, dx, dy, args) => {
+                // apply force - update acceleration
+                var a = 0.5 + 0.5*Math.random();
+                spr.particle.velocity.add([a*f*dx, a*f*dy]);
+            }, r);
+        }
     };
-    MosaicDemo.prototype.updateParticles = function(updater) {
-        var pi = 0;
-        var count = this.count;
-        for (var j=0; j<200; j+=count) {
-            for (var i=0; i<320; i+=count) {
-                updater.call(this, this.particles[pi], pi, i, j);
-                pi++;
-            }
+    MosaicDemo.prototype.onmousemove = function onmousemove(x, y, e) {
+        if (typeof(x) === 'number') {
+            this.mouse[0] = (2*x - 1)*gl.canvas.width;
+            this.mouse[1] = (1 - 2*y)*gl.canvas.height;
+            //console.log(this.particles[0].acc.x.toFixed(2), this.particles[0].acc.y.toFixed(2));
+        }
+    };
+    MosaicDemo.prototype.onkeyup = function onkeyup(keyCode, e) {
+        if (keyCode == 0x20) {
+            this.setImage(this.settings.image.value);
         }
     };
 

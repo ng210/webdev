@@ -1,6 +1,7 @@
 include('glui.js');
 (function() {
     function Buffer(width, height, noContext) {
+        var source = null;
         if (width instanceof HTMLCanvasElement) {
             this.canvas = width;
         } else {
@@ -8,15 +9,16 @@ include('glui.js');
             this.canvas.width = typeof width === 'number' ? width : 320;
             this.canvas.height = typeof height === 'number' ? height : 240;
 
-            if (width instanceof Image) {
+            if (width instanceof Image || width instanceof glui.Buffer) {
                 this.canvas.width = width.width;
                 this.canvas.height = width.height;
+                source = width instanceof glui.Buffer ? width.canvas : width;
             }
         }
         if (!noContext) {
             this.context = this.canvas.getContext('2d');
-            if (width instanceof Image) {
-                this.context.drawImage(width, 0, 0);
+            if (source) {
+                this.context.drawImage(source, 0, 0);
             }
             this.imgData = this.context.getImageData(0, 0, this.width, this.height);
         }
@@ -115,7 +117,7 @@ include('glui.js');
         delete this.imgData;
 		delete this.canvas;
 		delete buffer;
-    }
+    };
 
     publish(Buffer, 'Buffer', glui);
 })();

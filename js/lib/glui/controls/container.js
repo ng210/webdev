@@ -34,7 +34,9 @@ include('renderer2d.js');
             { name: 'mousemove', topDown: true },
             { name: 'dragging', topDown: true },
             { name: 'mousedown', topDown: true },
-            { name: 'mouseup', topDown: true }
+            { name: 'mouseup', topDown: true },
+            { name: 'keydown', topDown: true },
+            { name: 'keyup', topDown: true }
         );
         return handlers;
     };

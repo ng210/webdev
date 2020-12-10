@@ -55,11 +55,17 @@ include('webgl/sprite/sprite.js');
         this.thrust = 10;
         this.size = 1.0;
         this.lifeSpan = 100;
+        this.color = [
+            Math.random(), Math.random(), Math.random()
+        ];
         this.count = count;
         this.particles = new Array(count);
         for (var i=0; i<this.particles.length; i++) {
             this.particles[i] = new Particle(Emitter.sprMgr.addSprite());
             this.particles[i].obj.position.x = -10000;
+            this.particles[i].obj.color[0] = this.color[0];
+            this.particles[i].obj.color[1] = this.color[1];
+            this.particles[i].obj.color[2] = this.color[2];
         }
         this.time = 0;
         this.lastTime = 0;
@@ -138,14 +144,14 @@ include('webgl/sprite/sprite.js');
             count: { label: 'Count', value: 1500, min:1, max:4000, step: 20, type: 'int' },
             //alpha: { label: 'Alpha', value: 1, min:0, max:1, step: 0.05, type: 'float' },
             //force: { label: 'Force', value: 0, min:-1, max:1, step: 0.01, type: 'float' },
-            freq: { label: 'Frequency', value: 100.0, min:0.1, max:200, step: 10.0, type: 'float' },
+            freq: { label: 'Frequency', value: 100.0, min:0.0, max:200, step: 10.0, type: 'float' },
             thrust: { label: 'Thrust', value: 40.0, min:10, max:200, normalized: true, step: 10.0, type: 'float' },
-            size: { label: 'Size', value: 0.05, min:0.01, max:0.3, step: 0.01, normalized: true, type: 'float' },
-            rotation: { label: 'Rotation', value: 8.0, min:0, max:100, step: 1.0, type: 'float' },
+            size: { label: 'Size', value: 0.03, min:0.01, max:0.3, step: 0.01, normalized: true, type: 'float' },
+            rotation: { label: 'Rotation', value: 2.0, min:0, max:100, step: 1.0, type: 'float' },
             emission: { label: 'Emission', value: 1, min:0, max:1, step: 1, type: 'int' },
             espeed: { label: 'Emit. Speed', value: 0.2, min:0, max:1, step: 0.01, type: 'float' },
-            evariance: { label: 'Emit. Variance', value: 0.01, min:0, max:0.5, step: 0.01, normalized: true, type: 'float' },
-            lifeSpan: { label: 'Life', value: 10.0, min:1.0, max:30, step: 1, type: 'float' },
+            evariance: { label: 'Emit. Variance', value: 0.01, min:0, max:0.1, step: 0.01, normalized: true, type: 'float' },
+            lifeSpan: { label: 'Life', value: 6.0, min:1.0, max:10, step: 1, type: 'float' },
             pspeed: { label: 'Part. Speed', value: 0.5, min:0, max:1, step: 0.01, type: 'float' },
             pvariance: { label: 'Part. Variance', value: 0.4, min:0, max:0.5, step: 0.01, normalized: true, type: 'float' }
         });
@@ -287,6 +293,10 @@ include('webgl/sprite/sprite.js');
                 this.runningIndex = 0;
                 e.position.x = x*gl.canvas.width;
                 e.position.y = y*gl.canvas.height;
+                e.time = 0;
+                for (var i=0; i<e.count; i++) {
+                    e.particles[i].obj.position.x = -10000;
+                }
             }
         }
     };

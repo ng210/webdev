@@ -222,6 +222,31 @@ include('/player/player-lib.js');
         this.angleExtension.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, this.count);
     };
 
+    SpriteManager.prototype.selectRadius = function selectRadius(x, y, r, action, args) {
+        var r2 = r*r;
+        for (var i=0; i<this.count; i++) {
+            var spr = this.sprites[i];
+            var dx = x - spr.position.x, dy = y - spr.position.y;
+            var d = dx*dx + dy*dy;
+            if (d < r2) {
+                d = Math.sqrt(d);
+                action(spr, x,y, dx/d, dy/d, args);
+            }
+        }
+    };
+
+    SpriteManager.prototype.selectRect = function selectRect(x, y, width, height, action, args) {
+        height = height || width;
+        var x2 = x + width, y2 = y + height;
+        for (var i=0; i<this.count; i++) {
+            var spr = this.sprites[i];
+            var dx = x - spr.position.x, dy = y - spr.position.y;
+            if (dx < 0 && dy < 0 && spr.position.x < x2 && spr.position.y < y2) {
+                action(spr, x,y, dx,dy, args);
+            }
+        }
+    };
+
     publish(Sprite, 'Sprite', webGL);
     publish(SpriteManager, 'SpriteManager', webGL);
 })();
