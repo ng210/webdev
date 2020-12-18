@@ -3,7 +3,7 @@
         "left": 0, "top": 0,
         "width": "919px", "height": "146px",
         "z-index": 0,
-        "background": "#808080",
+        "background-color": "#808080",
         "background-image": "synth/ui/synth-blank.png",
         "font": "consolas 12 normal",
         "border": "#ff0000 0px none"
@@ -15,7 +15,7 @@
         "step": 0.01,
         "style": {
             "color": "#20e060",
-            "background": "#002010",
+            "background-color": "#204080",
             "background-image": "synth/ui/control-bg.png",
             "border": "#000000 0px solid",
             "font": "consolas 12 normal",

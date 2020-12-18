@@ -1,6 +1,7 @@
 (function() {
     var psynth = {
-        theta: 2 * Math.PI
+        theta: 2 * Math.PI,
+        C: 440.0/Math.pow(2, 5)*Math.pow(2, 3/12)     // C frequency 5 octaves below A:440Hz
     };
 
     // 00 01 02 03 04 05 06 07 08 09 10 11 12
@@ -18,16 +19,18 @@
     })();
 
     psynth.p2f_ = function p2f_(p) {
-        var i = Math.floor(p);
-        var f = p - i;
-        var f1 = psynth.freqTable[i];
-        var f2 = psynth.freqTable[i+1];
-        return (1-f)*f1 + f*f2;
-    }
-
+        if (p > 1) {
+            var i = Math.floor(p);
+            var f = p - i;
+            var f1 = psynth.freqTable[i];
+            var f2 = psynth.freqTable[i+1];
+            return (1-f)*f1 + f*f2;
+        } else {
+            return 0.0;
+        }
+    };
     // c = pow(2, 1/12); f = pow(c, pitch)*ref_freq (=C0)
-    psynth.p2f = p => ((p == 0) ? 0.0 : (Math.pow(1.05946309436, p) * 7.7169265821269392473555397165444));
-
+    psynth.p2f = p => p == 0 ? 0.0 : Math.pow(Math.pow(2, 1/12), p) * psynth.C;
 
     publish(psynth, 'psynth');
 })();

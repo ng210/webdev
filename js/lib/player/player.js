@@ -160,7 +160,7 @@ include('iadapter-ext.js');
 
     // static members
     Player.adapterTypes = {};
-    Player.registerAdapter = adapter => Ps.Player.adapterTypes[adapter.getInfo().id] = adapter;
+    Player.registerAdapter = adapterType => Ps.Player.adapterTypes[adapterType.getInfo().id] = adapterType;
     Player.createBinaryData = function createBinaryData(player, createAdapterList, createSequences, createDataBlocks) {
         var data = new Stream(256);
 

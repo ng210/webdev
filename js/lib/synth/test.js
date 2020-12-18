@@ -1,9 +1,10 @@
 include('/player/player-lib.js');
 include('/ge/sound.js');
+include('glui/glui-lib.js');
 include('synth.js');
 include('synth-adapter.js');
-include('glui/glui-lib.js');
-include('synth-control.js');
+include('panel-control.js');
+include('score-control.js');
 // include('/synth/synth-adapter-ext.js');
 // include('/utils/syntax.js');
 // include('/synth/grammar.js');
@@ -530,87 +531,6 @@ include('synth-control.js');
         return player;
     }
 
-    function MatrixItem(id, template, parent, context) {
-        MatrixItem.base.constructor.call(this, id, template, parent, context);
-
-    }
-    extend(glui.Textbox, MatrixItem);
-//     MatrixItem.prototype.onmouseover = function onmouseover(e) {
-// console.log('MatrixItem.onmouseover')
-//         MatrixItem.base.onmouseover.call(this, e);
-//         return true;
-//     }
-//     MatrixItem.prototype.onmouseout = function onmouseout(e) {
-// console.log('MatrixItem.onmouseout')
-//         MatrixItem.base.onmouseout.call(this, e);
-//         return true;
-//     }
-    async function createMatrix() {
-        var template = {
-            'type': 'Table',
-            'cols': 16,
-            'rows': 4,
-            'style': {
-                'font': 'Arial 20',
-                'width':'72em',
-                'align':'center middle',
-                'border':'#102040 2px outset',
-                'color': '#184030',
-                'background': '#308060',
-                'cell': {
-                    'font': 'Consolas 20',
-                    'align':'right middle',
-                    'border':'#102040 4px inset',
-                    'color': '#102040',
-                    'background': '#90b0c0',
-                    'width': '4em'
-                },
-                'title': {
-                    'font': 'Arial 16',
-                    'border':'#60a080 1px inset',
-                    'color': '#204060',
-                    'background': '#80c0a0',
-                    'height': '1.5em'
-                }
-            },
-            'cell-template': {
-                'type': 'MatrixItem',
-                'look': 'potmeter',
-                'data-type': 'float',
-                'min': 0, 'max': 1, 'step': 0.001,
-                'decimal-digits': 3,
-                'style': {
-                    'border':'#204080 1px inset',
-                    'background': '#102040',
-                    //"background-image": "synth/ui/control-bg.png",
-                    'color': '#80c0f0'
-                }
-            },
-            'title': false
-        };
-        var matrix = await glui.create('matrix1', template, null, App); await matrix.build();
-        // matrix.onmouseover = function onmouseover(e) {
-        //     console.log('Matrix.onmouseover')
-        //     return true;
-        // };
-        // matrix.onmouseout = function onmouseout(e) {
-        //     console.log('Matrix.onmouseout')
-        //     return true;
-        // };
-        // matrix.addHandler('mouseover', true);
-        // matrix.addHandler('mouseout', false);
-        return matrix;
-    }
-    glui.MatrixItem = MatrixItem;
-
-    function matrixToSequence() {
-
-    }
-
-    function framesToMatrix(matrix, frames) {
-
-    }
-
     function test_synthAdapter_makeSetCommandForContoller() {
         message('Test SynthAdapter.makeSetCommandForContoller', 1);
         var adapter = new psynth.SynthAdapter();
@@ -657,8 +577,14 @@ include('synth-control.js');
     }
 
     var _frame = 0;
-    var bpm = 72;
-    var _samplePerFrame = SAMPLE_RATE*3.75/bpm;
+    var _bpm = 72;
+    var _samplePerFrame = 0;
+
+    function setBpm(bpm) {
+        _bpm = bpm;
+        _samplePerFrame = SAMPLE_RATE*3.75/_bpm;
+    }
+
     function channelBasedFillBuffer(left, right, bufferSize, channel) {
         var start = 0;
         var end = 0;
@@ -726,6 +652,9 @@ include('synth-control.js');
         var adapter = player.adapters[psynth.SynthAdapter.getInfo().id];
         //player.dataBlocks = await createDataBlocks(_adapter);
         adapter.prepareContext(player.dataBlocks[1]);
+        var synth = adapter.devices[0];
+        loadPreset(synth, 'synth/preset.json');
+        synth.isActive = true;
 
         // create test channel
         var channel = player.createDevice(Ps.Player.Device.CHANNEL, null);
@@ -776,41 +705,143 @@ include('synth-control.js');
     }
     
     var App = {
+        bpm: 60,
+        channel: null,
+
+        onchange: function onchange(e, ctrl) {
+            if (ctrl.id == 'bpm') {
+                setBpm(ctrl.getValue());
+            }
+        },
+        onclick: function onclick(e, ctrl) {
+            if (ctrl.id == 'run') {
+                if (!sound.isRunning) {
+                    ctrl.setValue('Stop');
+                    sound.start();
+                } else {
+                    ctrl.setValue('Play');
+                    sound.stop();
+                }
+            }
+        },
+
+        fillBuffer: function fillBuffer(left, right, bufferSize, ch) {
+            _isDone = !channelBasedFillBuffer(left, right, bufferSize, App.channel);
+        }
     };
 
+    setBpm(App.bpm);
+
     async function test_synth_control() {
-        Dbg.con.style.top = '50vh';
-        Dbg.con.style.height = '50vh';
         message('Test synth ui', 1);
+
+        //#region init glui
         glui.scale.x = 0.8;
-        glui.scale.y = 0.8
+        glui.scale.y = 0.8;
 
         glui.initialize(App, true);
         await glui.setRenderingMode(glui.Render2d);
         glui.buildUI(App);
+        //#endregion
 
+        //#region create synth, sound playback
+        var player = Ps.Player.create();
+        var adapter = player.addAdapter(psynth.SynthAdapter);
+        sound.init(48000, this.fillSoundBuffer);
+        // create dummy sequence
+        var frames = [];
+        var delta = 0;
+        for (var i=0; i<16; i+=2) {
+            // frame on
+            var frame = new Ps.Frame(); frame.delta = delta; delta = 6;
+            frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 24, 240));
+            frames.push(frame);
+            // frame off
+            frame = new Ps.Frame(); frame.delta = 2;
+            frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 24, 0));
+            frames.push(frame);
+        }
+        // EOS
+        var frame = new Ps.Frame(); frame.delta = delta;
+        frames.push(frame);
+        var adapter = player.adapters[psynth.SynthAdapter.getInfo().id];
+        var sequence = Ps.Sequence.fromFrames(frames, adapter);
+        var sequences = [sequence];
+        player.sequences = sequences;
+
+        var synth = new psynth.Synth(sound.smpRate, 6);
+        adapter.devices.push(synth);
+        loadPreset(synth, 'synth/preset.json');
+        synth.isActive = true;
+
+        // create test channel
+        App.channel = player.createDevice(Ps.Player.Device.CHANNEL, null);
+        App.channel.assign(0, player.sequences[0]);
+        App.channel.loopCount = 16;
+        //#endregion
+
+        //#region create playback controls
+        res = await load('synth/ui/controls.layout.json');
+        if (res.error) throw res.error;
+        var template = res.data;
+        template.type = 'Panel';
+        var controls = await glui.create('controls', template, null, App);
+        await controls.build();
+        controls.move(10, 60);
+        controls.getControlById('bpm').dataBind(App, 'bpm');
+        controls.render();
+        // #endregion
+
+        //#region create synth UI
         var res = await load('synth/ui/synth.layout.json');
         if (res.error) throw res.error;
         var template = res.data;
-        template.type = 'Synth';
-
-        var player = await createPlayer();
-        var adapter = player.adapters[psynth.SynthAdapter.getInfo().id];
-        adapter.prepareContext(player.dataBlocks[1]);
-
-        var channel = player.createDevice(Ps.Player.Device.CHANNEL, null);
-        channel.assign(0, player.sequences[1]);
-        channel.loopCount = 16;
-
-        var synth = adapter.devices[0]; //new psynth.Synth(SAMPLE_RATE, 1);
-        loadPreset(synth, 'synth/preset.json');
-        synth.isActive = true;
-        synth.setNote(36, 1.0);
+        template.type = 'Panel';
         var synthUi = await glui.create('synth1', template, null, null);
         await synthUi.build(synth);
-        synthUi.move(10, 10);
+        synthUi.move(10, controls.top + controls.height + 4);
         synthUi.render();
-        
+        //#endregion
+
+        //#region create Score-Control
+        var score = await glui.create('score', {
+            'type': 'Score',
+            'style': {
+                'color': '#ffd080',
+                'background-color': '#102040'
+            },
+            'scroll-x-min': 0,
+            'scroll-x-max': 0,
+            'scroll-y-min': 0,
+            'scroll-y-max': 48,
+
+            'scale-x-min': 0,
+            'scale-x-max': 0,
+            'scale-y-min': 0.5,
+            'scale-y-max': 4,
+
+            'insert-mode': 'x-bound',
+            'drag-mode': 'free',
+            'curve-mode': 'line'
+        }, null, null);
+        score.unitX = 4;
+        score.scaleX = synthUi.width / 64;
+        var width = Math.floor(score.scaleX*score.unitX)*16;
+        var bw = synthUi.width - width;
+        score.style.border = `#000000 ${bw/2}px solid`;
+        score.style.width = width + bw;
+        score.unitY = 12;
+        score.style.height = score.unitY*36;
+        score.renderer.initialize(score, glui.renderingContext);
+        score.scaleRangeX[0] = score.scaleRangeX[1] = score.scaleX;
+        score.scaleY = 1.5;
+        score.setScale();
+        score.scrollTop = score.stepY * 24;
+        score.move(10, synthUi.top + synthUi.height + 4);
+        score.assignChannel(App.channel);
+        score.render();
+        //#endregion
+
         test('Should create and bind all UI controls', ctx => {
             for (var i in psynth.Synth.controls) {
                 var ctrl = synth.getControl(psynth.Synth.controls[i]);
@@ -824,34 +855,27 @@ include('synth-control.js');
             }
         });
 
-        var matrix = await createMatrix();
-        matrix.move(10, synthUi.top + synthUi.height + 10);
-        matrix.render();
-
         glui.animate();
 
-        await run((left, right, bufferSize) => channelBasedFillBuffer(left, right, bufferSize, channel));
-        // var frame = 0;
-        // await run((left, right, bufferSize) => {
-        //     for (var i=0; i<bufferSize; i++) left[i] = right[i] = 0.0;
-        //     if ((frame % 40) == 0) synth.setNote(36, 1.0);
-        //     if ((frame % 40) == 2) synth.setNote(36, 0.0);
-        //     synth.run(left, right, 0, bufferSize)
-        //     frame++;
-        //     return true;
-        // });
+        sound.init(SAMPLE_RATE, App.fillBuffer);
+
+        _isDone = false;
+        var button = addButton('End', () => _isDone = true);
+        await poll( () => _isDone, 10);
+        sound.stop();
+        button.innerHTML = 'Done';
 
         glui.shutdown();
     }
 
     var tests = () => [
         // test_freqTable,
-        //test_control_labels,
+        // test_control_labels,
         // test_create_synth,
         // test_run_env,
         // test_osc_run,
         // test_generate_sound_simple,
-        // test_synthAdapter_makeSetCommandForContoller,
+        // //test_synthAdapter_makeSetCommandForContoller,
         // test_synthAdapter_prepareContext,
         // test_synthAdapter_makeCommands,
         // test_run_channel,
