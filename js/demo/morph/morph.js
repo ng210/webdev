@@ -116,7 +116,7 @@ include('webgl/webgl.js');
         this.canvas.style.zIndex = 100;
         glui.canvas.style.zIndex = 1000;
         document.body.appendChild(this.canvas);
-        this.originalBackgroundColor = glui.canvas.style.background;
+        this.originalBackgroundColor = glui.canvas.style['background-color'];
         //glui.canvas.style.background = 'transparent';
         glui.renderingContext2d.clearRect(0, 0, glui.width, glui.height)
 

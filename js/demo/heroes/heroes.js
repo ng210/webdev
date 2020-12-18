@@ -94,7 +94,7 @@
                 'width':'40em',
                 'align':'right middle',
                 'border':'#406080 1px inset',
-                'background': '#c0e0ff',
+                'background-color': '#c0e0ff',
                 'color':'#101820',
                 'cell': {
                     'height': '1.5em'
@@ -103,32 +103,32 @@
                     'font': 'Arial 18', 'height':'1.8em',
                     'align':'center middle',
                     'border':'#406080 1px inset',
-                    'background': '#a0c0ff'
+                    'background-color': '#a0c0ff'
                 },
                 'header': {
                     'font': 'Arial 12', 'height':'1.6em',
                     'align':'center middle',
                     'border':'#80a0d0 1px outset',
-                    'background': '#80a0d0'
+                    'background-color': '#80a0d0'
                 }
             },
             'header': true,
             'title': 'Heroes',
             'row-template': {
                 'name': { 'type': 'Textbox', 'column': '$Key', 'style': {
-                    'width':'40%', 'background': '#d0e0f0', 'border':'#80a890 1px outset'
+                    'width':'40%', 'background-color': '#d0e0f0', 'border':'#80a890 1px outset'
                 } },
                 'type': { 'type': 'Label', 'column': '$Key', 'style': {
-                    'width':'30%', 'background': '#406080', 'border':'#406080 1px inset'
+                    'width':'30%', 'background-color': '#406080', 'border':'#406080 1px inset'
                 } },
                 'Wits': { 'type': 'Textbox', 'column': '$Key', 'data-type': 'int', 'data-field': 'wits', 'style': {
-                    'width':'10%', 'background': '#d0e0f0', 'border':'#80a890 1px outset'
+                    'width':'10%', 'background-color': '#d0e0f0', 'border':'#80a890 1px outset'
                 } },
                 'Will': { 'type': 'Textbox', 'column': '$Key', 'data-type': 'int', 'data-field': 'will', 'style': {
-                    'width':'10%', 'background': '#d0e0f0', 'border':'#80a890 1px outset'
+                    'width':'10%', 'background-color': '#d0e0f0', 'border':'#80a890 1px outset'
                 } },
                 'Woe': { 'type': 'Textbox', 'column': '$Key', 'data-type': 'int', 'data-field': 'woe', 'style': {
-                    'width':'10%', 'background': '#d0e0f0', 'border':'#80a890 1px outset'
+                    'width':'10%', 'background-color': '#d0e0f0', 'border':'#80a890 1px outset'
                 } },
             },
             'data-source': 'heroes'

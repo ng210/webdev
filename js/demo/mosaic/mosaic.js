@@ -50,16 +50,16 @@ include('base/dbg.js');
             image: { label: 'Image', value: 0, min:0, max:1, step: 1, type: 'int', link: null },
             pixel: { label: 'Pixel', value: 0, min:0, max:0, step: 1, type: 'int' },
             //freq: { label: 'Frequency', value: 100.0, min:0.1, max:200, step: 10.0, type: 'float' },
-            size: { label: 'Size', value: 0.8, min:0.1, max:1.0, step: 0.01, type: 'float' },
-            scale: { label: 'Scale', value: 0.25, min:0.1, max:1.0, step: 0.01, type: 'float' },
+            size: { label: 'Size', value: 0.5, min:0.1, max:1.0, step: 0.01, type: 'float' },
+            scale: { label: 'Scale', value: 0.4, min:0.1, max:1.0, step: 0.01, type: 'float' },
             //rotation: { label: 'Rotation', value: 8.0, min:0, max:100, step: 1.0, type: 'float' },
-            speed: { label: 'Speed', value: 0.0, min:0, max:10, step: 0.1, type: 'float' },
+            speed: { label: 'Speed', value: 0.2, min:0, max:10, step: 0.1, type: 'float' },
             variance: { label: 'Variance', value: 0.4, min:0, max:0.5, step: 0.01, normalized: true, type: 'float' },
-            force: { label: 'Force', value: 0.0, min:-1000.0, max:1000, step: 10, normalized: true, type: 'float' },
-            damping: { label: 'Damping', value: 0.05, min:0.0, max:0.2, step: 0.001, normalized: true, type: 'float' },
-            radius: { label: 'Radius', value: 2.0, min:0.1, max:10, step: 0.01, normalized: true, type: 'int' },
+            force: { label: 'Force', value: 0.0, min:-5000.0, max:5000, step: 100, type: 'float' },
+            damping: { label: 'Damping', value: 0.1, min:0.0, max:0.2, step: 0.001, normalized: true, type: 'float' },
+            radius: { label: 'Radius', value: 4.0, min:0.1, max:10, step: 0.01, normalized: true, type: 'int' },
             lifeSpan: { label: 'Life', value: 20.0, min:1.0, max:30, step: 1, type: 'float' },
-            delta: { label: 'Delta', value: 3.0, min:0.0, max:10, step: 0.1, type: 'float' }
+            delta: { label: 'Delta', value: 1.0, min:0.0, max:10, step: 0.1, type: 'float' }
         });
         // custom variables
         this.originalBackgroundColor = null;

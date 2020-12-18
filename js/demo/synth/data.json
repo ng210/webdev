@@ -126,41 +126,41 @@
         {
             "adapter": "SynthAdapter",
             "frames": [
-                [0, [["SETNOTE", "E-3", 80], ["SETPROGRAM", 0]]],
+                [0, [["SETNOTE", "E-2", 80], ["SETPROGRAM", 0]]],
+                [2, [["SETNOTE", "E-2",  0]]],
+                [2, [["SETNOTE", "G-2",100]]],
+                [2, [["SETNOTE", "G-1",  0]]],
+                [2, [["SETNOTE", "E-1",100]]],
+                [2, [["SETNOTE", "E-1",  0]]],
+                [2, [["SETNOTE", "E-3", 60]]],
                 [2, [["SETNOTE", "E-3",  0]]],
+        
+                [2, [["SETNOTE", "E-2", 90]]],
+                [2, [["SETNOTE", "E-2",  0]]],
+                [2, [["SETNOTE", "E-3", 60]]],
+                [2, [["SETNOTE", "E-3",  0]]],
+                [2, [["SETNOTE", "E-1",120]]],
+                [2, [["SETNOTE", "E-1",  0]]],
                 [2, [["SETNOTE", "G-3",100]]],
                 [2, [["SETNOTE", "G-2",  0]]],
-                [2, [["SETNOTE", "E-2",100]]],
+
+                [2, [["SETNOTE", "E-3", 60]]],
+                [2, [["SETNOTE", "E-3",  0]]],
+                [2, [["SETNOTE", "E-2", 60]]],
                 [2, [["SETNOTE", "E-2",  0]]],
-                [2, [["SETNOTE", "E-4", 60]]],
-                [2, [["SETNOTE", "E-4",  0]]],
+                [2, [["SETNOTE", "E-1",100]]],
+                [2, [["SETNOTE", "E-1",  0]]],
+                [2, [["SETNOTE", "E-2", 60]]],
+                [2, [["SETNOTE", "E-2",  0]]],
         
                 [2, [["SETNOTE", "E-3", 90]]],
                 [2, [["SETNOTE", "E-3",  0]]],
-                [2, [["SETNOTE", "E-4", 60]]],
-                [2, [["SETNOTE", "E-4",  0]]],
-                [2, [["SETNOTE", "E-2",120]]],
+                [2, [["SETNOTE", "E-2", 60]]],
                 [2, [["SETNOTE", "E-2",  0]]],
-                [2, [["SETNOTE", "G-4",100]]],
-                [2, [["SETNOTE", "G-3",  0]]],
-
-                [2, [["SETNOTE", "E-4", 60]]],
-                [2, [["SETNOTE", "E-4",  0]]],
-                [2, [["SETNOTE", "E-3", 60]]],
-                [2, [["SETNOTE", "E-3",  0]]],
-                [2, [["SETNOTE", "E-2",100]]],
-                [2, [["SETNOTE", "E-2",  0]]],
-                [2, [["SETNOTE", "E-3", 60]]],
-                [2, [["SETNOTE", "E-3",  0]]],
-        
-                [2, [["SETNOTE", "E-4", 90]]],
-                [2, [["SETNOTE", "E-4",  0]]],
-                [2, [["SETNOTE", "E-3", 60]]],
-                [2, [["SETNOTE", "E-3",  0]]],
-                [2, [["SETNOTE", "E-2",120]]],
-                [2, [["SETNOTE", "E-2",  0]]],
-                [2, [["SETNOTE", "D-4",100]]],
-                [2, [["SETNOTE", "D-3",  0]]],
+                [2, [["SETNOTE", "E-1",120]]],
+                [2, [["SETNOTE", "E-1",  0]]],
+                [2, [["SETNOTE", "D-3",100]]],
+                [2, [["SETNOTE", "D-2",  0]]],
         
                 [2, [["EOS"]]]
             ]
@@ -169,8 +169,8 @@
             "adapter": "SynthAdapter",
             "frames": [
                 [24, [["SETPROGRAM", 1],
-                      ["SETNOTE", "E-5", 80], ["SETNOTE", "G-5", 80], ["SETNOTE", "D-5", 60]]],
-                [ 4, [["SETNOTE", "E-5",  0], ["SETNOTE", "G-5",  0], ["SETNOTE", "D-5",  0]]],
+                      ["SETNOTE", "E-4", 80], ["SETNOTE", "G-4", 80], ["SETNOTE", "D-4", 60]]],
+                [ 4, [["SETNOTE", "E-4",  0], ["SETNOTE", "G-4",  0], ["SETNOTE", "D-4",  0]]],
         
                 [36, [["EOS"]]]
             ]
@@ -179,27 +179,27 @@
             "adapter": "SynthAdapter",
             "frames": [
                 [  0, [["SETPROGRAM",   2],
-                       ["SETNOTE", "E-2",  20]]],
-                [  4, [["SETNOTE", "E-2",   0]]],
-                [  4, [["SETNOTE", "E-2", 120]]],
-                [  4, [["SETNOTE", "E-2",   0]]],
+                       ["SETNOTE", "E-1",  20]]],
+                [  4, [["SETNOTE", "E-1",   0]]],
+                [  4, [["SETNOTE", "E-1", 120]]],
+                [  4, [["SETNOTE", "E-1",   0]]],
 
-                [  4, [["SETNOTE", "E-2",  20]]],
-                [  4, [["SETNOTE", "E-2",   0]]],
-                [  4, [["SETNOTE", "E-2", 120]]],
-                [  4, [["SETNOTE", "E-2",   0]]],
+                [  4, [["SETNOTE", "E-1",  20]]],
+                [  4, [["SETNOTE", "E-1",   0]]],
+                [  4, [["SETNOTE", "E-1", 120]]],
+                [  4, [["SETNOTE", "E-1",   0]]],
 
-                [  4, [["SETNOTE", "E-2",  20]]],
-                [  4, [["SETNOTE", "E-2",   0]]],
-                [  4, [["SETNOTE", "E-2", 100]]],
-                [  2, [["SETNOTE", "E-2",   0]]],
-                [  2, [["SETNOTE", "E-2",  80]]],
-                [  2, [["SETNOTE", "E-2",   0]]],
+                [  4, [["SETNOTE", "E-1",  20]]],
+                [  4, [["SETNOTE", "E-1",   0]]],
+                [  4, [["SETNOTE", "E-1", 100]]],
+                [  2, [["SETNOTE", "E-1",   0]]],
+                [  2, [["SETNOTE", "E-1",  80]]],
+                [  2, [["SETNOTE", "E-1",   0]]],
 
-                [  2, [["SETNOTE", "E-2",  20]]],
-                [  4, [["SETNOTE", "E-2",   0]]],
-                [  4, [["SETNOTE", "E-2", 120]]],
-                [  4, [["SETNOTE", "E-2",   0]]],
+                [  2, [["SETNOTE", "E-1",  20]]],
+                [  4, [["SETNOTE", "E-1",   0]]],
+                [  4, [["SETNOTE", "E-1", 120]]],
+                [  4, [["SETNOTE", "E-1",   0]]],
                 [  4, [["EOS"]]]
             ]
         },
@@ -228,39 +228,39 @@
             "adapter": "SynthAdapter",
             "frames": [
                 [ 0, [["SETPROGRAM", 3],
-                      ["SETNOTE", "E-2",120]]],
-                [ 2, [["SETNOTE", "E-2",  0]]],
+                      ["SETNOTE", "E-1",120]]],
+                [ 2, [["SETNOTE", "E-1",  0]]],
                 [14, [["SETPROGRAM", 4],
-                      ["SETNOTE", "C-4",150]]],
-                [ 2, [["SETNOTE", "C-4",  0]]],
+                      ["SETNOTE", "C-3",150]]],
+                [ 2, [["SETNOTE", "C-3",  0]]],
                 [10, [["SETPROGRAM", 3],
-                      ["SETNOTE", "E-2",120]]],
-                [ 2, [["SETNOTE", "E-2",  0]]],
+                      ["SETNOTE", "E-1",120]]],
+                [ 2, [["SETNOTE", "E-1",  0]]],
                 [ 2, [["SETPROGRAM", 3],
-                      ["SETNOTE", "E-2", 80]]],
-                [ 2, [["SETNOTE", "E-2",  0]]],
+                      ["SETNOTE", "E-1", 80]]],
+                [ 2, [["SETNOTE", "E-1",  0]]],
                 [14, [["SETPROGRAM", 4],
-                      ["SETNOTE", "C#4",150]]],
-                [ 2, [["SETNOTE", "C#4",  0]]],
+                      ["SETNOTE", "C#3",150]]],
+                [ 2, [["SETNOTE", "C#3",  0]]],
 
                 [14, [["SETPROGRAM", 3],
-                      ["SETNOTE", "E-2",120]]],
-                [ 2, [["SETNOTE", "E-2",  0]]],
+                      ["SETNOTE", "E-1",120]]],
+                [ 2, [["SETNOTE", "E-1",  0]]],
                 [14, [["SETPROGRAM", 4],
-                      ["SETNOTE", "C-4",150]]],
-                [ 2, [["SETNOTE", "C-4",  0]]],
+                      ["SETNOTE", "C-3",150]]],
+                [ 2, [["SETNOTE", "C-3",  0]]],
                 [10, [["SETPROGRAM", 3],
-                      ["SETNOTE", "E-2",120]]],
-                [ 2, [["SETNOTE", "E-2",  0]]],
+                      ["SETNOTE", "E-1",120]]],
+                [ 2, [["SETNOTE", "E-1",  0]]],
                 [ 2, [["SETPROGRAM", 3],
-                      ["SETNOTE", "E-2", 80]]],
-                [ 2, [["SETNOTE", "E-2",  0]]],
+                      ["SETNOTE", "E-1", 80]]],
+                [ 2, [["SETNOTE", "E-1",  0]]],
                 [14, [["SETPROGRAM", 4],
-                      ["SETNOTE", "C-4",150]]],
-                [ 2, [["SETNOTE", "C-4",  0]]],
+                      ["SETNOTE", "C-3",150]]],
+                [ 2, [["SETNOTE", "C-3",  0]]],
                 [10, [["SETPROGRAM", 4],
-                      ["SETNOTE", "D-4",120]]],
-                [ 2, [["SETNOTE", "D-4",  0]]],
+                      ["SETNOTE", "D-3",120]]],
+                [ 2, [["SETNOTE", "D-3",  0]]],
 
                 [ 2, [["EOS"]]]
             ]
@@ -269,63 +269,63 @@
             "adapter": "SynthAdapter",
             "frames": [
                 [ 0, [["SETPROGRAM", 5],
-                      ["SETNOTE", "C-5",180]]],
-                [ 2, [["SETNOTE", "C-5",  0]]],
+                      ["SETNOTE", "C-4",180]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
 
-                [ 6, [["SETNOTE", "C-5",120]]],
-                [ 2, [["SETNOTE", "C-5",  0]]],
+                [ 6, [["SETNOTE", "C-4",120]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
 
-                [ 6, [["SETNOTE", "C-5",180]]],
-                [ 2, [["SETNOTE", "C-5",  0]]],
+                [ 6, [["SETNOTE", "C-4",180]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
 
-                [ 6, [["SETNOTE", "C-5",120]]],
-                [ 2, [["SETNOTE", "C-5",  0]]],
+                [ 6, [["SETNOTE", "C-4",120]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
 
-                [ 6, [["SETNOTE", "C-5",180]]],
-                [ 2, [["SETNOTE", "C-5",  0]]],
+                [ 6, [["SETNOTE", "C-4",180]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
 
-                [ 6, [["SETNOTE", "C-5",120]]],
-                [ 2, [["SETNOTE", "C-5",  0]]],
+                [ 6, [["SETNOTE", "C-4",120]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
 
-                [ 6, [["SETNOTE", "C-5",180]]],
-                [ 2, [["SETNOTE", "C-5",  0]]],
+                [ 6, [["SETNOTE", "C-4",180]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
 
-                [ 6, [["SETNOTE", "C-5",120]]],
-                [ 2, [["SETNOTE", "C-5",  0]]],
+                [ 6, [["SETNOTE", "C-4",120]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
 
-                [ 2, [["SETNOTE", "E-5", 80]]],
-                [ 2, [["SETNOTE", "E-5",  0]]],
+                [ 2, [["SETNOTE", "E-4", 80]]],
+                [ 2, [["SETNOTE", "E-4",  0]]],
 
+
+                [ 2, [["SETNOTE", "C-4",180]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
+
+                [ 6, [["SETNOTE", "C-4",120]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
+
+                [ 6, [["SETNOTE", "C-4",180]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
+
+                [ 6, [["SETNOTE", "C-4",120]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
+
+                [ 6, [["SETNOTE", "C-4",180]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
+
+                [ 6, [["SETNOTE", "C-4",200]]],
+                [ 6, [["SETNOTE", "C-4",  0]]],
 
                 [ 2, [["SETNOTE", "C-5",180]]],
                 [ 2, [["SETNOTE", "C-5",  0]]],
 
-                [ 6, [["SETNOTE", "C-5",120]]],
+                [ 2, [["SETNOTE", "C-4", 80]]],
+                [ 2, [["SETNOTE", "c-4",  0]]],
+
+                [ 2, [["SETNOTE", "C-5",120]]],
                 [ 2, [["SETNOTE", "C-5",  0]]],
-
-                [ 6, [["SETNOTE", "C-5",180]]],
-                [ 2, [["SETNOTE", "C-5",  0]]],
-
-                [ 6, [["SETNOTE", "C-5",120]]],
-                [ 2, [["SETNOTE", "C-5",  0]]],
-
-                [ 6, [["SETNOTE", "C-5",180]]],
-                [ 2, [["SETNOTE", "C-5",  0]]],
-
-                [ 6, [["SETNOTE", "C-5",200]]],
-                [ 6, [["SETNOTE", "C-5",  0]]],
-
-                [ 2, [["SETNOTE", "C-6",180]]],
-                [ 2, [["SETNOTE", "C-6",  0]]],
-
-                [ 2, [["SETNOTE", "C-5", 80]]],
-                [ 2, [["SETNOTE", "c-5",  0]]],
-
-                [ 2, [["SETNOTE", "C-6",120]]],
-                [ 2, [["SETNOTE", "C-6",  0]]],
                 
-                [ 2, [["SETNOTE", "C-5", 80]]],
-                [ 2, [["SETNOTE", "C-5",  0]]],
+                [ 2, [["SETNOTE", "C-4", 80]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
 
                 [ 2, [["EOS"]]]
             ]

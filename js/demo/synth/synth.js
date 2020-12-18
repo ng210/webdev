@@ -115,7 +115,7 @@ debugger
                     'width':'28em',
                     'align':'center middle',
                     'border':'#406080 1px inset',
-                    'background': '#c0e0ff',
+                    'background-color': '#c0e0ff',
                     'color':'#101820',
                     'cell': {
                         'height': '1.5em'
@@ -124,19 +124,19 @@ debugger
                         'font': 'Arial 18', 'height':'1.8em',
                         'align':'center middle',
                         'border':'#406080 1px inset',
-                        'background': '#a0c0ff'
+                        'background-color': '#a0c0ff'
                     }
                 },
                 'title': 'Sequence',
                 'row-template': {
                     'no': { 'type': 'Label', 'style': {
-                        'width':'2em', 'background': '#406080', 'border':'#406080 1px outset'
+                        'width':'2em', 'background-color': '#406080', 'border':'#406080 1px outset'
                     } },
                     'note1': { 'type': 'NoteInput', 'look': 'textbox', 'data-type': 'string', 'data-field':'note', 'style': {
-                        'width':'5em', 'background': '#d0e0f0', 'border':'#80a890 1px inset'
+                        'width':'5em', 'background-color': '#d0e0f0', 'border':'#80a890 1px inset'
                     } },
                     'velocity1': { 'type': 'Textbox', 'look': 'potmeter', 'data-type': 'int', 'data-field':'velocity', 'min': 0, 'max': 255,
-                        'style': { 'width':'8em', 'background': '#d0e0f0', 'border':'#80a890 1px inset' }
+                        'style': { 'width':'8em', 'background-color': '#d0e0f0', 'border':'#80a890 1px inset' }
                     }
                 }
             }, null, this);

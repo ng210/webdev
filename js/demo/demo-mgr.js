@@ -43,20 +43,20 @@ var DemoMgr = {
                 'width':'194px',
                 'align':'right middle',
                 'border':'#406080 1px inset',
-                'background': '#c0e0ff',
+                'background-color': '#c0e0ff',
                 'color':'#ffe080',
                 'title': {
                     'font': 'Arial 18', 'height':'1.8em',
                     'align':'center middle',
                     'border':'#84b0e0 2px inset',
-                    'background': '#a0c0ff'
+                    'background-color': '#a0c0ff'
                 },
                 'visible': false
             },
             'title': 'Demo List',
             'cols': 3,
             'cell-template': { 'type': 'Label', 'data-field': 'label', 'style': {
-                'width':'64px', 'height':'64px', 'font': 'Arial 14', 'align':'center middle', 'background': '#406080', 'border':'#406080 1px outset'
+                'width':'64px', 'height':'64px', 'font': 'Arial 14', 'align':'center middle', 'background-color': '#406080', 'border':'#406080 1px outset'
             } }
         }, null, this);
         demoList.onclick = async function demoList_onclick (e, ctrl) {
@@ -84,7 +84,7 @@ var DemoMgr = {
             'data-type': 'float',
             'decimal-digits': 2,
             'style': {
-                'background': '#e0f0ff',
+                'background-color': '#e0f0ff',
                 'color': '#102040',
                 'width':'6em', 'height': '2em',
                 'align': 'middle center',
@@ -105,7 +105,7 @@ var DemoMgr = {
                 'width':'12em', 'height':'1.5em',
                 'align':'center middle',
                 'border':'#406080 2px outset',
-                'background': '#406080',
+                'background-color': '#406080',
                 'visible': false
             },
             'value': demo.name
@@ -118,7 +118,7 @@ var DemoMgr = {
                 'width':'20em',
                 'align':'right middle',
                 'border':'#406080 1px inset',
-                'background': '#c0e0ff',
+                'background-color': '#c0e0ff',
                 'color':'#101820',
                 'cell': {
                     'height': '1.5em'
@@ -127,16 +127,16 @@ var DemoMgr = {
                     'font': 'Arial 18', 'height':'1.8em',
                     'align':'center middle',
                     'border':'#406080 1px inset',
-                    'background': '#a0c0ff'
+                    'background-color': '#a0c0ff'
                 }
             },
             'title': 'Settings',
             'row-template': {
                 'label': { 'type': 'Label', 'style': {
-                    'width':'60%', 'background': '#406080', 'border':'#406080 1px outset'
+                    'width':'60%', 'background-color': '#406080', 'border':'#406080 1px outset'
                 } },
                 'value': { 'type': 'Textbox', 'look': 'potmeter', 'data-type': 'float', 'decimal-digits': 3, 'style': {
-                    'width':'40%', 'background': '#d0e0f0', 'border':'#80a890 1px inset'
+                    'width':'40%', 'background-color': '#d0e0f0', 'border':'#80a890 1px inset'
                 } }
             }
         }, null, demo);
@@ -214,9 +214,14 @@ var DemoMgr = {
     render: function render() {
         if (this.demo) {
             this.demo.render(this.frame);
+            this.controls.title.render();
+            this.controls.settings.render();
+            this.controls.start.render();
         }
-        //glui.render();
-        glui.screen.renderer.render();
+        this.demoList.render();
+        this.fps.render();
+        glui.render();
+        //glui.screen.renderer.render();
     },
     resize: function resize(e) {
         glui.clearRect();

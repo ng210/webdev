@@ -86,7 +86,7 @@ include('math/noise.js');
 		// 	'key-field': 'key',
 		// 	'values': 'DemoMgr.demo.images',
 		// 	'row-template': {
-		// 		'key': { 'type': 'Label', 'style': { 'background': '#60c0a0', 'border':'#60c0a0 1px inset' } },
+		// 		'key': { 'type': 'Label', 'style': { 'background-color': '#60c0a0', 'border':'#60c0a0 1px inset' } },
 		// 	}
 		// }, null, null);
 		// combobox.dataBind(ctrl.dataSource, ctrl.dataField);
