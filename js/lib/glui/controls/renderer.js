@@ -9,8 +9,10 @@ include('math/fn.js');
         this.font = { face:null, size:0, weight:null, em:0 };
         this.border = { color: null, colorLight: null, colorDark: null,width: 0, style: null };
         this.color = [0, 0, 0];
-        this.backgroundColor = [192, 192, 192];
+        this.backgroundColor = null;    //[192, 192, 192];
         this.backgroundImage = null;
+        this.spacing = [0, 0];
+        this.padding = [0, 0];
     }
     // Renderer.prototype.accumulate = function accumulate(property, isVertical) {
     //     var node = this.control;
@@ -28,17 +30,38 @@ include('math/fn.js');
         this.context = context;
         this.setFont(this.control.style.font);
         this.setBorder(this.control.style.border);
-        this.control.width = this.convertToPixel(this.control.style.width);
-        this.control.height = this.convertToPixel(this.control.style.height, true);
+        this.setSpacing(this.control.style['spacing']);
+        this.setPadding(this.control.style['padding']);
+        this.setWidth(this.control.style.width);
+        this.setHeight(this.control.style.height);
         this.control.offsetLeft = this.control.offsetLeft != -1 ? this.control.offsetLeft : this.convertToPixel(this.control.style.left);
         this.control.offsetTop = this.control.offsetTop != -1 ? this.control.offsetTop : this.convertToPixel(this.control.style.top, true);
         if (this.control.style.color != undefined) this.color = this.toColor(this.control.style.color);
-        if (this.control.style.background != undefined) this.backgroundColor = this.toColor(this.control.style.background);
+        var bgColor = this.control.style['background-color'];
+        if (bgColor != undefined) {
+            this.backgroundColor = bgColor.toLowerCase() != 'transparent' ? this.backgroundColor = this.toColor(this.control.style['background-color']) : null;
+        }
         if (this.control.style['background-image'] != 'none') {
             var res = await load(this.control.style['background-image']);
             this.backgroundImage = !res.error ? res.node : null;
         }
     };
+
+    Renderer.prototype.setWidth = function setWidth(value) {
+        var res = 0;
+        if (typeof value === 'string') res = this.convertToPixel(value) + 2*(this.border.width + this.padding[0]);
+        else if (typeof value === 'number') res = this.control.width = value;
+        this.control.width = res;
+        return res;
+    };
+    Renderer.prototype.setHeight = function setHeight(value) {
+        var res = 0;
+        if (typeof value === 'string') res = this.convertToPixel(value, true) + 2*(this.border.width + this.padding[1]);
+        else if (typeof value === 'number') res = this.control.height = value;
+        this.control.height = res;
+        return res;
+    };    
+
     Renderer.prototype.setBorder = function setBorder(border) {
         if (border == 'none') {
             this.border.style = 'none';
@@ -54,6 +77,31 @@ include('math/fn.js');
     Renderer.prototype.setFont = function setFont(font) {
         throw new Error('Not implemented!');
     };
+    Renderer.prototype.setSpacing = function setSpacing(sx, sy) {
+        if (sx == undefined) {
+            sx = 0;
+            sy = 0;
+        } else if (typeof sx === 'string') {
+            var tokens = sx.split(' ');
+            sx = this.convertToPixel(tokens[0]);
+            sy = tokens.length > 1 ? this.convertToPixel(tokens[1], true) : sx;
+        }
+        this.spacing[0] = sx;
+        this.spacing[1] = sy;
+    };
+    Renderer.prototype.setPadding = function setPadding(px, py) {
+        if (px == undefined) {
+            px = this.padding[0]/2;
+            py = this.padding[1]/2;
+        } else if (typeof px === 'string') {
+            var tokens = px.split(' ');
+            px = this.convertToPixel(tokens[0]);
+            py = tokens.length > 1 ? this.convertToPixel(tokens[1], true) : px;
+        }
+        this.padding[0] = px;
+        this.padding[1] = py;
+    };
+    
     Renderer.prototype.getAlignment = function getAlignment(align) {
         var tokens = align.split(' ');
         var alignment = 0;
@@ -72,17 +120,19 @@ include('math/fn.js');
         }
         var res = 0;
 if (!this.control) debugger;
-        if (value !== undefined) {
-            if (typeof value === 'number') res = value;
-            else if (value.endsWith('px')) res = parseFloat(value);
-            else if (value.endsWith('em')) res = this.font[fontSize] * parseFloat(value);
-            else if (value.endsWith('%')) {
-                var parent =  this.control.parent ? this.control.parent : glui.screen;
+        if (value == undefined || value == 'auto') res = this.getBestSizeInPixel()[isVertical ? 1 : 0];
+        else if (typeof value === 'number') res = value;
+        else if (value.endsWith('px')) res = parseFloat(value);
+        else if (value.endsWith('em')) res = this.font[fontSize] * parseFloat(value);
+        else if (value.endsWith('%')) {
+            var parent =  this.control.parent ? this.control.parent : glui.screen;
 if (!parent.renderer) debugger;
-                res = ((parent[prop] - 2*parent.renderer.border.width) * parseFloat(value))/100;
-            }
+            res = ((parent[prop] - 2*parent.renderer.border.width) * parseFloat(value))/100;
         }
         return Math.floor(res);
+    };
+    Renderer.prototype.getBestSizeInPixel = function getBestSizeInPixel() {
+        return [this.convertToPixel('6em'), this.convertToPixel('2em', true)];
     };
     Renderer.prototype.toColor = function toColor(cssColor) {
         var color = null;

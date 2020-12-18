@@ -7,8 +7,16 @@ include('renderer2d.js');
     }
     extend(glui.Renderer2d, LabelRenderer2d);
 
-    LabelRenderer2d.prototype.renderControl = function renderControl() {
-        var lines = null;
+    LabelRenderer2d.prototype.getBestSizeInPixel = function getBestSizeInPixel() {
+        var lines = this.getLines();
+        var boxes = this.getTextBoundingBoxes(lines);
+        var w = 0, h = this.font.size * boxes.length;
+        for (var i=0; i<boxes.length; i++) {
+            w += boxes[i][2];
+        }
+        return [w, h];
+    };
+    LabelRenderer2d.prototype.getLines = function getLInes() {
         var value = this.control.getValue();
         if (value != undefined) {
             if (this.control.isNumeric) {
@@ -19,6 +27,11 @@ include('renderer2d.js');
         } else {
             lines = [];
         }
+        return lines;
+    };
+
+    LabelRenderer2d.prototype.renderControl = function renderControl() {
+        var lines = this.getLines();
         var boxes = this.getTextBoundingBoxes(lines);
         var bgColor = this.backgroundColor || this.color;
         for (var i=0; i<lines.length; i++) {

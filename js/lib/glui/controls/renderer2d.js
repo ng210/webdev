@@ -61,18 +61,21 @@ include('renderer.js');
     };
     Renderer2d.prototype.getTextBoundingBoxes = function getBoundingBoxes(lines) {
         var boxes = [];
-        var bw = this.border.width;
-        var y = bw, w = 0;
-        var h = lines.length * this.font.size;
+        var cx = 2*(this.border.width + this.padding[0]);
+        var cy = 2*(this.border.width + this.padding[1]);
         var alignment = this.getAlignment(this.control.style.align);
-        var dy = this.control.height - 2*bw - h; //if (dy < 0) dy = 2*bw;
+
+        var y = 0;
+        var h = lines.length * this.font.size;
+        var dy = this.control.height - cy - h;
         if (alignment & glui.Alignment.MIDDLE) y += Math.floor(dy/2);
         else if (alignment & glui.Alignment.BOTTOM) y += dy;
+
         for (var i=0; i<lines.length; i++) {
             var metrics = this.context.measureText(lines[i]);
             var w = Math.abs(metrics.actualBoundingBoxLeft) + Math.abs(metrics.actualBoundingBoxRight);
-            var dx = this.control.width - 2*bw - w; //if (dx < 0) dx = 0;
-            var x = bw;
+            var dx = this.control.width - cx - w;
+            var x = 0;
             if (alignment & glui.Alignment.CENTER) x += Math.floor(dx/2);
             else if (alignment & glui.Alignment.RIGHT) x += dx;
             boxes.push([x, y, w]);
@@ -124,8 +127,10 @@ include('renderer.js');
                 // render control
                 if (ctrl.style.font) this.setFont(ctrl.style.font);
                 var bw = this.border.width;
-                rect[0] += bw; rect[1] += bw;
-                rect[2] -= 2*bw; rect[3] -= 2*bw;
+                rect[0] += this.padding[0] + bw;
+                rect[1] += this.padding[1] + bw;
+                rect[2] -= 2*(this.padding[0] + bw);
+                rect[3] -= 2*(this.padding[1] + bw);
                 this.context.setTransform(1, 0, 0, 1, rect[0], rect[1]);
                 region = new Path2D();
                 region.rect(0, 0, rect[2], rect[3]);

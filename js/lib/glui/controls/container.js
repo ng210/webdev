@@ -42,7 +42,7 @@ include('renderer2d.js');
     };
     Container.prototype.getTemplate = function getTemplate() {
         var tmpl = Container.base.getTemplate.call(this);
-        tmpl.style.background = 'none';
+        tmpl.style['background-color'] = 'transparent';
         tmpl.style.border = 'none';
         tmpl.items = {};
         return tmpl;
@@ -104,34 +104,20 @@ include('renderer2d.js');
         }
         await Promise.all(arr);
     };
-    // Container.prototype.render = function render() {
-    //     for (var i=0; i<this.items.length; i++) {
-    //         this.items[i].render();
-    //     }
-    // };
-    Container.prototype.move = function move(dx, dy) {
-		Container.base.move.call(this, dx, dy);
-		// for (var i=0; i<this.items.length; i++) {
-        //     this.items[i].getBoundingBox();
-        //     this.items[i].move(dx, dy);
-		// }
-	};
     Container.prototype.getControlAt = function getControlAt(cx, cy, recursive) {
-        var res = this; //null;
-        cx -= this.renderer.border.width + this.offsetLeft;
-        cy -= this.renderer.border.width + this.offsetTop;
-		for (var i=this.items.length-1; i>=0; i--) {
-            var ctrl = this.items[i];
-            if (ctrl.style.visible && ctrl.offsetLeft < cx  && cx < ctrl.offsetLeft + ctrl.width && ctrl.offsetTop < cy  && cy < ctrl.offsetTop + ctrl.height) {
-                res = ctrl;
-                if (recursive && Array.isArray(ctrl.items) && ctrl.items.length > 0) {
-                    res = ctrl.getControlAt(cx, cy, true);
+        var res = Container.base.getControlAt.call(this, cx, cy);
+        if (res && recursive) {
+            for (var i=this.items.length-1; i>=0; i--) {
+                var ctrl = this.items[i].getControlAt(cx, cy, recursive);
+                if (ctrl) {
+                    res = ctrl;
+                    break;
                 }
-				break;
-			}
+            }
         }
-		return res;
+        return res;
     };
+
     Container.prototype.getControlById = function getControlById(id) {
         var res = null;
         var containers = [];

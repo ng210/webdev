@@ -7,7 +7,7 @@ include('data/dataseries.js');
         'width':'10em', 'height':'1.5em',
         'align':'right middle',
         'border':'#406080 1px inset',
-        'background': '#c0e0ff',
+        'background-color': '#c0e0ff',
         'background-image': 'none'
     };
     var buttonStyle = {
@@ -15,28 +15,28 @@ include('data/dataseries.js');
         'width':'14em', 'height':'2em',
         'align':'center middle',
         'border':'#808090 2px',
-        'background': '#a0a0b0'
+        'background-color': '#a0a0b0'
     };
     var tableStyle = {
         'font': 'Arial 20',
         'width':'14em',
         'align':'center middle',
-        'border':'#308060 6px outset',
+        'border':'#308060 3px outset',
         'color': '#184030',
-        'background': '#308060',
+        'background-color': '#308060',
         'cell': {
             'font': 'Arial 14',
             'align':'center middle',
             'border':'#90b0c0 1px inset',
             'color': '#102040',
-            'background': '#90b0c0',
+            'background-color': '#90b0c0',
             'width': '4em'
         },
         'title': {
             'font': 'Arial 16',
             'border':'#60a080 1px inset',
             'color': '#204060',
-            'background': '#80c0a0',
+            'background-color': '#80c0a0',
             'height': '1.5em'
         },
         'header': {
@@ -45,7 +45,7 @@ include('data/dataseries.js');
             'align':'center middle',
             'border':'#60a080 2px outset',
             'color': '#000000',
-            'background': '#60a080'
+            'background-color': '#60a080'
         }
     };
     var comboboxStyle = {
@@ -53,8 +53,28 @@ include('data/dataseries.js');
         'align':'center middle',
         'border':'#7090c0 2px solid',
         'color': '#102040',
-        'background': '#90b0c0',
+        'background-color': '#90b0c0',
         'width': '10em'
+    };
+    var menuStyle = {
+        'font': 'Arial 12',
+        'align':'center middle',
+        'border':'#607080 1px outset',
+        'color': '#001010',
+        'background-color': '#607080',
+        'spacing': '2px 1px',
+        'padding': '2px 2px'
+    };
+
+    var menuItemTemplate = {
+        'type': 'Label',
+        'style': {
+            'border':'#607080 1px outset',
+            'align': 'left middle',
+            'width': '10em',
+            'padding': '3px 2px'
+            // 'height': '1.2em',
+        }
     };
 
     var controls = [
@@ -115,7 +135,7 @@ include('data/dataseries.js');
             'style': {
                 'width':'128px', 'height':'96px',
                 'border':'#805020 2px inset',
-                'background': '#102040'
+                'background-color': '#102040'
             },
             'source': 'glui/res/test.png'
         },
@@ -124,12 +144,16 @@ include('data/dataseries.js');
             'type': 'Grid',
             'style': {
                 'color': '#ffd080',
-                'background': '#102040',
+                'background-color': '#102040',
                 'width': '640px', 'height': '400px',
                 'border': '#102040 2px inset'
             },
-            'unit-x': 8,
+            'unit-x': 10,
             'unit-y': 8,
+            'scroll-x-min': 20,
+            'scroll-x-max': 40,
+            'scroll-y-min': 32,
+            'scroll-y-max': 32,
             'data-source': 'data',
             'data-field': 'grid',
             'insert-mode': 'x-bound',
@@ -149,8 +173,8 @@ include('data/dataseries.js');
         //     'key-field': 'name',
         //     'values': 'data.table',
         //     'row-template': {
-        //         'name': { 'type': 'Label', 'style': { 'width':'65%', 'background': '#60c0a0', 'border':'#60c0a0 2px inset' } },
-        //         'age': { 'type': 'Textbox', 'data-type': 'int', 'style': { 'width':'35%', 'background': '#d0fff0', 'border':'#608078 1px inset' } }
+        //         'name': { 'type': 'Label', 'style': { 'width':'65%', 'background-color': '#60c0a0', 'border':'#60c0a0 2px inset' } },
+        //         'age': { 'type': 'Textbox', 'data-type': 'int', 'style': { 'width':'35%', 'background-color': '#d0fff0', 'border':'#608078 1px inset' } }
         //     }
         // }
     ];
@@ -182,6 +206,33 @@ include('data/dataseries.js');
             { 'x':45, 'y': 7, 'value': 0.4},
             { 'x':55, 'y':13, 'value': 0.2}
         ],
+        'main-menu': {
+            'items': [
+                {
+                    'label': 'File',
+                    'key': 'ALT F',
+                    'items': [
+                        { 'label': 'Open', 'key': 'CTRL O' },
+                        { 'label': 'Save', 'key': 'CTRL S' },
+                        { 'label': 'Exit', 'key': 'ALT X' },
+                    ]
+                },
+                {
+                    'label': 'Edit',
+                    'key': 'ALT E',
+                    'items': [
+                        { 'label': 'Cut', 'key': 'CTRL X' },
+                        { 'label': 'Copy', 'key': 'CTRL C' },
+                        { 'label': 'Paste', 'key': 'CTRL V' }
+                    ]
+                },
+                {
+                    'label': 'Help',
+                    'key': 'ALT H'
+                }
+            ]
+        },
+
         'combobox': 'James'
     };
 
@@ -202,19 +253,22 @@ include('data/dataseries.js');
         onchange: function onchange(e, ctrl) {
             Dbg.prln(`Changed ${ctrl.id}.value: ${e.oldValue} => ${e.value}`);
         },
+        onmenu: function onopen(e, ctrl) {
+            Dbg.prln(e.control.getValue());
+        },
         isInitialized: false
     };
 
     async function setup() {
         if (!App.isInitialized) {
-            glui.scale.x = 0.6;
-            glui.scale.y = 0.6;
+            glui.scale.x = 0.5;
+            glui.scale.y = 0.5;
             await glui.initialize(App, true);
-            await glui.setRenderingMode(glui.Render2d);
             App.isInitialized = true;
+        } else {
+            await glui.setRenderingMode(glui.Render2d);
+            glui.repaint();
         }
-        glui.buildUI(App);
-        glui.repaint();
     }
 
     function teardown() {
@@ -281,7 +335,7 @@ include('data/dataseries.js');
                 'align':'center middle',
                 'border':'#308060 2px outset',
                 'color': '#184030',
-                'background': '#308060'
+                'background-color': '#308060'
             },
             'cell-template': {
                 'font': 'Arial 2',
@@ -337,6 +391,40 @@ include('data/dataseries.js');
         teardown();
     }
 
+    async function test_align() {
+        message('Test align', 1);
+        await setup();
+        var hAlign = ['left', 'center', 'right'];
+        var vAlign = ['top', 'middle', 'bottom'];
+        var x = 10, y = 10;
+        for (var j=0; j<vAlign.length; j++) {
+            x = 10;
+            for (var i=0; i<hAlign.length; i++) {
+                var a = hAlign[i] + ' ' + vAlign[j];
+                var ctrl = await glui.create('ctrl'+i+j, {
+                    'type': 'Label',
+                    'style': {
+                        'align': a,
+                        'font': 'Arial 10',
+                        'border': '#6080e0 2px outset',
+                        'background-color': '#6890f0',
+                        'color': '#202638',
+                        'padding': '1em 1em',
+                        'width': '12em', 'height': '2em',
+                    },
+                    'value': a
+                }, null, App);
+                ctrl.setValue(a);
+                ctrl.move(x, y);
+                x += ctrl.width + 20;
+                ctrl.render();
+            }
+            y += ctrl.height + 20;
+        }
+
+        glui.render();
+    }
+
     async function test_container() {
         message('Test container', 1);
         await setup();    
@@ -345,7 +433,7 @@ include('data/dataseries.js');
             'style': {
                 'left': '10px', 'top': '4em',
                 'width': '40em', 'height': '16em',
-                'background': '#8080f0',
+                'background-color': '#8080f0',
                 'border':'#404080 2px outset',
                 'z-index': 0
             },
@@ -358,7 +446,7 @@ include('data/dataseries.js');
                         'width':'10em', 'height':'2em',
                         'border':'#c0c0e0 1px inset',
                         'color': '#e0e0f0',
-                        'background': '#102040'
+                        'background-color': '#102040'
                     },
                     'look': 'textbox',
                     'decimal-digits': 3,
@@ -388,7 +476,7 @@ include('data/dataseries.js');
             'style': {
                 'width': '70px', 'height': '96px',
                 'left': '128px', 'top': '4px',
-                'background': '#f08040',
+                'background-color': '#f08040',
                 'border':'#401000 2px solid'
             },
             'title': 'Default',
@@ -413,7 +501,6 @@ include('data/dataseries.js');
             }
         };
         var cnt = await glui.create('cnt', tmpl, container, null);
-
         container.render();
         glui.animate();
 
@@ -465,7 +552,7 @@ include('data/dataseries.js');
                     'width':'2em', 'height':'2.2em',
                     'align':'left middle',
                     'border':'#406080 1px inset',
-                    'background': '#f0f0cf',
+                    'background-color': '#f0f0cf',
                     'background-image': 'none'
                 }
             }
@@ -540,6 +627,69 @@ include('data/dataseries.js');
         });
         table4.move(600, 60);
         table4.render();
+
+        glui.animate();
+
+        await button('Next');
+        teardown();
+    }
+
+    async function test_menu() {
+        message('Test menu', 1);
+
+        await setup();
+        //#region menu created manually
+        var mainMenu = await glui.create('mainMenu', {
+            'type': 'Menu',
+            'layout': 'horizontal',
+            'style': menuStyle,
+            'item-template': menuItemTemplate
+        }, null, App);
+        var fileMenu = await glui.create('file', {
+            'type': 'Menu',
+            'style': menuStyle,
+            'label': 'File',
+            'item-template': menuItemTemplate
+        }, mainMenu);
+        var resMenu = await glui.create('resMenu', {
+            'type': 'Menu',
+            'layout': 'vertical',
+            'style': menuStyle,
+            'label': 'Open',
+            'item-template': menuItemTemplate
+        }, fileMenu);
+        await resMenu.add('Resource1');
+        await resMenu.add('Resource2');
+        resMenu.build();
+        await fileMenu.add('Save');
+        await fileMenu.add('Exit');
+        fileMenu.build();
+        var editMenu = await glui.create('edit', {
+            'type': 'Menu',
+            'style': menuStyle,
+            'label': 'Edit',
+            'item-template': menuItemTemplate
+        }, mainMenu);
+        await editMenu.add('Cut');
+        await editMenu.add('Copy');
+        await editMenu.add('Paste');
+        editMenu.build();
+        await mainMenu.add('Help');
+        mainMenu.build();
+        mainMenu.move(10, 10);
+        mainMenu.render();
+        //#endregion
+
+        // //#region menu created from data
+        // var mainMenu2 = await glui.create('mainMenu', {
+        //     'type': 'Menu',
+        //     'layout': 'horizontal',
+        //     'style': tableStyle,
+        //     'data-source': 'data',
+        //     'data-field': 'main-menu'
+        // });
+        // mainMenu2.render();
+        // //#endregion
 
         glui.animate();
 
@@ -686,15 +836,17 @@ include('data/dataseries.js');
     // }
 
     var tests = () => [
-        test_mergeObjects,
-        test_getObjectAt,
-        test_clipping,
-        test_construct,
-        test_container,
-        test_table,
-        // test_render,
+        // test_mergeObjects,
+        // test_getObjectAt,
+        // test_clipping,
+        // test_construct,
+        // test_align,
+        // test_container,
+        // test_table,
+        test_menu,
+        //test_render,
 
-        test_grid
+        //test_grid
     ];
     publish(tests, 'glUi tests');
 })();

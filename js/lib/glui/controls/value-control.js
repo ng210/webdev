@@ -144,9 +144,9 @@ include('control.js');
 			this.dataLink = new DataLink(this);
 			this.dataLink.link('value', this.dataSource, this.dataField, fromDataSource, toDataSource);
 			this.dataLink.addHandler('value', glui.Control.prototype.render, this);
-			if (this.dataSource.obj instanceof glui.Control) {
-				this.dataLink.addHandler('value', glui.Control.prototype.render, this.dataSource.obj);
-			}
+			// if (this.dataSource.obj instanceof glui.Control) {
+			// 	this.dataLink.addHandler('value', glui.Control.prototype.render, this.dataSource.obj);
+			// }
 			this.setValue(fromDataSource ? fromDataSource.call(this.dataSource.obj, value, 0, {target:this, field:'value'}) : value);
 			//this.value = fromDataSource ? fromDataSource.call(this.dataSource.obj, value, 0, {target:this, field:'value'}) : value;
 		}
@@ -170,6 +170,7 @@ include('control.js');
 			}
 		}
 		this.dataLink ? this.dataLink.value = value : this.value = value;
+		//this.render();
 		return oldValue;
 	};
     ValueControl.prototype.normalize = function normalize() {

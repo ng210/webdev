@@ -12,8 +12,8 @@ include('renderer2d.js');
         var ctx = this.context;
         var x0 = ctrl.scrollLeft;
         var y0 = ctrl.scrollTop;
-        var bw = this.border.width;
-        var width = ctrl.width - 2*bw, height = ctrl.height - 2*bw;
+        var bw = 2*this.border.width;
+        var width = ctrl.width - bw, height = ctrl.height - bw;
         var stepX = ctrl.stepX;
         var stepX2 = ctrl.stepX2;
         var stepY = ctrl.stepY;
@@ -53,28 +53,30 @@ include('renderer2d.js');
         ctx.moveTo(0, ctrl.cursor[1]); ctx.lineTo(width, ctrl.cursor[1]);
         ctx.stroke();
 
-        // draw lines
-        ctx.globalAlpha = 0.5;
-        var color =this.toCssColor(this.color);
-        ctx.strokeStyle = color;
-        var p = ctrl.points[0];
-        ctx.moveTo(x0+stepX*p.x, height + y0 - stepY*p.y);
-        for (var i=1; i<ctrl.points.length; i++) {
-            p = ctrl.points[i];
-            ctx.lineTo(x0+stepX*p.x, height + y0 - stepY*p.y);
-        }
-        ctx.stroke();
+        if (ctrl.points.length) {
+            // draw lines
+            ctx.globalAlpha = 0.5;
+            var color =this.toCssColor(this.color);
+            ctx.strokeStyle = color;
+            var p = ctrl.points[0];
+            ctx.moveTo(x0 + stepX*p.x, height + y0 - stepY*p.y);
+            for (var i=1; i<ctrl.points.length; i++) {
+                var p = ctrl.convertToXY(ctrl.points[i]);
+                ctx.lineTo(x0+p.x, height + y0 - p.y);
+            }
+            ctx.stroke();
 
-        // draw points
-        ctx.globalAlpha = 0.8;
-        c1 = this.toCssColor(this.color);
-        c2 = this.toCssColor(this.calculateColor(this.color, 1.4));
-        var c3 = this.toCssColor(this.calculateColor(this.color, 1.8));
-        var size = 0.4*Math.min(stepX, stepY);
-        for (var i=0; i<ctrl.points.length; i++) {
-            p = ctrl.points[i];
-            ctx.fillStyle = i != ctrl.selected ? (i != ctrl.current ? c1 : c2) : c3;
-            ctx.fillRect(x0+stepX*p.x - size, height + y0 - stepY*p.y - size, 2*size, 2*size);
+            // draw points
+            ctx.globalAlpha = 0.8;
+            c1 = this.toCssColor(this.color);
+            c2 = this.toCssColor(this.calculateColor(this.color, 1.4));
+            var c3 = this.toCssColor(this.calculateColor(this.color, 1.8));
+            var size = 0.4*Math.min(stepX, stepY);
+            for (var i=0; i<ctrl.points.length; i++) {
+                var p = ctrl.convertToXY(ctrl.points[i]);
+                ctx.fillStyle = i != ctrl.selected ? (i != ctrl.current ? c1 : c2) : c3;
+                ctx.fillRect(x0+p.x - size, height + y0 - p.y - size, 2*size, 2*size);
+            }
         }
     };
 
@@ -84,6 +86,13 @@ include('renderer2d.js');
         this.selected = -1;
         this.selectionOffset = [];
         this.lockedDirection = 0;
+        this.scaleX = 0;
+        this.scaleY = 0;
+        this.scaleRangeX = [0, 0];
+        this.scaleRangeY = [0, 0];
+
+        this.convertFromXY = function convertFromXY(x, y) { return { x: x/this.stepX, y: y/this.stepY }; };
+        this.convertToXY = function convertToXY(p) { return { x: p.x*this.stepX, y: p.y*this.stepY }; };
         Grid.base.constructor.call(this, id, template, parent, context);
     }
     extend(glui.Control, Grid);
@@ -94,30 +103,38 @@ include('renderer2d.js');
         template['unit-x'] = '10px';
         template['scale-x'] = 1;
         template['scale-y'] = 1;
-        template['insert-mode'] = Grid.interactionModes.FREE;
-        template['drag-mode'] = Grid.interactionModes.FREE;
-        template['curve-mode'] = Grid.curveModes.LINE;
+        template['scale-x-min'] = 0.25;
+        template['scale-x-max'] = 4.0;
+        template['scale-y-min'] = 0.25;
+        template['scale-y-max'] = 4.0;
+        template['insert-mode'] = Grid.interactionModes.FREE.toString();
+        template['drag-mode'] = Grid.interactionModes.FREE.toString();
+        template['curve-mode'] = Grid.curveModes.LINE.toString();
         return template;
     };
     Grid.prototype.applyTemplate = function applyTemplate(tmpl) {
         var template = Grid.base.applyTemplate.call(this, tmpl);
         this.scaleX = parseFloat(template['scale-x']);
         this.scaleY = parseFloat(template['scale-y']);
+        this.scaleRangeX[0] = template['scale-x-min'];
+        this.scaleRangeX[1] = template['scale-x-max'];
+        this.scaleRangeY[0] = template['scale-y-min'];
+        this.scaleRangeY[1] = template['scale-y-max'];
 
         this.insertMode = 0;
-        var tokens = tmpl['insert-mode'].split(' ');
+        var tokens = template['insert-mode'].split(' ');
         for (var i=0; i<tokens.length; i++) {
             var v = Grid.interactionModes[tokens[i].toUpperCase()];
             if (v != undefined) this.insertMode |= v;
         }
         this.dragMode = 0;
-        tokens = tmpl['drag-mode'].split(' ');
+        tokens = template['drag-mode'].split(' ');
         for (var i=0; i<tokens.length; i++) {
             var v = Grid.interactionModes[tokens[i].toUpperCase()];
             if (v != undefined) this.dragMode |= v;
         }
 
-        this.curveMode = Grid.curveModes[tmpl['curve-mode'].toUpperCase()] || Grid.curveModes.NONE;
+        this.curveMode = Grid.curveModes[template['curve-mode'].toUpperCase()] || Grid.curveModes.NONE;
 
         if (this.dataSource && this.dataField) {
             this.dataBind();
@@ -177,20 +194,12 @@ include('renderer2d.js');
             }
         }
     };
-    Grid.prototype.getPointIndexAt = function getPointIndexAt(x, y, offset) {
-        var bw = this.renderer.border.width;
-        var height = this.height - 0*bw;
-        var cx = x/this.stepX;
-        var cy = (height - y)/this.stepY;
-        var x1 = cx - 0.5, x2 = cx + 0.5;
-        var y1 = cy - 0.5, y2 = cy + 0.5;
+    Grid.prototype.getPointIndexAt = function getPointIndexAt(x, y) {
+        var x1 = x - 0.5, x2 = x + 0.5;
+        var y1 = y - 0.5, y2 = y + 0.5;
         for (var i=0; i<this.points.length; i++) {
             var px = this.points[i].x, py = this.points[i].y;
             if (px > x1 && px < x2 && py > y1 && py < y2) {
-                if (offset) {
-                    offset[0] = px*this.stepX - x;
-                    offset[1] = height - py*this.stepY - y;
-                }
                 return i;
             }
         }
@@ -214,27 +223,34 @@ include('renderer2d.js');
         }
     };
     Grid.prototype.setScale = function setScale() {
-        this.stepX = this.renderer.convertToPixel(this.unitX) || 0;
-        this.stepX = Math.floor(this.stepX*this.scaleX);
-        this.stepX2 = this.stepX*this.stepX;
-        this.stepY = this.renderer.convertToPixel(this.unitY, true) || 0;
-        this.stepY = Math.floor(this.stepY*this.scaleY);
-        this.stepY2 = this.stepY*this.stepY;
-    };
+        if (this.scaleX < this.scaleRangeX[0]) this.scaleX = this.scaleRangeX[0];
+        else if (this.scaleX > this.scaleRangeX[1]) this.scaleX = this.scaleRangeX[1];
+        if (this.scaleY < this.scaleRangeY[0]) this.scaleY = this.scaleRangeY[0];
+        else if (this.scaleY < this.scaleRangeY[0]) this.scaleY = this.scaleRangeY[0];
 
+        var unitX = this.renderer.convertToPixel(this.unitX) || 0;
+        this.stepX = Math.floor(unitX*this.scaleX);
+        this.stepX2 = this.unitX*this.stepX;
+        var unitY = this.renderer.convertToPixel(this.unitY) || 0;
+        this.stepY = Math.floor(unitY*this.scaleY);
+        this.stepY2 = this.unitY*this.stepY;
+
+        this.minScrollLeft = -this.scrollRangeX[0]*this.stepX;
+        this.maxScrollLeft = this.scrollRangeX[1]*this.stepX;
+        this.minScrollTop = -this.scrollRangeY[0]*this.stepY;
+        this.maxScrollTop = this.scrollRangeY[1]*this.stepY;
+    };
     Grid.prototype.insertPoint = function insertPoint(x, y) {
         if (this.insertMode != Grid.interactionModes.NONE) {
             var insertMode = this.insertMode;
             var insertPosition = -1;
             if ((this.insertMode & Grid.interactionModes["Y-BOUND"]) != 0) {
                 insertMode -= Grid.interactionModes["Y-BOUND"];
-                var pi = this.points.findIndex(p => p.y >= y);
-                insertPosition = pi;
+                insertPosition = this.points.findIndex(p => p.y >= y);
             }
             if ((this.insertMode & Grid.interactionModes["X-BOUND"]) != 0) {
                 insertMode -= Grid.interactionModes["X-BOUND"];
-                var pi = this.points.findIndex(p => p.x >= x);
-                insertPosition = pi;
+                insertPosition = this.points.findIndex(p => p.x >= x);
             }
             if ((this.insertMode & Grid.interactionModes.FREE) != 0) {
                 insertMode -= Grid.interactionModes["FREE"];
@@ -242,31 +258,43 @@ include('renderer2d.js');
             if (insertMode != 0) {
                 console.warn(`Invalid insert mode '${this.insertMode}'`);
             }
+
             var point = { x: x, y: y, value: 1.0 };
             insertPosition == -1 ? this.points.push(point) : this.points.splice(insertPosition, 0, point);
         }
     };
+    Grid.prototype.removePoint = function removePoint(ix) {
+        this.points.splice(ix, 1);
+    };
+    Grid.prototype.transformXY = function transformXY(cx, cy) {
+        var bw = this.renderer.border.width;
+        return {
+            x: cx - this.scrollLeft - bw,
+            y: this.height - (cy - this.scrollTop) - bw
+        };
+    };
 
     Grid.prototype.onmousemove = function onmousemove(e) {
+        var xy = this.transformXY(e.controlX, e.controlY);
         this.cursor[0] = e.controlX;
         this.cursor[1] = e.controlY;
-        var bw = this.renderer.border.width;
-        var x = e.controlX-this.scrollLeft - bw, y = e.controlY - this.scrollTop + bw;
-        var pi = this.getPointIndexAt(x, y);
-        this.current = pi;
+        var pi = this.convertFromXY(xy.x, xy.y);
+        var ix = this.getPointIndexAt(pi.x, pi.y);
+        this.current = ix;
         this.render();
     };
     Grid.prototype.onmousedown = function onmousedown(e) {
-        var bw = this.renderer.border.width;
-        var x = e.controlX-this.scrollLeft - bw, y = e.controlY - this.scrollTop + bw;
-        this.selected = this.getPointIndexAt(x, y, this.selectionOffset);
+        var xy = this.transformXY(e.controlX, e.controlY);
+        var pi = this.convertFromXY(xy.x, xy.y);
+        this.selected = this.getPointIndexAt(pi.x, pi.y);
         if (this.selected == -1) {
             if (e.ctrlKey) {
-                this.insertPoint(x/this.stepX, (this.height - y)/this.stepY);
+                this.insertPoint(pi.x, pi.y);
             }
         } else {
             if (e.ctrlKey) {
-                this.points.splice(this.selected, 1);
+                this.removePoint(this.selected);
+                this.selected = -1;
             };
         }
         this.render();
@@ -280,12 +308,12 @@ include('renderer2d.js');
         }
     };
     Grid.prototype.ondragging = function ondragging(e) {
-        var bw = this.renderer.border.width;
-        var x = e.controlX - this.scrollLeft - bw, y = e.controlY - this.scrollTop + bw;
         if (e.control == this && this.selected != -1 && this.dragMode != Grid.interactionModes.NONE) {
             var p = this.points[this.selected];
-            var px = (x + this.selectionOffset[0])/this.stepX;
-            var py = (this.height - y - this.selectionOffset[1])/this.stepY;
+            var xy = this.transformXY(e.controlX, e.controlY);
+            var pi = this.convertFromXY(xy.x, xy.y);
+            var px = pi.x;
+            var py = pi.y;
             if (e.ctrlKey) {
                 // snap to grid
                 px = Math.round(px);
@@ -308,13 +336,18 @@ include('renderer2d.js');
             if (e.shiftKey) {
                 // scroll canvas
                 this.scrollLeft += e.deltaX;
+                if (this.scrollLeft < this.minScrollLeft) this.scrollLeft = this.minScrollLeft;
+                if (this.scrollLeft > this.maxScrollLeft) this.scrollLeft = this.maxScrollLeft;
+
                 this.scrollTop += e.deltaY;
+                if (this.scrollTop < this.minScrollTop) this.scrollTop = this.minScrollTop;
+                if (this.scrollTop > this.maxScrollTop) this.scrollTop = this.maxScrollTop;
             } else if (e.altKey) {
-                if (e.deltaX < 0 && this.scaleX > 0.6 || e.deltaX > 0 && this.scaleX < 4.0) {
+                if (e.deltaX != 0) {
                     var dx = 0.005*e.deltaX;
                     this.scaleX += dx;
                 }
-                if (e.deltaY > 0 && this.scaleY > 0.6 || e.deltaY < 0 && this.scaleY < 4.0) {
+                if (e.deltaY != 0) {
                     var dy = 0.005*e.deltaY;
                     this.scaleY -= dy;
                 }

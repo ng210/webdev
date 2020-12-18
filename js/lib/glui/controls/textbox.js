@@ -1,4 +1,4 @@
-include('value-control.js');
+include('label.js');
 include('renderer2d.js');
 
 (function() {
@@ -89,7 +89,7 @@ include('renderer2d.js');
         this.isFocused = false;
         //this.renderer3d = new TextboxRenderer3d()
     }
-    extend(glui.ValueControl, Textbox);
+    extend(glui.Label, Textbox);
 
     Textbox.prototype.getTemplate = function getTemplate() {
         var template = Textbox.base.getTemplate.call(this);

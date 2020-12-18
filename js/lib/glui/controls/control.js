@@ -1,7 +1,7 @@
 include('icontrol.js');
 include('data/datalink.js');
 
-const DEBUG_EVENT = 'mouseout_|mouseover_';
+const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
 
 (function() {
 
@@ -19,7 +19,6 @@ const DEBUG_EVENT = 'mouseout_|mouseover_';
         this.isFocused = false;
 
         this.handlers = {};
-        this.applyTemplate(template);
         // cache for left and top
         this.left_ = 0;
         this.top_ = 0;
@@ -28,10 +27,18 @@ const DEBUG_EVENT = 'mouseout_|mouseover_';
         this.offsetTop = -1;
         this.scrollLeft = 0;
         this.scrollTop = 0;
+        this.scrollRangeX = [0, 0];
+        this.scrollRangeY = [0, 0];
+        this.minScrollLeft = 0;
+        this.maxScrollLeft = 0;
+        this.minScrollTop = 0;
+        this.maxScrollTop = 0;
         this.innerHeight = 0;
         this.innerWidth = 0;
-        this.width = 0;
-        this.height = 0;
+        this.width = -1;
+        this.height = -1;
+
+        this.applyTemplate(template);
     }
     extend(glui.IControl, Control);
 
@@ -42,7 +49,7 @@ const DEBUG_EVENT = 'mouseout_|mouseover_';
             get: function () {
                 var left = this.renderer.convertToPixel(this.offsetLeft);
                 if (this.parent) {
-                    left += this.parent.left + this.parent.renderer.border.width;
+                    left += this.parent.left + this.parent.renderer.padding[0] + this.parent.renderer.border.width;
                 }
                 this.left_ = left;
                 return left;
@@ -54,7 +61,7 @@ const DEBUG_EVENT = 'mouseout_|mouseover_';
             get: function () {
                 var top = this.renderer.convertToPixel(this.offsetTop, true);
                 if (this.parent) {
-                    top += this.parent.top + this.parent.renderer.border.width;
+                    top += this.parent.top + this.parent.renderer.padding[1] +  this.parent.renderer.border.width;
                 }
                 this.top_ = top;
                 return top;
@@ -150,6 +157,10 @@ const DEBUG_EVENT = 'mouseout_|mouseover_';
             'disabled': false,
             'data-source': '',
             'data-field': null,
+            'scroll-x-min': 0,
+            'scroll-x-max': 1,
+            'scroll-y-min': 0,
+            'scroll-y-max': 1,
             // styling
             'style': Control.getStyleTemplate()
         };
@@ -187,6 +198,10 @@ const DEBUG_EVENT = 'mouseout_|mouseover_';
         this.zIndex = parseInt(this.template.style) || 0;
         this.style = mergeObjects(this.template.style, null);
         this.label = null;
+        this.scrollRangeX[1] = this.template['scroll-x-min'];
+        this.scrollRangeX[0] = this.template['scroll-x-max'];
+        this.scrollRangeY[0] = this.template['scroll-y-min'];
+        this.scrollRangeY[1] = this.template['scroll-y-max'];
         return this.template;
 	};
     Control.prototype.dataBind = function dataBind(source, field) {
@@ -211,11 +226,27 @@ const DEBUG_EVENT = 'mouseout_|mouseover_';
             var ctrl = this.parent;
             while (true) {
                 if (ctrl == glui.screen) break;
-                rect = Fn.intersectRect(rect, ctrl.getBoundingBox());
+                if (!(ctrl instanceof glui.Menu)) {
+                    rect = Fn.intersectRect(rect, ctrl.getBoundingBox());
+                }
                 ctrl = ctrl.parent;
             }
         }
         return rect;
+    };
+    Control.prototype.getControlAt = function getControlAt(x, y, recursive) {
+        var rect = this.getBoundingBox();
+        x -= rect[0];
+        y -= rect[1];
+        // var min = x * y;
+        // var max = (rect[2] - x) * (rect[3] - y);
+        // return this.style.visible && (min * max > 0);
+        return this.style.visible && 0 <= x && x < rect[2] && 0 <= y && y < rect[3] ? this : null;
+    };    
+    Control.prototype.size = function(width, height) {
+        if (width) this.renderer.setWidth(width);
+        if (height) this.renderer.setHeight(height);
+        this.render();
     };
     Control.prototype.move = function move(dx, dy) {
         this.offsetLeft = dx;
@@ -224,6 +255,7 @@ const DEBUG_EVENT = 'mouseout_|mouseover_';
         //     this.left = this.renderer.accumulate('offsetLeft');
         //     this.top = this.renderer.accumulate('offsetTop', true);
         // }
+        this.render();
     };
     Control.prototype.render = function render() {
         // mark control to render in the next requestAnimationFrame
@@ -279,6 +311,7 @@ const DEBUG_EVENT = 'mouseout_|mouseover_';
             };
             this.renderer = this.renderer3d;
         }
+       
         return this.renderer;
     };
     Control.prototype.isDescendant = function isDescendant(ancestor) {
@@ -304,11 +337,11 @@ const DEBUG_EVENT = 'mouseout_|mouseover_';
     Control.create = async function create(id, template, parent, context) {
         var type = template.type;
         if (typeof glui[type] === 'function') {
-            parent = parent || glui.screen;
+            parent = parent && parent instanceof glui.Container ? parent : glui.screen;
             var ctrl = Reflect.construct(glui[type], [id, template, parent, context]);
             if (ctrl instanceof glui.Control) {
                 if (ctrl instanceof glui.Container) {
-                    var p = [];
+                    //var p = [];
                     for (var i in ctrl.template.items) {
                         if (ctrl.template.items.hasOwnProperty(i)) {
                             await glui.create(i, ctrl.template.items[i], ctrl);
@@ -360,15 +393,15 @@ const DEBUG_EVENT = 'mouseout_|mouseover_';
         return {
             'left': 0,
             'top': 0,
-            'width': '2em',
-            'height': '1.2em',
+            'width': 'auto',
+            'height': 'auto',
             'z-index': NaN,
-            'background': '#c0c0c0',
+            'background-color': '#e0e0e0',
             'background-image': 'none',
             'color': '#000000',
             'font': 'Arial 12 normal',
             'align': 'center middle',
-            'border': '#a0a0a0 2px solid',
+            'border': '#c0c0c0 1px solid',
             'visible': true
         };
     };

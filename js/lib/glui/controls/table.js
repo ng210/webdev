@@ -1,18 +1,6 @@
 include('container.js');
 (function() {
-	// Row
-	//  - getTemplate/applyTemplate
-	//		- uses row-template created by parent grid
-	//  - build
-	//		- create cells
-	//  - update
-	//		- add/remove cells
-	//		- update data bindings
-	//  - dataBind
-	//  - getBoundingBox
-	//		- get width = border + total cell width
-	//  - render
-	//		- render items (cells)
+	// Row control
 	function TableRowRenderer2d(control, context) {
 		TableRowRenderer2d.base.constructor.call(this, control, context);
 	}
@@ -110,6 +98,7 @@ include('container.js');
 		}
 	};
 
+	// Column object
 	function Column(name, key, parent) {
 		this.id = `${parent.id}#${key}`;
 		this.name = name;
@@ -132,6 +121,8 @@ include('container.js');
 		ctrl.column = this;
 	};
 
+
+	// Table control
 	const headKey = '__head';
 
 	function TableRenderer2d(control, context) {
@@ -225,7 +216,7 @@ include('container.js');
 		template.style.cell = glui.Control.getStyleTemplate();
 		template.style.title = null;
 		template.style.header = glui.Control.getStyleTemplate();
-		template.style.height = undefined;
+		template.style.height = 0;
 		template.title = this.id;
 		template.rows = 0;
 		template.cols = 0;
@@ -577,7 +568,7 @@ include('container.js');
 			newItem.style.width = item.style.width;
 			newItem.style.height = item.style.height;
 			newItem.style.border = item.style.border;
-			newItem.style.background = item.style.background;
+			newItem.style['background-color'] = item.style['background-color'];
 			newItem.style.font = item.style.font;
 
 			var row = item.row;

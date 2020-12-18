@@ -55,7 +55,7 @@
         remove: function remove(control) {
             this.screen.remove(control);
         },
-        initialize: function initialize(app, isFullscreen) {
+        initialize: async function initialize(app, isFullscreen) {
             document.body.style.display = 'block';
             this.context = app;
             this.canvas = document.createElement('canvas');
@@ -75,7 +75,7 @@
             delete this.screen.onmouseover; // = function onmouseover() { return true; };
             delete this.screen.onmouseout;  // = function onmouseout() { return true; };
             this.screen.addHandlers();
-            this.setRenderingMode(glui.Render2d);
+            await this.setRenderingMode(glui.Render2d);
             document.addEventListener('keydown', glui.onevent);
             document.addEventListener('keyup', glui.onevent);
             document.addEventListener('mouseup', glui.onevent);
@@ -210,37 +210,21 @@
             glui.render();
             glui.animateId = requestAnimationFrame(glui.animate);
         },
-        onevent: function(e) {
+        onevent: function onevent(e) {
             // get control by coordinates
             var event = e.type;
             var control = glui.screen.getControlAt(glui.scale.x*e.clientX, glui.scale.y*e.clientY, true);
-            e.control = control;
+            if (control == null) control = glui.focusedControl;
             //console.log(`${event} for target=${e.target}, this=${this}, control=${this.control ? this.control : e.target.control ? e.target.control : 'none'}, Control.focused=${Control.focused}`);
-            if (control && control.disabled) {
+            if (!control || control.disabled) {
                 return false;
             }
+            e.control = control;
             e.controlX = Math.round(glui.scale.x*e.clientX - control.left_);
             e.controlY = Math.round(glui.scale.y*e.clientY - control.top_);
             if (event == 'mousedown') {
                 // check onfocus/onblur
-                if (control != glui.focusedControl) {
-                    if (glui.focusedControl) {
-                        var ctrl = glui.focusedControl;
-                        glui.focusedControl = control;
-                        e.control = control;    //ctrl;
-                        // var parent = getCommonParent(ctrl, control, 'parent')
-                        // if (!parent) {
-                            ctrl.callHandler('blur', e);
-                        // } else {
-                        //     parent.callHandler('blur', e);
-                        // }
-                    }
-                    if (control) {
-                        e.control = control;
-                        control.callHandler('focus', e);
-                        glui.focusedControl = control;
-                    }
-                }
+                glui.setFocus(control);
                 if (glui.focusedControl) {
                     glui.dragging = glui.focusedControl;
                     glui.dragStartX = glui.dragX = e.screenX;
@@ -259,8 +243,8 @@
                         controlY: Math.round(glui.scale.y*e.clientY - control.top_),
                         startX: glui.dragStartX,
                         startY: glui.dragStartY,
-                        deltaX: e.screenX - glui.dragX,
-                        deltaY: e.screenY - glui.dragY
+                        deltaX: (e.screenX - glui.dragX)*glui.scale.x,
+                        deltaY: (e.screenY - glui.dragY)*glui.scale.y
                     };
                     if (glui.keys[16]) draggingEvent.shiftKey = true;
                     if (glui.keys[18]) draggingEvent.altKey = true;
@@ -304,7 +288,25 @@
             }
             //console.log(Control.focused ? Control.focused.id : 'none')
         },
-        focused: null,
+        setFocus: function setFocus(control) {
+            if (control != glui.focusedControl) {
+                if (glui.focusedControl) {
+                    var ctrl = glui.focusedControl;
+                    glui.focusedControl = control;
+                    ctrl.callHandler('blur', {
+                        'type': 'blur',
+                        'control': control
+                    });
+                }
+                if (control) {
+                    control.callHandler('focus',  {
+                        'type': 'focus',
+                        'control': control
+                    });
+                    glui.focusedControl = control;
+                }
+            }
+        },
         atCursor: null,
         dragging: null,
         dragStartX: 0,
