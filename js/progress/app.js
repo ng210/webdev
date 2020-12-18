@@ -5,7 +5,7 @@ function App() {
     };
     this.data = null;
     this.points = null;
-    this.unitX = 60;
+    this.unitX = 10;
     this.unitY = 10;
 }
 
@@ -14,7 +14,7 @@ App.prototype.createUi = async function createUi() {
         'type': 'Container',
         'style': {
             'width': '100%', 'height': '100%',
-            'background': '#102040',
+            'background-color': '#102040',
             'border': '#102040 4px inset'
         }
     }, null, this);
@@ -26,23 +26,23 @@ App.prototype.createUi = async function createUi() {
             'width':'27em',
             'align':'right middle',
             'border':'#406080 2px outset',
-            'background': '#c0e0ff',
+            'background-color': '#c0e0ff',
             'color':'#101820',
             'cell': {
                 'height': '1.5em',
-                'background': '#e0e8ff',
+                'background-color': '#e0e8ff',
                 'border':'#406080 1px inset'
             },
             'title': {
                 'font': 'Arial 18', 'height':'1.8em',
                 'align':'center middle',
                 'border':'#406080 1px inset',
-                'background': '#a0c0ff'
+                'background-color': '#a0c0ff'
             }
         },
         'title': 'Data',
         'row-template': {
-            //'no': { 'type': 'Label', 'style': { 'width':'2em', 'background': '#406080' } },
+            //'no': { 'type': 'Label', 'style': { 'width':'2em', 'background-color': '#406080' } },
             'datum': { 'type': 'Textbox', 'multi-line': false, 'data-type': 'string', 'style': { 'width':'16em' } },
             'sis': { 'type': 'Textbox', 'multi-line': false, 'max':300, 'data-type': 'int', 'style': { 'width':'4em' } },
             'dias': { 'type': 'Textbox', 'multi-line': false, 'max':300, 'data-type': 'int', 'style': { 'width':'4em' } },
@@ -54,15 +54,15 @@ App.prototype.createUi = async function createUi() {
         'type': 'Grid',
         'style': {
             'color': '#a08060',
-            'background': '#102040',
+            'background-color': '#102040',
             'width': '100%', 'height': '100%',
             'border': '#102040 2px inset',
             'left': '32em'
         },
         'unit-x': this.unitX,
         'unit-y': this.unitY,
-        'scale-x': 0.4,
-        'scale-y': 1,
+        'scale-x': 1.0,
+        'scale-y': 1.0,
         'insert-mode': 'none',
         'drag-mode': 'none',
         'curve-mode': 'line'

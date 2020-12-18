@@ -38,7 +38,7 @@ include('webgl/sprite/sprite.js');
             'type':'Label',
             'style': {
                 'font': 'Arial 24',
-                'background': '#406050',
+                'background-color': '#406050',
                 'border': 'none',
                 'color': '#80c0a0',
                 'width':'8em', 'height': '1.4em',

@@ -11,8 +11,8 @@ async function onpageload(e) {
     Dbg.init('con');
     Dbg.prln('progress');
     _app = new App();
-    glui.scale.x = 0.5;
-    glui.scale.y = 0.5;
+    glui.scale.x = 1.0;
+    glui.scale.y = 1.0;
     await glui.initialize(_app, true);
     //glui.setRenderingMode(glui.Render2d);
     await _app.loadData();
