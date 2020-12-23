@@ -97,6 +97,16 @@ include('container.js');
 			this.render();
 		}
 	};
+	Row.prototype.onfocus = function onfocus(e) {
+		if (this.parent.mode == Table.modes.TABLE) {
+			this.parent.selectedRow = this;
+		}
+	};
+	Row.prototype.onblur= function onblur(e) {
+		if (this.parent.mode == Table.modes.TABLE) {
+			this.parent.selectedRow = null;
+		}
+	};
 
 	// Column object
 	function Column(name, key, parent) {
@@ -131,17 +141,17 @@ include('container.js');
 	extend(glui.Renderer2d, TableRenderer2d);
 
 	TableRenderer2d.prototype.renderControl = function renderControl() {
-		var grid = this.control;
+		var table = this.control;
 		var top = 0;
 		// draw titlebar
-		if (grid.titlebar) {
-			grid.titlebar.renderer.render();
-			top += grid.titlebar.height + grid.titlebar.renderer.border.width;
+		if (table.titlebar) {
+			table.titlebar.renderer.render();
+			top += table.titlebar.height + table.titlebar.renderer.border.width;
 		}
 
 		// calculate cell widths
 		// var headerHeight = 0, height = 0;
-		var width = grid.width - 2*this.border.width;
+		var width = table.width - 2*this.border.width;
 		var columnWidths = [];
 		var percentage = 0;
 		var absolute = 0;
@@ -149,8 +159,8 @@ include('container.js');
 		// sum absolute values
 		// rest = total - absolute
 		// distribute rest among percentage
-		for (var ci=0; ci<grid.columnCount; ci++) {
-			var column = grid.columns[ci];
+		for (var ci=0; ci<table.columnCount; ci++) {
+			var column = table.columns[ci];
 			column.width = -1;
 			if (column.style.width == undefined) {
 				percentage += 100; columnWidths.push(100);
@@ -162,15 +172,15 @@ include('container.js');
 				absolute += column.width = column.cells[0].renderer.convertToPixel(column.style.width, 0);
 				columnWidths.push(-1);
 			}
-			// if (grid.rowTemplate) {
-			// 	headerHeight = Math.max(grid.rows[headKey].cells[ci].height, height);
+			// if (table.rowTemplate) {
+			// 	headerHeight = Math.max(table.rows[headKey].cells[ci].height, height);
 			// }
-			// per row: grid.rows[..] => row
-			// height = Math.max(grid.rows[grid.rowKeys[1]].cells[ci].height, height);
+			// per row: table.rows[..] => row
+			// height = Math.max(table.rows[table.rowKeys[1]].cells[ci].height, height);
 		}
 		var restWidth = width - absolute;
-		for (var ci=0; ci<grid.columnCount; ci++) {
-			var column = grid.columns[ci];
+		for (var ci=0; ci<table.columnCount; ci++) {
+			var column = table.columns[ci];
 			if (column.width == -1) {
 				column.width = Math.ceil(restWidth/percentage*columnWidths[ci]);
 				restWidth -= column.width;
@@ -179,15 +189,15 @@ include('container.js');
 		}
 
 		// draw header
-		if (grid.showHeader) {
-			grid.header.move(0, top);
-			grid.header.renderer.render();
-			top += grid.header.height;
+		if (table.showHeader) {
+			table.header.move(0, top);
+			table.header.renderer.render();
+			top += table.header.height;
 		}
 
 		// draw rows
-		for (var i=0; i<grid.rowCount; i++) {
-			var row = grid.rows[grid.rowKeys[i]];
+		for (var i=0; i<table.rowCount; i++) {
+			var row = table.rows[table.rowKeys[i]];
 			if (row.style.visible) {
 				row.move(0, top);
 				row.renderer.render();
@@ -207,6 +217,7 @@ include('container.js');
 		this.isDirty = true;
 		this.titlebar = null;
 		this.mode = Table.modes.TABLE;
+		this.selectedRow = null;
 		Table.base.constructor.call(this, id, template, parent, context);
 	};
 	extend(glui.Container, Table);
@@ -239,13 +250,17 @@ include('container.js');
 		this.style.header = mergeObjects(this.cellStyle, template.style.header);
 		this.style.title = mergeObjects(this.cellStyle, template.style.title);
 
-		this.rowTemplate = template['row-template'];
 		this.cellTemplate = template['cell-template'];
 		if (!tmpl['cell-template']) {
 			this.cellTemplate.style = mergeObjects(this.cellTemplate.style, this.cellStyle);
 		} else {
 			this.cellTemplate.style = mergeObjects(this.cellStyle, this.cellTemplate.style);
 		}
+		this.rowTemplate = template['row-template'];
+		for (var i in this.rowTemplate) {
+			this.rowTemplate[i].style = mergeObjects(this.cellTemplate.style, this.rowTemplate[i].style)
+		}
+
 		this.style.title.width = '100%';
 		this.title = template.title;
 
@@ -558,6 +573,7 @@ include('container.js');
 		if (this.dataSource) {
 			this.dataBind();
 		}
+		this.getBoundingBox();
 	};
     Table.prototype.replace = function replace(item, newItem) {
 		var result = Table.base.replace.call(this, item, newItem);

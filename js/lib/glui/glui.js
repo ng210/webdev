@@ -12,13 +12,16 @@
         renderingContext3d: null,
         frontBuffer: null,
         backBuffer: null,
+        frame: 0,
         left: 0,
         top: 0,
         width: 0,
         height: 0,
         controlCount: 0,
+        isRunning: false,
 
         markedForRendering: {},
+        modalDialogs: [],
 
         animations: [],
         animateId: 0,
@@ -134,15 +137,7 @@
         //     this.screen.render();
         // },
         markForRendering: function markForRendering(ctrl) {
-            // while (ctrl != this.screen) {
-            //     if (ctrl.parent == this.screen) {
-            //         debug_(ctrl.id + 'marked for rendering', 2);
-            //         // get region
-                    this.markedForRendering[ctrl.id] = ctrl;
-            //         break;
-            //     }
-            //     ctrl = ctrl.parent;
-            // }            
+            this.markedForRendering[ctrl.id] = ctrl;
         },
         clearRect: function clearRect(left, top, width, height) {
             left = left || 0;
@@ -152,6 +147,7 @@
             this.renderingContext2d.clearRect(left, top, width, height);
         },
         repaint: function repaint() {
+            this.markedForRendering = {};
             this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
             this.screen.renderer.render();
         },
@@ -202,10 +198,22 @@
             glui.markedForRendering = {};
             for (var i=0; i<marks.length; i++) {
                 debug_('render ' + marks[i].id, 2);
-                marks[i].renderer.render();
+                var r = marks[i].renderer;
+                if (r.lastFrame != glui.frame) {
+                    r.render();
+                    r.lastFrame = glui.frame;
+                }
             }
+            // for (var i=0; i<glui.modalDialogs.length; i++) {
+            //     var dlg = glui.modalDialogs[i];
+            //     if (dlg.isActive) {
+
+            //     }
+            // }
+            glui.frame++;
         },
         animate: function animate() {
+            glui.isRunning = true;
             if (glui.animateId) cancelAnimationFrame(glui.animateId);
             glui.render();
             glui.animateId = requestAnimationFrame(glui.animate);
@@ -213,15 +221,18 @@
         onevent: function onevent(e) {
             // get control by coordinates
             var event = e.type;
-            var control = glui.screen.getControlAt(glui.scale.x*e.clientX, glui.scale.y*e.clientY, true);
+            var clientX = e.clientX * glui.scale.x;
+            var clientY = e.clientY * glui.scale.y;
+            var control = glui.screen.getControlAt(clientX, clientY, true);
             if (control == null) control = glui.focusedControl;
-            //console.log(`${event} for target=${e.target}, this=${this}, control=${this.control ? this.control : e.target.control ? e.target.control : 'none'}, Control.focused=${Control.focused}`);
+           //console.log(`${event} for target=${e.target}, this=${this}, control=${this.control ? this.control : e.target.control ? e.target.control : 'none'}, Control.focused=${Control.focused}`);
             if (!control || control.disabled) {
                 return false;
             }
+            if (glui.modalDialogs[0] && !control.isDescendant(glui.modalDialogs[0])) return false;                
             e.control = control;
-            e.controlX = Math.round(glui.scale.x*e.clientX - control.left_);
-            e.controlY = Math.round(glui.scale.y*e.clientY - control.top_);
+            e.controlX = clientX - control.left_;
+            e.controlY = clientY - control.top_;
             if (event == 'mousedown') {
                 // check onfocus/onblur
                 glui.setFocus(control);
@@ -229,6 +240,8 @@
                     glui.dragging = glui.focusedControl;
                     glui.dragStartX = glui.dragX = e.screenX;
                     glui.dragStartY = glui.dragY = e.screenY;
+                    glui.dragOffsetX = e.controlX;
+                    glui.dragOffsetY = e.controlY;
                 }
             } else if (event == 'mousemove') {
                 if (glui.dragging) {
@@ -237,12 +250,14 @@
                         control: control,
                         screenX: e.screenX,
                         screenY: e.screenY,
-                        clientX: e.clientX,
-                        clientY: e.clientY,
-                        controlX: Math.round(glui.scale.x*e.clientX - control.left_),
-                        controlY: Math.round(glui.scale.y*e.clientY - control.top_),
+                        clientX: clientX,
+                        clientY: clientY,
+                        controlX: e.controlX,
+                        controlY: e.controlY,
                         startX: glui.dragStartX,
                         startY: glui.dragStartY,
+                        offsetX: glui.dragOffsetX,
+                        offsetY: glui.dragOffsetY,
                         deltaX: (e.screenX - glui.dragX)*glui.scale.x,
                         deltaY: (e.screenY - glui.dragY)*glui.scale.y
                     };
@@ -269,12 +284,13 @@
                 glui.dragging = null;
                 if (control && control == glui.focusedControl) {
                     setTimeout( () => control.callHandler('click', e), 0);
+                } else {
+                    glui.focusedControl.callHandler('mouseup', e)
                 }
             }
     
             if (event == 'keydown' || event == 'keyup') {
                 glui.keys[e.keyCode] = event == 'keydown';
-                // console.log(e.keyCode, e.key);
                 if (control == glui.screen) {
                     control = glui.focusedControl;
                 }
@@ -283,10 +299,7 @@
             if (control) {
                 e.control = control;
                 control.callHandler(e.type, e);
-                // e.stopPropagation();
-                // e.preventDefault();
             }
-            //console.log(Control.focused ? Control.focused.id : 'none')
         },
         setFocus: function setFocus(control) {
             if (control != glui.focusedControl) {
@@ -309,6 +322,7 @@
         },
         atCursor: null,
         dragging: null,
+        draggedControl : null,
         dragStartX: 0,
         dragStartY: 0,    
         dragX: 0,

@@ -1,7 +1,7 @@
 include('icontrol.js');
 include('data/datalink.js');
 
-const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
+const DEBUG_EVENT = 'dragging_|mouseout_|mouseover_';
 
 (function() {
 
@@ -33,8 +33,8 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         this.maxScrollLeft = 0;
         this.minScrollTop = 0;
         this.maxScrollTop = 0;
-        this.innerHeight = 0;
-        this.innerWidth = 0;
+        // this.innerHeight = 0;
+        // this.innerWidth = 0;
         this.width = -1;
         this.height = -1;
 
@@ -66,8 +66,29 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
                 this.top_ = top;
                 return top;
             }
-        }
+        },
+        'innerWidth': {
+            enumerable: true,
+            configurable: false,
+            get: function () {
+                return this.width - 2*(this.renderer.padding[0] + this.renderer.border.width);
+            }
+        },
+        'innerHeight': {
+            enumerable: true,
+            configurable: false,
+            get: function () {
+                return this.height - 2*(this.renderer.padding[1] + this.renderer.border.width);
+            }
+        },
     });
+
+    function setParent(parent) {
+        if (this.parent) {
+            this.parent.remove(this);
+            parent.add(this);
+        }
+    }
 
     Control.prototype.destroy = function destroy() {
         delete this.renderer;
@@ -111,7 +132,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
             var handler = node['on'+eventName];
             this.addHandler(eventName, node, handler);
         }
-        if (eventName.match(DEBUG_EVENT)) debug_(`${this.id}.${eventName} = ${this.handlers[eventName].map(x => x.obj.id + '::' + x.fn.name)}`, 1);
+        if (eventName.match(DEBUG_EVENT) && this.handlers[eventName]) debug_(`${this.id}.${eventName} = ${this.handlers[eventName].map(x => x.obj.id + '::' + x.fn.name)}`, 1);
     };
     Control.prototype.addHandlers = function addHandlers(template) {
         if (template) {
@@ -140,9 +161,8 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
                 for (var i=0; i<handlers.length; i++) {
                     var handler = handlers[i];
                     if (eventName.match(DEBUG_EVENT)) debug_(` - ${handler.obj.id}::${handler.fn.name}`, 0);
-                    if (handler.fn.call(handler.obj, event, control) == true) {
-                        return true;
-                    }
+                    var isCancelled = Boolean(await handler.fn.call(handler.obj, event, control));
+                    if (isCancelled) return true;
                 }
                 break;
             } else {
@@ -229,6 +249,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
                 if (!(ctrl instanceof glui.Menu)) {
                     rect = Fn.intersectRect(rect, ctrl.getBoundingBox());
                 }
+                if (!rect) break;
                 ctrl = ctrl.parent;
             }
         }
@@ -245,6 +266,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
     };    
     Control.prototype.size = function(width, height) {
         if (width) this.renderer.setWidth(width);
+        if (height == undefined) height = width;
         if (height) this.renderer.setHeight(height);
         this.render();
     };
@@ -340,6 +362,9 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
             parent = parent && parent instanceof glui.Container ? parent : glui.screen;
             var ctrl = Reflect.construct(glui[type], [id, template, parent, context]);
             if (ctrl instanceof glui.Control) {
+                if (!ctrl.renderer && parent.renderer) {
+                    await ctrl.setRenderer(parent.renderer.mode, parent.renderer.context);
+                }
                 if (ctrl instanceof glui.Container) {
                     //var p = [];
                     for (var i in ctrl.template.items) {
@@ -352,9 +377,9 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
                 } else if (ctrl instanceof glui.Image) {
                     await ctrl.load();
                 }
-                if (!ctrl.renderer && parent.renderer) {
-                    await ctrl.setRenderer(parent.renderer.mode, parent.renderer.context);
-                }
+                // if (!ctrl.renderer && parent.renderer) {
+                //     await ctrl.setRenderer(parent.renderer.mode, parent.renderer.context);
+                // }
                 await parent.add(ctrl);
                 return ctrl;
             }

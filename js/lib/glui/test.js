@@ -68,6 +68,7 @@ include('data/dataseries.js');
 
     var menuItemTemplate = {
         'type': 'Label',
+        'layout': 'vertical',
         'style': {
             'border':'#607080 1px outset',
             'align': 'left middle',
@@ -206,46 +207,55 @@ include('data/dataseries.js');
             { 'x':45, 'y': 7, 'value': 0.4},
             { 'x':55, 'y':13, 'value': 0.2}
         ],
-        'main-menu': {
-            'items': [
-                {
-                    'label': 'File',
-                    'key': 'ALT F',
-                    'items': [
-                        { 'label': 'Open', 'key': 'CTRL O' },
-                        { 'label': 'Save', 'key': 'CTRL S' },
-                        { 'label': 'Exit', 'key': 'ALT X' },
-                    ]
-                },
-                {
-                    'label': 'Edit',
-                    'key': 'ALT E',
-                    'items': [
-                        { 'label': 'Cut', 'key': 'CTRL X' },
-                        { 'label': 'Copy', 'key': 'CTRL C' },
-                        { 'label': 'Paste', 'key': 'CTRL V' }
-                    ]
-                },
-                {
-                    'label': 'Help',
-                    'key': 'ALT H'
-                }
-            ]
-        },
+        'main-menu': [
+            {
+                'label': 'File',
+                'key': 'ALT F',
+                'items': [
+                    {
+                        'label': 'Open', 'key': 'CTRL O',
+                        'items': [
+                            { 'label': 'Resource1' },
+                            { 'label': 'Resource2' }
+                        ]
+                    },
+                    { 'label': 'Save', 'key': 'CTRL S' },
+                    { 'label': 'Exit', 'key': 'ALT X' },
+                ]
+            },
+            {
+                'label': 'Edit',
+                'key': 'ALT E',
+                'items': [
+                    { 'label': 'Cut', 'key': 'CTRL X' },
+                    { 'label': 'Copy', 'key': 'CTRL C' },
+                    { 'label': 'Paste', 'key': 'CTRL V' }
+                ]
+            },
+            {
+                'label': 'Help',
+                'key': 'F1'
+            }
+        ],
+        'res-list': [
+            { 'name': 'image1.png', 'size': 12567 },
+            { 'name': 'image2.png', 'size': 34768 },
+            { 'name': 'image3.png', 'size': 23975 },
+            { 'name': 'image4.png', 'size': 132569 }
+        ],
 
         'combobox': 'James'
     };
 
     var App = {
+        dlg: null,
+        selection: null,
+
         onclick: function onclick(e, ctrl) {
             if (ctrl instanceof glui.Button) {
-                switch (ctrl.value) {
-                    case 'Complete':
-                        Dbg.prln('End test');
-                        isComplete = true;
-                        break;
+                switch (ctrl.id) {
                     default:
-                        Dbg.prln('Click');
+                        Dbg.prln('Click ' + ctrl.id);
                         break;
                 }
             }
@@ -253,7 +263,7 @@ include('data/dataseries.js');
         onchange: function onchange(e, ctrl) {
             Dbg.prln(`Changed ${ctrl.id}.value: ${e.oldValue} => ${e.value}`);
         },
-        onmenu: function onopen(e, ctrl) {
+        oncommand: function oncommand(e, ctrl) {
             Dbg.prln(e.control.getValue());
         },
         isInitialized: false
@@ -261,8 +271,8 @@ include('data/dataseries.js');
 
     async function setup() {
         if (!App.isInitialized) {
-            glui.scale.x = 0.5;
-            glui.scale.y = 0.5;
+            glui.scale.x = 0.8;
+            glui.scale.y = 0.8;
             await glui.initialize(App, true);
             App.isInitialized = true;
         } else {
@@ -385,6 +395,7 @@ include('data/dataseries.js');
         await createControls();
         glui.repaint();
         glui.animate();
+        await glui.OpenSaveDialog({'title': 'Open image...', 'filters': ['*.png', '*.jpg'], 'init': function() { this.move(100, 100);} }, App);
 
         await button('Next');
 
@@ -628,6 +639,12 @@ include('data/dataseries.js');
         table4.move(600, 60);
         table4.render();
 
+        var table5 = await glui.create('table5', dialogTemplate.items[0], null, App);
+        table5.size('14em', '5em');
+        await table5.build();
+        table5.move(60,200);
+        table5.render();
+
         glui.animate();
 
         await button('Next');
@@ -638,7 +655,7 @@ include('data/dataseries.js');
         message('Test menu', 1);
 
         await setup();
-        //#region menu created manually
+        // #region menu created manually
         var mainMenu = await glui.create('mainMenu', {
             'type': 'Menu',
             'layout': 'horizontal',
@@ -649,6 +666,7 @@ include('data/dataseries.js');
             'type': 'Menu',
             'style': menuStyle,
             'label': 'File',
+            'key': 'ALT F',
             'item-template': menuItemTemplate
         }, mainMenu);
         var resMenu = await glui.create('resMenu', {
@@ -660,40 +678,56 @@ include('data/dataseries.js');
         }, fileMenu);
         await resMenu.add('Resource1');
         await resMenu.add('Resource2');
-        resMenu.build();
-        await fileMenu.add('Save');
-        await fileMenu.add('Exit');
-        fileMenu.build();
+        await resMenu.build();
+        await fileMenu.add('Save', 'CTRL S');
+        await fileMenu.add('Exit', 'ALT X');
+        await fileMenu.build();
         var editMenu = await glui.create('edit', {
             'type': 'Menu',
             'style': menuStyle,
             'label': 'Edit',
+            'key': 'ALT F',
             'item-template': menuItemTemplate
         }, mainMenu);
-        await editMenu.add('Cut');
-        await editMenu.add('Copy');
-        await editMenu.add('Paste');
-        editMenu.build();
-        await mainMenu.add('Help');
-        mainMenu.build();
+        await editMenu.add('Cut', 'CTRL X');
+        await editMenu.add('Copy', 'CTRL C');
+        await editMenu.add('Paste', 'CTRL V');
+        await editMenu.build();
+        await mainMenu.add('Help', 'ALT H');
+        await mainMenu.build();
         mainMenu.move(10, 10);
         mainMenu.render();
         //#endregion
 
-        // //#region menu created from data
-        // var mainMenu2 = await glui.create('mainMenu', {
-        //     'type': 'Menu',
-        //     'layout': 'horizontal',
-        //     'style': tableStyle,
-        //     'data-source': 'data',
-        //     'data-field': 'main-menu'
-        // });
-        // mainMenu2.render();
-        // //#endregion
+        //#region menu created from data
+        var mainMenu2 = await glui.create('mainMenu2', {
+            'type': 'Menu',
+            'layout': 'horizontal',
+            'style': menuStyle,
+            'item-template': menuItemTemplate,
+            'data-source': 'data',
+            'data-field': 'main-menu'
+        }, null, App);
+        await mainMenu2.build();
+        mainMenu2.move(10, 100);
+        mainMenu2.render();
+        //#endregion
 
         glui.animate();
 
         await button('Next');
+        teardown();
+    }
+
+    async function test_dialog() {
+        await setup();
+        glui.animate();
+
+        var selected = await glui.OpenSaveDialog({'title': 'Open image...', 'filters': ['*.png', '*.jpg'], 'init': function() { this.move(100, 100);} });
+        Dbg.prln('Selected image: ' + selected);
+
+        await button('Next');
+
         teardown();
     }
 
@@ -843,8 +877,9 @@ include('data/dataseries.js');
         // test_align,
         // test_container,
         // test_table,
-        test_menu,
-        //test_render,
+        // test_menu,
+        test_dialog,
+        test_render
 
         //test_grid
     ];

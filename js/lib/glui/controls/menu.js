@@ -17,6 +17,7 @@ include('container.js');
         Menu.base.constructor.call(this, id, template, parent, context);
         this.submenus = [];
         this.submenu = null;
+        this.keys = {};
     }
     extend(glui.Container, Menu);
 
@@ -43,7 +44,7 @@ include('container.js');
                 }
             }
         }
-        var itemTemplate = mergeObjects({
+        this.itemTemplate = this.template['item-template'] = mergeObjects({
             'type':'Label',
             'style': {
                 'font': this.style.font,
@@ -53,7 +54,7 @@ include('container.js');
                 'background-color': this.style['background-color']
             }
         }, tmpl['item-template']);
-        this.itemTemplate = itemTemplate;   //mergeObjects(template['item-template'], glui.Control.getStyleTemplate());
+
         if (!tmpl.style || !tmpl.style['background-color']) delete this.style['background-color'];
         if (!tmpl.style || !tmpl.style['background-color']) delete this.style['background-color'];
         return template;
@@ -66,7 +67,7 @@ include('container.js');
     Menu.prototype.getHandlers = function getHandlers() {
         var handlers = Menu.base.getHandlers();
         handlers.push(
-            { name: 'menu', topDown: false }
+            { name: 'command', topDown: false }
         );
         return handlers;
     };
@@ -84,10 +85,13 @@ include('container.js');
                 glui.setFocus(this.submenu);
             }
         } else if (!(ctrl instanceof Menu) && ctrl.parent == this) {
-            this.callHandler('menu', {
+            this.callHandler('command', {
                 'type': 'open',
                 'control': ctrl
             });
+            var menu = this;
+            while (menu.parent.submenu == menu) menu = menu.parent;
+            if (menu.submenu) menu.submenu.close();
         }
     };
     Menu.prototype.onblur = function onblur(e, ctrl) {
@@ -102,19 +106,22 @@ include('container.js');
         return;
     };
 
-    Menu.prototype.add = async function add(item) {
+    Menu.prototype.add = async function add(item, key) {
         var label = null;
+        var template = this.itemTemplate;
         if (item instanceof glui.Menu) {
             item.setVisible(false);
             this.submenus.push(item);
             label = item.label;
+            //template.style = this.style;  //, template.style);
         } else if (item instanceof glui.Control) {
             Menu.base.add.call(this, item);
+            if (key) this.keys[key] = item;
             return;
         } else {
             label = item.toString();
         }
-        var ctrl = await glui.create(label, this.itemTemplate, this);
+        var ctrl = await glui.create(label, template, this);
         if (item instanceof glui.Menu) {
             ctrl.submenu = item;
         }
@@ -123,11 +130,40 @@ include('container.js');
         ctrl.size(width, height);
         ctrl.setVisible(this.style.visible);
         ctrl.value = label;
+        return ctrl;
     };
-    Menu.prototype.build = function build(data) {
+    Menu.prototype.build = async function build(data) {
+        var source = null;
+        if (this.dataSource) {
+            source =  this.dataField ? this.dataSource[this.dataField] : this.dataSource;
+        }
+        data = data || source;
         if (data) {
             // build from data
+            for (var i=0; i<data.length; i++) {
+                var item = data[i];
+                if (Array.isArray(item.items)) {
+                    var template = {
+                        'type': 'Menu',
+                        'label': data[i].label,
+                        'key': data[i].key,
+                        'layout': this.template['item-template'].layout,
+                        'item-template': this.itemTemplate,
+                        'style': mergeObjects(this.style),
+                        'data-source': item.items,
+                        'data-field': ''
+                    };
+                    template.style.width = this.template.style.width;
+                    template.style.height = this.template.style.height;
+                    if (this.parent instanceof glui.Menu) template.label = '►' + template.label;
+                    var menu = await glui.create('menu'+data[i].label, template, this);
+                    await menu.build();
+                } else {
+                    await this.add(item.label, item.key);
+                }
+            }
         }
+
         var width = 0, height = 0;
         var maxWidth = 0, maxHeight = 0;
         var spacing = this.renderer.spacing;
@@ -167,11 +203,11 @@ include('container.js');
         maxWidth += bw + 2*padding[0]; maxHeight += bw + 2*padding[1];
         width += 2*padding[0] + bw; height += 2*padding[1] + bw;
         if (this.layout == Menu.layout.HORIZONTAL) {
-            if (!this.width) this.width = width;
-            if (!this.height) this.height = maxHeight;
+            if (!this.width || this.template.style.width == 'auto') this.width = width;
+            if (!this.height || this.template.style.height == 'auto') this.height = maxHeight;
         } else {
-            if (!this.width) this.width = maxWidth;
-            if (!this.height) this.height = height;
+            if (!this.width || this.template.style.width == 'auto') this.width = maxWidth;
+            if (!this.height || this.template.style.height == 'auto') this.height = height;
         }
     };
     Menu.prototype.getBoundingBox = function getBoundingBox() {

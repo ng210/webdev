@@ -10,7 +10,9 @@ include('renderer2d.js');
     extend(glui.Renderer2d, TextboxRenderer2d);
 
     TextboxRenderer2d.prototype.initialize = function initialize(control, context) {
-        control.style.backgroundColor = control.style.backgroundColor || [255, 255, 255];
+        this.control = control || this.control;
+        this.context = context || this.context;
+        this.control.style.backgroundColor = this.control.style.backgroundColor || [255, 255, 255];
         TextboxRenderer2d.base.initialize.call(this, control, context);
     };   
 
@@ -95,7 +97,7 @@ include('renderer2d.js');
         var template = Textbox.base.getTemplate.call(this);
         template.value = '';
         template.look = Textbox.Look.Textbox;
-        template.isMultiline = true;
+        template['multi-line'] = true;
         return template;
     };
 
@@ -104,7 +106,7 @@ include('renderer2d.js');
         if (template.normalize) {
             this.normalize();
         }
-        this.isMultiline = template['multi-line'] !== false;
+        this.isMultiline = Boolean(template['multi-line']);
         this.look = template.look;
         return template;
     };

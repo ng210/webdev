@@ -7,6 +7,10 @@ include('glui/controls/button.js');
 include('glui/controls/image.js');
 include('glui/controls/table.js');
 include('glui/controls/grid.js');
+include('glui/controls/dialog.js');
 //include('glui/controls/envelope.js');
 include('glui/controls/menu.js');
 //include('glui/controls/combobox.js');
+
+// dialogs
+include('glui/dialogs/open-save.js');

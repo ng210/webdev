@@ -3,7 +3,8 @@ include('control.js');
 (function() {
 
     function ValueControl(id, template, parent, context) {
-        ValueControl.base.constructor.call(this, id, template, parent, context);
+		this.isBlank = true;
+		ValueControl.base.constructor.call(this, id, template, parent, context);
     }
     extend(glui.Control, ValueControl);
 
@@ -17,9 +18,9 @@ include('control.js');
 		template.min = 0;
 		template.max = 100;
 		template.step = 1;
-		template.numeric = null;
+		template.numeric = '';
 		template.normalized = false;
-		template.value = '';
+		template.value = null;
 		template.blank = '';
 		template.default = '';
         template['data-type'] = glui.ValueControl.DataTypes.None;
@@ -40,32 +41,24 @@ include('control.js');
 			this.setValue(value);
 		}
 	};
-	ValueControl.prototype.getDataType = function(check) {
-		var dataType = this.template['data-type'] || (this.isNumeric ? glui.ValueControl.DataTypes.Int : glui.ValueControl.DataTypes.String);
+	ValueControl.prototype.checkDataType = function checkDataType(isStrict) {
+		var isNumeric = Boolean(this.template['numeric']);
+		var dataType = this.template['data-type'] || (isNumeric === true ? glui.ValueControl.DataTypes.Int : glui.ValueControl.DataTypes.String);
 		switch (dataType) {
 			case glui.ValueControl.DataTypes.String:
-				if (this.isNumeric === true) {
+				if (isStrict && isNumeric === true) {
 					console.warn('Inconsistency between numeric=true and data-type=string');
 				}
-				this.isNumeric = false;
+				isNumeric = false;
 				break;
 			case glui.ValueControl.DataTypes.Bool:
 				break;
 			case glui.ValueControl.DataTypes.Int:
 			case glui.ValueControl.DataTypes.Float:
-				//  1. n=true,	d=bool		=> n=true,	d=bool
-				//     n=false,	d=bool		=> n=true,	d=bool	+warn
-				//     n=null,	d=bool		=> n=true,	d=bool
-				//  2. n=true,	d=int		=> n=true,	d=int
-				//     n=false,	d=int		=> n=true,	d=int	+warn
-				//     n=null,	d=int		=> n=true,	d=int
-				//  3. n=true,	d=false		=> n=true,	d=false
-				//     n=false,	d=false		=> n=true,	d=false	+warn
-				//     n=null,	d=false		=> n=true,	d=false
-				if (check && this.isNumeric === false) {
+				if (isStrict && isNumeric === false) {
 					console.warn(`Inconsistency between numeric=false and data-type=${dataType}`);
 				}
-				this.isNumeric = true;
+				isNumeric = true;
 				break;
 			case glui.ValueControl.DataTypes.None:
 				break;
@@ -73,6 +66,7 @@ include('control.js');
 				throw new Error(`Invalid data type ${dataType}`);
 		}
 		this.dataType = dataType;
+		this.isNumeric = isNumeric;
 	};
 	ValueControl.prototype.applyTemplate = function(tmpl) {
         var template = ValueControl.base.applyTemplate.call(this, tmpl);
@@ -80,10 +74,7 @@ include('control.js');
 		this.defaultValue = template.default || null;
 		this.blankValue = template.blank || '';
 		this.template['data-type'] = template['data-type'];
-		if (tmpl && tmpl.numeric != undefined) {
-			this.isNumeric = tmpl.numeric != 'false' && tmpl.numeric != '0';
-		}		
-		this.getDataType(tmpl && tmpl.numeric != undefined);
+		this.checkDataType();
 		this.parse = this.dataType == glui.ValueControl.DataTypes.Float ? parseFloat : parseInt;
         if (this.isNumeric && this.dataType != glui.ValueControl.DataTypes.Bool) {
             this.min = this.parse(template.min); if (isNaN(this.min)) this.min = 0;
@@ -96,8 +87,9 @@ include('control.js');
         this.dataLink = null;
 		this.scale = 1.0;
 		this.value = '';
-		if (template.value) {
-			this.setValue(template.value);
+		if (template.value != null) {
+			var value = this.isNumeric ? Number(template.value) : template.value;
+			this.setValue(value);
 		}
         this.decimalDigits = template['decimal-digits'];
         if (this.dataSource && this.dataField) {
@@ -237,14 +229,6 @@ include('control.js');
 		//args.target[args.field] = v;
 		return v;
     };
-
-
-	ValueControl.DataTypes = {
-		Int:	'int',
-		Float:  'float',
-		String: 'string',
-		Bool:	'bool'
-	};
 
 	ValueControl.Validation = function(message, check, fix) {	// bool check(field)
 		this.check = check;

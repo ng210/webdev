@@ -26,8 +26,8 @@ include('math/fn.js');
     //     return value;
     // };
     Renderer.prototype.initialize = async function initialize(control, context) {
-        this.control = control;
-        this.context = context;
+        this.control = control || this.control;
+        this.context = context || this.context;
         this.setFont(this.control.style.font);
         this.setBorder(this.control.style.border);
         this.setSpacing(this.control.style['spacing']);
@@ -49,15 +49,23 @@ include('math/fn.js');
 
     Renderer.prototype.setWidth = function setWidth(value) {
         var res = 0;
-        if (typeof value === 'string') res = this.convertToPixel(value) + 2*(this.border.width + this.padding[0]);
-        else if (typeof value === 'number') res = this.control.width = value;
+        if (typeof value === 'string') {
+            res = this.convertToPixel(value);
+            if (value == 'auto') {
+                res += 2*(this.padding[0] + this.border.width);
+            }
+        } else if (typeof value === 'number') res = this.control.width = value;
         this.control.width = res;
         return res;
     };
     Renderer.prototype.setHeight = function setHeight(value) {
         var res = 0;
-        if (typeof value === 'string') res = this.convertToPixel(value, true) + 2*(this.border.width + this.padding[1]);
-        else if (typeof value === 'number') res = this.control.height = value;
+        if (typeof value === 'string') {
+            res = this.convertToPixel(value, true);
+            if (value == 'auto') {
+                res += 2*(this.padding[1] + this.border.width);
+            }
+        } else if (typeof value === 'number') res = this.control.height = value;
         this.control.height = res;
         return res;
     };    
@@ -112,10 +120,10 @@ include('math/fn.js');
         return alignment;
     };
     Renderer.prototype.convertToPixel = function convertToPixel(value, isVertical) {
-        var prop = 'width';
+        var prop = 'innerWidth';
         var fontSize = 'em';
         if (isVertical) {
-            prop = 'height'
+            prop = 'innerHeight'
             fontSize = 'size';
         }
         var res = 0;
@@ -127,7 +135,7 @@ if (!this.control) debugger;
         else if (value.endsWith('%')) {
             var parent =  this.control.parent ? this.control.parent : glui.screen;
 if (!parent.renderer) debugger;
-            res = ((parent[prop] - 2*parent.renderer.border.width) * parseFloat(value))/100;
+            res = parent[prop] * parseFloat(value)/100;
         }
         return Math.floor(res);
     };
@@ -149,14 +157,15 @@ if (!parent.renderer) debugger;
         return color;
     };
     Renderer.prototype.calculateColor = function calculateColor(color, factor) {
-        if (!color) debugger
-        var r = color[0] * factor;
-        var g = color[1] * factor;
-        var b = color[2] * factor;
-        if (r > 255) r = 255;
-        if (g > 255) g = 255;
-        if (b > 255) b = 255;
-        return [r, g, b];
+        if (color) {
+            var r = color[0] * factor;
+            var g = color[1] * factor;
+            var b = color[2] * factor;
+            if (r > 255) r = 255;
+            if (g > 255) g = 255;
+            if (b > 255) b = 255;
+            return [r, g, b];
+        } else return null;
     };
     Renderer.prototype.mixColors = function mixColors(color1, color2, factor) {
         var r = color1[0] * (1 - factor) + color2[0] * factor;

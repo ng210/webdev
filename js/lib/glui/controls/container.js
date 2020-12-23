@@ -44,7 +44,7 @@ include('renderer2d.js');
         var tmpl = Container.base.getTemplate.call(this);
         tmpl.style['background-color'] = 'transparent';
         tmpl.style.border = 'none';
-        tmpl.items = {};
+        tmpl.items = [];
         return tmpl;
     };
     Container.prototype.add = async function add(ctrl) {
@@ -76,9 +76,12 @@ include('renderer2d.js');
         return result;
     };
     Container.prototype.remove = function remove(control) {
+        var removed = false;
         for (var i=0; i<this.items.length; i++) {
             if (this.items[i] == control) {
                 this.items.splice(i, 1);
+                removed = true;
+                break;
             }
         }
     };
