@@ -751,15 +751,24 @@ include('score-control.js');
         // create dummy sequence
         var frames = [];
         var delta = 0;
-        for (var i=0; i<16; i+=2) {
-            // frame on
-            var frame = new Ps.Frame(); frame.delta = delta; delta = 6;
-            frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 24, 240));
-            frames.push(frame);
-            // frame off
-            frame = new Ps.Frame(); frame.delta = 2;
-            frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, 24, 0));
-            frames.push(frame);
+        var pattern1 = [
+            0,-1,24,12,  0,-1,12,-1, 0,10,-1,12, 0,15,0,-1
+        ]
+        for (var i=0; i<pattern1.length; i++) {
+            var note = pattern1[i] + 12;
+            if (pattern1[i] != -1) {
+                // frame on
+                var frame = new Ps.Frame(); frame.delta = delta;
+                frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, note, 240));
+                frames.push(frame);
+                // frame off
+                frame = new Ps.Frame(); frame.delta = 2;
+                delta = 2;
+                frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, note, 0));
+                frames.push(frame);
+            } else {
+                delta = 6;
+            }
         }
         // EOS
         var frame = new Ps.Frame(); frame.delta = delta;
@@ -879,10 +888,9 @@ include('score-control.js');
         // test_synthAdapter_prepareContext,
         // test_synthAdapter_makeCommands,
         // test_run_channel,
-        // test_complete_player,
+        test_complete_player,
         // test_synthAdapterToDataSeries/*, test_synthAdapterFromDataSeries, test_synth_Ui_binding, test_synth_fromPreset*/
-
-        test_synth_control
+        // test_synth_control
     ];
 
     publish(tests, 'Synth tests');
