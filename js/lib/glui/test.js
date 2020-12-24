@@ -395,7 +395,8 @@ include('data/dataseries.js');
         await createControls();
         glui.repaint();
         glui.animate();
-        await glui.OpenSaveDialog({'title': 'Open image...', 'filters': ['*.png', '*.jpg'], 'init': function() { this.move(100, 100);} }, App);
+        var select = await glui.OpenSaveDialog({'title': 'Open image...', 'filters': ['*.png', '*.jpg'], 'init': function() { this.move(100, 100);} }, App);
+        Dbg.prln('Selected image: ' + select);
 
         await button('Next');
 

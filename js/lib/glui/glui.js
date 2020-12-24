@@ -132,10 +132,6 @@
             glui.resize();
             return this.renderingContext;
         },
-        // render: function render() {
-        //     //this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        //     this.screen.render();
-        // },
         markForRendering: function markForRendering(ctrl) {
             this.markedForRendering[ctrl.id] = ctrl;
         },
@@ -204,12 +200,6 @@
                     r.lastFrame = glui.frame;
                 }
             }
-            // for (var i=0; i<glui.modalDialogs.length; i++) {
-            //     var dlg = glui.modalDialogs[i];
-            //     if (dlg.isActive) {
-
-            //     }
-            // }
             glui.frame++;
         },
         animate: function animate() {

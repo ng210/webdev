@@ -243,7 +243,7 @@ include('container.js');
             if (cx < 0) cx = 0;
             else if (cx + submenu.width > glui.width) cx = glui.width - submenu.width;
 
-            submenu.move(cx - item.left + item.offsetLeft, cy - item.top + item.offsetTop);
+            submenu.move(cx - item.left + item.offsetLeft, cy - item.top + item.offsetTop, glui.Control.order.TOP);
             submenu.setVisible(true);
             submenu.render();
         }

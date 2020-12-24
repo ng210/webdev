@@ -270,13 +270,27 @@ const DEBUG_EVENT = 'dragging_|mouseout_|mouseover_';
         if (height) this.renderer.setHeight(height);
         this.render();
     };
-    Control.prototype.move = function move(dx, dy) {
+    Control.prototype.move = function move(dx, dy, order) {
         this.offsetLeft = dx;
         this.offsetTop = dy;
-        // if (this.renderer) {
-        //     this.left = this.renderer.accumulate('offsetLeft');
-        //     this.top = this.renderer.accumulate('offsetTop', true);
-        // }
+        if (order && Array.isArray(this.parent.items)) {
+            var parent = null;
+            var isFirst = true;
+            switch (order) {
+                case glui.Control.order.TOP:
+                    parent = this.parent;
+                    isFirst = true;
+                    break;
+                case glui.Control.order.BOTTOM:
+                    parent = this.parent;
+                    isFirst = false;
+                    break;
+            }
+            if (parent) {
+                parent.remove(this);
+                isFirst ? parent.items.push(this) : parent.items.unshift(this);
+            }
+        }
         this.render();
     };
     Control.prototype.render = function render() {
@@ -339,6 +353,23 @@ const DEBUG_EVENT = 'dragging_|mouseout_|mouseover_';
     Control.prototype.isDescendant = function isDescendant(ancestor) {
         var path = getObjectPath(this, 'parent', ancestor);
         return path[0] == ancestor;
+    };
+    Control.prototype.applyStyles = async function applyStyles(styles)  {
+        var isChanged = false;
+        if (Array.isArray(this.tags)) {
+            for (var i=0; i<this.tags.length; i++) {
+                var style = styles[this.tags[i]];
+                if (style) {
+                    for (var p in style) {
+                        if (style.hasOwnProperty(p)) {
+                            this.style[p] = style[p];
+                            isChanged = true;
+                        }
+                    }
+                }
+            }
+        }
+        if (isChanged) await this.renderer.initialize();
     };
 
     Control.prototype.click = function click() {
@@ -429,6 +460,11 @@ const DEBUG_EVENT = 'dragging_|mouseout_|mouseover_';
             'border': '#c0c0c0 1px solid',
             'visible': true
         };
+    };
+
+    Control.order = {
+        'TOP': 1,
+        'BOTTOM': 2
     };
 
     publish(Control, 'Control', glui);

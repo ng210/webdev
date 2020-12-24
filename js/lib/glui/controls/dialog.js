@@ -165,10 +165,10 @@ include('renderer2d.js');
     Dialog.prototype.ondragging = function ondragging(e, ctrl) {
         if (glui.focusedControl == e.control && (e.control == this.titlebar || e.control == this.title)) {
         //if (glui.focusedControl == e.control && ctrl == this.titlebar) {
-            var x = e.clientX - e.offsetX;
-            var y = e.clientY - e.offsetY;
-            this.move(x, y);
-            //this.move(this.offsetLeft+e.deltaX, this.offsetTop+e.deltaY);
+            // var x = e.clientX - e.offsetX;
+            // var y = e.clientY - e.offsetY;
+            // this.move(x, y);
+            this.move(this.offsetLeft+e.deltaX, this.offsetTop+e.deltaY);
             glui.repaint();
         }
     };

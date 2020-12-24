@@ -49,6 +49,7 @@ include('math/fn.js');
 
     Renderer.prototype.setWidth = function setWidth(value) {
         var res = 0;
+        if (value == undefined) value = 'auto';
         if (typeof value === 'string') {
             res = this.convertToPixel(value);
             if (value == 'auto') {
@@ -60,6 +61,7 @@ include('math/fn.js');
     };
     Renderer.prototype.setHeight = function setHeight(value) {
         var res = 0;
+        if (value == undefined) value = 'auto';
         if (typeof value === 'string') {
             res = this.convertToPixel(value, true);
             if (value == 'auto') {
