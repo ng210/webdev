@@ -1,96 +1,122 @@
 {
+    "type": "Panel",
     "style": {
         "left": 0, "top": 0,
-        "width": "919px", "height": "146px",
+        "width": "885px", "height": "73px",
         "z-index": 0,
-        "background-color": "#808080",
-        "background-image": "synth/ui/synth-blank.png",
-        "font": "consolas 12 normal",
-        "border": "#ff0000 0px none"
+        "background-color": "#3080e0",
+        "background-image": "/synth/res/synth.template.png",
+        "font": "consolas 10 normal",
+        "border": "#204080 0px outset"
     },
-    "elem-template": {
-        "look": "potmeter",
+    "item-template": {
+        "look": "knob",
         "data-type": "float",
-        "decimal-digits": 3,
-        "step": 0.01,
+        "decimal-digits": 2,
+        "min": 0, "max": 2,
+        "step": 0.001,
+        "label": true,
         "style": {
-            "color": "#20e060",
+            "color": "#80c0ff",
             "background-color": "#204080",
-            "background-image": "synth/ui/control-bg.png",
-            "border": "#000000 0px solid",
-            "font": "consolas 12 normal",
-            "height": "18px",
-            "align": "right middle"
+            "background-image": "/synth/res/knob-bg.png",
+            "border": "#4060f0 0px outset",
+            "font": "consolas 9 normal",
+            "width": "24px", "height": "14px",
+            "align": "center middle",
+            "padding": "2px"
         }
     },
     "group-template": {
         "style": {
-            "border": "#f00000 0px solid",
-            "font": "consolas 12 normal"
+            "border": "#4060a0 0px outset",
+            "padding": "0px"
         }
     },
     "groups": {
         "env": {
             "style": {
                 "background-image": "",
-                "width": "120px", "height": "134px"
+                "width": "140px", "height": "49px"
             },
-            "controls": {
-                "amp": { "type": "Textbox", "style": { "left":  "37px", "top":   "3px", "width":  "78px" }, "decimal-digits": 2 },
-                 "dc": { "type": "Textbox", "style": { "left":  "37px", "top":  "24px", "width":  "78px" }, "decimal-digits": 2 },
-                "atk": { "type": "Textbox", "style": { "left":  "37px", "top":  "47px", "width":  "58px" } },
-                "dec": { "type": "Textbox", "style": { "left":  "37px", "top":  "69px", "width":  "58px" } },
-                "sus": { "type": "Textbox", "style": { "left":  "37px", "top":  "91px", "width":  "58px" } },
-                "rel": { "type": "Textbox", "style": { "left":  "37px", "top": "113px", "width":  "58px" } }
+            "items": {
+                "amp": { "type": "Textbox", "style": { "left":   "2px", "top": "13px" } },
+                "atk": { "type": "Textbox", "style": { "left":  "29px", "top": "13px" } },
+                "dec": { "type": "Textbox", "style": { "left":  "57px", "top": "13px" } },
+                "sus": { "type": "Textbox", "style": { "left":  "83px", "top": "13px" } },
+                "rel": { "type": "Textbox", "style": { "left": "110px", "top": "13px" } }
             }
         },
         "lfo": {
             "style": {
                 "background-image": "",
-                "width": "120px", "height": "66px"
+                "width": "55px", "height": "49px"
             },
-            "controls": {
-                "amp": { "type": "Textbox", "style": { "left":  "37px", "top":  "2px", "width": "78px" } },
-                 "dc": { "type": "Textbox", "style": { "left":  "37px", "top": "25px", "width": "78px" } },
-                "fre": { "type": "Textbox", "style": { "left":  "37px", "top": "47px", "width": "78px" } }
+            "items": {
+                "amp": { "type": "Textbox", "style": { "left":  "2px", "top":  "13px"}, "decimal-digits": 2 },
+                "fre": { "type": "Textbox", "style": { "left":  "29px", "top": "13px"}, "decimal-digits": 1 }
             }
         },
         "osc": {
             "style": {
                 "background-image": "",
-                "width": "100px", "height": "112px"
+                "width": "136px", "height": "49px"
             },
-            "controls": {
-                "amp": { "type": "Textbox", "style": { "left":  "37px", "top":   "3px", "width": "58px" } },
-                "fre": { "type": "Textbox", "style": { "left":  "37px", "top":  "25px", "width": "58px" }, "decimal-digits":1 },
-               "tune": { "type": "Textbox", "style": { "left":  "47px", "top":  "47px", "width": "48px" }, "step": 0.5, "decimal-digits": 1 },
-                "psw": { "type": "Textbox", "style": { "left":  "37px", "top":  "69px", "width": "58px" } },
-               "wave": { "type": "Textbox", "style": { "left":  "47px", "top":  "91px", "width": "28px", "data-type": "int" }, "step": 1, "max": 31, "decimal-digits": 0 }
+            "items": {
+                "amp":  { "type": "Textbox", "style": { "left":   "2px", "top": "13px" } },
+                "fre":  { "type": "Textbox", "style": { "left":  "29px", "top": "13px" }, "decimal-digits": 0 },
+                "psw":  { "type": "Textbox", "style": { "left":  "56px", "top": "13px" } },
+                "tune": { "type": "Textbox", "style": { "left":  "83px", "top": "13px" }, "data-type": "int", "decimal-digits": 0, "min": 0, "max": 24, "step": 1 },
+                "wave": { "type": "Textbox", "style": { "left": "110px", "top": "13px" }, "data-type": "int", "decimal-digits": 0, "step": 1 }
             }
         },
         "flt": {
             "style": {
                 "background-image": "",
-                "width": "100px", "height": "90px"
+                "width": "82px", "height": "59px"
             },
-            "controls": {
-                "cut": { "type": "Textbox", "style": { "left":  "37px", "top":   "3px", "width": "58px" } },
-                "res": { "type": "Textbox", "style": { "left":  "37px", "top":  "25px", "width": "58px" } },
-                "mod": { "type": "Textbox", "style": { "left":  "37px", "top":  "47px", "width": "58px" } },
-               "mode": { "type": "Textbox", "style": { "left":  "47px", "top":  "69px", "width": "28px", "data-type": "int" }, "step": 1, "max": 7, "decimal-digits": 0 }
+            "items": {
+                "mode": { "type": "Textbox", "style": { "left": "2px", "top": "13px" }, "data-type": "int", "decimal-digits": 0 },
+                "cut": { "type": "Textbox", "style": { "left": "29px", "top": "13px" } },
+                "res": { "type": "Textbox", "style": { "left": "56px", "top": "13px" } }}
+        },
+        "self": {
+            "style": {
+                "width": "324px",
+                "height": "20px"
+            },
+            "item-template": {
+                "label":false,
+                "style": {
+                    "font": "Arial 10 bold",
+                    "background-image": "/synth/res/control-bg.png",
+                    "align": "center middle",
+                    "padding": "0px"
+                }
+            },
+            "items": {
+                "poly":  { "type": "Textbox", "style": { "left":  "40px", "top":  "2px", "width":  "16px", "background-image": "/synth/res/knob-bg.png" }, "data-type": "int", "decimal-digits": 0, "min": 1, "max": 16, "step": 1 },
+           "polyCount":  { "type": "Textbox", "style": { "left":  "59px", "top":  "2px", "width":  "24px", "height": "16px" }, "disabled": true, "look": "textbox", "data-type": "string", "multi-line": false },
+                "pid":   { "type": "Textbox", "style": { "left": "137px", "top":  "2px", "width":  "16px", "background-image": "/synth/res/knob-bg.png" }, "data-type": "int", "decimal-digits": 0, "min": 0, "max":  1, "step": 1 },
+                "pname": { "type": "Textbox", "style": { "left": "156px", "top":  "2px", "width": "128px", "height": "16px", "align": "left middle", "font": "Courier 12px" }, "multi-line": false, "look": "textbox", "data-type": "string" },
+                "padd":  { "type": "Button",  "style": { "left": "286px", "top":  "1px", "width":  "18px", "height": "18px", "border": "#4060f0 2px outset" }, "value": "+", "data-type": "string" },
+                "pdel":  { "type": "Button",  "style": { "left": "305px", "top":  "1px", "width":  "18px", "height": "18px", "border": "#4060f0 2px outset" }, "value": "-", "data-type": "string" }
             }
         }
     },
     "layout": {
-        "amp": { "type": "Textbox", "style": { "left": "872px", "top":  "97px", "width": "36px"}, "step": 0.01, "decimal-digits": 2 },
-        "env1": { "group": "env",   "style": { "left":   "6px", "top":  "6px"} },
-        "env2": { "group": "env",   "style": { "left": "127px", "top":  "6px"} },
-        "env3": { "group": "env",   "style": { "left": "248px", "top":  "6px"} },
-        "env4": { "group": "env",   "style": { "left": "369px", "top":  "6px"} },
-        "lfo1": { "group": "lfo",   "style": { "left": "490px", "top":  "6px"} },
-        "lfo2": { "group": "lfo",   "style": { "left": "490px", "top": "72px"} },
-        "osc1": { "group": "osc",   "style": { "left": "611px", "top":  "6px"} },
-        "osc2": { "group": "osc",   "style": { "left": "712px", "top":  "6px"} },
-        "flt1": { "group": "flt",   "style": { "left": "813px", "top":  "6px"} }
+        "self":  { "group": "self", "style": { "left": "66px", "top":  "1px" } },
+
+        "lfo1":  { "group": "lfo", "style": { "left":   "1px", "top": "23px" } },
+        "env1":  { "group": "env", "style": { "left":  "58px", "top": "23px" } },
+
+        "lfo2":  { "group": "lfo", "style": { "left": "196px", "top": "23px" } },
+        "env2":  { "group": "env", "style": { "left": "253px", "top": "23px" } },
+
+        "osc1":  { "group": "osc", "style": { "left": "391px", "top": "23px" } },
+        "osc2":  { "group": "osc", "style": { "left": "529px", "top": "23px" } },
+
+        "flt1":  { "group": "flt", "style": { "left": "667px", "top": "23px" } },
+        "env3":  { "group": "env", "style": { "left": "748px", "top": "23px" } }
     }
 }

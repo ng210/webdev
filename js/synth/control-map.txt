@@ -1,0 +1,101 @@
+amp:         0   0: PotF8 {min: 0, max: 1, step: 0.01, value: 0.8}
+
+env1amp:     1   1: PotF32 {min: 0, max: 1, step: 0.01, value: 0}
+env1dc:      2   2: PotF32 {min: 0, max: 1, step: 0.01, value: 0}
+
+env1atk:     3   3: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+env1dec:     4   4: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+env1sus:     5   5: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+env1rel:     6   6: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+
+env2amp:     7   7: PotF32 {min: 0, max: 1, step: 0.01, value: 0}
+env2dc:      8   8: PotF32 {min: 0, max: 1, step: 0.01, value: 0}
+
+env2atk:     9   9: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+env2dec:    10  10: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+env2sus:    11  11: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+env2rel:    12  12: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+
+env3amp:    13  13: PotF32 {min: 0, max: 1, step: 0.01, value: 1}
+env3dc:     14  14: PotF32 {min: 0, max: 1, step: 0.01, value: 0}
+
+env3atk:    15  15: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+env3dec:    16  16: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+env3sus:    17  17: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+env3rel:    18  18: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+
+lfo1amp:    19  19: PotF32 {min: 0, max: 1, step: 0.01, value: 0}
+lfo1fre:    20  20: PotF32 {min: 0, max: 1000, step: 0.1, value: 0}
+
+lfo2amp:    21  21: PotF32 {min: 0, max: 100, step: 0.1, value: 0}
+lfo2fre:    22  22: PotF32 {min: 0, max: 1000, step: 0.1, value: 0}
+
+osc1amp:    23  23: PotF32 {min: 0, max: 1, step: 0.01, value: 0}
+osc1fre:    24  24: PotF32 {min: 0, max: 12000, step: 120, value: 0}
+
+osc1note:   25  25: Pot {min: 0, max: 127, step: 1.27, value: 0}
+osc1tune:   26  26: Pot {min: -24, max: 24, step: 0.48, value: 0}
+
+osc1psw:    27  27: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+
+osc1wave:   28  28: Pot {min: 1, max: 127, step: 1.26, value: 1}
+
+osc2amp:    29  29: PotF32 {min: 0, max: 1, step: 0.01, value: 0}
+osc2fre:    30  30: PotF32 {min: 0, max: 12000, step: 120, value: 0}
+
+osc2note:   31  31: Pot {min: 0, max: 127, step: 1.27, value: 0}
+osc2tune:   32  32: Pot {min: -24, max: 24, step: 0.48, value: 0}
+
+osc2psw:    33  33: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+
+osc2wave:   34  34: Pot {min: 1, max: 127, step: 1.26, value: 1}
+
+flt1amp:    35  35: PotF32 {min: 0, max: 1, step: 0.01, value: 0}
+
+flt1cut:    36  36: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+flt1res:    37  37: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+flt1mod:    38  38: PotF8 {min: 0, max: 1, step: 0.01, value: 0}
+
+flt1mode:   39  39: Pot {min: 1, max: 7, step: 1, value: 1}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
