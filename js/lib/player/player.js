@@ -96,8 +96,13 @@ include('iadapter-ext.js');
         this.adapters[id] = adapter;
         return adapter;
     };
-    Player.prototype.load = async function load(url) {
-        var stream = await Stream.fromFile(url);
+    Player.prototype.load = async function load(data) {
+        var stream = null;
+        if (typeof data === 'string') {
+            stream = await Stream.fromFile(url);
+        } else if (data instanceof Stream) {
+            stream = data;
+        }
         // get data blocks
         this.dataBlocks = [];
         var offset = stream.readUint16(6);
@@ -130,7 +135,6 @@ include('iadapter-ext.js');
         }
         // assign master channel
         this.masterChannel.assign(0, this.sequences[0]);
-        //player.prepareContext(this.dataBlocks[0]);
     };
     Player.prototype.createSequence = function createSequence(stream, offset, length) {
         var adapter = this.adapters[stream.readUint8(offset)];
@@ -164,6 +168,7 @@ include('iadapter-ext.js');
     Player.createBinaryData = function createBinaryData(player, createAdapterList, createSequences, createDataBlocks) {
         var data = new Stream(256);
 
+        if (typeof createAdapterList != 'function') createAdapterList = () => player.adapters;
         if (typeof createSequences != 'function') createSequences = () => player.sequences;
         if (typeof createDataBlocks != 'function') createDataBlocks = () => player.dataBlocks;
         var adapterList = createAdapterList.call(this);

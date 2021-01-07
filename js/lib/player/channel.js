@@ -4,7 +4,14 @@ include('sequence.js');
     function Frame() {
         this.delta = 0;
         this.commands = [];
-        
+    };
+    Frame.prototype.setDelta = function setDelta(value) {
+        this.delta = value;
+        return this;
+    };
+    Frame.prototype.addCommand = function addCommand(command) {
+        this.commands.push(command);
+        return this;
     };
     publish(Frame, 'Frame', Ps)
 
