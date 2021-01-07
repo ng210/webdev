@@ -47,7 +47,7 @@ include('math/fn.js');
         }
     };
 
-    Renderer.prototype.setWidth = function setWidth(value) {
+    Renderer.prototype.setWidth = function setWidth(value, isInner) {
         var res = 0;
         if (value == undefined) value = 'auto';
         if (typeof value === 'string') {
@@ -55,11 +55,12 @@ include('math/fn.js');
             if (value == 'auto') {
                 res += 2*(this.padding[0] + this.border.width);
             }
-        } else if (typeof value === 'number') res = this.control.width = value;
+        } else if (typeof value === 'number') res = value;
+        if (isInner) res += 2*(this.border.width + this.padding[0]);
         this.control.width = res;
         return res;
     };
-    Renderer.prototype.setHeight = function setHeight(value) {
+    Renderer.prototype.setHeight = function setHeight(value, isInner) {
         var res = 0;
         if (value == undefined) value = 'auto';
         if (typeof value === 'string') {
@@ -67,10 +68,15 @@ include('math/fn.js');
             if (value == 'auto') {
                 res += 2*(this.padding[1] + this.border.width);
             }
-        } else if (typeof value === 'number') res = this.control.height = value;
+        } else if (typeof value === 'number') res = value;
+        if (isInner) res += 2*(this.border.width + this.padding[1]);
         this.control.height = res;
         return res;
-    };    
+    };
+
+    Renderer.prototype.getFrameSize = function getFrameSize() {
+        return [this.border.width+this.padding[0], this.border.width+this.padding[1]];
+    };
 
     Renderer.prototype.setBorder = function setBorder(border) {
         if (border == 'none') {
@@ -139,9 +145,9 @@ if (!this.control) debugger;
 if (!parent.renderer) debugger;
             res = parent[prop] * parseFloat(value)/100;
         }
-        return Math.floor(res);
+        return Math.ceil(res);
     };
-    Renderer.prototype.getBestSizeInPixel = function getBestSizeInPixel() {
+    Renderer.prototype.getBestSizeInPixel = function getBestSizeInPixel(isInner) {
         return [this.convertToPixel('6em'), this.convertToPixel('2em', true)];
     };
     Renderer.prototype.toColor = function toColor(cssColor) {

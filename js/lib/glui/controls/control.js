@@ -1,7 +1,7 @@
 include('icontrol.js');
 include('data/datalink.js');
 
-const DEBUG_EVENT = 'dragging_|mouseout_|mouseover_';
+const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
 
 (function() {
 
@@ -9,6 +9,7 @@ const DEBUG_EVENT = 'dragging_|mouseout_|mouseover_';
         this.id = id != undefined ? id : 'ctrl';
         this.parent = parent || null;
         this.context = context || this.parent;
+        this.path = null;
         this.template = null;
         this.style = {};
         this.renderer = null;
@@ -101,6 +102,7 @@ const DEBUG_EVENT = 'dragging_|mouseout_|mouseover_';
             { name: 'mouseover', topDown: true },
             { name: 'mouseout', topDown: false },
             { name: 'click', topDown: true },
+            { name: 'dblclick', topDown: true },
             { name: 'focus', topDown: true },
             { name: 'blur', topDown: false }
         ];
@@ -154,7 +156,6 @@ const DEBUG_EVENT = 'dragging_|mouseout_|mouseover_';
     Control.prototype.callHandler = async function(eventName, event) {
         var control = this;
         if (eventName.match(DEBUG_EVENT)) debug_(`${eventName} on ${getObjectPath(control, 'parent').map(x=>x.id).join('.')} (${event.control ? `${getObjectPath(event.control, 'parent').map(x=>x.id).join('.')}` : 'null'})`, 0);
-            
         while (control) {
             var handlers = control.handlers[eventName];
             if (handlers) {
@@ -190,6 +191,7 @@ const DEBUG_EVENT = 'dragging_|mouseout_|mouseover_';
         var defaultTemplate = this.getTemplate();
         this.template = mergeObjects(defaultTemplate, tmpl);
         if (this.template.id) this.id = this.template.id;
+        this.path = this.parent && this.parent != glui.screen ? `${this.parent.path}.${this.id}` : this.id;
         this.type = this.template.type;
         this.disabled = this.template.disabled;
         var source = this.template['data-source'];
@@ -233,6 +235,7 @@ const DEBUG_EVENT = 'dragging_|mouseout_|mouseover_';
                 this.dataSource.add(this.dataField);
             }
         }
+        return this.dataSource;
     };
     Control.prototype.getBoundingBox = function getBoundingBox() {
         // this.left = this.renderer.accumulate('offsetLeft');
@@ -264,10 +267,12 @@ const DEBUG_EVENT = 'dragging_|mouseout_|mouseover_';
         // return this.style.visible && (min * max > 0);
         return this.style.visible && 0 <= x && x < rect[2] && 0 <= y && y < rect[3] ? this : null;
     };    
-    Control.prototype.size = function(width, height) {
-        if (width) this.renderer.setWidth(width);
+    Control.prototype.size = function(width, height, isInner) {
+        if (width == null) width = this.style.width;
+        if (height == null) height = this.style.height;
+        if (width) this.renderer.setWidth(width, isInner);
         if (height == undefined) height = width;
-        if (height) this.renderer.setHeight(height);
+        if (height) this.renderer.setHeight(height, isInner);
         this.render();
     };
     Control.prototype.move = function move(dx, dy, order) {
@@ -337,15 +342,19 @@ const DEBUG_EVENT = 'dragging_|mouseout_|mouseover_';
         if (mode == glui.Render2d) {
             if (this.renderer2d == null) {
                 this.renderer2d = this.createRenderer(mode);
+                this.renderer = this.renderer2d;
                 await this.renderer2d.initialize(this, context);
+            } else {
+                this.renderer = this.renderer2d;
             };
-            this.renderer = this.renderer2d;
         } else if (mode == glui.Render3d) {
             if (this.renderer3d == null) {
                 this.renderer3d = this.createRenderer(mode);
+                this.renderer = this.renderer3d;
                 await this.renderer3d.initialize(this, context);
-            };
-            this.renderer = this.renderer3d;
+            } else {
+                this.renderer = this.renderer3d;
+            }
         }
        
         return this.renderer;

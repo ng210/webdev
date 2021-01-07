@@ -57,7 +57,7 @@ include('data/dataseries.js');
         'width': '10em'
     };
     var menuStyle = {
-        'font': 'Arial 12',
+        'font': 'Arial 14px normal',
         'align':'center middle',
         'border':'#607080 1px outset',
         'color': '#001010',
@@ -162,7 +162,41 @@ include('data/dataseries.js');
             'curve-mode': 'line',
             'scale-x': 2.0,
             'scale-y': 2.0
+        },
+
+        {
+            'type': 'Textbox',
+            'style': {
+                'font': 'Arial 10',
+                'align':'center middle',
+                'width': '24px',
+                'border':'#204080 1px outset',
+                'background-color': '#204080',
+                'color': '#80a0f0'
+            },
+            //'image': 'glui/res/knob.png',
+            //'data-type': 'int',
+            //'decimal-digits': 1,
+            'look': 'knob',
+            'min': 0, 'max': 255, 'value': 10
+        },
+        {
+            'type': 'Textbox',
+            'style': {
+                'font': 'Arial 10',
+                'align':'center middle',
+                'width': '40px',
+                'border':'#204080 1px outset',
+                'background-color': '#204080',
+                'color': '#80a0f0'
+            },
+            //'image': 'glui/res/knob.png',
+            //'data-type': 'int',
+            //'decimal-digits': 1,
+            'look': 'knob',
+            'min': 0, 'max': 255, 'value': 200
         }
+
 
         // {
         //     'type': 'Combobox',
@@ -207,36 +241,41 @@ include('data/dataseries.js');
             { 'x':45, 'y': 7, 'value': 0.4},
             { 'x':55, 'y':13, 'value': 0.2}
         ],
-        'main-menu': [
-            {
-                'label': 'File',
-                'key': 'ALT F',
-                'items': [
-                    {
-                        'label': 'Open', 'key': 'CTRL O',
-                        'items': [
-                            { 'label': 'Resource1' },
-                            { 'label': 'Resource2' }
-                        ]
-                    },
-                    { 'label': 'Save', 'key': 'CTRL S' },
-                    { 'label': 'Exit', 'key': 'ALT X' },
-                ]
+        'main-menu': {
+            "codes": {
+                "OPEN":      10,
+                "SAVE":      20,
+                "CUT":      100,
+                "COPY":     110,
+                "PASTE":    120
             },
-            {
-                'label': 'Edit',
-                'key': 'ALT E',
-                'items': [
-                    { 'label': 'Cut', 'key': 'CTRL X' },
-                    { 'label': 'Copy', 'key': 'CTRL C' },
-                    { 'label': 'Paste', 'key': 'CTRL V' }
-                ]
-            },
-            {
-                'label': 'Help',
-                'key': 'F1'
-            }
-        ],
+            "items": [
+                {
+                    'label': 'File',
+                    'key': 'ALT F',
+                    'items': [
+                        {
+                            'label': 'Open', 'code': 'OPEN', 'key': 'CTRL O',
+                            'items': [
+                                { 'label': 'Resource1', 'code': 'RES1' },
+                                { 'label': 'Resource2', 'code': 'RES2' }
+                            ]
+                        },
+                        { 'label': 'Save', 'code': 'SAVE', 'key': 'CTRL S' }
+                    ]
+                },
+                {
+                    'label': 'Edit',
+                    'key': 'ALT E',
+                    'items': [
+                        { 'label': 'Cut',   'code': 'CUT',   'key': 'CTRL X' },
+                        { 'label': 'Copy',  'code': 'COPY',  'key': 'CTRL C' },
+                        { 'label': 'Paste', 'code': 'PASTE', 'key': 'CTRL V' }
+                    ]
+                },
+                { 'label': 'Help', 'code': 500, 'key': 'F1' }
+            ]
+        },
         'res-list': [
             { 'name': 'image1.png', 'size': 12567 },
             { 'name': 'image2.png', 'size': 34768 },
@@ -271,10 +310,11 @@ include('data/dataseries.js');
 
     async function setup() {
         if (!App.isInitialized) {
-            glui.scale.x = 0.8;
-            glui.scale.y = 0.8;
+            glui.scale.x = 1.0;
+            glui.scale.y = 1.0;
             await glui.initialize(App, true);
             App.isInitialized = true;
+            Dbg.prln(`Screen size is ${glui.width}x${glui.height}`);
         } else {
             await glui.setRenderingMode(glui.Render2d);
             glui.repaint();
@@ -395,8 +435,9 @@ include('data/dataseries.js');
         await createControls();
         glui.repaint();
         glui.animate();
-        var select = await glui.OpenSaveDialog({'title': 'Open image...', 'filters': ['*.png', '*.jpg'], 'init': function() { this.move(100, 100);} }, App);
-        Dbg.prln('Selected image: ' + select);
+console.log(glui.screen.items.map(x => x.id+': '+x.width+'x'+x.height))
+        // var select = await glui.OpenSaveDialog({'title': 'Open image...', 'filters': ['*.png', '*.jpg'], 'init': function() { this.move(100, 100);} }, App);
+        // Dbg.prln('Selected image: ' + select);
 
         await button('Next');
 
@@ -681,7 +722,6 @@ include('data/dataseries.js');
         await resMenu.add('Resource2');
         await resMenu.build();
         await fileMenu.add('Save', 'CTRL S');
-        await fileMenu.add('Exit', 'ALT X');
         await fileMenu.build();
         var editMenu = await glui.create('edit', {
             'type': 'Menu',
@@ -701,17 +741,15 @@ include('data/dataseries.js');
         //#endregion
 
         //#region menu created from data
-        var mainMenu2 = await glui.create('mainMenu2', {
-            'type': 'Menu',
-            'layout': 'horizontal',
-            'style': menuStyle,
-            'item-template': menuItemTemplate,
-            'data-source': 'data',
-            'data-field': 'main-menu'
-        }, null, App);
-        await mainMenu2.build();
-        mainMenu2.move(10, 100);
-        mainMenu2.render();
+        // var mainMenu2 = await glui.create('mainMenu2', {
+        //     'type': 'Menu',
+        //     'layout': 'horizontal',
+        //     'style': menuStyle,
+        //     'item-template': menuItemTemplate
+        // }, null, App);
+        // await mainMenu2.build(data['main-menu']);
+        // mainMenu2.move(10, 100);
+        // mainMenu2.render();
         //#endregion
 
         glui.animate();
@@ -878,8 +916,8 @@ include('data/dataseries.js');
         // test_align,
         // test_container,
         // test_table,
-        // test_menu,
-        test_dialog,
+        test_menu,
+        // test_dialog,
         test_render
 
         //test_grid

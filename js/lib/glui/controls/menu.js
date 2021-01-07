@@ -18,6 +18,7 @@ include('container.js');
         this.submenus = [];
         this.submenu = null;
         this.keys = {};
+        this.codes = {};
     }
     extend(glui.Container, Menu);
 
@@ -106,7 +107,7 @@ include('container.js');
         return;
     };
 
-    Menu.prototype.add = async function add(item, key) {
+    Menu.prototype.add = async function add(item, code, key) {
         var label = null;
         var template = this.itemTemplate;
         if (item instanceof glui.Menu) {
@@ -115,29 +116,33 @@ include('container.js');
             label = item.label;
             //template.style = this.style;  //, template.style);
         } else if (item instanceof glui.Control) {
-            Menu.base.add.call(this, item);
             if (key) this.keys[key] = item;
+            Menu.base.add.call(this, item);
             return;
         } else {
             label = item.toString();
         }
         var ctrl = await glui.create(label, template, this);
+        ctrl.code = code;
         if (item instanceof glui.Menu) {
             ctrl.submenu = item;
         }
         var width = this.itemTemplate.style.width || this.renderer.getTextBoundingBoxes([label])[0][2];
         var height = this.itemTemplate.style.height || this.renderer.font.size + 'px';
-        ctrl.size(width, height);
+        ctrl.size(width, height, true);
         ctrl.setVisible(this.style.visible);
         ctrl.value = label;
         return ctrl;
     };
     Menu.prototype.build = async function build(data) {
-        var source = null;
         if (this.dataSource) {
-            source =  this.dataField ? this.dataSource[this.dataField] : this.dataSource;
+            data =  this.dataField ? this.dataSource[this.dataField] : this.dataSource;
+        } else {
+            if (data && Array.isArray(data.items)) {
+                this.codes = data.codes;
+                data = data.items;
+            }
         }
-        data = data || source;
         if (data) {
             // build from data
             for (var i=0; i<data.length; i++) {
@@ -157,62 +162,57 @@ include('container.js');
                     template.style.height = this.template.style.height;
                     if (this.parent instanceof glui.Menu) template.label = '►' + template.label;
                     var menu = await glui.create('menu'+data[i].label, template, this);
+                    menu.codes = this.codes;
                     await menu.build();
                 } else {
-                    await this.add(item.label, item.key);
+                    await this.add(item.label, this.codes[item.code] || item.code, item.key);
                 }
             }
         }
 
-        var width = 0, height = 0;
-        var maxWidth = 0, maxHeight = 0;
+        this.size(null, null, true);
+    };
+
+    Menu.prototype.size = function resize(width, height, isInner) {
+        var maxWidth = 0, maxHeight = 0, count = 0;
+        // get maxHeight and maxWidth
+        for (var i=0; i<this.items.length; i++) {
+            var item = this.items[i];
+            if (!(item instanceof glui.Menu)) {
+                if (maxHeight < item.height) maxHeight = item.height;
+                if (maxWidth < item.width) maxWidth = item.width;
+                count++;
+            }
+        }
+        // resize and position menu items
+        width = 0, height = 0;
         var spacing = this.renderer.spacing;
-        var padding = this.renderer.padding;
+        if (this.layout == Menu.layout.HORIZONTAL) {
+            height = maxHeight;
+            width = count * (maxWidth + spacing[0]) - spacing[0];
+        } else {
+            width = maxWidth;
+            height = count * (maxHeight + spacing[1]) - spacing[1];
+        }
+        glui.Control.prototype.size.call(this, width, height, true);
+
         var left = 0, top = 0;
         for (var i=0; i<this.items.length; i++) {
             var item = this.items[i];
-            item.move(left, top);
-            var w = item.width;
-            width += w;
-            if (maxWidth < w) maxWidth = w;
-            var h = item.height;
-            height += h;
-            if (maxHeight < h) maxHeight = h;
-            if (this.layout == Menu.layout.HORIZONTAL) {
-                left += w + spacing[0];
-                if (i < this.items.length-1) {
-                    width += spacing[0];
-                }
-            } else {
-                top += h + spacing[1];
-                if (i < this.items.length-1) {
-                    height += spacing[1];
+            if (!(item instanceof glui.Menu)) {
+                item.move(left, top);
+                item.size(maxWidth, maxHeight);
+                if (this.layout == Menu.layout.HORIZONTAL) {
+                    left += spacing[0] + maxWidth;
+                } else {
+                    top += spacing[1] + maxHeight;
                 }
             }
         }
-        //maxWidth += padding[0]; maxHeight += padding[1];
-        for (var i=0; i<this.items.length; i++) {
-            var item = this.items[i];
-            if (this.layout == Menu.layout.HORIZONTAL) {
-                if (!this.height) item.height = maxHeight
-            } else {
-                if (item.width) item.width = maxWidth;
-            }
-        }
-        var bw = 2*this.renderer.border.width;
-        maxWidth += bw + 2*padding[0]; maxHeight += bw + 2*padding[1];
-        width += 2*padding[0] + bw; height += 2*padding[1] + bw;
-        if (this.layout == Menu.layout.HORIZONTAL) {
-            if (!this.width || this.template.style.width == 'auto') this.width = width;
-            if (!this.height || this.template.style.height == 'auto') this.height = maxHeight;
-        } else {
-            if (!this.width || this.template.style.width == 'auto') this.width = maxWidth;
-            if (!this.height || this.template.style.height == 'auto') this.height = height;
-        }
-    };
-    Menu.prototype.getBoundingBox = function getBoundingBox() {
-        return [this.left, this.top, this.width, this.height];
-    };
+    }
+    // Menu.prototype.getBoundingBox = function getBoundingBox() {
+    //     return [this.left, this.top, this.width, this.height];
+    // };
 
     Menu.prototype.getControlAt = function getControlAt(cx, cy, recursive) {
         var res = null;
@@ -242,7 +242,6 @@ include('container.js');
             else if (cy + submenu.height > glui.height) cy = glui.height - submenu.height;
             if (cx < 0) cx = 0;
             else if (cx + submenu.width > glui.width) cx = glui.width - submenu.width;
-
             submenu.move(cx - item.left + item.offsetLeft, cy - item.top + item.offsetTop, glui.Control.order.TOP);
             submenu.setVisible(true);
             submenu.render();

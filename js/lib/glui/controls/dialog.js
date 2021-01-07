@@ -36,7 +36,6 @@ include('renderer2d.js');
         var template = Dialog.base.applyTemplate.call(this, tmpl);
         var titleStyle = mergeObjects(template.style);
         delete template.style.title;
-        delete this.style.padding;
         template.style.title = mergeObjects(titleStyle, template.style.title);
         this.title = null;
         template.items = [
@@ -53,11 +52,13 @@ include('renderer2d.js');
                 'id': 'body_',
                 'type': 'Container',
                 'style': {
-                    'left': 0, 'width': '100%'
+                    'left': 0, 'width': '100%',
+                    'padding': this.style.padding
                 },
-                'items': mergeObjects(tmpl.items)
+                'items': mergeObjects(template.items)
             }
         ];
+        delete this.style.padding;
         return template;
     };
     Dialog.prototype.createRenderer = mode => mode == glui.Render2d ? new DialogRenderer2d() : 'DialogRenderer3d';
@@ -82,17 +83,26 @@ include('renderer2d.js');
             height -= this.titlebar.height;
         }
         this.body.move(0, top);
+        top += this.body.height - this.body.innerHeight;
         this.body.size(this.innerWidth, height);
-        for (var i=0; i<this.body.items.length; i++) {
-            var item = this.body.items[i];
-            item.renderer.initialize();
-        }
 
         if (typeof this.oninit === 'function') {
             await this.oninit(options.data);
         }
     };
 
+    Dialog.prototype.size = function size(width, height, isInner) {
+        glui.Dialog.base.size.call(this, width, height, isInner);
+        for (var i=this.titlebar.items.length-1; i>0; i--) {
+            var ctrl = this.titlebar.items[i];
+            ctrl.size(this.titlebar.renderer.font.size-1, this.titlebar.renderer.font.size-1, true);
+            ctrl.offsetLeft = this.titlebar.innerWidth - ctrl.width - this.titlebar.padding;
+            ctrl.offsetTop = this.titlebar.padding;
+            ctrl.render();
+        }
+        this.body.size(this.innerWidth, this.innerHeight - this.titlebar.height);
+    }
+        
     // Dialog.prototype.getHandlers = function getHandlers() {
     //     var handlers = Dialog.base.getHandlers();
     //     handlers.push(
@@ -135,14 +145,16 @@ include('renderer2d.js');
             }
             // add system controls
             var sysCtrlKeys = Object.keys(glui.Dialog.systemControls);
-            var padding = this.titlebar.renderer.convertToPixel('0.2em');
+            this.titlebar.padding = this.titlebar.renderer.convertToPixel(glui.Dialog.systemControls.padding);
             for (var i=glui.Dialog.systemControls.length-1; i>=0; i--) {
                 var item = glui.Dialog.systemControls[i];
                 var ctrl = await glui.create(item.id, item.template, this.titlebar);
-                ctrl.size(this.titlebar.renderer.font.size-1);
-                ctrl.offsetLeft = this.titlebar.innerWidth - ctrl.width - padding;
-                ctrl.offsetTop = padding;
                 ctrl.addHandler('click', this, glui.Dialog.prototype[item.command]);
+
+                ctrl.size(this.titlebar.renderer.font.size-1, this.titlebar.renderer.font.size-1, true);
+                ctrl.offsetLeft = this.titlebar.innerWidth - ctrl.width - this.titlebar.padding;
+                ctrl.offsetTop = this.titlebar.padding;
+                ctrl.render();
             }
         }
         await this.init(options);
@@ -180,7 +192,6 @@ include('renderer2d.js');
                 'type': 'Button',
                 // 'value': 'x',
                 'style': {
-                    'width': '12px', 'height': '100%',
                     //'background-color': 'transparent',
                     'background-image': 'glui/res/icon_close.png'
                 },
@@ -188,6 +199,7 @@ include('renderer2d.js');
             'command': 'close'
         }
     ];
+    Dialog.systemControls.padding = '0.2em';
 
     Dialog.titlebar = {
         'type': 'Container',

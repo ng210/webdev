@@ -91,6 +91,12 @@ include('renderer2d.js');
             this.items[i].setVisible(visible);
         }
     };
+    Container.prototype.size = function size(width, height, isInner) {
+        Container.base.size.call(this, width, height, isInner);
+        for (var i=0; i<this.items.length; i++) {
+            this.items[i].size(null, null, isInner);
+        }
+    };
 	Container.prototype.dataBind = function(source, field) {
         Container.base.dataBind.call(this, source, field);
         var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;

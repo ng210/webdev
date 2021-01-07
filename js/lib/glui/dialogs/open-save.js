@@ -136,8 +136,6 @@ include('glui/controls/dialog.js');
         okButton.move(gap, top);
         var left = okButton.width + 2*gap;
         cancelButton.move(left, top);
-
-        this.init
     };
 
     OpenSaveDialog.onclick = async function onclick(e, ctrl) {

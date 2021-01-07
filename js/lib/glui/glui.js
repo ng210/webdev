@@ -1,5 +1,7 @@
 (function() {
 
+    const MAX_DBLCLICK_DELAY = 400; // ms
+
     var glui = {
         //controls: [],
         scale: { x:1, y:1 },
@@ -19,6 +21,7 @@
         height: 0,
         controlCount: 0,
         isRunning: false,
+        lastMouseUpTime: 0,
 
         markedForRendering: {},
         modalDialogs: [],
@@ -148,17 +151,20 @@
             this.screen.renderer.render();
         },
         resize: function resize() {
-            glui.width = Math.floor(glui.scale.x * glui.canvas.clientWidth);
-            glui.height = Math.floor(glui.scale.y * glui.canvas.clientHeight);
-            glui.screen.width = glui.canvas.width = glui.width;
-            glui.screen.height = glui.canvas.height = glui.height;
-            for (var i=0; i<glui.screen.items.length; i++) {
-                var ctrl = glui.screen.items[i];
-                ctrl.renderer.initialize(ctrl, glui.renderingContext);
-                ctrl.getBoundingBox();
-                //ctrl.move(left, top);
+            if (glui.canvas) {
+                glui.width = Math.floor(glui.scale.x * glui.canvas.clientWidth);
+                glui.height = Math.floor(glui.scale.y * glui.canvas.clientHeight);
+                glui.screen.width = glui.canvas.width = glui.width;
+                glui.screen.height = glui.canvas.height = glui.height;
+                for (var i=0; i<glui.screen.items.length; i++) {
+                    var ctrl = glui.screen.items[i];
+                    ctrl.size(null, null);
+                    // ctrl.renderer.initialize(ctrl, glui.renderingContext);
+                    // ctrl.getBoundingBox();
+                    //ctrl.move(left, top);
+                }
+                glui.repaint();
             }
-            glui.repaint();
         },
         getControlAt: function getControlAt(x, y, recursive) {
             var cx = x*glui.scale.x, cy = y*glui.scale.y;
@@ -273,7 +279,15 @@
             } else if (event == 'mouseup') {
                 glui.dragging = null;
                 if (control && control == glui.focusedControl) {
-                    setTimeout( () => control.callHandler('click', e), 0);
+                    var t = new Date().getTime();
+                    var d = t - glui.lastMouseUpTime;
+                    glui.lastMouseUpTime = t;
+                    if (d < MAX_DBLCLICK_DELAY && control == glui.lastClicked) {
+                        setTimeout( () => control.callHandler('dblclick', e), 0);
+                    } else {
+                        setTimeout( () => control.callHandler('click', e), 0);
+                    }
+                    glui.lastClicked = control;
                 } else {
                     glui.focusedControl.callHandler('mouseup', e)
                 }
@@ -310,6 +324,8 @@
                 }
             }
         },
+        lastClicked: null,
+        focusedControl: null,
         atCursor: null,
         dragging: null,
         draggedControl : null,

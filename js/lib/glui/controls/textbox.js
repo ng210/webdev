@@ -1,21 +1,31 @@
 include('label.js');
-include('renderer2d.js');
 
 (function() {
     function TextboxRenderer2d() {
         TextboxRenderer2d.base.constructor.call(this);
         this.cursorColor = this.color;
         this.box = [0, 0, 0, 0];
+        this.angle = 0;
     }
-    extend(glui.Renderer2d, TextboxRenderer2d);
+    extend(glui.LabelRenderer2d, TextboxRenderer2d);
 
-    TextboxRenderer2d.prototype.initialize = function initialize(control, context) {
+    TextboxRenderer2d.PiPer2 = Math.PI/2;
+
+    TextboxRenderer2d.prototype.initialize = async function initialize(control, context) {
         this.control = control || this.control;
         this.context = context || this.context;
         this.control.style.backgroundColor = this.control.style.backgroundColor || [255, 255, 255];
-        TextboxRenderer2d.base.initialize.call(this, control, context);
+        await TextboxRenderer2d.base.initialize.call(this, control, context);
     };   
-
+    TextboxRenderer2d.prototype.drawSingleLine = function drawSingleLine() {
+        var lines = this.control.getLines();
+        var line = lines[0];
+        var boxes = this.getTextBoundingBoxes(lines);
+        var box = boxes[0];
+        var color = !this.control.isBlank ? this.color : this.mixColors(this.color, bgColor, 0.5);
+        this.drawText(line, box[0], box[1], box[2], color);
+        this.renderCursor(lines, boxes);
+    };
     TextboxRenderer2d.prototype.renderCursor = function renderCursor(lines, boxes) {
         if (this.cursorVisible) {
             var cursor = this.control.cursorPos;
@@ -53,14 +63,68 @@ include('renderer2d.js');
         var bw = this.border.width;
         var width = (this.control.value - this.control.min)*(this.control.width - 2*bw)/(this.control.max - this.control.min);
         this.drawRect(0, 0, width, this.control.height, fillColor);
-        var lines = this.control.getLines();
-        var line = lines[0];
-        var boxes = this.getTextBoundingBoxes(lines);
-        var box = boxes[0];
-        var color = !this.control.isBlank ? this.color : this.mixColors(this.color, bgColor, 0.5);
-        this.drawText(line, box[0], box[1], box[2], color);
-        this.renderCursor(lines, boxes);
+        this.drawSingleLine();
     };
+    TextboxRenderer2d.prototype.renderKnob = function renderKnob() {
+        var ctrl = this.control;
+        var ctx = this.context;
+        var r = ctrl.innerWidth/2;
+        var s = r - 1;
+        var color = this.toCssColor(this.color);
+        var bgColor = this.mixColors(this.color, this.backgroundColor, 0.5);
+        var shadow = this.calculateColor(bgColor, 0.5);
+        var edge = this.toCssColor(this.calculateColor(this.backgroundColor, 0.9));
+        shadow = this.toCssColor(shadow);
+        var angle = this.angle - Math.PI/2;
+
+        var ca = s*Math.cos(angle), sa = s*Math.sin(angle);
+
+        // outer edge
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = edge;
+        ctx.beginPath();
+        ctx.arc(r, r, s+0.5, 0, 2*Math.PI);
+        ctx.stroke();
+
+        // inner edge
+        ctx.beginPath();
+        ctx.strokeStyle = shadow;
+        ctx.arc(r, r, s, 0, 2*Math.PI);
+        ctx.stroke();
+
+        // plate
+        ctx.beginPath();
+        ctx.fillStyle = this.toCssColor(bgColor);
+        ctx.arc(r, r, s-0.5, 0, 2*Math.PI);
+        ctx.fill();
+
+        // marker
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.moveTo(r, r); ctx.lineTo(r + ca, r + sa);
+        ctx.stroke();
+
+        // marker's shadow
+        ctx.beginPath();
+        ctx.strokeStyle = shadow;
+        ctx.moveTo(r+1, r+1); ctx.lineTo(r+1 + ca, r+1 + sa);
+        ctx.stroke();
+
+        this.context.translate(0, r + this.padding[1]);
+
+        if (ctrl.label) {
+            this.drawSingleLine();
+        }
+    };
+    TextboxRenderer2d.prototype.setHeight = function setHeight(value) {
+        var res = TextboxRenderer2d.base.setHeight.call(this, value);
+        if (this.control.look == Textbox.Look.Knob) {
+            res = this.control.label ? res + this.control.innerWidth : this.control.innerWidth;
+            this.control.height = res;
+        }
+        return res;
+    };    
+
     TextboxRenderer2d.prototype.animateCursor = function animateCursor() {
         this.cursorVisible = !this.cursorVisible;
         this.render();
@@ -98,6 +162,8 @@ include('renderer2d.js');
         template.value = '';
         template.look = Textbox.Look.Textbox;
         template['multi-line'] = true;
+        template.image = null;
+        template.label = false;
         return template;
     };
 
@@ -106,6 +172,7 @@ include('renderer2d.js');
         if (template.normalize) {
             this.normalize();
         }
+        this.label = template.label;
         this.isMultiline = Boolean(template['multi-line']);
         this.look = template.look;
         return template;
@@ -113,7 +180,7 @@ include('renderer2d.js');
 
     Textbox.prototype.advanceValue = function advanceValue(n) {
         var delta = n*this.step;
-        var oldValue = this.value;  //getValue();
+        var oldValue = this.value;
         var value = oldValue + delta;
         // validate and adjust value
         oldValue = this.setValue(value);
@@ -133,6 +200,9 @@ include('renderer2d.js');
         } else {
             this.lines = [];
             v = '';
+        }
+        if (this.look == Textbox.Look.Knob) {
+            this.renderer.angle = 2*Math.PI*this.toNormalized(v);
         }
         return oldValue;
     };
@@ -188,10 +258,31 @@ include('renderer2d.js');
         //return true;
     };
     Textbox.prototype.ondragging = function ondragging(e) {
-        if (this.isNumeric && this.look == glui.Textbox.Look.Potmeter) {
-            var delta = this.step * e.deltaX;
+        if (this.look == glui.Textbox.Look.Potmeter) {
+            var deltaX = this.step * e.deltaX;
+            var deltaY = this.step * e.deltaY;
+            var delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : -deltaY;
             var oldValue = this.value;
             var value = oldValue + delta;
+            // validate and adjust value
+            this.setValue(value);
+            this.callHandler('change', {'type':'change','oldValue': oldValue, 'value':value, 'control':this});
+        } else if (this.look == glui.Textbox.Look.Knob) {
+            var r = this.innerWidth/2;
+            var deltaX = e.clientX - this.left - r;
+            var deltaY = e.clientY - this.top - r;
+            var angle = Math.atan(deltaY/deltaX) + Math.PI/2;
+//if (Math.abs(this.renderer.angle - angle) > Math.PI) angle = this.renderer.oldAngle;
+            if (deltaX < 0) {
+                angle = angle + Math.PI;
+            }
+
+            if (angle - this.renderer.angle > Math.PI) angle = 0;
+            else if (angle - this.renderer.angle < -Math.PI) angle = 2*Math.PI;
+            
+            var oldValue = this.value;
+            var value = this.fromNormalized(0.5*angle/Math.PI);
+            this.renderer.angle = angle;
             // validate and adjust value
             this.setValue(value);
             this.callHandler('change', {'type':'change','oldValue': oldValue, 'value':value, 'control':this});
@@ -432,14 +523,29 @@ include('renderer2d.js');
     Textbox.prototype.createRenderer = mode => mode == glui.Render2d ? new TextboxRenderer2d() : 'TextboxRenderer3d';
     Textbox.prototype.setRenderer = async function(mode, context) {
         await Textbox.base.setRenderer.call(this, mode, context);
+        this.setValue(this.value);
         this.setLook();
+        // if (this.look == Textbox.Look.Knob) {
+        //     var res = await load(this.template.image);
+        //     if (res.error) throw new Error(res.error);
+        //     this.image = res.node;
+        // }
     };
     Textbox.prototype.setLook = function setLook(look) {
         look = look || this.look;
         switch (look) {
             case Textbox.Look.Potmeter:
                 this.isNumeric = true;
+                this.setNumericProperties();
                 this.renderer.renderControl = TextboxRenderer2d.prototype.renderPotmeter;
+                break;
+            case Textbox.Look.Knob:
+                this.isNumeric = true;
+                this.setNumericProperties();
+                this.renderer.renderControl = TextboxRenderer2d.prototype.renderKnob;
+                var value = Number(this.value);
+                if (isNaN(this.value)) value = this.template.min;
+                this.setValue(value);
                 break;
             default:
                 console.warn(`Invalid look '${look}' for textbox '${this.id}'!`);
@@ -451,7 +557,8 @@ include('renderer2d.js');
 
     Textbox.Look = {
         Textbox: 'textbox',
-        Potmeter: 'potmeter'
+        Potmeter: 'potmeter',
+        Knob: 'knob'
     };
 
     publish(Textbox, 'Textbox', glui);

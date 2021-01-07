@@ -7,12 +7,18 @@ include('renderer2d.js');
     }
     extend(glui.Renderer2d, LabelRenderer2d);
 
-    LabelRenderer2d.prototype.getBestSizeInPixel = function getBestSizeInPixel() {
+    LabelRenderer2d.prototype.getBestSizeInPixel = function getBestSizeInPixel(isInner) {
         var lines = this.getLines();
         var boxes = this.getTextBoundingBoxes(lines);
         var w = 0, h = this.font.size * boxes.length;
         for (var i=0; i<boxes.length; i++) {
             w += boxes[i][2];
+        }
+        var frameSize = this.getFrameSize();
+        w = Math.ceil(w);
+        if (!isInner) {
+            w += 2*frameSize[0];
+            h += 2*frameSize[1];
         }
         return [Math.ceil(w), h];
     };
