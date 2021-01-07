@@ -18,7 +18,7 @@ var ajax = {
         'jpg':   { mimeType: 'image/jpg', responseType: 'blob', charSet: 'binary' },
         'png':   { mimeType: 'image/png', responseType: 'blob', charSet: 'binary' },
         'json':  { mimeType: 'text/json', responseType: 'json', charSet: 'utf-8' },
-        'bin':   { mimeType: 'application/octet-stream', responseType: 'arraybuffer', charSet: 'binary' },
+        'bin':   { mimeType: 'application/octet-stream', responseType: 'arraybuffer', charSet: 'binary' }
     },
     getTypeByExtension: function(url) {
         var m = url.match(/[^\\\/\.]+\.([^.]+)$/);
@@ -107,6 +107,18 @@ function extend(b, e) {
     e.prototype = Reflect.construct(b, []);
     e.prototype.constructor = e;
     e.base = b.prototype;
+}
+function inherits(d, b) {
+    var res = false;
+    var c = d;
+    while (c != Object && c != null) {
+        if (c.constructor == b) {
+            res = true;
+            break;
+        }
+        c = c.__proto__;
+    };
+    return res;
 }
 
 /******************************************************************************

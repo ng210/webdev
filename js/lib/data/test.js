@@ -96,7 +96,6 @@ include('graph.js');
             context.assert(s.buffer, '=', typedArray.buffer);
         });
 
-
         test('Should create a Stream from array', context => {
             var s = new Stream([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
             context.assert(s.size, '=', 10);
@@ -153,7 +152,7 @@ include('graph.js');
             context.assert(s.writePosition, '=', 0);
             context.assert(s.readPosition, '=', 8);
         });
-        
+
         test('Should read proper values from Stream', context => {
             var s = new Stream(new Uint32Array([0x00434241, 0x04030201, 0x08070605, 0x0000C03F]));
             context.assert(s.size, '=', 16);
@@ -164,6 +163,27 @@ include('graph.js');
             context.assert(s.readUint16(), '=', 0x0304);
             context.assert(s.readUint32(), '=', 0x05060708);
             context.assert(s.readFloat32(), '=', 1.5);
+        });
+
+        test('Should create a classic hex dump of the stream', context => {
+            var s = new Stream(32);
+            for (var i=0; i<32; i++) s.writeUint8(i);
+            var received = s.hexdump(16);
+            var expected = '00 01 02 03  04 05 06 07  08 09 0a 0b  0c 0d 0e 0f\n10 11 12 13  14 15 16 17  18 19 1a 1b  1c 1d 1e 1f';
+            context.assert(received, '=', expected);
+        });
+
+        test('Should dump the stream as hex string', context => {
+            var s = new Stream(128).writeString('Hello World!').writeUint32(0x12345678);
+            var str = s.dump();
+            context.assert(str, '=', '48656c6c6f20576f726c64210012345678');
+        });
+
+        test('Should read stream from dump', context => {
+            var si = new Stream(128).writeString('Hello World!').writeUint32(0x12345678);
+            var str = si.hexdump();
+            var so = Stream.fromDump(str);
+            context.assert(si.hexdump(), '=', so.hexdump());
         });
     }
 
@@ -413,6 +433,6 @@ include('graph.js');
         test_DataLink,
         test_Graph
     ];
-    
+
     publish(tests, 'Data tests');
 })();

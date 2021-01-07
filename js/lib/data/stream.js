@@ -121,6 +121,7 @@
     };
 
     Stream.prototype.writeArray = function writeArray(array, offset, length) {
+        offset = offset || 0;
         var byteCount = length || array.length - offset;
         ensureSize(this, byteCount);
         for (var i=offset; i<offset+byteCount; i++) {
@@ -218,32 +219,40 @@
         return this.view.getFloat32(r);
     };
 
-    Stream.prototype.dump = function dump(width) {
-        width = width || 16;
+    Stream.prototype.dump = function dump(width, separator, linebreaks) {
+        width = width || this.length;
+        separator = separator || '';
         var dump = [];
-        var j = 0, k = 0;
-        width += Math.floor(width/4);
+        var ri = 0, j = 0, k = 0;
+        //width += Math.floor(width/4);
         var row = new Array(256);
         for (var i=0; i<this.length; i++) {
             var b = this.readUint8(i);
             b = b.toString(16);
             if (b.length < 2) b = '0' + b;
-            row[j++] = b;
-            if (k++ == 3) {
-                row[j++] = ' ';
-                k = 0;
-            }
-            if (j == width) {
-                dump.push(row.join(' '));
+            row[ri++] = b;
+            j++;
+            if (j == width && j < this.length) {
+                dump.push(row.slice(0, ri).join(separator));
                 j = 0;
                 k = 0;
+                ri = 0;
                 row = new Array(256);
+            } else {
+                if (separator && ++k == 4) {
+                    row[ri++] = '';
+                    k = 0;
+                }
             }
         }
-        if (j != 0) {
-            dump.push(row.join(' '));
+        if (ri != 0) {
+            dump.push(row.slice(0, ri).join(separator));
         }
-        return dump.join('\n');
+        return dump.join(linebreaks ? '\n' : separator+separator);
+    };
+
+    Stream.prototype.hexdump = function hexdump(width) {
+        return this.dump(width, ' ', true);
     };
 
     Stream.prototype.toFile = function toFile(fileName, type, offset, length) {
@@ -261,11 +270,42 @@
         delete link;
     };
     
-    Stream.fromFile = async function fromFile(path, type) {
-        type = type || 'application/octet-stream';
-        var file = await load({ 'url':path, 'contentType': type, 'charSet': 'bin'});
+    Stream.fromFile = async function fromFile(path, options) {
+        // options
+        // - contentType
+        // - responseType
+        // - charSet
+        var loadOptions = mergeObjects({
+            'url': path,
+            'contentType': 'application/octet-stream',
+            'responseType': 'arraybuffer',
+            'charSet': 'binary'
+        }, options);
+        var file = await load(loadOptions);
         if (file.error instanceof Error) throw file.error;
         return new Stream(file.data);
+    };
+
+    Stream.fromDump = function dump(str) {
+        var s = new Stream(128);
+        var hex = '';
+        var j = 0;
+        for (var i=0; i<str.length;) {
+            var ch = str.charAt(i++);
+            if (ch >= '0' && ch <= '9' || ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f') {
+                hex = hex + ch;
+                j++;
+            } else j = 2;
+            if (j == 2) {
+                if (hex != '') {
+                    s.writeUint8(parseInt(hex, 16));
+                    hex = '';
+                }
+                j = 0;
+            }
+        }
+
+        return new Stream(s);
     };
 
     publish(Stream, 'Stream');
