@@ -3,7 +3,6 @@ include('/ge/sound.js');
 include('glui/glui-lib.js');
 include('synth.js');
 include('synth-adapter.js');
-include('panel-control.js');
 include('score-control.js');
 // include('/synth/synth-adapter-ext.js');
 // include('/utils/syntax.js');
@@ -707,10 +706,20 @@ include('score-control.js');
     var App = {
         bpm: 60,
         channel: null,
+        synthAdapter: null,
 
         onchange: function onchange(e, ctrl) {
             if (ctrl.id == 'bpm') {
                 setBpm(ctrl.getValue());
+            } else if (ctrl.id == 'score') {
+                App.channel.cursor = 0;
+                // release every voice
+                var dev = App.channel.device;
+                for (var i=0; i<dev.voices.length; i++) {
+                    var voice = dev.voices[i];
+                    voice.setNote(0, 0);
+                }
+                App.channel.sequence = ctrl.getAsSequence(App.synthAdapter);
             }
         },
         onclick: function onclick(e, ctrl) {
@@ -773,13 +782,13 @@ include('score-control.js');
         // EOS
         var frame = new Ps.Frame(); frame.delta = delta;
         frames.push(frame);
-        var adapter = player.adapters[psynth.SynthAdapter.getInfo().id];
-        var sequence = Ps.Sequence.fromFrames(frames, adapter);
+        App.synthAdapter = player.adapters[psynth.SynthAdapter.getInfo().id];
+        var sequence = Ps.Sequence.fromFrames(frames, App.synthAdapter);
         var sequences = [sequence];
         player.sequences = sequences;
 
         var synth = new psynth.Synth(sound.smpRate, 6);
-        adapter.devices.push(synth);
+        App.synthAdapter.devices.push(synth);
         loadPreset(synth, 'synth/preset.json');
         synth.isActive = true;
 
@@ -802,12 +811,19 @@ include('score-control.js');
         // #endregion
 
         //#region create synth UI
-        var res = await load('synth/ui/synth.layout.json');
+        var res = await load('synth/ui/synth1.layout.json');
         if (res.error) throw res.error;
         var template = res.data;
         template.type = 'Panel';
         var synthUi = await glui.create('synth1', template, null, null);
         await synthUi.build(synth);
+        var polyCtrl = synthUi.items.find(x => x.id == 'poly');
+        polyCtrl.setValue(synth.voices.length);
+        polyCtrl.addHandler('change', synthUi,
+            function(e, ctrl) {
+                this.boundObject.setVoiceCount(ctrl.getValue());
+            }
+        );
         synthUi.move(10, controls.top + controls.height + 4);
         synthUi.render();
         //#endregion
@@ -840,14 +856,14 @@ include('score-control.js');
         score.style.border = `#000000 ${bw/2}px solid`;
         score.style.width = width + bw;
         score.unitY = 12;
-        score.style.height = score.unitY*36;
+        score.scaleY = 1.5;
+        score.style.height = (score.scaleY*score.unitY)*36;
         score.renderer.initialize(score, glui.renderingContext);
         score.scaleRangeX[0] = score.scaleRangeX[1] = score.scaleX;
-        score.scaleY = 1.5;
         score.setScale();
-        score.scrollTop = score.stepY * 24;
+        score.scrollTop = score.stepY * 12;
         score.move(10, synthUi.top + synthUi.height + 4);
-        score.assignChannel(App.channel);
+        score.assign(player.sequences[0]);
         score.render();
         //#endregion
 
@@ -857,7 +873,9 @@ include('score-control.js');
                 var ui = synthUi.items.find(x => x.id == i);
                 if (!ui) {
                     var grp = synthUi.items.find(x => i.startsWith(x.id));
-                    ui = grp.items.find(x => i.endsWith(x.id));
+                    if (grp) {
+                        ui = grp.items.find(x => i.endsWith(x.id));
+                    }
                 }
                 if (!ui) continue;
                 ctx.assert(ui && ui.dataSource instanceof DataLink && ui.dataSource.obj == ctrl && ui.dataField == 'value', 'true');
@@ -880,17 +898,17 @@ include('score-control.js');
     var tests = () => [
         // test_freqTable,
         // test_control_labels,
-        // test_create_synth,
-        // test_run_env,
-        // test_osc_run,
+        test_create_synth,
+        test_run_env,
+        test_osc_run,
         // test_generate_sound_simple,
         // //test_synthAdapter_makeSetCommandForContoller,
         // test_synthAdapter_prepareContext,
         // test_synthAdapter_makeCommands,
         // test_run_channel,
-        test_complete_player,
+        // test_complete_player,
         // test_synthAdapterToDataSeries/*, test_synthAdapterFromDataSeries, test_synth_Ui_binding, test_synth_fromPreset*/
-        // test_synth_control
+        test_synth_control
     ];
 
     publish(tests, 'Synth tests');

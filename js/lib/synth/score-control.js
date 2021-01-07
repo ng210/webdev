@@ -1,5 +1,4 @@
 include('glui/controls/grid.js');
-include('player/channel.js');
 include('synth/synth-adapter.js');
 
 (function() {
@@ -99,6 +98,11 @@ include('synth/synth-adapter.js');
         var template = Score.base.applyTemplate.call(this, tmpl);
         return template;
     };
+    Score.prototype.getHandlers = function getHandlers() {
+        var handlers = Score.base.getHandlers.call(this);
+        handlers.push({ name: 'change', topDown: false });
+        return handlers;
+    };
     Score.prototype.createRenderer = mode => mode == glui.Render2d ? new ScoreRenderer2d() : 'ScoreRenderer3d';
     Score.prototype.setRenderer = async function(mode, context) {
         await Score.base.setRenderer.call(this, mode, context);
@@ -109,21 +113,19 @@ include('synth/synth-adapter.js');
         // set scale
         this.setScale();
     };
-    Score.prototype.assignChannel = function assignChannel(channel) {
-        this.channel = channel;
-        this.setFromSequence(channel.sequence);
+    Score.prototype.assign = function assign(sequence) {
+        this.setFromSequence(sequence);
     };
     Score.prototype.insertPoint = function insertPoint(x, y) {
         Score.base.insertPoint.call(this, x, y);
-        this.updateChannel();
+        this.callHandler('change');
     };
     Score.prototype.removePoint = function removePoint(ix) {
         Score.base.removePoint.call(this, ix);
-        this.updateChannel();
+        this.callHandler('change');
     };
 
-    Score.prototype.updateChannel = function updateChannel() {
-        var adapter = this.channel.adapter;
+    Score.prototype.getAsSequence = function getAsSequence(adapter) {
         var frames = new Array(2*16+1);
         frames[2*16] = new Ps.Frame();
         for (var i=0; i<this.points.length; i++) {
@@ -147,22 +149,11 @@ include('synth/synth-adapter.js');
                 last = i;
             }
         }
-        // var fi = 0;
-        // console.log(finalFrames.map(f => `${fi++}: ${f.delta} - ${f.commands.map(y => y.dump(4)).join('|')}`).join('\n'));
-
-        this.channel.cursor = 0;
-        // release every voice
-        var dev = this.channel.device;
-        for (var i=0; i<dev.voices.length; i++) {
-            var voice = dev.voices[i];
-            voice.setNote(0, 0);
-        }
-        this.channel.sequence = Ps.Sequence.fromFrames(finalFrames, adapter);
-        // resume
+        return Ps.Sequence.fromFrames(finalFrames, adapter);
     };
 
-    Score.prototype.setFromSequence = function setFromSequence(seq) {
-        var frames = seq.toFrames();
+    Score.prototype.setFromSequence = function setFromSequence(sequence) {
+        var frames = sequence.toFrames();
         var points = [];
         var delta = 0;
         for (var i=0; i<frames.length; i++) {

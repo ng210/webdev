@@ -59,13 +59,13 @@ include('input.js');
 
     Filter.createControls = function createControls() {
         return {
-            amp: new psynth.PotF32(0, 1, .5),
-            cut:  new psynth.PotF8(0, 1, .1),
-            res: new psynth.PotF8(0, 1, .2),
+            amp: new psynth.PotF32(0, 1, .0),   // not used
+            cut:  new psynth.PotF8(0, 1, .0),
+            res: new psynth.PotF8(0, 1, .0),
             mod: new psynth.PotF8(0, 1, .0),
             mode: new psynth.Pot(0, 7, 1)
         };
-    }
+    };
 
     Filter.modes = {
         NONE:       0,

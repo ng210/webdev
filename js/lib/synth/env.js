@@ -89,12 +89,12 @@ include('input.js');
 
     Env.createControls = function createControls() {
         return {
-            'amp': new psynth.PotF32(0, 5000, .5),
-            'dc':  new psynth.PotF32(0, 5000, .5),
-            'atk': new psynth.PotF8(0, 1, .5),
-            'dec': new psynth.PotF8(0, 1, .5),
-            'sus': new psynth.PotF8(0, 1, .5),
-            'rel': new psynth.PotF8(0, 1, .5)
+            'amp': new psynth.PotF32(0, 1, .0),
+            'dc':  new psynth.PotF32(0, 1, .0),
+            'atk': new psynth.PotF8(0, 1, .0),
+            'dec': new psynth.PotF8(0, 1, .0),
+            'sus': new psynth.PotF8(0, 1, .0),
+            'rel': new psynth.PotF8(0, 1, .0)
         }
     };
 

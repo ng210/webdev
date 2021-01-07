@@ -86,7 +86,6 @@
         "env1": { "group": "env",   "style": { "left":   "6px", "top":  "6px"} },
         "env2": { "group": "env",   "style": { "left": "127px", "top":  "6px"} },
         "env3": { "group": "env",   "style": { "left": "248px", "top":  "6px"} },
-        "env4": { "group": "env",   "style": { "left": "369px", "top":  "6px"} },
         "lfo1": { "group": "lfo",   "style": { "left": "490px", "top":  "6px"} },
         "lfo2": { "group": "lfo",   "style": { "left": "490px", "top": "72px"} },
         "osc1": { "group": "osc",   "style": { "left": "611px", "top":  "6px"} },

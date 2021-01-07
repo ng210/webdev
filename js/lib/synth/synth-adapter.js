@@ -5,12 +5,12 @@ include('/ge/sound.js');
 (function() {
 	function SynthAdapter(player) {
 		SynthAdapter.base.constructor.call(this, player);
-	 }
+		SynthAdapter.player = player;
+	}
 	extend(Ps.IAdapterExt, SynthAdapter);
 
 	// IAdapter implementation
 	SynthAdapter.prototype.prepareContext = function prepareContext(data) {
-		// TODO: create audio process worker
 		sound.init(data.readUint16(), this.fillSoundBuffer);
 		SynthAdapter.base.prepareContext.call(this, data);
 	};
@@ -22,6 +22,7 @@ include('/ge/sound.js');
 				if (voiceCount != 0) {
 					device = new psynth.Synth(sound.smpRate, voiceCount);
 					device.soundBank = this.player.dataBlocks[initData.readUint8()];
+					device.setProgram(0);
 				}
 				break;
 			case psynth.SynthAdapter.Device.DELAY:
@@ -201,9 +202,10 @@ include('/ge/sound.js');
 		DELAY: 1
 	};
 
-	var _sampleCount = 0;
-	SynthAdapter.prototype.fillSoundBuffer = function(left, right, bufferSize, channel) {
-		//var samplesPerFrame = _settings.samplingRate / SynthApp.player.refreshRate;
+	SynthAdapter.frame = 0;
+	SynthAdapter.samplePerFrame = 0;
+	SynthAdapter.player = null;
+	SynthAdapter.prototype.fillSoundBuffer = function(left, right, bufferSize) {
 		var start = 0;
 		var end = 0;
 		var remains = bufferSize;
@@ -211,23 +213,25 @@ include('/ge/sound.js');
 			left[i] = .0;
 			right[i] = .0;
 		}
-		while (remains) {
-			if (_frame == 0) {
-				update();
-				_frame = _samplePerFrame;
-				//SynthApp.frameCounter = _settings.samplingRate / SynthApp.player.refreshRate;
-			}
-			var len = _frame < remains ? _frame : remains;
-			end = start + len;
-			_frame -= len;
-			for (var i=0; i<_player.channels.length; i++) {
-				_player.channels[i].target.run(left, right, start, end);
-			}
-			start = end;
-			remains -= len;
-			_sampleCount += len;
-		}
-		//console.log(_sampleCount);
+        while (remains) {
+            var frameInt = Math.floor(SynthAdapter.frame);
+            if (frameInt == 0) {
+                if (!SynthAdapter.player.run(1)) {
+					SynthAdapter.player.reset();
+					SynthAdapter.player.run(0);
+                }
+                SynthAdapter.frame += SynthAdapter.samplePerFrame;
+            }
+            var len = SynthAdapter.frame < remains ? frameInt : remains;
+            end = start + len;
+            SynthAdapter.frame -= len;
+            var adapter = SynthAdapter.player.adapters[psynth.SynthAdapter.getInfo().id];
+            for (var i=0; i<adapter.devices.length; i++) {
+                adapter.devices[i].run(left, right, start, end);
+            }
+            start = end;
+            remains -= len;
+        }
 	};
 
 

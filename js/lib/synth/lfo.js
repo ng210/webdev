@@ -21,14 +21,14 @@ include('osc.js');
         if ((this.timer += delta) > 1.0) {
             this.timer -= 1.0;
         }
-        return this.amp.value*out + this.dc.value;
+        return this.amp.value*out;  // + this.dc.value;
     };
 
     LFO.createControls = function createControls() {
         return {
-            amp: new psynth.PotF32(0, 12000, 1.0),
-            dc:  new psynth.PotF32(0, 100, 1.0),
-            fre: new psynth.PotF32(0, 12000, .5)
+            amp: new psynth.PotF32(0, 12000, 0.0),
+            //dc:  new psynth.PotF32(0, 100, 1.0),
+            fre: new psynth.PotF32(0, 12000, .0)
         };
     };
 

@@ -65,12 +65,12 @@ include('input.js');
 
     Osc.createControls = function createControls() {
         return {
-            amp: new psynth.PotF32(0, 1, .6),
-            fre: new psynth.PotF32(0, 12000, .5),
+            amp: new psynth.PotF32(0, 1, .0),
+            fre: new psynth.PotF32(0, 12000, .0),
             note: new psynth.Pot(0, 127, 0),
             tune: new psynth.Pot(-24, 24, .0),
-            psw: new psynth.PotF8(0, 1, .5),
-            wave: new psynth.Pot(0, 127, 1),
+            psw: new psynth.PotF8(0, 1, .0),
+            wave: new psynth.Pot(1, 127, 1),
         };
     };
 

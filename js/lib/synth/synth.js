@@ -14,24 +14,17 @@ include('voice.js');
         this.createControls();
         // create voices
         this.voices = [];
-        for (var i=0; i<voiceCount; i++) {
-            this.voices.push(new psynth.Voice(this));
-        }
+        this.setVoiceCount(voiceCount);
         this.soundBank = null;
     }
-
-    Synth.prototype.setup = function(values) {
-        for (var i=0; i<values.length; i+=2) {
-            var ctrlId = values[i];
-            var key = Object.keys(psynth.Synth.controls).find(
-                function(k) {
-                    return psynth.Synth.controls[k] == ctrlId;
-                }
-            );
-            if (key === undefined) {
-                console.log('No control with the id ' + ctrlId + ' was found!');
+    Synth.prototype.setVoiceCount = function setVoiceCount(voiceCount) {
+        var oldCount = this.voices.length;
+        if (oldCount < voiceCount) {
+            for (var i=oldCount; i<voiceCount; i++) {
+                this.voices.push(new psynth.Voice(this));
             }
-            this.getControl(values[i]).value = values[i+1];
+        } else {
+            this.voices.splice(voiceCount, oldCount - voiceCount);
         }
     };
     Synth.prototype.getControl = function(controlId) {
@@ -112,7 +105,6 @@ include('voice.js');
             env1: psynth.Env.createControls(),
             env2: psynth.Env.createControls(),
             env3: psynth.Env.createControls(),
-            env4: psynth.Env.createControls(),
             lfo1: psynth.LFO.createControls(),
             lfo2: psynth.LFO.createControls(),
             osc1: psynth.Osc.createControls(),
@@ -120,18 +112,26 @@ include('voice.js');
             flt1: psynth.Filter.createControls(),
         };
 
+        this.controls.lfo1.amp.init(0, 1, 0.01);
+        this.controls.lfo1.fre.init(0, 1000, 0.1);
+        this.controls.lfo2.amp.init(0, 100, 0.1);
+        this.controls.lfo2.fre.init(0, 1000, 0.1);
+        this.controls.env3.amp.set(1.0);
+        this.controls.flt1.mode.init(1, 7, 1);
+        this.controls.flt1.cut.set(0.0);
+
         this.idToControl = [];
         var keys1 = Object.keys(this.controls);
         for (var i=0; i<keys1.length; i++) {
             var key1 = keys1[i];
             var obj = this.controls[key1];
-            if (obj instanceof psynth.Pot) {
+            if (inherits(obj, psynth.PotBase)) {
                 this.idToControl.push(obj);
             } else {
                 var keys2 = Object.keys(obj);
                 for (var j=0; j<keys2.length; j++) {
                     var key2 = keys2[j];
-                    if (obj[key2] instanceof psynth.Pot) {
+                    if (inherits(obj[key2], psynth.PotBase)) {
                         this.idToControl.push(obj[key2]);
                     }
                 }
@@ -147,13 +147,13 @@ include('voice.js');
         for (var i=0; i<keys1.length; i++) {
             var key1 = keys1[i];
             var obj = synth.controls[key1];
-            if (obj instanceof psynth.Pot) {
+            if (inherits(obj, psynth.PotBase)) {
                 map[key1] = id++;
             } else {
                 var keys2 = Object.keys(obj);
                 for (var j=0; j<keys2.length; j++) {
                     var key2 = keys2[j];
-                    if (obj[key2] instanceof psynth.Pot) {
+                    if (inherits(obj[key2], psynth.PotBase)) {
                         map[key1+key2] = id++;
                     }
                 }
@@ -161,6 +161,21 @@ include('voice.js');
         }
         return map;
     })();
+
+    // Synth.prototype.setup = function(values) {
+    //     for (var i=0; i<values.length; i+=2) {
+    //         var ctrlId = values[i];
+    //         var key = Object.keys(psynth.Synth.controls).find(
+    //             function(k) {
+    //                 return psynth.Synth.controls[k] == ctrlId;
+    //             }
+    //         );
+    //         if (key === undefined) {
+    //             console.log('No control with the id ' + ctrlId + ' was found!');
+    //         }
+    //         this.getControl(values[i]).value = values[i+1];
+    //     }
+    // };
 
     publish(Synth, 'Synth', psynth);
 })();

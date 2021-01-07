@@ -10,8 +10,7 @@ include('filter.js')
         this.envelopes = [
             new psynth.Env(parent, parent.controls.env1),
             new psynth.Env(parent, parent.controls.env2),
-            new psynth.Env(parent, parent.controls.env3),
-            new psynth.Env(parent, parent.controls.env4)
+            new psynth.Env(parent, parent.controls.env3)
         ];
         this.lfos = [
             new psynth.LFO(parent, parent.controls.lfo1),
@@ -37,15 +36,15 @@ include('filter.js')
     };
     Voice.prototype.run = function() {
         // run LFOs
-        var lfo1 = this.lfos[0].run();
-        var lfo2 = this.lfos[1].run();
+        var am = this.lfos[0].amp.value;
+        var amLfo = (this.lfos[0].run() + am)/2 + (1-am);
+        var fmLfo = this.lfos[1].run();
         // run main oscillators
-        var amp = this.envelopes[0].amp.value != 0 ? this.envelopes[0].run(lfo1) : 0;
-        var  fm = this.envelopes[1].amp.value != 0 ? this.envelopes[1].run(1.0) : 0;
-        var psw = this.envelopes[2].amp.value != 0 ? this.envelopes[2].run(1.0) : 0;
-        var cut = this.envelopes[3].amp.value != 0 ? this.envelopes[3].run(1.0) : 0;
-        var smp1 = this.oscillators[0].run(amp, fm+lfo2, psw);
-        var smp2 = this.oscillators[1].run(amp, fm+lfo2, psw);
+        var amp = this.envelopes[0].amp.value != 0 ? this.envelopes[0].run(amLfo) : 0;
+        var psw = this.envelopes[1].amp.value != 0 ? this.envelopes[1].run(1.0) : 0;
+        var cut = this.envelopes[2].amp.value != 0 ? this.envelopes[2].run(1.0) : 0;
+        var smp1 = this.oscillators[0].run(amp, fmLfo, psw);
+        var smp2 = this.oscillators[1].run(amp, fmLfo, psw);
         this.filter.onchange(cut);
         var out = this.filter.run(smp1 + smp2);
         return out;
