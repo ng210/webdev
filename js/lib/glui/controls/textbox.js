@@ -189,12 +189,8 @@ include('label.js');
         }
     }
     Textbox.prototype.setValue = function setValue(value) {
-        var results = this.validate('value', value);
-        if (results.length > 0) {
-            value = results[0].value;
-        }
         var oldValue = Textbox.base.setValue.call(this, value);
-        var v = !this.isNumeric ? value.toString() : value.toFixed(this.decimalDigits);
+        var v = !this.isNumeric ? this.value.toString() : this.value.toFixed(this.decimalDigits);
         if (v != undefined && v != null && v != '') {
             this.lines = v.split('\\n');
         } else {

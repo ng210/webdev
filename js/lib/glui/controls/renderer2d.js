@@ -106,7 +106,13 @@ include('renderer.js');
                 this.context.clip(region);
                 if (this.backgroundColor) this.drawRect(0, 0, ctrl.width, ctrl.height, this.backgroundColor);
                 if (this.backgroundImage) {
-                    this.drawImage(this.backgroundImage, 0, 0);
+                    var wi = this.bgRepeatX ? this.backgroundImage.width : rect[2];
+                    var he = this.bgRepeatX ? this.backgroundImage.height : rect[3];
+                    for (var y=0; y<rect[3]; y+=he) {
+                        for (var x=0; x<rect[2]; x+=wi) {
+                            this.drawImage(this.backgroundImage, x, y, wi, he, 0, 0, this.backgroundImage.width, this.backgroundImage.height);
+                        }
+                    }
                 }
 
                 var width = ctrl.width;

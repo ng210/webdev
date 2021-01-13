@@ -69,14 +69,9 @@ include('control.js');
 		this.isNumeric = isNumeric;
 	};
 	ValueControl.prototype.setNumericProperties = function setNumericProperties() {
-		if (this.isNumeric && this.dataType != glui.ValueControl.DataTypes.Bool) {
-			this.min = this.parse(this.template.min); if (isNaN(this.min)) this.min = 0;
-			this.max = this.parse(this.template.max); if (isNaN(this.max)) this.max = 100;
-			this.step = this.parse(this.template.step); if (isNaN(this.step)) this.step = 1;
-			// default min/max validations
-			this.addValidation('value', x => x >= this.min, 'Value is less than minimum!', x => this.min);
-			this.addValidation('value', x => x <= this.max, 'Value is greater than maximum!', x => this.max);
-		}
+		this.min = this.parse(this.template.min); if (isNaN(this.min)) this.min = 0;
+		this.max = this.parse(this.template.max); if (isNaN(this.max)) this.max = 100;
+		this.step = this.parse(this.template.step); if (isNaN(this.step)) this.step = 1;
 	};
 	ValueControl.prototype.applyTemplate = function(tmpl) {
         var template = ValueControl.base.applyTemplate.call(this, tmpl);
@@ -86,7 +81,12 @@ include('control.js');
 		this.template['data-type'] = template['data-type'];
 		this.checkDataType();
 		this.parse = this.dataType == glui.ValueControl.DataTypes.Float ? parseFloat : parseInt;
-		this.setNumericProperties();
+		if (this.isNumeric && this.dataType != glui.ValueControl.DataTypes.Bool) {
+			this.setNumericProperties();
+			// default min/max validations
+			this.addValidation('value', x => x >= this.min, 'Value is less than minimum!', x => this.min);
+			this.addValidation('value', x => x <= this.max, 'Value is greater than maximum!', x => this.max);
+		}
         this.dataLink = null;
 		this.scale = 1.0;
 		this.value = '';
@@ -108,6 +108,7 @@ include('control.js');
 			if (this.dataType == glui.ValueControl.DataTypes.Bool) {
 				value = this.template['true-value'] || this.value;
 			} else {
+				value = this.dataSource[this.dataField];
 				if (this.isNumeric) {
 					var min = typeof this.dataSource.obj.min === 'number' ? this.dataSource.obj.min : this.min;
 					var max = typeof this.dataSource.obj.max === 'number' ? this.dataSource.obj.max : this.max;
@@ -133,8 +134,8 @@ include('control.js');
 					// this.toSource = x => (x - this.min)*this.scale + min;
 					// this.fromSource = x => (x - min)/this.scale + this.min
 					// this.step = typeof this.dataSource.obj.step === 'number' ? this.fromSource(this.dataSource.obj.step) : this.parse(this.template.step) || this.step;
+					value = this.parse(value);
 				}
-				value = this.dataSource[this.dataField];
 			}
 			this.dataLink = new DataLink(this);
 			this.dataLink.link('value', this.dataSource, this.dataField, fromDataSource, toDataSource);
@@ -148,6 +149,11 @@ include('control.js');
         return this.dataSource;
 	};
 	ValueControl.prototype.setValue = function setValue(value) {
+        var results = this.validate('value', value);
+        if (results.length > 0) {
+            value = results[0].value;
+		}
+
 		var oldValue = this.value;
 		this.isBlank = false;
 		if (this.isNumeric) {

@@ -37,14 +37,7 @@ include('math/fn.js');
         this.control.offsetLeft = this.control.offsetLeft != -1 ? this.control.offsetLeft : this.convertToPixel(this.control.style.left);
         this.control.offsetTop = this.control.offsetTop != -1 ? this.control.offsetTop : this.convertToPixel(this.control.style.top, true);
         if (this.control.style.color != undefined) this.color = this.toColor(this.control.style.color);
-        var bgColor = this.control.style['background-color'];
-        if (bgColor != undefined) {
-            this.backgroundColor = bgColor.toLowerCase() != 'transparent' ? this.backgroundColor = this.toColor(this.control.style['background-color']) : null;
-        }
-        if (this.control.style['background-image'] != 'none') {
-            var res = await load(this.control.style['background-image']);
-            this.backgroundImage = !res.error ? res.node : null;
-        }
+        await this.setBackground();
     };
 
     Renderer.prototype.setWidth = function setWidth(value, isInner) {
@@ -116,6 +109,27 @@ include('math/fn.js');
         }
         this.padding[0] = px;
         this.padding[1] = py;
+    };
+
+    Renderer.prototype.setBackground = async function setBackground() {
+        this.bgRepeatX = false;
+        this.bgRepeatY = false;
+        var bgColor = this.control.style['background-color'];
+        if (bgColor != undefined) {
+            this.backgroundColor = bgColor.toLowerCase() != 'transparent' ? this.backgroundColor = this.toColor(this.control.style['background-color']) : null;
+        }
+        if (this.control.style['background-image'] != 'none') {
+            var res = await load(this.control.style['background-image']);
+            this.backgroundImage = !res.error ? res.node : null;
+        }
+        if (this.control.style['background-repeat']) {
+            this.bgRepeatX = this.control.style['background-repeat'].indexOf('repeat-x') != -1;
+            this.bgRepeatY = this.control.style['background-repeat'].indexOf('repeat-y') != -1;
+            if (this.control.style['background-repeat'] == 'both') {
+                this.bgRepeatX = true;
+                this.bgRepeatY = true;
+            }
+        }
     };
     
     Renderer.prototype.getAlignment = function getAlignment(align) {
