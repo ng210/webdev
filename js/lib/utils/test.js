@@ -1,4 +1,5 @@
 include('syntax.js');
+include('schema.js');
 (function(){
 
     var grammar = {
@@ -70,14 +71,190 @@ include('syntax.js');
         }
 
         return results;
+    }
+
+    function message_errors(errors) {
+        for (var i=0; i<errors.length; i++) {
+            var err = (errors[i].field.length > 0) ? errors[i].field.join('.') + ': ' : '';
+            message(err + errors[i].message);
+        }
+    }
+
+    function test_schema() {
+        message('Test schema', 1);
+        var schema = new Schema();
+
+        schema.addType({ name:'String10', type:Schema.Types.STRING, length:10 });
+        test('Should have a String10 type', ctx => {
+            var type = schema.types.String10;
+            ctx.assert(type, '!null');
+            ctx.assert(type.name, '=', 'String10');
+            ctx.assert(type.type, '=', Schema.Types.STRING);
+            ctx.assert(type.length, '=', 10);
+            ctx.assert(type.elemType, 'null');
+            var cst = type.constraints;
+            ctx.assert(cst.length, '=', 2);
+            ctx.assert(cst[0].obj, '=', type);
+            ctx.assert(cst[0].fn, '=', Schema.checkType);
+            ctx.assert(cst[1].obj, '=', type);
+            ctx.assert(cst[1].fn, '=', Schema.checkLength);
+        });
+        var text = "0123456789";
+        test(`Should accept "${text}"`, ctx => {
+            var type = schema.types.String10;
+            ctx.assert(type, '!null');
+            var errors = type.validate(text);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 0);
+        });
+        text = "0123456789A";
+        test(`Should reject "${text}"`, ctx => {
+            var type = schema.types.String10;
+            ctx.assert(type, '!null');
+            var errors = type.validate(text);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 1);
+        });
+        text = 12;
+        test(`Should reject ${text}`, ctx => {
+            var type = schema.types.String10;
+            ctx.assert(type, '!null');
+            var errors = type.validate(text);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 1);
+        });
+
+        schema.addType({ name:'Int100', type:Schema.Types.INT, min:0, max:100 });
+        test('Should have a Int100 type', ctx => {
+            var type = schema.types.Int100;
+            ctx.assert(type, '!null');
+            ctx.assert(type.name, '=', 'Int100');
+            ctx.assert(type.type, '=', Schema.Types.INT);
+            ctx.assert(type.min, '=', 0);
+            ctx.assert(type.max, '=', 100);
+            ctx.assert(type.elemType, 'null');
+            var cst = type.constraints;
+            ctx.assert(cst.length, '=', 2);
+            ctx.assert(cst[0].obj, '=', type);
+            ctx.assert(cst[0].fn, '=', Schema.checkType);
+            ctx.assert(cst[1].obj, '=', type);
+            ctx.assert(cst[1].fn, '=', Schema.checkRange);
+        });
+        var num = 12;
+        test(`Should accept ${num}`, ctx => {
+            var type = schema.types.Int100;
+            var errors = type.validate(num);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 0);
+        });
+        num = -12;
+        test(`Should reject ${num} (min)`, ctx => {
+            var type = schema.types.Int100;
+            var errors = type.validate(num);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 1);
+        });
+        num = 101;
+        test(`Should reject ${num} (max)`, ctx => {
+            var type = schema.types.Int100;
+            var errors = type.validate(num);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 1);
+        });
+
+        schema.addType({ name:'Int100Arr5', type:Schema.Types.LIST, length:5, elemType:'Int100' });
+        test('Should have a Int100Arr5 type', ctx => {
+            var type = schema.types.Int100Arr5;
+            ctx.assert(type, '!null');
+            ctx.assert(type.name, '=', 'Int100Arr5');
+            ctx.assert(type.type, '=', Schema.Types.LIST);
+            ctx.assert(type.elemType, '=', schema.types.Int100);
+            var cst = type.constraints;
+            ctx.assert(cst.length, '=', 3);
+            ctx.assert(cst[0].obj, '=', type);
+            ctx.assert(cst[0].fn, '=', Schema.checkType);
+            ctx.assert(cst[1].obj, '=', type);
+            ctx.assert(cst[1].fn, '=', Schema.checkLength);
+            ctx.assert(cst[2].obj, '=', type);
+            ctx.assert(cst[2].fn, '=', Schema.checkElemType);
+        });
+        var arr = [1,2,3,4,5];
+        test(`Should accept ${arr}`, ctx => {
+            var type = schema.types.Int100Arr5;
+            var errors = type.validate(arr);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 0);
+        });
+        arr = [1,2,3,4,5,6];
+        test(`Should reject ${arr} (length)`, ctx => {
+            var type = schema.types.Int100Arr5;
+            var errors = type.validate(arr);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 1);
+        });
+        arr = [1,2,3,4,500];
+        test(`Should reject ${arr} (max)`, ctx => {
+            var type = schema.types.Int100Arr5;
+            var errors = type.validate(arr);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 1);
+        });
+        arr = [1,2,3,4,'a5'];
+        test(`Should reject ${arr} (type)`, ctx => {
+            var type = schema.types.Int100Arr5;
+            var errors = type.validate(arr);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 1);
+        });
+
+        schema.addType({ name:'EnumColors', type:Schema.Types.ENUM, values:['blue', 'red', 'green'] });
+        var color = 'blue';
+        test(`Should accept '${color}'`, ctx => {
+            var type = schema.types.EnumColors;
+            var errors = type.validate(color);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 0);
+        });
+        color = 'blu';
+        test(`Should reject '${color}'`, ctx => {
+            var type = schema.types.EnumColors;
+            var errors = type.validate(color);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 1);
+        });
+
+        schema.addType({ name:'Person', attributes: {
+            id: { type:{ name:'Int1000', type:Schema.Types.INT, min:1, max:1000 }, required:true },
+            name: { type:'String' },
+            parent: { type:'Person' },
+            color: { type: 'EnumColors' }
+        }});
+        var grandpa = { id:3, name:'Grandpa', color:'green'};
+        var parent = { id:1, name:'Parent', parent:grandpa };
+        var child = { id:2, name:'Child', parent:parent, color:'red' };
+        test(`Should accept ${JSON.stringify(child)}`, ctx => {
+            var type = schema.types.Person;
+            var errors = type.validate(child);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 0);
+        });
+        child.id = 'id';
+        parent.name = 12;
+        parent.color = 'black';
+        delete grandpa.id;
+        test(`Should accept ${JSON.stringify(child)}`, ctx => {
+            var type = schema.types.Person;
+            var errors = type.validate(child);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 4);
+        });
 
     }
 
-    var tests = async function() {
-        return [
-            test_syntax()
-        ];
-    };
+    var tests = () => [
+        //test_syntax,
+        test_schema
+    ];
 
     publish(tests, 'Util tests');
 })();
