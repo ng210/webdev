@@ -2,7 +2,7 @@ include('webgl/webgl.js');
 include('math/v2.js');
 include('math/v3.js');
 include('math/m44.js');
-include('/player/player-lib.js');
+include('player/player-lib.js');
 
 (function() {
 
@@ -80,8 +80,8 @@ include('/player/player-lib.js');
         if (this.angleExtension) shaderName += '-inst';
         // load resources
         var resources = await Promise.all([
-            load({ url: `webgl/sprite/${shaderName}.vs`, contentType: 'x-shader/x-vertex', shaderType: gl.VERTEX_SHADER }),
-            load({ url: `webgl/sprite/${shaderName}.fs`, contentType: 'x-shader/x-fragment', shaderType: gl.FRAGMENT_SHADER })
+            load({ url: `/lib/webgl/sprite/${shaderName}.vs`, contentType: 'x-shader/x-vertex', shaderType: gl.VERTEX_SHADER }),
+            load({ url: `/lib/webgl/sprite/${shaderName}.fs`, contentType: 'x-shader/x-fragment', shaderType: gl.FRAGMENT_SHADER })
         ]);
         var errors = [];
         if (resources[0].error) errors.push(resources[0].error.message);

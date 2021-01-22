@@ -1,5 +1,5 @@
 {
-    "image": "webgl/sprite/stone.png",
+    "image": "/lib/webgl/sprite/stone.png",
     "frames": [
         [  0, 0, 95, 95 ],
         [  95, 0, 159, 64 ],

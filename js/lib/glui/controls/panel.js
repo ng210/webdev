@@ -1,4 +1,4 @@
-include('glui/controls/container.js');
+include('container.js');
 
 (function() {
     function PanelRenderer2d(control, context) {

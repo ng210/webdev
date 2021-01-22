@@ -1,5 +1,5 @@
-include('glui/glui.js');
-include('math/fn.js');
+include('/lib/glui/glui.js');
+include('/lib/math/fn.js');
 (function() {
 
     function Renderer() {

@@ -1,5 +1,5 @@
-include('glui/glui-lib.js');
-include('data/dataseries.js');
+include('glui-lib.js');
+include('/lib/data/dataseries.js');
 (function() {
 
     var style = {
@@ -138,7 +138,7 @@ include('data/dataseries.js');
                 'border':'#805020 2px inset',
                 'background-color': '#102040'
             },
-            'source': 'glui/res/test.png'
+            'source': '/lib/glui/res/test.png'
         },
 
         {

@@ -292,7 +292,7 @@ include('player-lib.js');
 
     async function test_load_binary() {
         message('Should load binary data', 1);
-        stream = await Stream.fromFile('player/test-data.bin');
+        stream = await Stream.fromFile('/lib/player/test-data.bin');
         test_binary(stream, createPlayer());
     }
 

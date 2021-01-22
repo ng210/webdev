@@ -1,4 +1,4 @@
-include('iadapter-ext.js');
+include('/lib/player/iadapter-ext.js');
 (function () {
     function Player() {
         Player.base.constructor.call(this, this);

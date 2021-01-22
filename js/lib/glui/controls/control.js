@@ -1,5 +1,5 @@
 include('icontrol.js');
-include('data/datalink.js');
+include('/lib/data/datalink.js');
 
 const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
 

@@ -1,4 +1,4 @@
-include('glui/controls/dialog.js');
+include('/lib/glui/controls/dialog.js');
 
 (function() {
 

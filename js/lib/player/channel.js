@@ -1,4 +1,4 @@
-include('sequence.js');
+include('/lib//player/sequence.js');
 
 (function(){
     function Frame() {

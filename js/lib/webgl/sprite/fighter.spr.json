@@ -1,5 +1,5 @@
 {
-    "image": "webgl/sprite/fighter.png",
+    "image": "/lib/webgl/sprite/fighter.png",
     "frames": [
       [  0, 0, 24, 47 ],
       [ 24, 0, 48, 47 ],

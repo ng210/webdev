@@ -1,6 +1,6 @@
-include('/player/player-lib.js');
-include('/synth/synth.js');
-include('/ge/sound.js');
+include('/lib/player/player-lib.js');
+include('/lib/synth/synth.js');
+include('/lib/ge/sound.js');
 
 (function() {
 	function SynthAdapter(player) {

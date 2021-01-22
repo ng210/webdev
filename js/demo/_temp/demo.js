@@ -63,7 +63,7 @@ include('/lib/ui/ui-lib.js');
         }
         // load demo files
         var files = [
-            { url: path + '.json', contentType: 'text/json' },
+            { url: path + '.json', contentType: 'application/json' },
             { url: path + '.js', contentType: 'text/javascript' },
             { url: path + '.css', contentType: 'text/css' }
         ];

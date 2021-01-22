@@ -21,7 +21,7 @@ include('webgl/sprite/sprite.js');
     var fpsRange = 20;
     var fpsDisplay = null;
     async function setup(url, count) {
-        url = url || 'webgl/sprite/fighter.spr.json';
+        url = url || '/lib/webgl/sprite/fighter.spr.json';
         count = count || 100;
         glui.initialize();
         glui.canvas.style.position = 'absolute';
@@ -78,11 +78,20 @@ include('webgl/sprite/sprite.js');
             context.assert(spr.ix, '=', 0);
             var data = _sprMgr.spriteAttributeData.slice(spr.ix*webGL.Sprite.AttributeSize, (spr.ix+1)*webGL.Sprite.AttributeSize);
             context.assert(data, ':=', new Float32Array([
-                spr.position.x, spr.position.y, spr.position.z,
-                spr.scale.x*expectedFrame[4], spr.scale.y*expectedFrame[5],
+                spr.position.x,
+                spr.position.y,
+                spr.position.z,
+                spr.scale.x * expectedFrame[4],
+                spr.scale.y * expectedFrame[5],
                 spr.rotationZ,
-                spr.alpha,
-                expectedFrame[0], expectedFrame[1], expectedFrame[2], expectedFrame[3]
+                spr.color[0],
+                spr.color[1],
+                spr.color[2],
+                spr.color[3],
+                expectedFrame[0],
+                expectedFrame[1],
+                expectedFrame[2],
+                expectedFrame[3]
             ]));
         });
         tearDown();
@@ -169,7 +178,7 @@ include('webgl/sprite/sprite.js');
     }
     async function test_animateSprites2() {
         message('Animate sprites #2', 1);
-        await setup('webgl/sprite/stone.spr.json', 50000);
+        await setup('/lib/webgl/sprite/stone.spr.json', 50000);
         for (var i=0; i<_sprMgr.sprites.length; i++) {
             var spr = _sprMgr.addSprite();
             setBall(spr);

@@ -1,12 +1,30 @@
 'use strict';
 
-var DBGLVL = 0;
-var ISWORKER = self.document == undefined;
+self.DBGLVL = self.DBGLVL || 0;
+self.ISWORKER = self.document == undefined;
+self.ISNODEAPP = self.jsLib != undefined;
 
-/******************************************************************************
- * AJAX
- ******************************************************************************/
-var ajax = {
+self.extend = function extend(b, e) {
+    debug_('EXTEND @' + (b ? b.name :'?') + ' by ' + (e ? e.name : '?'), 1);
+    e.prototype = Reflect.construct(b, []);
+    e.prototype.constructor = e;
+    e.base = b.prototype;
+};
+self.inherits = function inherits(d, b) {
+    var res = false;
+    var c = d;
+    while (c != Object && c != null) {
+        if (c.constructor == b) {
+            res = true;
+            break;
+        }
+        c = c.__proto__;
+    };
+    return res;
+};
+
+ //#region AJAX
+ self.ajax = {
     ExtToMimeTypeResponseTypeMap: {
         'css':   { mimeType: 'text/css', responseType: 'text', charSet: 'utf-8' },
         'js':    { mimeType: 'text/javascript', responseType: 'text', charSet: 'utf-8' },
@@ -17,7 +35,7 @@ var ajax = {
         'bmp':   { mimeType: 'image/bmp', responseType: 'blob', charSet: 'binary' },
         'jpg':   { mimeType: 'image/jpg', responseType: 'blob', charSet: 'binary' },
         'png':   { mimeType: 'image/png', responseType: 'blob', charSet: 'binary' },
-        'json':  { mimeType: 'text/json', responseType: 'json', charSet: 'utf-8' },
+        'json':  { mimeType: 'application/json', responseType: 'json', charSet: 'utf-8' },
         'bin':   { mimeType: 'application/octet-stream', responseType: 'arraybuffer', charSet: 'binary' }
     },
     getTypeByExtension: function(url) {
@@ -70,9 +88,9 @@ var ajax = {
             options.async = true;
         }
         options.method = options.method || 'GET';
-        var xhr = ajax.createXhr(options);
         return new Promise(resolve => {
             try {
+                var xhr = ajax.createXhr(options);
                 xhr.onreadystatechange = function() {
                     if (this.readyState == 4) {
                         this.options.response = this.response;
@@ -90,175 +108,47 @@ var ajax = {
                 resolve(options);
             }
         });
+    },
+    processContent: async function(options) {
+        var data = options.response;
+        var res = null;
+        switch (options.contentType) {
+            // case 'x-shader/*':
+            // case 'x-shader/x-vertex':
+            // case 'x-shader/x-fragment':
+            // case 'text/xml':
+            // case 'application/json':
+            // case 'text/html':
+            // case 'text/css':
+            //     this.node = data;
+            //     break;
+            case 'image/bmp':
+            case 'image/gif':
+            case 'image/jpg':
+            case 'image/png':
+                var res = new Image();
+                res.src = self.URL.createObjectURL(data);
+                await res.decode();
+                break;
+            default: res = data; break;
+        }
+        return res;
     }
 };
+//#endregion
 
-function debug_(txt, lvl) {
+self.debug_ = function debug_(txt, lvl) {
     //if (txt.indexOf('player.') == -1) return;
     if (DBGLVL >= lvl) {
         var err = new Error();
         var lines = err.stack.split('\n');
         console.log(`${txt} (${lines[2].trim()})`);
     }
-}
-
-function extend(b, e) {
-    debug_('EXTEND @' + (b ? b.name :'?') + ' by ' + (e ? e.name : '?'), 1);
-    e.prototype = Reflect.construct(b, []);
-    e.prototype.constructor = e;
-    e.base = b.prototype;
-}
-function inherits(d, b) {
-    var res = false;
-    var c = d;
-    while (c != Object && c != null) {
-        if (c.constructor == b) {
-            res = true;
-            break;
-        }
-        c = c.__proto__;
-    };
-    return res;
-}
-
-/******************************************************************************
- * URL
- ******************************************************************************/
-function Url(url) {
-    this.schema = '';
-    this.user = '';
-    this.password = '';
-    this.host = '';
-    this.port = '';
-    this.path = '';
-    this.query = {};
-    this.fragment = '';
-    if (self.baseUrl != undefined) {
-        this.schema = baseUrl.schema;
-        this.user = baseUrl.user;
-        this.password = baseUrl.password;
-        this.host = baseUrl.host;
-        this.port = baseUrl.port;
-        this.path = baseUrl.path;
-        Object.keys(baseUrl.query).forEach(k=>this.query[k]=baseUrl[k]);
-        this.fragment = baseUrl.fragment;
-    }
-    if (url) this.parse(url);
-};
-Url.prototype.parse = function(url) {
-    // 1. full schema: https://max:muster@www.example.com:8080/directory/index.html?p1=A&p2=B#ressource
-    // 2. path: /directory/file /(. and .. are supported)
-    // check schema
-    var position = -1;
-    var normalize = false;
-    var schemas = [ 'http://', 'https://', 'file://', 'ftp://', 'mailto:' ];
-    for (var i=0; i<schemas.length; i++) {
-        // case #1: full schema expected
-        var schema = schemas[i];
-        if (url.indexOf(schema) == 0) {
-            // set position after the schema
-            this.schema = schema;
-            position = schema.length;
-            url = url.substring(position);
-            break;
-        }
-    }
-    if (position != -1) {
-        // check user and password
-        if (url.indexOf('@') != -1) {
-            var tokens = url.split('@');
-            url = tokens[1];
-            tokens = tokens[0].split(':');
-            this.user = tokens[0];
-            this.password = tokens[1] || '';
-        }
-        // check host
-        position = url.indexOf('/');
-        if (position == -1) position = url.length;
-        this.host = url.substring(0, position);
-        var tokens = this.host.split(':');
-        if (tokens.length > 1) {
-            this.host = tokens[0];
-            if (tokens[1] != '') {
-                this.port = parseInt(tokens[1]);
-                if (isNaN(this.port)) throw 'Invalid port number!';
-            }
-        }
-    } else {
-        // case #2: direct path expected
-        position = 0;
-        normalize = true;
-    }
-    if (position != -1) {
-        url = url.substring(position);
-        // check path
-        // path ends with '?', '#', or EOS
-        position = url.indexOf('?');
-        if (position == -1) position = url.indexOf('#');
-        if (position == -1) position = url.length;
-        this.path = url.substring(0, position);
-        if (normalize) this.path = normalizePath(this.path);
-        url = url.substring(position);
-        // check query
-        if ((position = url.indexOf('?')) != -1) {
-            var tokens = url.split('?');
-            this.path = tokens[0];
-            tokens = tokens[1].split('&');
-            for (var i=0; i<tokens.length; i++) {
-                var keyValue = tokens[i].split('=');
-                this.query[keyValue[0]] = keyValue[1];
-            }
-        }
-        url = url.substring(position);
-        // check fragment
-        if ((position = url.indexOf('#')) != -1) {
-            var tokens = url.split('#');
-            url = tokens[0];
-            this.fragment = tokens[1];
-        }
-    } else {
-        this.host = url;
-    }
-};
-Url.prototype.normalize = function() {
-    for (var i in baseUrl) {
-        if (baseUrl.hasOwnProperty(i) && typeof baseUrl[i] !== 'function') {
-            this[i] = this[i] || baseUrl[i];
-        }
-    }
-    //this.path = load.normalizePath(this.path);
-    return this.toString();
-};
-Url.prototype.toString = function() {
-    // https://max:muster@www.example.com:8080/index.html?p1=A&p2=B#ressource
-    var sb = [this.schema];
-    if (this.user) {
-        sb.push(this.user);
-        if (this.password) sb.push(':', this.password);
-        sb.push('@');
-    }
-    sb.push(this.host);
-    if (this.schema != 'file' && this.schema != 'mailto' && this.port != '') {
-        sb.push(':', this.port);
-    }
-    sb.push(this.path);
-    var qk = Object.keys(this.query);
-    if (qk.length > 0) {
-        sb.push('?');
-        var qkv = [];
-        for (var k in this.query) {
-            qkv.push(k + '=' + this.query[k]);
-        }
-        sb.push(qkv.join('&'));
-    }
-    if (this.fragment) sb.push('#', this.fragment);
-    return sb.join('');
 };
 
-//*****************************************************************************
-
-function Resource(url) {
-    this.url = new Url(url).normalize();
+//#region RESOURCE
+self.Resource = function Resource(url) {
+    this.url = url;    //.normalize();
     //this.resolvedAddress = '';
     this.resolvedUrl = null;
     // loaded data
@@ -272,7 +162,8 @@ function Resource(url) {
 }
 Resource.load = async function(options) {
     // check resource cache
-    var url = new Url(options.url).normalize();
+    var url = new Url(options.url).toString();
+    options.url = url;
     var resource = Resource.cache[url];
     if (!resource) {
         // resource not found in cache
@@ -324,7 +215,7 @@ Resource.load = async function(options) {
 };
 Resource.prototype.processContent = async function(options) {
     debug_('PROCESS @' + this.url, 1);
-    var data = options.response;
+    var data = await ajax.processContent(options);
     switch (options.contentType) {
         case 'text/javascript':
             // create Module from Resource
@@ -338,20 +229,20 @@ Resource.prototype.processContent = async function(options) {
         case 'x-shader/*':
         case 'x-shader/x-vertex':
         case 'x-shader/x-fragment':
-            if (!ISWORKER) {
-                this.node = document.createElement('script');
-                this.node.setAttribute('type', options.contentType);
-                this.node.innerHTML = data;
-                this.node.url = options.url;
-                document.head.appendChild(this.node);
-            } else {
-                this.node = data;
-            }
-            break;
+            // if (!ISWORKER) {
+            //     this.node = document.createElement('script');
+            //     this.node.setAttribute('type', options.contentType);
+            //     this.node.innerHTML = data;
+            //     this.node.url = options.url;
+            //     document.head.appendChild(this.node);
+            // } else {
+            //     this.node = data;
+            // }
+            // break;
         case 'text/xml':
             this.node = data;
             break;
-        case 'text/json':
+        case 'application/json':
             this.node = null;
             break;
         case 'text/html':
@@ -372,9 +263,7 @@ Resource.prototype.processContent = async function(options) {
         case 'image/gif':
         case 'image/jpg':
         case 'image/png':
-            this.node = new Image();
-            this.node.src = self.URL.createObjectURL(data);
-            await this.node.decode();
+            this.node = data;
             break;
         default: this.node = data; break;
     }
@@ -394,9 +283,10 @@ Resource.ERROR = 'error';
 Resource.ALIAS = 'alias';
 
 Resource.searchPath = [];
+//#endregion
 
-//*************************************************************************
-function Module(url) {
+//#region MODULE
+self.Module = function Module(url) {
     Resource.call(this, url);
     // array of included modules
     this.includes = {};
@@ -458,8 +348,9 @@ Module.prototype.resolveIncludes = async function() {
             if (match != null) {
                 var args = match[2].split(',');
                 if (args.length < 3) args.push(' null');
-                args.push(` '${this.url}'`);
+                args.push(` '${this.url.replace(/\\/g, '\\\\')}'`);
                 lines[i] = `${match[1]}(${args.join(',')});`;
+                debug_('MATCH @:' + this.toString() + '\n' + lines[i], 1);
             }
         }
         this.data = lines.join('\n');
@@ -482,122 +373,173 @@ Module.fromResource = function(resource) {
 };
 
 Module.RESOLVED = 'resolved';
+//#endregion
 
-/******************************************************************************
- * Boot, environment
- ******************************************************************************/
-var baseUrl = (function(){
-    var address = !ISWORKER ? document.currentScript.src : self.location.href;
+//#region URL
+self.Url = function Url(url) {
+    this.hasQuery = false;
+    this.schema = '';
+    this.user = '';
+    this.password = '';
+    this.host = '';
+    this.port = '';
+    this.path = '';
+    this.query = {};
+    this.fragment = '';
+    if (url) {
+        if (url instanceof Url) {
+            this.hasQuery = url.hasQuery;
+            this.schema = url.schema;
+            this.user = url.user;
+            this.password = url.password;
+            this.host = url.host;
+            this.port = url.port;
+            this.path = url.path;
+            this.query = mergeObjects(url.query);
+            this.fragment = url.fragment;
+        } else if (typeof url === 'string') {
+            var pos = this.getSchema(url, 0);
+            pos = this.getLogin(url, pos);
+            pos = this.getHostAndPort(url, pos);
+            pos = this.getPath(url, pos);
+            pos = this.getQuery(url, pos);
+            pos = this.getFragment(url, pos);
+        }
+    }
+    // ensure a full URL
+    if (self.baseUrl) {
+        this.schema = this.schema || baseUrl.schema;
+        if (this.schema.startsWith('http')) {
+            this.host = this.host || baseUrl.host;
+            this.port = this.port || baseUrl.port;
+            this.user = this.user || baseUrl.user;
+            this.password = this.password || baseUrl.password;
+        }
+    }
+};
+Url.prototype.getSchema = function getSchema(str, pos) {
+    var schemas = [ 'http://', 'https://', 'file://', 'ftp://', 'mailto:' ];
+    for (var i=0; i<schemas.length; i++) {
+        if (str.indexOf(schemas[i]) == 0) {
+            var sch = schemas[i];
+            this.schema = sch;
+            pos =+ sch.length;
+            break;
+        }
+    }
+    return pos;
+};
+Url.prototype.getLogin = function getLogin(str, pos) {
+    var ix = str.indexOf('@', pos);
+    if (ix != -1) {
+        var tokens = str.substring(pos, ix).split(':');
+        this.schema = 'http://';
+        this.user = tokens[0];
+        this.password = tokens[1];
+        pos = ix + 1;
+    }
+    return pos;
+};
+Url.prototype.getHostAndPort = function getHost(str, pos) {
+    if (this.schema.startsWith('http')) {
+        var ix = str.indexOf('/', pos);
+        if (ix != -1) {
+            var tokens = str.substring(pos, ix).split(':');
+            this.host = tokens[0];
+            this.port = tokens[1];
+            pos = ix + 1;
+        } else {
+            ix = str.length;
+        }
+    }
+    return pos;
+};
+Url.prototype.getPath = function getPath(str, pos) {
+    var ix = str.indexOf('?', pos);
+    if (ix == -1) ix = str.indexOf('#', pos);
+    if (ix == -1) ix = str.length;
+    var pth = str.substring(pos, ix);
+    pos = ix;
+    if (pth.charAt(0) == '.' || pth.charAt(0) == '/') {
+        // allow path.resolve
+        var basePathParts = (pth.charAt(0) == '/' ? baseUrl.path : appUrl.path).split('/');
+        var pathParts = pth.split('/');
+        for (var i=0; i<pathParts.length; i++) {
+            var part = pathParts[i];
+            if (part == '' || part == '.') continue;
+            else if (part == '..') basePathParts.pop();
+            else basePathParts.push(part);
+        }
+        this.path = basePathParts.join('/');
+    } else {
+        if (this.schema.startsWith('http')) pth = '/' + pth;
+        this.path = pth;
+    }
+    return pos;
+};
+Url.prototype.getQuery = function getQuery(str, pos) {
+    if (str.charAt(pos) == '?') {
+        this.hasQuery = true;
+        pos++;
+        var ix = str.indexOf('#', pos);
+        if (ix == -1) ix = str.length;
+        var query = str.substring(pos, ix).split('&');
+        for (var i=0; i<query.length; i++) {
+            var tokens = query[i].split('=');
+            this.query[tokens[0]] = tokens.length > 1 ? tokens[1] : true;
+        }
+        pos = ix;
+    }
+    return pos;
+};
+Url.prototype.getFragment = function getFragment(str, pos) {
+    if (str.charAt(pos) == '#') {
+        this.fragment = str.substring(pos+1);
+        pos += this.fragment.length;
+    }
+    return pos;
+};
+Url.prototype.toString = function toString() {
+    var sb = [this.schema];
+    if (this.user) sb.push(this.user);
+    if (this.password) sb.push(':', this.password);
+    if (sb.length > 1) sb.push('@')
+    if (this.host) sb.push(this.host);
+    if (this.port) sb.push(':', this.port);
+    if (this.path) sb.push(this.path);
+    if (this.hasQuery) {
+        var query = [];
+        for (var key in this.query) {
+            var term = key;
+            if (this.query[key] !== true) term += `=${this.query[key]}`;
+            query.push(term);
+        }
+        sb.push('?', query.join('&'));
+    }
+    if (this.fragment) sb.push('#', this.fragment);
+    return sb.join('');
+};
+self.baseUrl = (function() {
+    // http://<host>/<path>/lib/base/base.js
+    var address = !ISWORKER ? document.currentScript.src : self.location ? self.location.href : '';
     var tokens = address.split('/');
-    tokens.pop(); tokens.pop();
+    tokens.pop(); // base.js
+    tokens.pop(); // base
+    Resource.searchPath.push(tokens.join('/'));
+    tokens.pop(); // lib
     return new Url(tokens.join('/'));
 })();
-
-var appUrl = (function(){
-    var url = !ISWORKER ? document.URL : self.location.href;
+self.appUrl = (function(){
+    var url = !ISWORKER ? document.URL : self.location ? self.location.href : '';
     var address = url.split('#')[0];
     var pos = address.lastIndexOf('/');
     if (pos == -1) pos == undefined;
     url = url.substring(0, pos);
     return new Url(url);
 })();
+//#endregion
 
-var rootUrl = (function() {
-    var i = 0;
-    var a = baseUrl.toString();
-    var b = appUrl.toString();
-    for (var i=0; i<a.length; i++) {
-        if (a.charAt(i) != b.charAt(i)) break;
-    }
-    if (a.charAt(i-1) == '/') i--;
-    return new Url(a.substr(0, i));
-})();
-
-function addToSearchPath(url) {
-    if (url === undefined) {
-        url = !ISWORKER ? document.currentScript.src || document.currentScript.url : self.location.href;
-        url = url.substring(0, url.lastIndexOf('/'));
-    }
-    Resource.searchPath.push(url);
-}
-
-function normalizePath(path, base) {
-    var base = base || baseUrl.path;
-    var pathParts = base.split('/');
-    if (pathParts[pathParts.length-1].length == 0) pathParts.pop();
-    var arr = path.split('/');
-    for (var i=0; i<arr.length; i++) {
-        var part = arr[i];
-        if (part == '' && i == 0) {
-            pathParts = [rootUrl.path];
-            continue;
-        }
-        if (part == '.') continue;
-        if (part == '..') {
-            if (pathParts.length > 1) {
-                pathParts.pop();
-                continue;
-            }
-        // }
-        // if (part == '~') {
-        //     if (i == 0) {
-        //         pathParts = [rootUrl.path];
-        //         continue;
-        //     }
-        } else {
-            pathParts.push(part);
-            continue;
-        }
-        throw new Error('Invalid path!');
-    }
-    return pathParts.join('/');
-}
-
-function poll(action, timeout) {
-    async function poll_(action, timeout, resolve, args) {
-        clearTimeout(action.timer);
-        var result = await action(...args);
-        if (result) resolve(result);
-        else action.timer = setTimeout(poll_, timeout, action, timeout, resolve, args);
-    }
-
-    var args_ = [];
-    for (var i=2; i<arguments.length; i++) {
-        args_.push(arguments [i]);
-    }
-    return new Promise( resolve => {
-        poll_(action, timeout || 100, resolve, args_);
-    });
-}
-
-var locks__ = {};
-function lock(token, action) {
-    if (locks__[token] == undefined) {
-        locks__[token] = [0, 0];
-    }
-    return new Promise( resolve => {
-        poll( function() {
-            var request = locks__[token][0];
-            if (request == locks__[token][1]) {
-                locks__[token][0]++;
-                if (locks__[token][0] == request + 1) {
-                    debug_('locked: ' + locks__[token], 4);
-                    return true;
-                }
-            }
-            return false;
-        }).then(async function() {
-            await action();
-            locks__[token][1] = locks__[token][0];
-            resolve();
-            debug_('unlocked: ' + locks__[token], 4);
-        });
-    });
-}
-
-/******************************************************************************
-/* Loading function
-******************************************************************************/ 
+//#region LOAD, INCLUDE, PUBLISH
 /******************************************************************************
  * Examples
  *  - load('config.xml');
@@ -606,7 +548,7 @@ function lock(token, action) {
  *  - load([ { url: 'user.html', contentType: 'html', method: 'get' },
  *              { url: 'app.cfg', contentType: 'xml', method: 'post' } ]);
  ******************************************************************************/
-function load(obj) {
+self.load = function load(obj) {
     if (!Array.isArray(obj)) {
         var options = { error: null };
         if (typeof obj === 'string') {
@@ -633,9 +575,20 @@ function load(obj) {
         }
         return Promise.all(loads);
     }
-}
-
-function publish(obj, name, context, url) {
+};
+// self.inherits = function inherits(d, b) {
+//     var res = false;
+//     var c = d;
+//     while (c != Object && c != null) {
+//         if (c.constructor == b) {
+//             res = true;
+//             break;
+//         }
+//         c = c.__proto__;
+//     };
+//     return res;
+// };
+self.publish = function publish(obj, name, context, url) {
     if (!ISWORKER) {
         var script = document.currentScript;
         url = script.src || script.url;
@@ -647,18 +600,17 @@ function publish(obj, name, context, url) {
     context = context || self;
     mdl.symbols[name] = obj;
     context[name] = obj;
-}
-
-async function include(path, parentPath) {
+};
+self.include = async function include(path, parentPath) {
     debug_('INCLUDE @' + path, 1);
-    parentPath = parentPath || appUrl;
+    parentPath = parentPath || appUrl.toString();
     var mdl = null;
     var searchPath = null;
     if (path.startsWith('/')) {
-        searchPath = [baseUrl];
+        searchPath = [self.baseUrl];
         path = path.substr(1);
     } else {
-        searchPath = [parentPath, baseUrl.toString()];
+        searchPath = [parentPath, self.baseUrl.toString()];
         searchPath.push(...Resource.searchPath);
     }
     var attempts = [];
@@ -677,9 +629,16 @@ async function include(path, parentPath) {
     }
     debug_('INCLUDED @' + mdl.toString()), 2;
     return mdl;
-}
+};
+self.addToSearchPath = function addToSearchPath(url) {
+    if (url === undefined) {
+        url = !ISWORKER ? document.currentScript.src || document.currentScript.url : self.location.href;
+        url = url.substring(0, url.lastIndexOf('/'));
+    }
+    Resource.searchPath.push(url);
+};
+//#endregion
 
-/*****************************************************************************/
 Array.prototype.binSearch = function binSearch(item, cmp, min, max) {
     if (this.length == 0) {
         return 0;
@@ -708,9 +667,50 @@ Array.prototype.select = function select(filter) {
         }
     }
     return res;
-}
+};
 
-function mergeObjects(src, dst, sourceOnly) {
+//#region UTILITIES: POLL,LOCK,MERGEOBJECTS,OBJECT-PATH
+self.poll = function poll(action, timeout) {
+    async function poll_(action, timeout, resolve, args) {
+        clearTimeout(action.timer);
+        var result = await action(...args);
+        if (result) resolve(result);
+        else action.timer = setTimeout(poll_, timeout, action, timeout, resolve, args);
+    }
+
+    var args_ = [];
+    for (var i=2; i<arguments.length; i++) {
+        args_.push(arguments [i]);
+    }
+    return new Promise( resolve => {
+        poll_(action, timeout || 100, resolve, args_);
+    });
+};
+self.locks__ = {};
+self.lock = function lock(token, action) {
+    if (locks__[token] == undefined) {
+        locks__[token] = [0, 0];
+    }
+    return new Promise( resolve => {
+        poll( function() {
+            var request = locks__[token][0];
+            if (request == locks__[token][1]) {
+                locks__[token][0]++;
+                if (locks__[token][0] == request + 1) {
+                    debug_('locked: ' + locks__[token], 4);
+                    return true;
+                }
+            }
+            return false;
+        }).then(async function() {
+            await action();
+            locks__[token][1] = locks__[token][0];
+            resolve();
+            debug_('unlocked: ' + locks__[token], 4);
+        });
+    });
+};
+self.mergeObjects = function mergeObjects(src, dst, sourceOnly) {
     var res = {};
     if (src == undefined || src == null) {
         src = {};
@@ -777,8 +777,8 @@ function mergeObjects(src, dst, sourceOnly) {
         }
     }
     return res;
-}
-function getCommonParent(obj1, obj2, parentAttributeName) {
+};
+self.getCommonParent = function getCommonParent(obj1, obj2, parentAttributeName) {
     var p1 = obj1;
     var p2 = obj2;
     var path1 = [];
@@ -795,8 +795,8 @@ function getCommonParent(obj1, obj2, parentAttributeName) {
         p2 = p2[parentAttributeName];
     }
     return res;
-}
-function getObjectPath(obj, parentAttributeName, ancestor) {
+};
+self.getObjectPath = function getObjectPath(obj, parentAttributeName, ancestor) {
     var res = [];
     ancestor = ancestor || self;
     while (obj != null) {
@@ -805,9 +805,8 @@ function getObjectPath(obj, parentAttributeName, ancestor) {
         obj = obj[parentAttributeName];
     }
     return res;
-}
-
-function getObjectAt(path, obj) {
+};
+self.getObjectAt = function getObjectAt(path, obj) {
     obj = obj || self;
     var tokens = path.split('.');
     for (var i=0; i<tokens.length; i++) {
@@ -818,10 +817,10 @@ function getObjectAt(path, obj) {
         }
     }
     return obj;
-}
+};
+//#endregion
 
-if (!ISWORKER) {
-
+if (!ISWORKER || ISNODEAPP) {
 // APPLICATION
 self.onload = e => poll(async function() {
     var errors = [];
@@ -834,7 +833,7 @@ self.onload = e => poll(async function() {
         }
     }
     debug_('onload - resource loading complete');
-    onpageload(errors);
+    if (!ISNODEAPP) onpageload(errors);
     return true;
 });
 
@@ -868,5 +867,5 @@ self.onmessage = async function(e) {
         self.postMessage({code:'startup', id:msg.id, body:resp});
     }
 };
-console.log(ISWORKER);
+//console.log(ISWORKER);
 }
