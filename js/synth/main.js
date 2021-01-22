@@ -1,7 +1,7 @@
-include('base/dbg.js');
-include('glui/glui-lib.js');
-include('synth/synth-adapter.js');
-include('synth/score-control.js');
+include('/lib/base/dbg.js');
+include('/lib/glui/glui-lib.js');
+include('/lib/synth/synth-adapter.js');
+include('/lib/synth/score-control.js');
 
 const SAMPLE_RATE = 48000;
 const LOCAL_STORAGE_KEY = 'synth-app';
@@ -18,9 +18,14 @@ var App = {
     saveDialog: null,
     settingsDialog: null,
 
-    selectedChannel: null,
+    ticks: {
+        value: 0,
+        min: 0,
+        step: 1,
+        max: 10
+    },
 
-    selectedSequence: 0,
+    selectedChannel: null,
 
     menuStyle: {
         'font': 'Arial 18px',
@@ -47,13 +52,13 @@ var App = {
     createUi: async function createUi() {
         // pre-load UI resources
         var res = await load([
-            '/synth/res/main-menu.json',
-            '/synth/res/controls.layout.json',
-            '/synth/res/synth.layout.json',
-            '/synth/res/bg.png',
-            '/synth/res/control-bg.png',
-            //'/synth/res/knob-bg.png',
-            '/synth/res/synth.template.png'
+            './res/main-menu.json',
+            './res/controls.layout.json',
+            './res/synth.layout.json',
+            './res/bg.png',
+            './res/control-bg.png',
+            //'/res/knob-bg.png',
+            './res/synth.template.png'
         ]);
         var errors = res.select(x => x.error);
         if (errors.length > 0) {
@@ -107,11 +112,40 @@ var App = {
         ui.size = App.size;
         ui.mainMenu = ui.items.find(x => x.id == 'MainMenu'); await ui.mainMenu.build(menuRes);
         this.commands = ui.mainMenu.codes;
-        ui.controlPanel = ui.items.find(x => x.id == 'ControlPanel'); await ui.controlPanel.build();
-        ui.controlPanel.getControlById('bpm').dataBind(App, 'bpm');
 
         ui.synthPanel = ui.items.find(x => x.id == 'SynthPanel');
 
+        //#region control panel
+        ui.controlPanel = ui.items.find(x => x.id == 'ControlPanel');
+        ui.controlPanel.onclick = function(e, ctrl) {
+            switch (ctrl.id) {
+                case 'run':
+                    if (!sound.isRunning) {
+                        ctrl.setValue('P');
+                        sound.start();
+                    } else {
+                        ctrl.setValue('►');
+                        sound.stop();
+                    }
+                    break;
+                case 'rwd':
+                    break;
+                case 'fwd':
+                    break;
+                case 'stp':
+                    break;
+            }
+        };
+        await ui.controlPanel.build();
+        ui.controlPanel.getControlById('bpm').dataBind(App, 'bpm');
+        ui.controlPanel.getControlById('tck').dataBind(App.ticks, 'value');
+        var ctrl = ui.controlPanel.getControlById('seq');
+        ctrl.dataBind(App.selectedSequence, 'value');
+        ctrl.dataLink.addHandler('value', App.selectSequence, App);
+        App.selectedSequence.ctrl = ctrl;
+        //#endregion
+
+        //#region score panel
         ui.scorePanel = ui.items.find(x => x.id == 'ScorePanel');
         ui.scorePanel.unitX = 4;
         ui.scorePanel.scaleX = 14;
@@ -125,29 +159,34 @@ var App = {
         ui.scorePanel.scaleRangeX[0] = ui.scorePanel.scaleRangeX[1] = ui.scorePanel.scaleX;
         ui.scorePanel.setScale();
         ui.scorePanel.scrollTop = ui.scorePanel.stepY * 24;
+        //#endregion
 
         return ui;
     },
     size: function resize() {
         this.renderer.initialize();
-        // await this.controlPanel.renderer.initialize();
-        this.controlPanel.move(0, 0);
+        var top = 0;
 
-        this.mainMenu.move(this.controlPanel.width, 0);
-        //this.ui.synthPanel.renderer.initialize();
-        var top = Math.max(this.mainMenu.height, this.controlPanel.height);
+        this.mainMenu.move(0, 0);
+        top += this.mainMenu.height;
+
+        // await this.ui.synthPanel.renderer.initialize();
         this.synthPanel.move(0, top);
         //this.ui.synthPanel.size(0, top);
         top += this.synthPanel.height;
 
-        //this.ui.scorePanel.renderer.initialize();
+        // await this.controlPanel.renderer.initialize();
+        this.controlPanel.move(0, top);
+        top += this.controlPanel.height;
+
+        // await this.ui.scorePanel.renderer.initialize();
         this.scorePanel.move(0, top);
         //this.ui.scorePanel.size(this.ui.synthPanel.width, this.ui.scorePanel.height);
 
         this.render();
     },
     updateUi: async function updateUi() {
-        var res = await load('/synth/res/synth.layout.json');
+        var res = await load('./res/synth.layout.json');
         if (res.error) throw res.error;
         var synthTemplate = res.data;
         var height = 0;
@@ -199,8 +238,9 @@ var App = {
         for (; i<this.ui.synthPanel.items.length; i++) {
             this.ui.synthPanel.remove(this.ui.synthPanel.items[i])
         }
+        this.ui.controlPanel.size(synthTemplate.style.width);
         this.ui.synthPanel.size(synthTemplate.style.width, height);
-        this.ui.scorePanel.assign(this.player.sequences[1]);
+        //this.ui.scorePanel.size(synthTemplate.style.width);
         this.ui.scorePanel.render();
     },
     applyStyles: function applyStyles(styles) {
@@ -225,6 +265,24 @@ var App = {
     player: null,
     synthAdapter: null,
     selectedChannel: null,
+
+    selectedSequence: {
+        value: 0,
+        min: 1,
+        step: 1,
+        max: 1,
+        ctrl: null
+    },
+
+    selectSequence: function selectSequence(id) {
+        if (id == 0) {
+            // show master sequence - player device
+        } else {
+            // update score panel
+            this.ui.scorePanel.setFromSequence(this.player.sequences[id]);
+            this.ui.scorePanel.render();
+        }
+    },
     //#endregion
 
     //#region misc
@@ -254,17 +312,18 @@ var App = {
         if (this.ui) {
             Dbg.prln('Ui created');
             this.loadFromLocalStore();
-            if (!this.localStore.asu.current) {
+            if (!this.localStore.current) {
                 Dbg.prln('Create blank ASU');
                 this.createBlank();
             }
-            this.selectedSequence = 1;
+            App.selectedSequence.ctrl.max = this.player.sequences.length - 1;
+            App.selectedSequence.ctrl.setValue(1);
             // update UI
             await this.updateUi();
             this.ui.size();
         }
 
-        var res = await load(`/synth/errors.${this.settings.languageCode}.json`);
+        var res = await load(`./errors.${this.settings.languageCode}.json`);
         if (res.error) Dbg.prln('Could not load error text file!');
         else {
             for (var i in res.data) {
@@ -278,8 +337,9 @@ var App = {
     createBlank: function createBlank() {
         //#region create data blocks
         // DataBlock #0
-        var playerInit = new Stream(1+4)
+        var playerInit = new Stream(8)
             .writeUint8(2)
+                .writeUint8(Ps.Player.Device.CHANNEL)
                 .writeUint8(Ps.Player.Device.CHANNEL)
                 .writeUint8(Ps.Player.Device.CHANNEL);
 
@@ -348,11 +408,15 @@ var App = {
         //#region create sequences
         // create master sequence
         var frames = [];
-        frames.push(new Ps.Frame().setDelta(0).addCommand(this.player.makeCommand(Ps.Player.ASSIGN, 1, 1, 0, 1)));
-        frames.push(new Ps.Frame().setDelta(64).addCommand(this.player.makeCommand(Ps.Player.EOS)));
+        frames.push(
+            new Ps.Frame().setDelta(0)
+                .addCommand(this.player.makeCommand(Ps.Player.ASSIGN, 1, 1, 0, 1))
+                .addCommand(this.player.makeCommand(Ps.Player.ASSIGN, 2, 2, 1, 1)),
+            new Ps.Frame().setDelta(64).
+                addCommand(this.player.makeCommand(Ps.Player.EOS)));
         this.player.sequences.push(Ps.Sequence.fromFrames(frames, this.player));
 
-        // create default synth sequence
+        // create default synth sequences
         var d = 0;
         frames = [];
         for (var i=0; i<16; i++) {
@@ -361,6 +425,7 @@ var App = {
             d = 2;
         }
         frames.push(new Ps.Frame().setDelta(2).addCommand(this.player.makeCommand(Ps.Player.EOS)));
+        this.player.sequences.push(Ps.Sequence.fromFrames(frames, this.synthAdapter));
         this.player.sequences.push(Ps.Sequence.fromFrames(frames, this.synthAdapter));
         //#endregion
 
@@ -442,7 +507,8 @@ var App = {
     //#region load/save
     localStore: {
         'settings': {},
-        'asu': {}
+        'asu': [],
+        'current': null
     },
     storeUrl: '',
 
@@ -453,7 +519,7 @@ var App = {
         } else {
             this.synthAdapter = this.player.adapters[psynth.SynthAdapter.getInfo().id];
             //this.selectedChannel = this.player.channels[1];
-            this.selectedSequence = 1;
+            this.selectedSequence.value = 1;
         }
         // update UI
         await this.updateUi();
@@ -467,8 +533,10 @@ var App = {
                 this.localStore.settings[i] = data.settings[i];
             }
             // load asu
-            if (data && data.asu.current) {
+            if (data && data.asu) {
+                Dbg.prln();
                 this.localStore.asu.current = data.asu.current;
+                
                 await this.loadAsu(data.asu.current);
             }
             
@@ -530,7 +598,8 @@ var App = {
                 var sequence = ctrl.getAsSequence(App.synthAdapter);
                 for (var i=1; i<App.player.channels.length; i++) {
                     var ch = App.player.channels[i];
-                    if (ch.sequence == App.player.sequences[App.selectedSequence]) {
+
+                    if (ch.sequence == App.player.sequences[App.selectedSequence.value]) {
                         if (ch.cursor > sequence.stream.length) ch.cursor = 0;
                         // release every voice
                         var dev = ch.device;
@@ -541,7 +610,7 @@ var App = {
                         ch.sequence = sequence;
                     }
                 }
-                App.player.sequences[App.selectedSequence] = sequence;
+                App.player.sequences[App.selectedSequence.value] = sequence;
                 if (isRunning) {
                     sound.start();
                 }
@@ -550,15 +619,6 @@ var App = {
     },
     onclick: async function onclick(e, ctrl) {
         switch (ctrl.id) {
-            case 'run':
-                if (!sound.isRunning) {
-                    ctrl.setValue('Stop');
-                    sound.start();
-                } else {
-                    ctrl.setValue('Play');
-                    sound.stop();
-                }
-                break;
             case 'padd':
                 var pname = ctrl.parent.getControlById('pname');
                 var message = 'Ok';

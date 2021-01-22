@@ -113,9 +113,6 @@ include('synth/synth-adapter.js');
         // set scale
         this.setScale();
     };
-    Score.prototype.assign = function assign(sequence) {
-        this.setFromSequence(sequence);
-    };
     Score.prototype.insertPoint = function insertPoint(x, y) {
         Score.base.insertPoint.call(this, x, y);
         this.callHandler('change');
@@ -159,19 +156,20 @@ include('synth/synth-adapter.js');
         for (var i=0; i<frames.length; i++) {
             var frame = frames[i];
             delta += frame.delta;
-            var cmd = frame.commands[0];
-            if (cmd) {
-                if (cmd.readUint8(0) != psynth.SynthAdapter.SETNOTE) throw new Error('Invalid sequence data!');
-                if (cmd.readUint8(2) != 0) {
-                    var note = cmd.readUint8(1);
-                    points.push({x:delta, y:note});
+            for (var j=0; j<frame.commands.length; j++) {
+                var cmd = frame.commands[j];
+                if (cmd) {
+                    if (cmd.readUint8(0) != psynth.SynthAdapter.SETNOTE) throw new Error('Invalid sequence data!');
+                    if (cmd.readUint8(2) != 0) {
+                        var note = cmd.readUint8(1);
+                        points.push({x:delta, y:note});
+                    }
                 }
             }
         }
         this.points = points;
         this.render();
     };
-
 
     publish(Score, 'Score', glui);
 })();

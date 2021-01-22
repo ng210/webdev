@@ -5,7 +5,7 @@
         "width": "885px", "height": "73px",
         "z-index": 0,
         "background-color": "#3080e0",
-        "background-image": "/synth/res/synth.template.png",
+        "background-image": "./res/synth.template.png",
         "font": "consolas 10 normal",
         "border": "#204080 0px outset"
     },
@@ -19,7 +19,8 @@
         "style": {
             "color": "#80c0ff",
             "background-color": "#204080",
-            "background-image": "/synth/res/knob-bg.png",
+            "background-image": "./res/knob-bg.png",
+            "background-repeat": "repeat-x repeat-y",
             "border": "#4060f0 0px outset",
             "font": "consolas 9 normal",
             "width": "24px", "height": "14px",
@@ -89,7 +90,7 @@
                 "label":false,
                 "style": {
                     "font": "Arial 10 bold",
-                    "background-image": "/synth/res/control-bg.png",
+                    "background-image": "./res/control-bg.png",
                     "align": "center middle",
                     "padding": "0px"
                 }
