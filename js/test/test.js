@@ -1,4 +1,4 @@
-include('base/dbg.js');
+include('/lib/base/dbg.js');
 
 //var _indentText = ['&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;'];
 var _indentText = '        ';
@@ -225,24 +225,31 @@ var _assertion_operators = {
 };
 
 test_context.prototype.assert = function assert(value, operator, expected) {
-    var op = _assertion_operators[operator];
-    if (op) {
-        var result = op.action(value, expected);
-        if (operator == ':=') {
-            if (result != null) {
+    if (operator == undefined) {
+        var err = new Error();
+        var tokens = err.stack.split('\n');
+        error(`Assertion failed ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);
+        this.errors++;
+    } else {
+        var op = _assertion_operators[operator];
+        if (op) {
+            var result = op.action(value, expected);
+            if (operator == ':=') {
+                if (result != null) {
+                    var err = new Error();
+                    var tokens = err.stack.split('\n');
+                    error(`<b>${result}</b> should match! ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);
+                    this.errors++;
+                }
+            } else if (!result) {
                 var err = new Error();
                 var tokens = err.stack.split('\n');
-                error(`<b>${result}</b> should match! ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);
+                var expectedText = expected !== undefined ? ` <b>${expected}</b>` : '';
+                error(`<b>${value}</b> should ${op.term}${expectedText}! ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);
                 this.errors++;
             }
-        } else if (!result) {
-            var err = new Error();
-            var tokens = err.stack.split('\n');
-            var expectedText = expected !== undefined ? ` <b>${expected}</b>` : '';
-            error(`<b>${value}</b> should ${op.term}${expectedText}! ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);
-            this.errors++;
-        }
-    } else throw new Error(`Unknown assertion operator '${operator}'!`);
+        } else throw new Error(`Unknown assertion operator '${operator}'!`);
+    }
 };
 
 async function onpageload(errors) {
@@ -251,7 +258,6 @@ async function onpageload(errors) {
     Dbg.con.style.visibility = 'visible';
 
     //testDeepCompare();
-
     var url = new Url(location.href);
     var testUrl = new Url(`${url.fragment}/test.js`);
     Dbg.prln(`Load '${testUrl}'`);

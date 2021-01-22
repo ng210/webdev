@@ -52,7 +52,7 @@
                         }
                         var link = this.links[field];
                         if (link) {
-                            DataLink.updateLinkedValue(this.obj[field], oldValue, link);
+                            link.fn.call(link.context, value, oldValue, link);
                         }
                         return oldValue;
                     }
@@ -100,12 +100,7 @@
         return target;
     };
 
-    DataLink.defaultTransform = (value, oldValue, args) => value;
-    DataLink.updateLinkedValue = function updateLinkedValue(value, oldValue, link) {
-        var result = link.fn.call(link.context, value, oldValue);
-        if (result == undefined) result = value;
-        link.target[link.field] = result;
-    };
+    DataLink.defaultTransform = (value, oldValue, link) => link.target[link.field] = value;
 
     publish(DataLink, 'DataLink');
 })();
