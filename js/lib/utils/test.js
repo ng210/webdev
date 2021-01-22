@@ -1,5 +1,6 @@
 include('syntax.js');
 include('schema.js');
+
 (function(){
 
     var grammar = {
@@ -75,8 +76,7 @@ include('schema.js');
 
     function message_errors(errors) {
         for (var i=0; i<errors.length; i++) {
-            var err = (errors[i].field.length > 0) ? errors[i].field.join('.') + ': ' : '';
-            message(err + errors[i].message);
+            message(errors[i].toString());
         }
     }
 
@@ -84,12 +84,12 @@ include('schema.js');
         message('Test schema', 1);
         var schema = new Schema();
 
-        schema.addType({ name:'String10', type:Schema.Types.STRING, length:10 });
+        schema.buildType({ name:'String10', type:Schema.Types.STRING, length:10 });
         test('Should have a String10 type', ctx => {
             var type = schema.types.String10;
             ctx.assert(type, '!null');
             ctx.assert(type.name, '=', 'String10');
-            ctx.assert(type.type, '=', Schema.Types.STRING);
+            ctx.assert(type.baseType.name, '=', Schema.Types.STRING);
             ctx.assert(type.length, '=', 10);
             ctx.assert(type.elemType, 'null');
             var cst = type.constraints;
@@ -124,12 +124,12 @@ include('schema.js');
             ctx.assert(errors.length, '=', 1);
         });
 
-        schema.addType({ name:'Int100', type:Schema.Types.INT, min:0, max:100 });
+        schema.buildType({ name:'Int100', type:Schema.Types.INT, min:0, max:100 });
         test('Should have a Int100 type', ctx => {
             var type = schema.types.Int100;
             ctx.assert(type, '!null');
             ctx.assert(type.name, '=', 'Int100');
-            ctx.assert(type.type, '=', Schema.Types.INT);
+            ctx.assert(type.baseType.name, '=', Schema.Types.INT);
             ctx.assert(type.min, '=', 0);
             ctx.assert(type.max, '=', 100);
             ctx.assert(type.elemType, 'null');
@@ -162,12 +162,12 @@ include('schema.js');
             ctx.assert(errors.length, '=', 1);
         });
 
-        schema.addType({ name:'Int100Arr5', type:Schema.Types.LIST, length:5, elemType:'Int100' });
+        schema.buildType({ name:'Int100Arr5', type:Schema.Types.LIST, length:5, elemType:'Int100' });
         test('Should have a Int100Arr5 type', ctx => {
             var type = schema.types.Int100Arr5;
             ctx.assert(type, '!null');
             ctx.assert(type.name, '=', 'Int100Arr5');
-            ctx.assert(type.type, '=', Schema.Types.LIST);
+            ctx.assert(type.baseType.name, '=', Schema.Types.LIST);
             ctx.assert(type.elemType, '=', schema.types.Int100);
             var cst = type.constraints;
             ctx.assert(cst.length, '=', 3);
@@ -207,7 +207,7 @@ include('schema.js');
             ctx.assert(errors.length, '=', 1);
         });
 
-        schema.addType({ name:'EnumColors', type:Schema.Types.ENUM, values:['blue', 'red', 'green'] });
+        schema.buildType({ name:'EnumColors', type:Schema.Types.ENUM, values:['blue', 'red', 'green'] });
         var color = 'blue';
         test(`Should accept '${color}'`, ctx => {
             var type = schema.types.EnumColors;
@@ -223,12 +223,12 @@ include('schema.js');
             ctx.assert(errors.length, '=', 1);
         });
 
-        schema.addType({ name:'Person', attributes: {
-            id: { type:{ name:'Int1000', type:Schema.Types.INT, min:1, max:1000 }, required:true },
-            name: { type:'String' },
-            parent: { type:'Person' },
-            color: { type: 'EnumColors' }
-        }});
+        schema.buildType({ name:'Person', attributes: [
+            { "name":"id", type:{ name:'Int1000', type:Schema.Types.INT, min:1, max:1000 }, required:true },
+            { "name":"name", type:'string' },
+            { "name":"parent", type:'Person' },
+            { "name":"color", type: 'EnumColors' }
+        ]});
         var grandpa = { id:3, name:'Grandpa', color:'green'};
         var parent = { id:1, name:'Parent', parent:grandpa };
         var child = { id:2, name:'Child', parent:parent, color:'red' };
@@ -242,17 +242,52 @@ include('schema.js');
         parent.name = 12;
         parent.color = 'black';
         delete grandpa.id;
-        test(`Should accept ${JSON.stringify(child)}`, ctx => {
+        test(`Should reject ${JSON.stringify(child)}`, ctx => {
             var type = schema.types.Person;
             var errors = type.validate(child);
             message_errors(errors);
             ctx.assert(errors.length, '=', 4);
         });
 
+        schema.buildType({ name:'IntToString', type:Schema.Types.MAP, key:'int', value:'string' });
+        var map = { 1:'1', 2:'2', 3:'3' };
+        test(`Should accept object:${JSON.stringify(map)}`, ctx => {
+            var type = schema.types.IntToString;
+            var errors = type.validate(map);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 0);
+        });
+        map = { a:'1', 2:2, 3:'3' };
+        test(`Should reject object:${JSON.stringify(map)}`, ctx => {
+            var type = schema.types.IntToString;
+            var errors = type.validate(map);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 2);
+        });
+
+        schema.buildType({ name:'MyObject', type:Schema.Types.OBJECT, sealed:true, attributes: [
+            { name:"id", type:"int" },
+            { name:"text", type:"string" },
+            { name:"map", type:"IntToString" }
+        ]});
+        var obj1 = { 'id': 12, 'text': 'Hello World!', map: {1:'one', 2:'two', 3:'three'} };
+        test(`Should accept object:${JSON.stringify(obj1)}`, ctx => {
+            var type = schema.types.MyObject;
+            var errors = type.validate(obj1);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 0);
+        });
+        var obj2 = { 'id': 12, 'text': 'Hello World!', map: {1:'one', '2a':'two', 3:'three'}, 'isValid':false };
+        test(`Should reject object:${JSON.stringify(obj2)}`, ctx => {
+            var type = schema.types.MyObject;
+            var errors = type.validate(obj2);
+            message_errors(errors);
+            ctx.assert(errors.length, '=', 2);
+        });
     }
 
     var tests = () => [
-        //test_syntax,
+        // test_syntax,
         test_schema
     ];
 
