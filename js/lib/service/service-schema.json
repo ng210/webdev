@@ -1,0 +1,56 @@
+[
+    { "name":"String10", "type":"string", "length":10 },
+    { "name":"Methods", "type":"enum", "values": ["CREATE", "RETRIEVE", "UPDATE", "DELETE"] },
+    { "name":"Verbs", "type":"enum", "values": ["POST", "GET", "PUT", "DELETE"] },
+    { "name":"MimeTypes", "type":"enum", "values": ["application/json"] },
+    { "name":"HttpRequest",
+        "attributes": [
+            { "name":"mimeType", "type":"MimeTypes" },
+            { "name":"arguments", "type":"AttributeList" }
+        ]
+    },
+    { "name":"HttpResponse",
+        "attributes": [
+            { "name":"mimeType", "type":"MimeTypes" },
+            { "name":"type", "type":"type" }
+        ]
+    },
+    { "name":"Call",
+        "attributes": [
+            { "name":"method", "type":"Verbs" },
+            { "name":"request", "type":"HttpRequest" },
+            { "name":"response", "type":"HttpResponse" }
+        ]
+    },
+    { "name":"VerbList", "type":"list", "elemType":"Verbs" },
+    { "name":"MethodsList", "type":"list", "elemType":"Methods" },
+    { "name":"CallList", "type":"list", "elemType":"Call" },
+    { "name":"TypeList", "type":"list", "elemType":"type" },
+
+    { "name": "Endpoint",
+        "attributes": [
+            { "name":"id", "type":"string", "required":true },
+            { "name":"calls", "type": "CallList", "required":true }
+        ]
+    },
+    { "name": "Resource",
+        "attributes": [
+            { "name":"id", "type":"String10", "required":true },
+            { "name":"type", "type":"String10", "required":true },
+            { "name":"key", "type":"String10", "required":false },
+            { "name":"methods", "type":"MethodsList" }
+        ]
+    },
+    { "name":"ResourceList", "type":"list", "elemType":"Resource" },
+    { "name":"EndpointList", "type":"list", "elemType":"Endpoint" },
+    {
+        "name": "Service",
+        "attributes": [
+            { "name":"id", "type":"String10", "required":true },
+            { "name":"url", "type":"string", "required":true },
+            { "name":"DataTypes", "type":"TypeList" },
+            { "name":"Resources", "type":"ResourceList" },
+            { "name":"Endpoints", "type":"EndpointList" }
+        ]
+    }
+]
