@@ -31,35 +31,32 @@ include('service/api.js');
         message('Test calls', 1);
         for (var i in api.endpoints) {
             var ep = api.endpoints[i];
+            _indent++;
             for (var j in ep) {
-                var endpoint = ep[j];
-
+                var e = ep[j];
                 // create input
                 var args = [];
-                for (var k=0; k<endpoint.request.arguments.length; k++) {
-                    var t = endpoint.request.arguments[k].type;
+                for (var k=0; k<e.request.arguments.length; k++) {
+                    var t = e.request.arguments[k].type;
                     var type = Api.schema.types[t];
                     args.push(type.createValue());
                 }
-                var resp = await endpoint.call(...args);
-                var respType = endpoint.response.type;
+                var resp = await e.call(...args);
+                var respType = e.response.type;
                 var type = typeof respType === 'string' ? Api.schema.types[respType] : Api.schema.types[respType.name];
-                test(`${j.toUpperCase()} ${i}(${args}) should return a valid value`, async function(ctx) {
+                test(`${j.toUpperCase()} ${i}(${JSON.stringify(args)}) should return a valid value`, async function(ctx) {
                     ctx.assert(resp, '!null');
                     var isError = resp instanceof Error;
                     if (isError) {
                         message(resp.message);
+                        if (resp.details) {
+                            message(resp.details);
+                        }
                         ctx.assert(false);
                     }
-                    //     var results = type.validate(resp).length;
-                    //     for (var i=0; i<results.length; i++) {
-                    //         message(results[i].toString(), 1);
-                    //     }
-                    //     _indent--;
-                    //     ctx.assert(results, '=', 0);
-                    // }
                 });
             }
+            _indent--;
         }
         _indent--;
     }

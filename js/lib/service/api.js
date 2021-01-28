@@ -13,18 +13,15 @@ if (ISNODEAPP) {
         }
     }
 
-    function Endpoint(id, api, def) {
+    function Endpoint(id, api, def, handler) {
         this.id = id;
         this.api = api;
-        this.method = def.method;
+        this.method = Api.actionVerbMap[def.method] || def.method;
         this.request = mergeObjects(def.request);
         configTransfer(this.request.mimeType, this.request);
-        // this.request.mimeType = def.request.mimeType || 'application/json';
-        // this.request.charSet = this.request.mimeType != '*' ? Api.mimeTypeMap[this.request.mimeType].charSet : '*';
         this.response = mergeObjects(def.response);
         configTransfer(this.response.mimeType, this.response);
-        // this.response.mimeType = def.response.mimeType || 'application/json';
-        // this.response.charSet = Api.mimeTypeMap[this.response.mimeType].charSet;
+        this.call = handler;
     }
 
     Endpoint.prototype.call = async function call(args) {
@@ -32,7 +29,9 @@ if (ISNODEAPP) {
     };
 
     function Api(definition) {
+        this.methods = [];
         if (definition) {
+            var methods = {};
             this.id = definition.id;
             this.url = new Url(definition.url);
             if (!this.url.path.endsWith('/')) this.url.path += '/';
@@ -44,6 +43,7 @@ if (ISNODEAPP) {
                 this.endpoints[ep.id] = {};
                 for (var j=0; j<ep.calls.length; j++) {
                     var call = mergeObjects(ep.calls[j]);
+                    methods[call.method] = true;
                     call.method = call.method.toLowerCase();
                     var p = this.createEndpoint(ep.id, call);
                     if (p) {
@@ -51,10 +51,75 @@ if (ISNODEAPP) {
                     }
                 }
             }
+            // create resources
+            var def = {
+                "method": '',
+                "request": {
+                    "mimeType": "application/json",
+                    "arguments": null
+                },
+                "response": {
+                    "mimeType": "application/json",
+                    "type": null
+                }
+            };
+            for (var i=0; i<this.definition.Resources.length; i++) {
+                var res = this.definition.Resources[i];
+                var resourceType = Api.schema.types[res.type];
+                def.response.type = resourceType.name;
+                for (var j=0; j<res.methods.length; j++) {
+                    var method = res.methods[j].toLowerCase();
+                    var verb = Api.actionVerbMap[method] || method;
+                    methods[verb.toUpperCase()] = true;
+                    def.method = method;
+                    switch (method) {
+                        case 'create':
+                        case 'update':
+                            def.request.arguments = [ { "name":"res", "type":resourceType.name } ];
+                            break;
+                        case 'retrieve':
+                        case 'delete':
+                            def.request.arguments = [ { "name":res.key, "type":resourceType.attributes[res.key].type.name } ];
+                            break;
+                    }
+                    var p = this.createEndpoint(res.id, def);
+                    if (p) {
+                        if (this.endpoints[res.id] == undefined) this.endpoints[res.id] = {};
+                        this.endpoints[res.id][verb] = p;
+                    }
+                }
+            }
+            this.methods = Object.keys(methods);
         }
     }
     Api.prototype.createEndpoint = function createEndpoint(id, def) {
         throw new Error('Not implemented!');
+    };
+    Api.prototype.resourceAction = function resourceAction(arg, type, method) {
+        // get type
+        // validate
+        // call endpoint
+        // validate response
+
+        this.type = Api.schema.types[type];
+        this.data = null;
+        this.methods = [];
+        for (var i=0; i<def.methods.length; i++) {
+            this.methods.push(def.methods[i].toLowerCase());
+        }
+    };
+
+    Api.prototype.create = function create(obj, type) {
+        return this.resourceAction(obj, type, 'create');
+    };
+    Api.prototype.retrieve = function retrieve(id, type) {
+        return this.resourceAction(id, type, 'retrieve');
+    };
+    Api.prototype.update = function update(obj, type) {
+        return this.resourceAction(obj, type, 'update');
+    };
+    Api.prototype.delete = function delete_(id, type) {
+        return this.resourceAction(id, type, 'delete');
     };
     //#endregion
 
@@ -65,8 +130,7 @@ if (ISNODEAPP) {
     extend(Api, ApiClient);
 
     ApiClient.prototype.createEndpoint = function ApiClientCreateEndpoint(id, def) {
-        var ep = new Endpoint(id, this, def);
-        ep.call = ApiClient.endpointCall;
+        var ep = new Endpoint(id, this, def, ApiClient.endpointCall);
         return ep;
     };
     ApiClient.endpointCall = async function ApiClientEndpointCall() {
@@ -160,8 +224,7 @@ if (ISNODEAPP) {
         var handler = this[`${def.method}_${id}`];
         var ep = null;
         if (typeof handler === 'function') {
-            ep = new Endpoint(id, this, def);
-            ep.handler = handler;
+            ep = new Endpoint(id, this, def, handler);
         }
         return ep;
     };
@@ -174,12 +237,12 @@ if (ISNODEAPP) {
         sb.push('│ ID         │ VERB   │ HANDLER              │');
         sb.push('╞════════════╪════════╪══════════════════════╡');
         for (var i in this.endpoints) {
-            var ep = this.endpoints[i];
-            for (var j in ep) {
-                var call = ep[j];
-                if (call.handler != null) {
+            var group = this.endpoints[i];
+            for (var j in group) {
+                var ep = group[j];
+                if (ep.call != null) {
                     var id = i != '' ? i : '[info]'; 
-                    sb.push(`│ ${(id+'          ').slice(0, 10)} │ ${(j.toUpperCase()+'    ').slice(0, 6)} │ ${(this.endpoints[i][j].handler.name+'                    ').slice(0, 20)} │`);
+                    sb.push(`│ ${(id+'          ').slice(0, 10)} │ ${(j.toUpperCase()+'    ').slice(0, 6)} │ ${(ep.call.name+'                    ').slice(0, 20)} │`);
                     sb.push('╞════════════╪════════╪══════════════════════╡');
                 }
             }
@@ -207,7 +270,6 @@ if (ISNODEAPP) {
         reqBody = Buffer.concat(reqBody).toString();
         if (reqBody.length == 0) reqBody = null;
         debug_(`Request from ${req.headers.referer} to ${req.url} (${req.method}) received.`, 1);
-
         // route request to the handler
         resp.statusCode = 200;
         var reqUrl = new Url(req.url);
@@ -225,7 +287,7 @@ if (ISNODEAPP) {
                 var endpoint = ep[method];
                 if (this.checkCORS(ep, req, resp)) {
                     if (method != 'options') {
-                        if (endpoint && endpoint.handler) {
+                        if (endpoint && endpoint.call) {
                             var args = [];
                             var results = [];
                             if (method == 'get') {
@@ -263,8 +325,8 @@ if (ISNODEAPP) {
                                 body = JSON.stringify(results);
                             } else {
                                 args.push(req, resp);
-                                body = endpoint.handler.apply(endpoint, args);
-                                console.info(`Request handled by ${endpoint.handler.name}`);
+                                body = endpoint.call.apply(endpoint, args);
+                                console.info(`Request handled by ${endpoint.call.name}`);
 
                                 // validate output
                                 switch (endpoint.response.mimeType) {
@@ -293,16 +355,19 @@ if (ISNODEAPP) {
 
     ApiServer.prototype.checkCORS = function checkCORS(endpoint, req, resp) {
         var res = true;
-        // // check content type
+        // check content type
         // if (endpoint.request.mimeType == '*' || endpoint.request.mimeType == req.headers['Content-Type']) {
         //     resp.setHeader('Access-Control-Allow-Headers', 'Content-Type');
         // } else res = false;
 
         // origin
         var origin = req.headers.origin || req.headers.referer;
-        if (!endpoint.origin || endpoint.origin == '*' || endpoint.origin.includes(origin) ) {
+        if (origin && (!endpoint.origin || endpoint.origin == '*' || endpoint.origin.includes(origin))) {
             resp.setHeader('Access-Control-Allow-Origin', origin);
         } else res = false;
+
+        // methods
+        resp.setHeader('Access-Control-Allow-Methods', this.methods);
 
         return res;
     };
@@ -316,6 +381,12 @@ if (ISNODEAPP) {
     Api.schemaDefinition = '/lib/service/service-schema.json';
     Api.schema = null;
     Api.mimeTypeMap = null;
+    Api.actionVerbMap = {
+        'create': 'post',
+        'retrieve': 'get',
+        'update': 'put',
+        'delete': 'delete'
+    };
 
     Api.initialize = async function initialize() {
         if (Api.mimeTypeMap == null) {
@@ -336,8 +407,9 @@ if (ISNODEAPP) {
     Api.validate = async function validate(definition, errors) {
         if (typeof definition === 'string') {
             var res = await load({ url:definition, responseType:'json', charSet:'utf-8' });
-            if (res.error) errors.push(res.error);
-            else {
+            if (res.error) {
+                errors.push(res.error);
+            } else {
                 definition = res.data;
                 Api.schema.types.Service.validate(definition, errors);
             }
@@ -359,19 +431,19 @@ if (ISNODEAPP) {
     };
     
     Api.Client = async function Client(definition) {
+        var api = null;
         // initialize API
         await Api.initialize();
         // fetch definition
         var errors = [];
         var def = await Api.validate(definition, errors);
         if (errors.length > 0) {
-            for (var i=0; i<errors.length; i++) {
-                console.log(errors[i]);
-            }
-            
+            throw new Error(errors.map(x => x instanceof Error ? x.message : x.toString()));
+        } else {
+            // create ApiServer instance
+            api = new ApiClient(def);
         }
-        // create ApiServer instance
-        return new ApiClient(def);
+        return api;
     };
     //#endregion
 

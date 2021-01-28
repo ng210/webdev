@@ -29,6 +29,39 @@ async function main(args, errors) {
         return createResponse(this);
     };
 
+    //#region RES1 handlers
+    TestApi.prototype.create_res1 = function create_res1(res1, req, resp) {
+        return res1;
+    };
+    TestApi.prototype.retrieve_res1 = function retrieve_res1(id, req, resp) {
+        var res = createResponse(this)
+        res.id = id;
+        return res;
+    };
+    TestApi.prototype.update_res1 = function update_res1(res1, req, resp) {
+        return res1;
+    };
+    //#endregion
+
+    //#region RES2 handlers
+    TestApi.prototype.create_res2 = function create_res2(res1, req, resp) {
+        return res1;
+    };
+    TestApi.prototype.update_res2 = function update_res2(res1, req, resp) {
+        return res1;
+    };
+    TestApi.prototype.retrieve_res2 = function retrieve_res2(id, req, resp) {
+        var res = createResponse(this)
+        res.id = id;
+        return res;
+    };
+    TestApi.prototype.delete_res2 = function delete_res2(id, req, resp) {
+        var res = createResponse(this)
+        res.id = id;
+        return res;
+    };
+    //#endregion
+
     try {
         var api = await Api.Server(TestApi, './test-service-definition.json');
         console.log(api.info());
