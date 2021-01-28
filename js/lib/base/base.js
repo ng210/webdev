@@ -73,6 +73,20 @@ self.inherits = function inherits(d, b) {
         xhr.overrideMimeType(options.contentType + '; charset=' + options.charSet);
         return xhr;
     },
+    onReadyStateChange: function() {
+        if (this.readyState == XMLHttpRequest.DONE) {
+            this.options.response = this.response;
+            if (this.status < 200 || this.status >= 400) {
+                // create error object
+                var sb = [this.options.url];
+                var statusText = this.statusText ? this.statusText : 'Network error';
+                sb.push(' - ' + statusText);
+                if (this.status) sb.push(`(${this.status})`);
+                this.options.error = new Error(sb.join(''));
+            }
+            this.resolve(this.options);
+        }
+    },
     /******************************************************************************
     * Send data to server and read response.
     * Options:
@@ -91,16 +105,8 @@ self.inherits = function inherits(d, b) {
         return new Promise(resolve => {
             try {
                 var xhr = ajax.createXhr(options);
-                xhr.onreadystatechange = function() {
-                    if (this.readyState == 4) {
-                        this.options.response = this.response;
-                        if (this.status >= 400) {
-                            // create error object
-                            this.options.error = new Error(this.options.url + ' - ' + this.statusText + ' (' + this.status + ')');
-                        }
-                        resolve(this.options);
-                    }
-                };
+                xhr.resolve = resolve;
+                xhr.onreadystatechange = ajax.onReadyStateChange;
                 xhr.send(options.data);
             } catch (err) {
                 options.error = err;
@@ -518,6 +524,11 @@ Url.prototype.toString = function toString() {
     }
     if (this.fragment) sb.push('#', this.fragment);
     return sb.join('');
+};
+Url.relative = function toString(base, target) {
+    if (base instanceof Url) base = base.toString();
+    if (target instanceof Url) target = target.toString();
+    return target.startsWith(base) ? target.substring(base.length) : '';
 };
 self.baseUrl = (function() {
     // http://<host>/<path>/lib/base/base.js

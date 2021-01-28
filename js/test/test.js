@@ -220,8 +220,8 @@ var _assertion_operators = {
    "!empty": { "term": "have an element", "action": a => !isEmpty(a) },
    "true":   { "term": "be true", "action": a => a == true },
    "false":  { "term": "be false", "action": a => a == false },
-   "null":   { "term": "is null", "action": a => a == null },
-   "!null":  { "term": "is not null", "action": a => a != null }
+   "null":   { "term": "be null", "action": a => a == null },
+   "!null":  { "term": "be not null", "action": a => a != null }
 };
 
 test_context.prototype.assert = function assert(value, operator, expected) {
@@ -267,12 +267,20 @@ async function onpageload(errors) {
         var testName = Object.keys(module.symbols)[0];
         var test = module.symbols[testName];
         if (typeof test === 'function') {
+            var path = Url.relative(baseUrl.path, module.resolvedUrl.path);
+            path = path.substr(0, path.lastIndexOf('/'));
+            self.appUrl = new Url(path);
             Dbg.prln(`<b>Running '<i>${testName}</i>'...</b>`);
             var tests = test();
             for (var i=0; i<tests.length; i++) {
                 _indent = 0;
                 if (typeof tests[i] === 'function') {
-                    await tests[i]();
+                    try {
+                        await tests[i]();
+                    } catch (err) {
+                        error('Test raised an error!');
+                        error(`<pre>${err.stack}</pre>`);
+                    }
                 }
             }
             poll( () => {

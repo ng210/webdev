@@ -28,6 +28,7 @@ async function main() {
 
         var type = null;
         var schema = null;
+        var typeCache = null;
         try {
             if (!Array.isArray(schemaDefinition)) {
                 console.log('Schema definition has to be an array of type descriptions!');
@@ -36,6 +37,8 @@ async function main() {
             console.log('\nBuilding schema');
             schema = new Schema(schemaDefinition);
             type = Object.values(schema.types)[0];
+            typeCache = Object.keys(schema.types);
+
             console.log('Schema built successfully.')
             console.log('Simple Types');
             for (var i in schema.types) {
@@ -72,7 +75,13 @@ async function main() {
                     console.log(errors[i].toString());
                 }
             } else {
-                console.log('Validation successful!');
+                console.log('\n* Validation successful!');
+                console.log('\nTypes defined in run-time')
+                for (var i in schema.types) {
+                    if (schema.types.hasOwnProperty(i) && !typeCache.includes(schema.types[i].name)) {
+                        console.log('-' + schema.types[i].name);
+                    }
+                }
             }
         }
     } else {

@@ -215,7 +215,7 @@
         this.types.enum   = new Schema.SimpleType(Schema.Types.ENUM);
         this.types.map    = new Schema.SimpleType(Schema.Types.MAP);
         this.types.object = new Schema.ComplexType(Schema.Types.OBJECT);
-        this.types.type   = new Schema.SimpleType(Schema.Types.TYPE, null, {schema:this});
+        this.types.type   = new Schema.SimpleType(Schema.Types.TYPE, undefined, {schema:this});
         // schema types
         var types = this.buildType({name:"Types", type:"enum", values:[]});
         this.buildType({name:"Attribute",
