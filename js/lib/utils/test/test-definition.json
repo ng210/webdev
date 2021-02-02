@@ -1,0 +1,23 @@
+{
+    "methods": [
+        { "name":"Read",
+            "arguments": [
+                { "name":"path", "type":"string", "required":true }
+            ],
+            "return":"string"
+        },
+        { "name":"Write",
+            "arguments": [
+                { "name":"path", "type":"string", "required":true },
+                { "name":"data", "type":"string", "required":true }
+            ],
+            "return":"int"
+        }
+    ],
+    "interfaces": [
+        { "name":"IAccess", "methods": ["Read", "Write"]}
+    ],
+    "classes": [
+        { "name":"IReader", "implements":["IAccess"], "methods": ["Print"]}
+    ]
+}

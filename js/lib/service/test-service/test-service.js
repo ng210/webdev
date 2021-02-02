@@ -18,7 +18,7 @@ async function main(args, errors) {
     function createResponse(ep) {
         var typeName = ep.response.type;
         if (typeof typeName === 'object') typeName = typeName.name;
-        var type = Api.schema.types[typeName];
+        var type = ep.api.schema.types[typeName];
         return type.createValue();
     }
 
@@ -30,33 +30,34 @@ async function main(args, errors) {
     };
 
     //#region RES1 handlers
-    TestApi.prototype.create_res1 = function create_res1(res1, req, resp) {
+    TestApi.prototype.create_res1 = function create_res1(res1) {
         return res1;
     };
-    TestApi.prototype.retrieve_res1 = function retrieve_res1(id, req, resp) {
+    TestApi.prototype.retrieve_res1 = function retrieve_res1(id) {
         var res = createResponse(this)
         res.id = id;
         return res;
     };
-    TestApi.prototype.update_res1 = function update_res1(res1, req, resp) {
+    TestApi.prototype.update_res1 = function update_res1(res1) {
         return res1;
     };
     //#endregion
 
     //#region RES2 handlers
-    TestApi.prototype.create_res2 = function create_res2(res1, req, resp) {
+    TestApi.prototype.create_res2 = function create_res2(res1) {
         return res1;
     };
-    TestApi.prototype.update_res2 = function update_res2(res1, req, resp) {
+    TestApi.prototype.update_res2 = function update_res2(res1) {
         return res1;
     };
-    TestApi.prototype.retrieve_res2 = function retrieve_res2(id, req, resp) {
-        var res = createResponse(this)
+    TestApi.prototype.retrieve_res2 = function retrieve_res2(id) {
+debugger
+        var res = createResponse(this);
         res.id = id;
         return res;
     };
-    TestApi.prototype.delete_res2 = function delete_res2(id, req, resp) {
-        var res = createResponse(this)
+    TestApi.prototype.delete_res2 = function delete_res2(id) {
+        var res = createResponse(this);
         res.id = id;
         return res;
     };

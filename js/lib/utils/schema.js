@@ -332,6 +332,26 @@
         }
         return res;
     };
+    Schema.load = async function schema_load(schemaInfo, definition, errors) {
+        if (schemaInfo.schema == null) {
+            var res = await load(schemaInfo.schemaDefinition);
+            if (res.error) throw res.error;
+            schemaInfo.schema = new Schema(res.data);
+        }
+        if (typeof definition === 'string') {
+            var res = await load({ url:definition, responseType:'json', charSet:'utf-8' });
+            if (res.error) {
+                errors.push(res.error);
+            } else {
+                definition = res.data;
+                var vt = schemaInfo.schema.types[schemaInfo.validate];
+                if (vt) {
+                    vt.validate(definition, errors);
+                }
+            }
+        }
+        return definition;
+    }
     //#endregion
 
     //#region CHECK METHODS

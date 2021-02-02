@@ -286,9 +286,25 @@ include('schema.js');
         });
     }
 
+    async function test_load_schema() {
+        var schemaInfo = {
+            schema: null,
+            schemaDefinition: './test/test-schema.json',
+            validate: 'Source'
+        };
+        var definition = './test/test-definition.json';
+        var errors = [];
+        schema = await Schema.load(schemaInfo, definition, errors);
+        test('Should load schema and definition', ctx => {
+            ctx.assert(schemaInfo.schema, '!null');
+            ctx.assert(errors, 'empty');
+        });
+    }
+
     var tests = () => [
         // test_syntax,
-        test_schema
+        test_schema,
+        test_load_schema
     ];
 
     publish(tests, 'Util tests');

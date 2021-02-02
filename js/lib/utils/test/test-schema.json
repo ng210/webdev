@@ -1,0 +1,34 @@
+[
+    { "name":"Method",
+        "attributes": [
+            { "name":"name", "type":"string" },
+            { "name":"arguments", "type":"AttributeList" },
+            { "name":"return", "type":"type" }
+        ]
+    },
+
+    { "name":"Interface",
+        "attributes": [
+            { "name":"name", "type":"string" },
+            { "name":"methods", "type":"list", "elemType":"Method" }
+        ]
+    },
+
+    { "name":"Class",
+        "attributes": [
+            { "name":"name", "type":"string" },
+            { "name":"extends", "type":"Class" },
+            { "name":"implements", "type":"list", "elemType":"Interface" },
+            { "name":"attributes", "type":"AttributeList" },
+            { "name":"methods", "type":"list", "elemType":"Method" }
+        ]
+    },
+
+    { "name":"Source",
+        "attributes": [
+            { "name":"methods", "type":"list", "elemType":"string" },
+            { "name":"interfaces", "type":"list", "elemType":"string" },
+            { "name":"classes", "type":"list", "elemType":"string" }
+        ]        
+    }
+]

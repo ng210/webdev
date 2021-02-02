@@ -35,7 +35,7 @@
     },
     { "name": "Resource",
         "attributes": [
-            { "name":"id", "type":"String10", "required":true },
+            { "name":"id", "type":"String10", "required":false },
             { "name":"type", "type":"String10", "required":true },
             { "name":"key", "type":"String10", "required":false },
             { "name":"methods", "type":"MethodsList" }
