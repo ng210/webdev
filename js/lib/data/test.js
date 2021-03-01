@@ -2,6 +2,8 @@ include('stream.js');
 include('dataseries.js');
 include('datalink.js');
 include('graph.js');
+include('b-tree.js');
+include('repository.js');
 
 (function() {
 
@@ -193,7 +195,7 @@ include('graph.js');
             arr[i] = [2*i,  Math.floor(5*i + (i%2)*20)];
         }
         var ds = new DataSeries(arr);
-        message('Test DataSeries');
+        message('Test DataSeries', 1);
 
         test('Should iterate through all items', function (context) {
             ds.iterate( (value, it, series) => {
@@ -260,7 +262,7 @@ include('graph.js');
     }
 
     function test_DataSeriesCompare() {
-        message('Test DataSeries.compare');
+        message('Test DataSeries.compare', 1);
         var ds = new DataSeries();
 
         test('Compare([0, 0], [1, 1])', context => context.assert(ds.compare([0, 0], [1, 1]), '<', 0) );
@@ -285,7 +287,7 @@ include('graph.js');
     }
 
     function test_DataLink() {
-        message('Test DataLink');
+        message('Test DataLink', 1);
         var obj1 = {
             name: 'Joe',
             id: 1,
@@ -366,7 +368,7 @@ include('graph.js');
     }
 
     function test_Graph() {
-        message('Test Graph');
+        message('Test Graph', 1);
         test('Should create a graph with 6 vertices and 7 edges', context => {
             var graph = createTestGraph();
             context.assert(graph.vertices.length, '=', 7);
@@ -394,7 +396,7 @@ include('graph.js');
         test('Should DFS traverse a complete graph', context => {
             var graph = Graph.createComplete(5);
             var labels = [];
-            graph.DFS(graph.vertices[0], v => {labels.push(`→${v.data}`)}, v => {labels.push(`←${v.data}`)}, null);
+            graph.DFS(graph.vertices[0], v => {labels.push(`→${v.data}`)}, v => {labels.push(`←${v.data}`)}, null, null);
             context.assert(labels.join(''), '=', '→v0→v1←v1→v2←v2→v3←v3→v4←v4←v0');
         });
         test('Should BFS traverse a complete graph', context => {
@@ -425,13 +427,385 @@ include('graph.js');
             context.assert(labels.join(), '=', '5,2,1,4');   //'→v0←v0→v1→v2→v3→v4←v1←v2←v3←v4');
         });
     }
+    function test_BTree() {
+        message('Test B-Tree', 1);
+
+        function test_tree(tree, items, ctx) {
+            var result = {};
+            //var d = Math.ceil(tree.degree/2);
+            var maxHeight = tree.maxHeight();   //Math.floor(Math.log2((tree.vertices.length+1)/2)/Math.log2(d));
+            message(`Max.height = ${maxHeight.toPrecision(4)}`);
+            tree.tryGet(tree.first(), result);
+            result.index--;
+            for (var i=0; i<items.length; i++) {
+                var item = tree.next(result);
+                ctx.assert(item, '=', items[i]);
+                ctx.assert(result.path.length, '<=', maxHeight);
+            }
+        }
+
+        //#region CREATE TREE
+        //             14, 19
+        //           /    |   \
+        //       4,9    15,16,  20
+        //     /  |  \  17,18
+        //   /    |    \  
+        // 0,1,  5,6,  10,11,
+        // 2,3   7,8   12,13
+        var items = [];
+        for (var i=0; i<21; i++) {
+            items.push({id:i, value:i});
+        }
+        var tree = new BTree(3, 4, (a, b) => a.id - b.id);
+        // create 2 internal nodes
+        tree.createVertex().add(items[14]).add(items[19]);
+        tree.createVertex(null, tree.root).add(items[4]).add(items[9]);
+        // create 5 leaf nodes
+        tree.createVertex(null, null, true).addRange(items, null,  0, 4);
+        tree.createVertex(null, null, true).addRange(items, null,  5, 4);
+        tree.createVertex(null, null, true).addRange(items, null, 10, 4);
+        tree.createVertex(null, null, true).addRange(items, null, 15, 4);
+        tree.createVertex(null, null, true).addRange(items, null, 20, 1);
+        // add 6 edges
+        tree.addEdge(tree.root, tree.vertices[1]);
+        tree.addEdge(tree.root, tree.vertices[5]);
+        tree.addEdge(tree.root, tree.vertices[6]);
+        tree.addEdge(tree.vertices[1], tree.vertices[2]);
+        tree.addEdge(tree.vertices[1], tree.vertices[3]);
+        tree.addEdge(tree.vertices[1], tree.vertices[4]);
+        var sb = [];
+        tree.BFS(tree.root,
+            v => {
+                sb.push(`${(v.edges.length ? 'I' : 'L') + v.id}: (${v.data.map((x,i) => i<v.length ? x.id : '-')})`);
+            }
+        );
+        message(sb.join(' | '));
+        //#endregion
+
+        //#region BASIC TESTS
+        test('Should find the items in ascending order', ctx => {
+            var result = {};
+            for (var i=0; i<items.length; i++) {
+                var isFound = tree.tryGet(items[i], result);
+                ctx.assert(isFound, 'true');
+                var m = {
+                    0: [14, 19],
+                    1: [4, 9],
+                    2: [0,1,2,3],
+                    3: [5,6,7,8],
+                    4: [10,11,12,13],
+                    5: [15,16,17,18],
+                    6: [20]
+                };
+                var ids = m[result.node.id];
+                ctx.assert(ids, '!null');
+                ctx.assert(ids.includes(i), 'true');
+                ctx.assert(result.index, '=', ids.indexOf(i));
+            }
+            test_tree(tree, items, ctx);
+        });
+
+        test('Should NOT find the items', ctx => {
+            var result = {};
+            message('Item #20');
+            var isFound = tree.tryGet({id:21}, result);
+            ctx.assert(isFound, 'false');
+            ctx.assert(result.node, '=', tree.vertices[6]);
+            ctx.assert(result.index, '=', -2);
+            message('Item #10.5');
+            isFound = tree.tryGet({id:10.5}, result);
+            ctx.assert(isFound, 'false');
+            ctx.assert(result.node, '=', tree.vertices[4]);
+            ctx.assert(result.index, '=', -2);
+        });
+
+        test('Should return the next item', ctx => {
+            var result = {};
+            message('from leaf to leaf');
+            tree.tryGet(items[0], result);
+            var item = tree.next(result);
+            ctx.assert(item, '=', items[1]);
+
+            message('from leaf to internal');
+            tree.tryGet(items[8], result);
+            item = tree.next(result);
+            ctx.assert(item, '=', items[9]);
+            
+            message('from leaf to internal with step back');
+            tree.tryGet(items[13], result);
+            item = tree.next(result);
+            ctx.assert(item, '=', items[14]);
+            
+            message('from internal to leaf');
+            tree.tryGet(items[19], result);
+            item = tree.next(result);
+            ctx.assert(item, '=', items[20]);
+
+            message('from last');
+            tree.tryGet(items[20], result);
+            item = tree.next(result);
+            ctx.assert(item, 'null');
+        });
+        tree.destroy();
+        //#endregion
+
+        var _count = 12;
+        items = [];
+        for (var i=0; i<_count; i++) {
+            items.push({id:i, value:_count-i});
+        }
+
+        //#region NORMAL ADD
+        test('Should add items to tree in normal order', ctx => {
+            tree = new BTree(3, 4, (a, b) => a.id - b.id);
+            var ms = Dbg.measure( () => {
+                for (var i=0; i<items.length; i++) {
+                    tree.add(items[i]);
+                }
+            });
+            message(tree.vertices.length + ' nodes');
+            message('Added in ' + ms + 'ms');
+            test_tree(tree, items, ctx);
+        });
+        tree.destroy();
+        //#endregion
+
+        //#region RANDOM ADD
+        test('Should add items to tree in random order', ctx => {
+            var indices = new Array(items.length);
+            for (var i=0; i<items.length; i++) indices[i] = i;
+            tree = new BTree(3, 4, (a, b) => a.id - b.id);
+            var count = indices.length;
+            while (count > 0) {
+                var rnd = Math.floor(count*Math.random());
+                var ix = indices[rnd];
+                tree.add(items[ix]);
+                count--;
+                indices[rnd] = indices[count];
+            }
+            ms = Dbg.measure( () => {
+                for (var i=0; i<items.length; i++) {
+                    tree.add(items[indices[i]]);
+                }
+            });
+            message(tree.vertices.length + ' nodes');
+            message('Added in ' + ms + 'ms');
+            test_tree(tree, items, ctx);
+        });
+        test('Should iterate through a range of items', ctx => {
+            var ms = 0;
+            ms += Dbg.measure( () => {
+                var from = Math.floor(tree.count/2 * Math.random());
+                var length = tree.count/2;
+                var to = from + length;
+                var total = 0;
+                var error = 0;
+                var last = {id:-1, value: -1};
+
+                tree.range(items[from], items[to], x => {
+                    if (x.id < last.id) error++;
+                    total += x.id;
+                    last = x;
+                    return error > 0;
+                }, null);
+                ctx.assert(error, '=', 0);
+                ctx.assert(total, '=', 0.5*(length+1)*(from + to));
+            }, 10);
+            message(`Range took ${(ms/100).toPrecision(4)} ms`);
+        });
+        test('Should iterate through items', ctx => {
+            var ms = 0;
+            ms += Dbg.measure( () => {
+                var from = Math.floor(tree.count/2 * Math.random());
+                var length = tree.count/2;
+                var to = from + length;
+                var total = 0;
+                var error = 0;
+                var last = {id:-1, value: -1};
+
+                var result = {};
+                tree.tryGet(items[from], result);
+                var total = result.node.data[result.index].id;
+                for (var i=from+1; i<=to; i++) {
+                    var item = tree.next(result);
+                    if (item.id < last.id) error++;
+                    total += item.id;
+                    last = item;
+                    if (error > 0) break;
+                }
+                ctx.assert(error, '=', 0);
+                ctx.assert(total, '=', 0.5*(length+1)*(from + to));
+            }, 10);
+            message(`Iteration took ${(ms/100).toPrecision(4)} ms`);
+        });
+        tree.destroy();
+        //#endregion
+
+        //#region MULTIPLE INDICES
+        test('Should have 2 tree to index 2 attributes', ctx => {
+            tree = new BTree(3, 4, (a, b) => a.id - b.id);
+            var tree2 = new BTree(3, 4, (a, b) => a.value - b.value);
+            var indices = new Array(items.length);
+            for (var i=0; i<items.length; i++) indices[i] = i;
+            var count = indices.length;
+            while (count > 0) {
+                var rnd = Math.floor(count*Math.random());
+                var ix = indices[rnd];
+                tree.add(items[ix]);
+                tree2.add(items[ix]);
+                count--;
+                indices[rnd] = indices[count];
+            }
+
+            var node = tree.first();
+            var last = {id: -1, value: -1 };
+            while (node) {
+                ctx.assert(tree.compare.method(last, node), '<', 0);
+                last = node;
+                node = tree.next();
+            }
+
+            node = tree2.first();
+            last = {id: -1, value: -1 };
+            while (node) {
+                ctx.assert(tree2.compare.method(last, node), '<', 0);
+                last = node;
+                node = tree2.next();
+            }
+
+            tree.destroy();
+            tree2.destroy();
+        });
+        //#endregion
+    }
+
+    async function test_Repository() {
+        message('Test Repository', 1);
+        function User(id, name) {
+            this.id = id;
+            this.name = name;
+        }
+        function Item(id, name, value, ownerId) {
+            this.id = id;
+            this.name = name;
+            this.value = value;
+            this.ownerId = ownerId;
+        }
+        function rnd(range) {
+            return Math.floor(range*Math.random());
+        }
+        var consonants = 'bcdfghjklmnpqrstvxyzw';
+        var vowels = 'aeiou';
+        function createUserName() {
+            var length = Math.floor(4*Math.random()) + 3;
+            var name = '';
+            while (name.length < length) {
+                name += Math.random() > 0.5 ? consonants.charAt(rnd(consonants.length)) : '';
+                name += vowels.charAt(rnd(vowels.length));
+                name += consonants.charAt(rnd(consonants.length));
+            }
+            return name.charAt(0).toUpperCase() + name.slice(1, length);
+        }
+        function createItemName() {
+            var size = ['epic', 'awesome', 'old', 'modern', 'unique', 'tiny', 'small', 'large', 'huge'];
+            var color = ['red', 'green', 'blue', 'yellow', 'brown', 'purple', 'gray', 'white', 'black', 'cyan'];
+            var material = ['wooden', 'iron', 'steel', 'plastic', 'textil', 'silk', 'leather'];
+            var item = ['pen', 'fork', 'spoon', 'knife', 'armor', 'mug', 'table', 'hat', 'shoe', 'sword', 'shield'];
+
+            var name = [];
+            name.push(size[rnd(size.length)]);
+            name.push(color[rnd(color.length)]);
+            name.push(material[rnd(material.length)]);
+            name.push(item[rnd(item.length)]);
+            return name.join(' ');
+        }
+        var repo = await Repository.create('./test-repo.json');
+        test('Should create a repository', ctx => ctx.assert(repo, '!null'));
+        test('Should have 4 data types', ctx => {
+            ctx.assert(Object.keys(repo.dataTypes).length, '=', 4);
+            ctx.assert(Object.keys(repo.data).length, '=', 4);
+        });
+        test('Should have 3 indices', ctx => ctx.assert(Object.keys(repo.indices).length, '=', 3));
+        test('Should have 1 query', ctx => ctx.assert(Object.keys(repo.queries).length, '=', 1));
+
+        test('Should add 1 User and set indices', ctx => {
+            repo.add(new User(0, createUserName()));
+            ctx.assert(repo.indices.id.data.count, '=', 1);
+            ctx.assert(repo.indices.name.data.count, '=', 1);
+        });
+        test('Should add User and Item objects', ctx => {
+            for (var i=1; i<1000; i++) {
+                var name = null;
+                while (true) {
+                    name = createUserName();
+                    if (repo.get('User', 'name', name) == null) break;
+                }
+                repo.add(new User(i, name));
+            }
+            ctx.assert(repo.indices.id.data.count, '=', 1000);
+            ctx.assert(repo.indices.name.data.count, '=', 1000);
+
+            for (var i=0; i<5000; i++) {
+                repo.add(new Item(i, createItemName(), Math.random(), rnd(1000)));
+            }
+            var count = 0;
+            var block = repo.indices.owner.data.first();
+            do {
+                count += block._data.length;
+                block = repo.indices.owner.data.next();
+            } while (block != null);
+            ctx.assert(count, '=', 5000);
+        });
+        test('Should return users and items', ctx => {
+            var user = null;
+            var id = 0;
+            for (var ui=0; ui<10; ui++) {
+                id += rnd(100);
+                user = repo.get('User', 'id', id);
+                ctx.assert(user, '!null');
+                var items = repo.get('Item', 'ownerId', id);
+                if (items) {
+                    message(`${user.name} has`, 1);
+                    for (var i=0; i<items.length; i++) {
+                        var item = items[i];
+                        message((vowels.includes(item.name.charAt(0)) ? 'an ' : 'a ') + item.name);
+                    }
+                    _indent--;
+                } else {
+                    message(`${user.name} has nothing`);
+                }
+            }
+        });
+        test('Should be sorted by indices', ctx => {
+            for (var i in repo.indices) {
+                if (repo.indices.hasOwnProperty(i)) {
+                    var index = repo.indices[i];
+                    message(index.name, 1);
+                    var last = index.data.first();
+                    ctx.assert(last, '!null');
+                    if (from) {
+                        message(`Iterate from '${from[index.attribute]}'`);
+                        var from = index.data.next();
+                        var error = 0;
+                        index.data.range(from, null, item => {
+                            if (index.data.compare.method(last, item) > 0) error++;
+                            return error > 0;
+                        }, null);
+                    }
+                    _indent--;
+                }
+            }
+        });
+    }
 
     var tests = () => [
-        test_Stream,
-        test_DataSeries,
-        test_DataSeriesCompare,
-        test_DataLink,
-        test_Graph
+        // test_Stream,
+        // test_DataSeries,
+        // test_DataSeriesCompare,
+        // test_DataLink,
+        // test_Graph,
+        // test_BTree,
+        test_Repository
     ];
 
     publish(tests, 'Data tests');

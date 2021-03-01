@@ -1,0 +1,26 @@
+[
+    { "name":"Index",
+        "attributes": [
+            { "name":"name", "type":"string" },
+            { "name":"type", "type":"string" },
+            { "name":"attribute", "type":"string" },
+            { "name":"unique", "type":"bool" }
+        ]
+    },
+
+    { "name": "Query",
+        "attributes": [
+            { "name":"name", "type":"string" },
+            { "name":"arguments", "type":"list", "elemType":"string" },
+            { "name":"expression", "type":"string" }
+        ]
+    },
+
+    { "name":"Repository",
+        "attributes": [
+            { "name":"DataTypes", "type":"list", "elemType":"type" },
+            { "name":"Indices", "type":"list", "elemType":"Index" },
+            { "name":"Queries", "type":"list", "elemType":"Query" }
+        ]
+    }
+]

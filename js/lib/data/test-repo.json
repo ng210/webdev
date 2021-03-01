@@ -1,0 +1,17 @@
+{
+    "DataTypes": [
+        { "name":"string8", "type":"string", "length":8 },
+        { "name":"User", "attributes": [ { "name":"id", "type":"int" }, { "name":"name", "type":"string8" } ] },
+        { "name":"Item", "attributes": [ { "name":"id", "type":"int" }, { "name":"name", "type":"string8" }, { "name":"value", "type":"string" }, { "name":"ownerId", "type":"int" } ] },
+        { "name":"Group", "attributes": [ { "name":"id", "type":"int" }, { "name":"value", "type":"string" }, { "name":"members", "type":"list", "elemType":"User" } ] }
+    ],
+    "Indices": [
+        { "name":"id", "type":"User", "attribute":"id", "unique":true },
+        { "name":"name", "type":"User", "attribute":"name" },
+        { "name":"owner", "type":"Item", "attribute":"ownerId" }
+    ],
+    "Queries": [
+        { "name": "GetUserGroups", "arguments": ["User.id"], "expression":"select g.name from Group g where User u on u in g.members"}
+    ]
+}
+    

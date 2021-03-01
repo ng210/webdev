@@ -6,10 +6,24 @@
         this.edges = [];
         this.flag = 0;
     };
+    Vertex.prototype.destroy = function destroy() {
+        this.parent = null;
+        this.data = null;
+        for (var i=0; i<this.edges.length; i++) {
+            this.edges[i] = null;
+        }
+        this.edges = null;
+        this.flag = 0;
+    };
     function Edge(from, to, edgeData) {
         this.from = from;
         this.to = to;
         this.data = edgeData;
+    };
+    Edge.prototype.destroy = function destroy() {
+        this.from = null;
+        this.to = null;
+        this.data = null;
     };
 
     function Graph() {
@@ -17,36 +31,55 @@
         this.vertices = [];
         this.edges = [];
     }
-    Graph.prototype.createVertex = function(vertexData) {
-        var vertex = new Vertex(this.vertices.length, null, vertexData);
+    Graph.prototype.destroy = function destroy() {
+        // delete edges
+        for (var i=0; i<this.edges.length; i++) {
+            this.edges[i].destroy();
+        }
+        this.edges = null;
+        // delete vertices
+        for (var i=0; i<this.vertices.length; i++) {
+            this.vertices[i].destroy();
+        }
+        this.vertices = null;
+        this.root = null;
+    };
+    Graph.prototype.createVertex = function(vertexData, parent) {
+        var vertex = new Vertex(this.vertices.length, parent, vertexData);
         if (!this.root) {
             this.root = vertex;
         }
         this.vertices.push(vertex);
         return vertex;
     };
+    Graph.prototype.createEdge = function(from, to, edgeData) {
+        var edge = new Edge(from, to, edgeData);
+        this.edges.push(edge);
+        return edge;
+    };
     Graph.prototype.addVertex = function(parentVertex, vertexData, edgeData) {
-        var vertex = this.createVertex(vertexData);
+        parentVertex = parentVertex || this.root;
+        var vertex = this.createVertex(vertexData, parentVertex);
         if (vertex != this.root) {
-            this.addEdge(parentVertex || this.root, vertex, edgeData);
+            this.addEdge(parentVertex, vertex, edgeData);
         }
         return vertex;
     };
     Graph.prototype.addEdge = function(from, to, edgeData) {
-        var edge = new Edge(from, to, edgeData);
+        var edge = this.createEdge(from, to, edgeData);
         from.edges.push(edge);
-        this.edges.push(edge);
         return edge;
     };
-    Graph.prototype.DFS = function(startVertex, preHandler, postHandler, args) {
+    Graph.prototype.DFS = function(startVertex, preHandler, postHandler, edgehandler, args) {
         // reset flags
         for (var i=0; i<this.vertices.length; i++) {
             this.vertices[i].flag = 0;
         }
         startVertex = startVertex || this.root;
         var remaining = [startVertex];
+        var stop = false;
         startVertex.flag = 1;
-        while (remaining.length > 0) {
+        while (!stop && remaining.length > 0) {
             var vertex = remaining[remaining.length-1];
             if (vertex.flag == 1) {
                 if (typeof preHandler === 'function') {
@@ -54,10 +87,19 @@
                 }
                 vertex.flag = 2;
                 for (var i=vertex.edges.length-1; i>=0; i--) {
-                    var child = vertex.edges[i].to;
-                    if (child.flag == 0) {
-                        child.flag = 1;
-                        remaining.push(child);
+                    var edge = vertex.edges[i];
+                    if (edge) {
+                        var child = edge.to;
+                        if (child.flag == 0) {
+                            child.flag = 1;
+                            remaining.push(child);
+                            if (typeof edgehandler === 'function') {
+                                if (edgehandler.call(this, edge, i, args)) {
+                                    stop = true;
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
             } else if (vertex.flag == 2) {
@@ -84,36 +126,23 @@
             if (typeof postHandler === 'function' && postHandler.call(this, vertex, args)) break;
             for (var i=0; i<vertex.edges.length; i++) {
                 var edge = vertex.edges[i];
-                var child = edge.to;
-                if (child.flag == 0) {
-                    if (typeof edgeHandler !== 'function' || edgeHandler.call(this, edge, args)) {
-                        child.flag = 1;
-                        if (typeof preHandler !== 'function' || !preHandler.call(this, child, args)) {
-                            remaining.unshift(child);
-                        } else {
-                            isStopped = true;
-                            break;
+                if (edge) {
+                    var child = edge.to;
+                    if (child.flag == 0) {
+                        if (typeof edgeHandler !== 'function' || !edgeHandler.call(this, edge, args)) {
+                            child.flag = 1;
+                            if (typeof preHandler !== 'function' || !preHandler.call(this, child, args)) {
+                                remaining.unshift(child);
+                            } else {
+                                isStopped = true;
+                                break;
+                            }
                         }
                     }
                 }
             }
         }
     };
-
-    (vertex, edge) => {
-        var result = false;
-        if (edge != null) {
-//console.log(`BFS.pre ${[edge.from.id, edge.to.id]} -] ${end.id}`);
-            if (typeof checkEdge !== 'function' || checkEdge.call(this, edge)) {
-                links[vertex.id] = edge;
-//console.log('is part of path');
-                result = (vertex == end);
-            } else {
-                result = true;
-            }
-        }
-        return result;
-    }
 
     Graph.prototype.findPath = function(start, end, checkEdge) {
         // distance(start, v)
@@ -123,8 +152,7 @@
         this.BFS(start, vertex => vertex == end, null, e => {
             if (checkEdge.call(this, e)) {
                 links[e.to.id] = e;
-                return true;
-            }
+            } else return true;
         });
         var path = null;
         if (links[end.id] != null) {
@@ -219,4 +247,6 @@
     }
 
     publish(Graph, 'Graph');
+    publish(Edge, 'Edge', Graph);
+    publish(Vertex, 'Vertex', Graph);
 })();

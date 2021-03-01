@@ -48,7 +48,7 @@
     DataSeries.prototype.iterate_ = function(start, end, callback) {
         var args = Array.from(arguments);
         var ix = this.data.binSearch(start, this.compare);
-        if (ix < 0) ix = -ix;
+        if (ix < 0) ix = -ix-1;
         var it = { start:start, end:end, ix:ix };
 //console.log(it.ix);
         while (it.ix < this.data.length) {
@@ -113,7 +113,7 @@
         var key = [value[0],];
         var ix = this.data.binSearch(key, this.compare);
         if (ix < 0) {
-            this.data.splice(-ix, 0, value);
+            this.data.splice(-ix-1, 0, value);
         } else {
             if (this.isStrict) {
                 this.data[ix] = value;
