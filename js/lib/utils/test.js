@@ -302,7 +302,7 @@ include('schema.js');
     }
 
     var tests = () => [
-        // test_syntax,
+        test_syntax,
         test_schema,
         test_load_schema
     ];

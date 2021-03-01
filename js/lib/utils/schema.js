@@ -88,10 +88,13 @@
         var res = null;
         switch (this.basicType.name) {
             case Schema.Types.STRING:
-                res = Math.floor(Math.random()*65536).toString(16);
-                res += Math.floor(Math.random()*65536).toString(16);
-                res += Math.floor(Math.random()*65536).toString(16);
-                res += Math.floor(Math.random()*65536).toString(16);
+                var length = this.length || 20;
+                var v = [];
+                var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVXYZWabcdefghijklmnopqrstuvxyzw_";
+                for (var i=0; i<length; i++) {
+                    v.push(chars[Math.floor(chars.length*Math.random())]);
+                }
+                res = v.join('');
                 break;
             case Schema.Types.LIST:
                 res = [];
@@ -123,6 +126,7 @@
     };
     //#endregion
 
+    //#region COMPLEX TYPE
     function ComplexType(name, type, args) {
         ComplexType.base.constructor.call(this, name, type);
         this.attributes = {};
@@ -142,7 +146,6 @@
     }
     extend(Type, ComplexType);
 
-    //#region COMPLEX TYPE
     ComplexType.prototype.addAttribute = function addAttribute(name, type, required) {
         this.attributes[name] = {type:type, required:required};
     };
@@ -189,6 +192,7 @@
                 }
                 break;
         }
+        if (res) res.__type__ = this;
         return res;
     };
     //#endregion
@@ -288,8 +292,6 @@
                 for (var i=0; i<obj.attributes.length; i++) {
                     var attr = obj.attributes[i];
                     if (typeof attr === 'string') {
-    console.log('####################');
-    debugger
                         res.addAttribute(i, this.types[attr]);
                     } else {
                         res.addAttribute(attr.name, this.getOrBuildType(attr.type), obj.attributes[i].required);

@@ -1,5 +1,5 @@
 require('service/nodejs.js');
- include('/lib/utils/schema.js');
+include('/lib/utils/schema.js');
 
 async function main() {
     console.log('\n\n * Schema validation\n');
@@ -67,7 +67,7 @@ async function main() {
             try {
                 errors = type.validate(input);
             } catch (err) {
-                errors = [{field:[], message:err}];
+                errors = [new Schema.ValidationResult(null, err.stack)];
             }
 
             if (errors.length > 0) {
@@ -75,10 +75,14 @@ async function main() {
                     console.log(errors[i].toString());
                 }
             } else {
-                console.log('\n* Validation successful!');
-                console.log('\nTypes defined in run-time')
+                console.log('* Validation successful!');
+                var hasRunTimeType = false;
                 for (var i in schema.types) {
                     if (schema.types.hasOwnProperty(i) && !typeCache.includes(schema.types[i].name)) {
+                        if (!hasRunTimeType) {
+                            console.log('\nTypes defined in run-time')
+                            hasRunTimeType = true;
+                        }
                         console.log('-' + schema.types[i].name);
                     }
                 }
@@ -87,7 +91,7 @@ async function main() {
     } else {
         console.log(
 `Usage
- schema.js <schema-definition>.json [input.js] [type]
+ schema.js <schema-definition>.json [input.json] [type]
  The <schema-definition> is a JSON file containing the types of the schema.
  The [input.json] is a JSON file containing a JSON object to be validated against the schema.
  If the schema contains more than 1 type at the top level the [type] selects the type for the validation, otherwise the first type is used.

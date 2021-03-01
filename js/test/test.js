@@ -5,18 +5,28 @@ var _indentText = '        ';
 var _bulletinSymbols = ['►', '▪', '∙'];
 var _pending = 0;
 var _indent = 0;
+var _indentColor = [240,224,192];
+var _defaultColor = [192, 240, 208];
 
-function formatResult(value) {
-    return `<pre>${_indentText.substr(0, _indent)}</pre>${_bulletinSymbols[_indent<_bulletinSymbols.length-1 ? _indent : _bulletinSymbols.length-1]} ${value}`;
+function formatResult(value, color) {
+    color = color || _defaultColor;
+    var f = _indent < 8 ? _indent/8 : 1;
+    var e = 1 - f;
+    var rgb = new Array(3);
+    for (var i=0; i<3; i++) {
+        var c = Math.floor(color[i]*e + _indentColor[i]*f);
+        rgb[i] = c < 256 ? c : 255;
+    }
+    return `<pre>${_indentText.substr(0, _indent)}</pre><span style="color:rgb(${rgb})">${_bulletinSymbols[_indent<_bulletinSymbols.length-1 ? _indent : _bulletinSymbols.length-1]} ${value}</span>`;
 }
 
-function print(node) {
+function print(node, color) {
     if (Array.isArray(node)) {
         for (var i=0; i<node.length; i++) {
-            print(node[i], indent+1);
+            print(node[i], color);
         }
     } else {
-        Dbg.pr(formatResult(node));
+        Dbg.pr(formatResult(node, color));
     }
 }
 
@@ -33,17 +43,17 @@ function print_result(context, result) {
     }
 }
 
-function println(text) {
-    print(text+'<br/>');
+function println(text, color) {
+    print(text+'<br/>', color);
 }
 
 function message(text, indent) {
-    println(`<span style="color:#80a080">${text}</text>`);
+    println(text, [144, 160, 144]);
     if (indent) _indent+=indent;
 }
 
 function error(text) {
-    println(`<span style="color:#ff4040">${text}</text>`);
+    println(text, [255, 64, 64]);
 }
 
 var _buttonCount = 0;
@@ -63,7 +73,7 @@ async function button(text) {
 }
 
 async function test(lbl, action) {
-    println(lbl + '..[result]');
+    println(lbl + '..[result]', [208, 208, 128]);
     _indent++;
     var result = null;
     var context = new test_context(lbl);
@@ -110,7 +120,7 @@ async function measure(lbl, action, batchSize) {
         }
     }, 5);  
     
-    println(`<span style="color:#f0e080">${count} iterations took <b>${duration}ms</b> (avg: ${(duration/count).toPrecision(4)})</span>`);
+    Dbg.prln(`<span style="color:#f0e080">${count} iterations took <b>${duration}ms</b> (avg: ${(duration/count).toPrecision(4)})</span>`);
 }
 
 function test_context(lbl) {
@@ -191,6 +201,17 @@ function equals(a, b) {
     // cast b to the type of a
     switch (typeof a) {
         case 'number': result = Math.abs(a - b) <= Number.EPSILON; break;
+        case 'object': {
+            result = true;
+            result = a != null && b != null;
+            for (var i in a) {
+                if (a[i] != b[i]) {
+                    result = false;
+                    break;
+                }
+            }
+            break;
+        }
         default: result = a == b;
     }
     return result;
@@ -213,8 +234,8 @@ var _assertion_operators = {
        "!=": { "term": "not be", "action": (a, b) => a != b },
         "<": { "term": "be less", "action": (a, b) => a < b },
         ">": { "term": "be greater", "action": (a, b) => a > b },
-        "<": { "term": "be less or equal", "action": (a, b) => a <= b },
-        ">": { "term": "be greater or equal", "action": (a, b) => a >= b },
+        "<=": { "term": "be less or equal", "action": (a, b) => a <= b },
+        ">=": { "term": "be greater or equal", "action": (a, b) => a >= b },
        ":=": { "term": "match", "action": (a, b) => deepCompare(a, b) },
     "empty": { "term": "be empty", "action": a => isEmpty(a) },
    "!empty": { "term": "have an element", "action": a => !isEmpty(a) },
@@ -282,6 +303,7 @@ async function onpageload(errors) {
                         error(`<pre>${err.stack}</pre>`);
                     }
                 }
+                Dbg.prln('');
             }
             poll( () => {
                 if (_pending == 0) {
