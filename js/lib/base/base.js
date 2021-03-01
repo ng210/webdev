@@ -655,12 +655,17 @@ Array.prototype.binSearch = function binSearch(item, cmp, min, max) {
         return 0;
     }
 	if (min == undefined) min = 0;
-	if (max == undefined) max = this.length;
-    if (cmp == undefined) cmp = (a, b) => a - b;
-
+    if (max == undefined) max = this.length;
+    var obj = this;
+    if (cmp == undefined) {
+        cmp = typeof item.compare === 'function' ? item.compare : (a, b) => a - b;
+    } else if (typeof cmp === 'object') {
+        obj = cmp.context;
+        cmp = cmp.method;
+    }
 	while (min < max) {
 		var mid = (min + max)>>1;
-        var i = (cmp != undefined) ? cmp(item, this[mid]) : item.compare != undefined ? item.compare(this[mid]) : item - mid;
+        var i = this[mid] != undefined ? cmp.call(obj, item, this[mid]) : -1;
 		if (i == 0) return mid;
 		if (i < 0) { // continue with the first half-range: [min, mid]
 			max = mid;
@@ -668,7 +673,7 @@ Array.prototype.binSearch = function binSearch(item, cmp, min, max) {
 			min = mid + 1;
 		}
 	}
-	return -max;
+	return -max-1;
 };
 Array.prototype.select = function select(filter) {
     var res = [];

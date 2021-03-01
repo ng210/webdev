@@ -47,14 +47,18 @@
 	Dbg.prln = function prln(txt) {
 		this.pr(txt.toString().replace(/\n/g, "<br/>") + '<br/>');
 	};
-	Dbg.measure = function measure(fn, lbl) {
+	Dbg.measure = function measure(fn, count) {
+		if (isNaN(count) || count < 0) count = 1;
 		var ti = new Date().getTime();
-		for (var i=0; i<10000; i++) {
+		for (var i=0; i<count; i++) {
 			fn();
 		}
 		ti = new Date().getTime() - ti;
-		this.prln(lbl + ': ' + ti);
-	}
+		return ti/count;
+	};
+	Dbg.breakOn = function breakOn(obj, property, onread, onwrite) {
+		// call handler if obj[property] is read or written
+	};
 
 	publish(Dbg, 'Dbg');
 })();
