@@ -35,16 +35,16 @@
     //#endregion
 
     //#region SIMPLE TYPE
-    function SimpleType(name, type, args) {
-        SimpleType.base.constructor.call(this, name, type);
+    function SimpleType(name, baseType, args) {
+        SimpleType.base.constructor.call(this, name, baseType);
         this.min = NaN;
         this.max = NaN;
         this.length = -1;
         this.elemType = null;
         this.values = null;
         this.types = null;
-        if (type) {
-            this.isNumeric = type.basicType.isNumeric;
+        if (baseType) {
+            this.isNumeric = baseType.basicType.isNumeric;
         }
         //if (args != undefined)
         for (var i in args) {
@@ -127,13 +127,13 @@
     //#endregion
 
     //#region COMPLEX TYPE
-    function ComplexType(name, type, args) {
-        ComplexType.base.constructor.call(this, name, type);
+    function ComplexType(name, baseType, args) {
+        ComplexType.base.constructor.call(this, name, baseType);
         this.attributes = {};
-        if (type instanceof ComplexType) {
-            for (var i in type.attributes) {
-                if (type.attributes.hasOwnProperty(i)) {
-                    this.attributes[i] = type.attributes[i];
+        if (baseType instanceof ComplexType) {
+            for (var i in baseType.attributes) {
+                if (baseType.attributes.hasOwnProperty(i)) {
+                    this.attributes[i] = baseType.attributes[i];
                 }
             }
         }
@@ -171,10 +171,12 @@
                 }
             }
         }
-        for (var i in this.attributes) {
-            if (this.attributes.hasOwnProperty(i) && obj[i] == undefined) {
-                if (this.attributes[i].required) {
-                    results.push(new Schema.ValidationResult(i, 'Required element has no value!'));
+        if (obj != null) {
+            for (var i in this.attributes) {
+                if (this.attributes.hasOwnProperty(i) && obj[i] == undefined) {
+                    if (this.attributes[i].required) {
+                        results.push(new Schema.ValidationResult(i, 'Required element has no value!'));
+                    }
                 }
             }
         }
@@ -192,7 +194,9 @@
                 }
                 break;
         }
-        if (res) res.__type__ = this;
+        if (res) {
+            Object.defineProperty(res, '__type__', { configurable:false, enumerable:false, writable:false, value:this});
+        }
         return res;
     };
     //#endregion
@@ -209,7 +213,8 @@
 
     //#region SCHEMA
     function Schema(definition) {
-        this.types = {};
+        this.types = {};    //mergeObjects(_BasicTypes);
+        this.types.type = new Schema.SimpleType(Schema.Types.TYPE, undefined, {schema:this});
         // basic types
         this.types.string = new Schema.SimpleType(Schema.Types.STRING);
         this.types.bool   = new Schema.SimpleType(Schema.Types.BOOL);
@@ -220,7 +225,9 @@
         this.types.map    = new Schema.SimpleType(Schema.Types.MAP);
         this.types.object = new Schema.ComplexType(Schema.Types.OBJECT);
         this.types.type   = new Schema.SimpleType(Schema.Types.TYPE, undefined, {schema:this});
+
         // schema types
+        this.types.Types = new Schema.SimpleType(Schema.Types.ENUM, )
         var types = this.buildType({name:"Types", type:"enum", values:[]});
         this.buildType({name:"Attribute",
             attributes: [
@@ -334,25 +341,49 @@
         }
         return res;
     };
-    Schema.load = async function schema_load(schemaInfo, definition, errors) {
-        if (schemaInfo.schema == null) {
-            var res = await load(schemaInfo.schemaDefinition);
-            if (res.error) throw res.error;
-            schemaInfo.schema = new Schema(res.data);
-        }
-        if (typeof definition === 'string') {
-            var res = await load({ url:definition, responseType:'json', charSet:'utf-8' });
-            if (res.error) {
-                errors.push(res.error);
+    Schema.resolveImports = async function resolveImports(definition) {
+        var imports = definition.Imports;
+        if (imports) {
+            var links = Object.values(imports).map(x => { return { url:x, responseType:'json', charSet:'utf-8' }; });
+            var res = await load(links);
+            var errors = res.reduce((a, x) => { if (x.error) a.push(x.error); return a; }, []);
+            if (errors.length > 0) {
+                definition.error = new Error("Imports failed!");
+                definition.error.details = errors;
             } else {
-                definition = res.data;
-                var vt = schemaInfo.schema.types[schemaInfo.validate];
-                if (vt) {
-                    vt.validate(definition, errors);
+                var ri = 0;
+                for (var i in imports) {
+                    definition[i] = res[ri++].data;
                 }
+                delete definition.Imports;
             }
         }
         return definition;
+    };
+    Schema.load = async function schema_load(schemaInfo, definition, errors) {
+        if (schemaInfo.schema == null) {
+            var res = await load(schemaInfo.schemaDefinition);
+            if (res.error) errors.push(res.error);
+            else schemaInfo.schema = new Schema(res.data);
+        }
+        if (!errors.length) {
+            if (typeof definition === 'string') {
+                res = await load({ url:definition, responseType:'json', charSet:'utf-8' });
+                if (res.error) errors.push(res.error);
+            }
+            if (!errors.length) {
+                definition = await Schema.resolveImports(res.data);
+                if (definition.error) {
+                    errors.push(definition.error);
+                } else {
+                    var vt = schemaInfo.schema.types[schemaInfo.validate];
+                    if (vt) {
+                        vt.validate(definition, errors);
+                    }
+                }
+            }
+        }
+        return !errors.length ? definition : null;
     }
     //#endregion
 
@@ -474,6 +505,27 @@
         'OBJECT': 'object',
         'TYPE': 'type'
     };
+
+    var _BasicTypes = {
+        'string': new SimpleType(Schema.Types.STRING),
+        'bool'  : new SimpleType(Schema.Types.BOOL),
+        'int'   : new SimpleType(Schema.Types.INT),
+        'float' : new SimpleType(Schema.Types.FLOAT),
+        'list'  : new SimpleType(Schema.Types.LIST),
+        'enum'  : new SimpleType(Schema.Types.ENUM),
+        'map'   : new SimpleType(Schema.Types.MAP),
+        'object': new ComplexType(Schema.Types.OBJECT),
+    };
+    _BasicTypes.int.isNumeric = true;
+    _BasicTypes.float.isNumeric = true;
+
+    // Schema.serialize = function serialize(obj) {
+    //     return JSON.stringify(obj, (key, value) => if (key.startsWith('__')))
+    // };
+
+    // Schema.deserialize = function deserialize(json) {
+    //     return JSON.parse(json);
+    // }
 
     publish(Schema, 'Schema');
     publish(SimpleType, 'SimpleType', Schema);

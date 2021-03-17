@@ -24,13 +24,11 @@
     },
     { "name":"VerbList", "type":"list", "elemType":"Verbs" },
     { "name":"MethodsList", "type":"list", "elemType":"Methods" },
-    { "name":"CallList", "type":"list", "elemType":"Call" },
-    { "name":"TypeList", "type":"list", "elemType":"type" },
 
     { "name": "Endpoint",
         "attributes": [
             { "name":"id", "type":"string", "required":true },
-            { "name":"calls", "type": "CallList", "required":true }
+            { "name":"calls", "type":"list", "elemType":"Call", "required":true }
         ]
     },
     { "name": "Resource",
@@ -48,7 +46,7 @@
         "attributes": [
             { "name":"id", "type":"String10", "required":true },
             { "name":"url", "type":"string", "required":true },
-            { "name":"DataTypes", "type":"TypeList" },
+            { "name":"DataTypes", "type":"list", "elemType":"type" },
             { "name":"Resources", "type":"ResourceList" },
             { "name":"Endpoints", "type":"EndpointList" }
         ]

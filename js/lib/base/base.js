@@ -505,6 +505,11 @@ Url.prototype.getFragment = function getFragment(str, pos) {
     }
     return pos;
 };
+Url.prototype.getFilename = function getFilename() {
+    var ix = this.path.lastIndexOf('/');
+    if (ix == -1) ix = this.path.lastIndexOf('\\');
+    return ix != -1 ? this.path.substring(ix) : this.path;
+};
 Url.prototype.toString = function toString() {
     var sb = [this.schema];
     if (this.user) sb.push(this.user);

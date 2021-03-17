@@ -1,5 +1,5 @@
-include('/math/noise.js');
-include('/math/fn.js');
+include('math/noise.js');
+include('math/fn.js');
 
 include('glui/glui-lib.js');
 (function() {
