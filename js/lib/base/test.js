@@ -3,8 +3,15 @@
     async function test_load() {
         message('Test load', 1);
         var res = await load('./test-file.json');
-        test('Should load test-file at relative path sync', ctx => {
+        test('Should load test-file from current folder (app\'s path) sync', ctx => {
             ctx.assert(res, '!null');
+            if (res.error) message(res.error);
+            ctx.assert(res.error, 'null');
+        });
+        res = await load('/lib/base/test-file.json');
+        test('Should load test-file from root folder (document base path) sync', ctx => {
+            ctx.assert(res, '!null');
+            if (res.error) message(res.error);
             ctx.assert(res.error, 'null');
         });
         res = load('./test-file.json');
@@ -97,7 +104,35 @@
         });
     }
 
+    function testGetSetObjectAt() {
+        var text1 = 'Hello World!';
+        var text2 = 'Test';
+        var obj1 = {
+            obj2: {
+                arr1: [
+                    { obj3: {
+                        text: text1
+                    }}
+                ],
+                print: t => console.log(t)
+            }
+        };
+        obj1.obj2.print.text = text1;
+
+        test('Should return object at path', ctx => {
+            ctx.assert(getObjectAt('obj2.arr1.0.obj3.text', obj1), '=', obj1.obj2.arr1[0].obj3.text);
+        });
+        test('Should return object at path', ctx => {
+            ctx.assert(getObjectAt('obj2.print.text', obj1), '=', obj1.obj2.print.text);
+        });
+        test('Should set object at path', ctx => {
+            ctx.assert(setObjectAt('obj2.arr1.0.obj3.text', obj1, text2), '=', text1);
+            ctx.assert(obj1.obj2.arr1[0].obj3.text, '=', text2);
+        });
+    }
+
     var tests = () => [
+        testGetSetObjectAt,
         test_load,
         test_binSearch
     ];

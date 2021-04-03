@@ -1,6 +1,6 @@
 {
-    "Imports" :{
-        "DataTypes": "./test-repo-datatypes.json"
+    "Imports": {
+        "DataTypes": "./data-types.json"
     },
 
     "Indices": [
@@ -9,7 +9,5 @@
         { "name":"owner", "type":"Item", "attribute":"ownerId" }
     ],
     "Queries": [
-        { "name": "GetUserGroups", "arguments": ["User.id"], "expression":"select g.name from Group g where User u on u in g.members"}
     ]
 }
-    

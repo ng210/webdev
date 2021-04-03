@@ -1,0 +1,74 @@
+{
+    "id":"store",
+    "url":"http://localhost:4000/store",
+
+
+    "DataTypes": [
+        {   "name":"Item",
+            "attributes": [
+                { "name":"id", "type":"int", "required":false },
+                { "name":"name", "type":"string", "required":true },
+                { "name":"owner", "type":"int", "required":true },
+                { "name":"store", "type":"int", "required":true }
+            ]
+        },
+        {   "name":"Store",
+            "attributes": [
+                { "name":"id", "type": "int", "required":false },
+                { "name":"name", "type": "string", "required":true },
+                { "name":"owner", "type":"int", "required":true }
+            ]
+        },
+        {   "name":"StoreInfo",
+            "attribute": [
+                { "name":"name", "type": "string", "required":true },
+                { "name":"count", "type":"int", "required":true }
+            ]
+        },
+        { "name":"StoreList", "type":"list", "elemType": "StoreInfo" },
+    
+        {   "name":"User",
+            "attributes": [
+                { "name":"id", "type": "int", "required":false },
+                { "name":"name", "type": "string", "required":true }
+            ]
+        },
+        {   "name":"UserInfo",
+            "attribute": [
+                { "name":"name", "type": "string", "required":true },
+                { "name":"count", "type":"int", "required":true }
+            ]
+        },
+        { "name":"UserList", "type":"list", "elemType":"UserInfo" },
+        {   "name":"Info",
+            "attributes": [
+                { "name":"stores", "type": "StoreList", "required":true },
+                { "name":"users", "type": "UserList", "required":true }
+            ]
+        }
+    ],
+
+    "Resources": [
+        { "type":"Item", "key":"id", "methods": ["CREATE", "RETRIEVE", "UPDATE", "DELETE"] },
+        { "type":"Store", "key":"id",  "methods": ["CREATE", "RETRIEVE", "UPDATE", "DELETE"] },
+        { "type":"User", "key":"id",  "methods": ["CREATE", "RETRIEVE", "UPDATE", "DELETE"] }
+    ],
+    "Endpoints": [
+        {
+            "id":"info",
+            "calls": [
+                {
+                    "method": "GET",
+                    "request":{
+                        "mimeType":"application/json",
+                        "arguments":[]
+                    },
+                    "response": {
+                        "mimeType":"application/json",
+                        "type": "Info"
+                    }
+                }
+            ]
+        }
+    ]
+}

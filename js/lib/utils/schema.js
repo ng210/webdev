@@ -5,6 +5,8 @@
         this.baseType = type;
         this.constraints = [];
         this.isNumeric = false;
+        this.isReference = false;
+        this.schema = null;
         this.addConstraint(this, Schema.checkType);
     }
     Object.defineProperties(Type.prototype, {
@@ -23,9 +25,21 @@
     };
     Type.prototype.validate = function validate(value, results) {
         var results = results || [];
-        for (var i=0; i<this.constraints.length; i++) {
-            var cst = this.constraints[i];
-            cst.fn.call(cst.obj, value, results);
+        if (this.isReference) {
+            var refs = this.schema.references[this.baseType.name];
+            var key = `${this.baseType.name} ${value}`;
+            if (!this.schema.missingReferences.includes(key) && (!refs || !refs.find(x => x.name == value))) {
+                this.schema.missingReferences.push(key);
+            }
+        } else {
+            for (var i=0; i<this.constraints.length; i++) {
+                try {
+                    var cst = this.constraints[i];
+                    cst.fn.call(cst.obj, value, results);
+                } catch (err) {
+                    results.push(new Schema.ValidationResult(i, err));
+                }
+            }
         }
         return results;
     };
@@ -35,18 +49,16 @@
     //#endregion
 
     //#region SIMPLE TYPE
-    function SimpleType(name, baseType, args) {
+    function SimpleType(name, baseType,  args) {
         SimpleType.base.constructor.call(this, name, baseType);
         this.min = NaN;
         this.max = NaN;
         this.length = -1;
         this.elemType = null;
         this.values = null;
-        this.types = null;
         if (baseType) {
             this.isNumeric = baseType.basicType.isNumeric;
         }
-        //if (args != undefined)
         for (var i in args) {
             switch (i) {
                 case 'length':
@@ -78,6 +90,9 @@
                     break;
                 case 'schema':
                     this.schema = args.schema;
+                    break;
+                case 'ref':
+                    this.isReference = args.ref;
                     break;
             }
         }
@@ -141,6 +156,7 @@
         for (var i in args) {
             switch (i) {
                 case 'sealed': this.isSealed = args.sealed; break;
+                case 'ref': this.isReference = args.ref; break;
             }
         }
     }
@@ -152,32 +168,40 @@
     ComplexType.prototype.validate = function validate(obj, results) {
         var results = results || [];
         ComplexType.base.validate.call(this, obj, results);
-        for (var i in obj) {
-            if (obj.hasOwnProperty(i)) {
-                if (this.attributes[i]) {
-                    if (this.attributes[i].type) {
-                        var res = this.attributes[i].type.validate(obj[i]);
-                        for (var j=0; j<res.length; j++) {
-                            res[j].field.unshift(i);
-                            results.push(res[j]);
+        if (typeof obj === 'object') {
+            for (var i in obj) {
+                if (obj.hasOwnProperty(i)) {
+                    if (this.attributes[i]) {
+                        if (this.attributes[i].type) {
+                            var res = this.attributes[i].type.validate(obj[i]);
+                            for (var j=0; j<res.length; j++) {
+                                res[j].field.unshift(i);
+                                results.push(res[j]);
+                            }
+                        } else {
+                            results.push(new Schema.ValidationResult(i, 'Unknown attribute type!'));
                         }
                     } else {
-                        results.push(new Schema.ValidationResult(i, 'Unknown type!'));    
-                    }
-                } else {
-                    if (this.isSealed) {
-                        results.push(new Schema.ValidationResult(i, 'Undefined element!'));
+                        if (this.isSealed) {
+                            results.push(new Schema.ValidationResult(i, 'Undefined element!'));
+                        }
                     }
                 }
             }
-        }
-        if (obj != null) {
-            for (var i in this.attributes) {
-                if (this.attributes.hasOwnProperty(i) && obj[i] == undefined) {
-                    if (this.attributes[i].required) {
-                        results.push(new Schema.ValidationResult(i, 'Required element has no value!'));
+            if (obj != null) {
+                for (var i in this.attributes) {
+                    if (this.attributes.hasOwnProperty(i) && obj[i] == undefined) {
+                        if (this.attributes[i].required) {
+                            results.push(new Schema.ValidationResult(i, 'Required element has no value!'));
+                        }
                     }
                 }
+            }
+
+            var refs = this.schema.references;
+            if (obj) {
+                if (!refs[this.name]) refs[this.name] = [obj];
+                else if (!refs[this.name].find(x => x.name == obj.name)) refs[this.name].push(obj);
             }
         }
         return results;
@@ -214,6 +238,10 @@
     //#region SCHEMA
     function Schema(definition) {
         this.types = {};    //mergeObjects(_BasicTypes);
+        this.missingTypes = {};
+        this.typeDefinitions = [];
+        this.references = {};
+        this.missingReferences = [];
         this.types.type = new Schema.SimpleType(Schema.Types.TYPE, undefined, {schema:this});
         // basic types
         this.types.string = new Schema.SimpleType(Schema.Types.STRING);
@@ -227,8 +255,8 @@
         this.types.type   = new Schema.SimpleType(Schema.Types.TYPE, undefined, {schema:this});
 
         // schema types
-        this.types.Types = new Schema.SimpleType(Schema.Types.ENUM, )
         var types = this.buildType({name:"Types", type:"enum", values:[]});
+        types.schema = this;
         this.buildType({name:"Attribute",
             attributes: [
                 { "name":"name", type:"string", required:true },
@@ -247,16 +275,31 @@
 
         this.builtInTypes = Object.keys(this.types);
 
+        this.typeDefinitions = [];
         if (definition) {
             for (var i=0; i<definition.length; i++) {
                 var t = definition[i];
                 debug_(`- adding type '${t.name}'`, 1);
-                this.buildType(t);
+                if (!this.buildType(t)) throw new Error('Bad schema definition!');
             }
         }
-
         // update values of Attribute type
         types.values = Object.keys(this.types);
+
+        var missingTypes = [];
+        for (var i in this.missingTypes) {
+            var type = this.types[i];
+            if (type) {
+                for (var j=0; j<this.missingTypes[i].length; j++) {
+                    var cache = this.missingTypes[i][j];
+                    if (cache.path) {
+                        setObjectAt(cache.path, this.types, type);
+                    }
+                }
+            } else missingTypes.push(i);
+            delete this.missingTypes[i];
+        }
+        if (missingTypes.length > 0) throw new Error(`Unknown type: ${missingTypes.join()}`)
     }
     Schema.prototype.addType = function addType(obj) {
         var type = null;
@@ -270,8 +313,26 @@
     Schema.prototype.getOrBuildType = function getOrBuildType(obj) {
         var type = null;
         if (typeof obj === 'string') {
-            type = this.types[obj];
-            if (!type) throw new Error(`Unknown type '${obj}'!`);
+            if (obj.toUpperCase().startsWith('REF')) {
+                // else error
+                var refType = obj.substring(4);
+                var ref = '*'  + refType;
+                type = this.types[ref];
+                if (!type) {
+                    if (this.types[refType]) {
+                        // create reference
+                        type = this.types[ref] = new Schema.SimpleType(ref, this.types[refType], {ref:true});
+                        type.schema = this;
+                    } else {
+                        if (!this.missingTypes[refType]) this.missingTypes[refType] = [];
+                    }
+                }
+            } else {
+                type = this.types[obj];
+                if (!type) {
+                    if (!this.missingTypes[obj]) this.missingTypes[obj] = [];
+                }
+            }
         } else {
             type = this.buildType(obj);
         }
@@ -288,58 +349,114 @@
         // - attributes: list of types
         var res = null;
         var type = this.getOrBuildType(obj.type || Schema.Types.OBJECT);
-        if (type.basicType.name == Schema.Types.OBJECT) {
-            // complex type
-            var name = obj.name || `Complex${Object.keys(this.types).length}`;
-            debug_('build complex type ' + name, 2);
-            res = new Schema.ComplexType(name, type, obj);
-            debug_('Add ComplexType ' + name, 1);
-            this.types[name] = res;
-            if (obj.attributes) {
-                for (var i=0; i<obj.attributes.length; i++) {
-                    var attr = obj.attributes[i];
-                    if (typeof attr === 'string') {
-                        res.addAttribute(i, this.types[attr]);
-                    } else {
-                        res.addAttribute(attr.name, this.getOrBuildType(attr.type), obj.attributes[i].required);
-                    }                    
+        if (type) {
+            if (type.basicType.name == Schema.Types.OBJECT) {
+                // complex type
+                var name = obj.name || `Complex${Object.keys(this.types).length}`;
+                debug_('build complex type ' + name, 2);
+                res = new Schema.ComplexType(name, type, obj);
+                debug_('Add ComplexType ' + name, 1);
+                this.types[name] = res;
+                if (obj.res) {
+                    this.isReference = true;
+                } else if (obj.attributes) {
+                    for (var i=0; i<obj.attributes.length; i++) {
+                        var attr = obj.attributes[i];
+                        if (typeof attr === 'string') {
+                            res.addAttribute(i, this.types[attr]);
+                        } else {
+                            var attrType = this.getOrBuildType(attr.type);
+                            if (!attrType) this.missingTypes[attr.type].push({'path':`${name}.attributes.${attr.name}.type`});
+                            res.addAttribute(attr.name, attrType, obj.attributes[i].required);
+                        }                    
+                    }
                 }
+            } else {
+                // simple type
+                var name = obj.name || `${type.name.substr(0, 1).toUpperCase()}${type.name.substr(1)}${Object.keys(this.types).length}`;
+                var args = {};
+                debug_('build simple type ' + name, 2);
+                switch (type.name) {
+                    case Schema.Types.STRING:
+                        args.length = obj.length;
+                        break;
+                    case Schema.Types.LIST:
+                        args.length = obj.length;
+                        args.elemType = null;
+                        if (obj.elemType) {
+                            var elemType = this.getOrBuildType(obj.elemType);
+                            if (!elemType) {
+                                if (!this.missingTypes[obj.elemType]) this.missingTypes[obj.elemType] = [];
+                                this.missingTypes[obj.elemType].push({'path':`${name}.elemType`});
+                            }
+                            args.elemType = elemType;
+                        }
+                        break;
+                    case Schema.Types.ENUM:
+                        args.values = obj.values;
+                        break;
+                    case Schema.Types.INT:
+                    case Schema.Types.FLOAT:
+                        args.min = obj.min != undefined ? obj.min : Number.NEGATIVE_INFINITY;
+                        args.max = obj.max != undefined ? obj.max : Number.POSITIVE_INFINITY;
+                        break;
+                    case Schema.Types.MAP:
+                        var keyType = this.getOrBuildType(obj.key || Schema.Types.STRING);
+                        if (keyType.name != Schema.Types.STRING && keyType.name != Schema.Types.INT ) throw new Error(`Invalid key type ${keyType.name}!`);
+                        var valueType = this.getOrBuildType(obj.value);
+                        if (!valueType) {
+                            this.missingTypes[valueType].push({'path':`${name}.valueType`});
+                        }
+                        args.keyValue = [keyType, valueType];
+                        break;
+                    case Schema.Types.TYPE:
+                        args.schema = this;
+                        break;
+                }
+                args.ref = obj.ref;
+                res = new Schema.SimpleType(name, type, args);
+                debug_('Add SimpleType ' + name, 1);
             }
-        } else {
-            // simple type
-            var name = obj.name || `${type.name.substr(0, 1).toUpperCase()}${type.name.substr(1)}${Object.keys(this.types).length}`;
-            var args = {};
-            debug_('build simple type ' + name, 2);
-            switch (type.name) {
-                case Schema.Types.STRING:
-                    args.length = obj.length;
-                    break;
-                case Schema.Types.LIST:
-                    args.length = obj.length;
-                    args.elemType = obj.elemType ? this.getOrBuildType(obj.elemType) : null;
-                    break;
-                case Schema.Types.ENUM:
-                    args.values = obj.values;
-                    break;
-                case Schema.Types.INT:
-                case Schema.Types.FLOAT:
-                    args.min = obj.min != undefined ? obj.min : Number.NEGATIVE_INFINITY;
-                    args.max = obj.max != undefined ? obj.max : Number.POSITIVE_INFINITY;
-                    break;
-                case Schema.Types.MAP:
-                    var keyType = this.getOrBuildType(obj.key || Schema.Types.STRING);
-                    if (keyType.name != Schema.Types.STRING && keyType.name != Schema.Types.INT ) throw new Error(`Invalid key type ${keyType.name}!`);
-                    args.keyValue = [keyType, this.getOrBuildType(obj.value)];
-                    break;
-                case Schema.Types.TYPE:
-                    args.schema = this;
-                    break;
-            }
-            res = new Schema.SimpleType(name, type, args);
-            debug_('Add SimpleType ' + name, 1);
             this.types[name] = res;
+            this.types.Types.values.push(name);
+            this.typeDefinitions.push(res);
+            res.schema = this;
         }
         return res;
+    };
+    Schema.prototype.validate = function validate(type, obj, errors) {
+        var t = null;
+        if (type instanceof Type) {
+            t = type;
+        } else if (typeof type === 'string') {
+            t = this.types[type];
+            if (!t) {
+                errors.push(new Schema.ValidationResult(i, new Error(`Type '${type}' not defined!`)));
+            }
+        } else {
+            errors.push(new Schema.ValidationResult(i, new Error('Invalid input for validation!')));
+        }
+
+        if (t) {
+            try {
+                var validateErrors = [];
+                t.validate(obj, validateErrors);
+                // any missing types during validation?
+                if (Object.keys(this.missingTypes).length > 0) {
+                    validateErrors = [];
+                    // revalidate
+                    this.missingReferences = [];
+                    t.validate(obj, validateErrors);
+                }
+                // check references
+                for (var i=0; i<this.missingReferences.length; i++) {
+                    errors.push(new Schema.ValidationResult(null, `Null reference: '${this.missingReferences[i]}'`));
+                }
+                errors.push(...validateErrors);
+            } catch (err) {
+                errors.push(err);
+            }
+        }
     };
     Schema.resolveImports = async function resolveImports(definition) {
         var imports = definition.Imports;
@@ -376,15 +493,12 @@
                 if (definition.error) {
                     errors.push(definition.error);
                 } else {
-                    var vt = schemaInfo.schema.types[schemaInfo.validate];
-                    if (vt) {
-                        vt.validate(definition, errors);
-                    }
+                    schemaInfo.schema.validate(schemaInfo.validate, definition, errors);
                 }
             }
         }
         return !errors.length ? definition : null;
-    }
+    };
     //#endregion
 
     //#region CHECK METHODS
@@ -456,16 +570,22 @@
         return res;
     };
     Schema.checkElemType = function checkElemType(value, results) {
-        return Schema.checkList(value, this.elemType, 'element', results);
+        return (Array.isArray(value)) ? Schema.checkList(value, this.elemType, 'element', results) : results;
     };
     Schema.checkEnum = function checkEnum(value, results) {
         var res = this.values.includes(value);
         if (!res) {
-            results.push(new Schema.ValidationResult(null, `Invalid item ${value}, allowed values are ${this.values}!`))
+            if (this.name == 'Types') {
+                var sch = this.schema;
+                if (!sch.missingTypes[value]) sch.missingTypes[value] = 0;
+                sch.missingTypes[value]++;
+            } else {
+                results.push(new Schema.ValidationResult(null, `Invalid item ${value}, allowed values are ${this.values}!`))
+            }
         }
         return res;
     };
-    Schema.checkKeyValue = function checkElemType(value, results) {
+    Schema.checkKeyValue = function checkKeyValue(value, results) {
         var keys = Object.keys(value);
         var hasKeyErrors = false;
         var basicType = this.keyType.basicType;
@@ -492,6 +612,20 @@
         var hasValueErrors = Schema.checkList(Object.values(value), this.valueType, 'value', results);
         return hasKeyErrors || hasValueErrors;
     };
+//     Schema.checkAttributes = function checkAttributes(value, results) {
+//         var errorCount = results.length;
+// debugger
+//         for (var i in this.attributes) {
+//             if (this.attributes.hasOwnProperty(i)) {
+//                 if (value[i] != undefined) {
+//                     this.attributes[i].type.validate(value[i], results);
+//                 } else if (this.attributes[i].required) {
+//                     results.push(new Schema.ValidationResult(i, `Required attribute '${i}' missing`));
+//                 }
+//             }
+//         }
+//         return errorCount != results.length;
+//     };
     //#endregion
 
     Schema.Types = {

@@ -196,25 +196,16 @@ function testDeepCompare() {
     _testDeepCompare(buf1, buf2);
 }
 
-function equals(a, b) {
-    var result = false;
-    // cast b to the type of a
-    switch (typeof a) {
-        case 'number': result = Math.abs(a - b) <= Number.EPSILON; break;
-        case 'object': {
-            result = true;
-            result = a != null && b != null;
-            for (var i in a) {
-                if (a[i] != b[i]) {
-                    result = false;
-                    break;
-                }
-            }
-            break;
-        }
-        default: result = a == b;
+function testEquals() {
+    var values = [undefined/10, null, undefined, 0, 1, '', '1', true,  false, [], [1,2], {}, {a:'a', b:'b'}];
+    for (var i=0; i<values.length; i++) {
+        var a = values[i];
+        console.log(values[i], equals(a, values[i]));
     }
-    return result;
+}
+
+function equals(a, b) {
+    return a == b || typeof a === 'number' && isNaN(a) && typeof b === 'number' && isNaN(b);
 }
 
 function isEmpty(a) {
@@ -266,6 +257,7 @@ test_context.prototype.assert = function assert(value, operator, expected) {
                 var err = new Error();
                 var tokens = err.stack.split('\n');
                 var expectedText = expected !== undefined ? ` <b>${expected}</b>` : '';
+                if (typeof value === 'object') value = '<i>Received value</i>';
                 error(`<b>${value}</b> should ${op.term}${expectedText}! ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);
                 this.errors++;
             }
@@ -279,6 +271,7 @@ async function onpageload(errors) {
     Dbg.con.style.visibility = 'visible';
 
     //testDeepCompare();
+    testEquals();
     var url = new Url(location.href);
     var testUrl = new Url(`${url.fragment}/test.js`);
     Dbg.prln(`Load '${testUrl}'`);

@@ -1,0 +1,6 @@
+[
+    { "name":"String256", "type":"string", "length":256 },
+    { "name":"Byte", "type":"int", "min":0,"max":255 },
+    { "name":"Word", "type":"int", "min":0,"max":65536 },
+    { "name":"DWord", "type":"int", "min":0,"max":4294967296 }
+]

@@ -1,0 +1,6 @@
+[
+    { "name":"string8", "type":"string", "length":8 },
+    { "name":"User", "attributes": [ { "name":"id", "type":"int" }, { "name":"name", "type":"string8" } ] },
+    { "name":"Item", "attributes": [ { "name":"id", "type":"int" }, { "name":"name", "type":"string8" }, { "name":"value", "type":"string" }, { "name":"ownerId", "type":"int" } ] },
+    { "name":"Group", "attributes": [ { "name":"id", "type":"int" }, { "name":"value", "type":"string" }, { "name":"members", "type":"list", "elemType":"User" } ] }
+]

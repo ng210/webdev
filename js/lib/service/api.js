@@ -259,10 +259,17 @@ if (ISNODEAPP) {
 
     ApiServer.prototype.onrequest = function onrequest(req, resp) {
         var reqBody = [];
-        req
-            .on('error', err => { console.error(err); })
-            .on('data', chunk => { reqBody.push(chunk); })
-            .on('end', () => this.processRequest(req, resp, reqBody));
+        try {
+            req
+                .on('error', err => { console.error(err); })
+                .on('data', chunk => { reqBody.push(chunk); })
+                .on('end', () => this.processRequest(req, resp, reqBody));
+        } catch (err) {
+            // TODO: add customizable error handling
+            // send 500
+            resp.statusCode = 500;
+            resp.send(err);
+        }
     };
     
     ApiServer.prototype.processRequest = function processRequest(req, resp, reqBody) {
@@ -330,7 +337,11 @@ if (ISNODEAPP) {
                                 // validate output
                                 switch (endpoint.response.mimeType) {
                                     case 'application/json':
-                                        body = JSON.stringify(body);
+                                        try {
+                                            body = JSON.stringify(body);
+                                        } catch (err) {
+                                            debugger
+                                        }
                                         break;
                                 }
                                 resp.setHeader('Content-Type', endpoint.response.mimeType);
@@ -405,14 +416,20 @@ if (ISNODEAPP) {
     Api.Server = async function Server(ApiType, apiDefinition) {
         var errors = [];
         // initialize API and schema
+        var api = null;
         await Api.initialize();
         var schemaInfo = mergeObjects(Api.schemaInfo);
         schemaInfo.definition = await Schema.load(schemaInfo, apiDefinition, errors);
         if (errors.length > 0) {
-            console.log(errors.join('\n'));
+            throw new Error(errors.join('\n'));
+        } else {
+            // create ApiServer instance
+            api = Reflect.construct(ApiType, [schemaInfo]);
+            if (typeof api.initalize === 'function') {
+                await api.initialize();
+            }
         }
-        // create ApiServer instance
-        return Reflect.construct(ApiType, [schemaInfo]);
+        return api;
     };
     
     Api.Client = async function Client(apiDefinition) {

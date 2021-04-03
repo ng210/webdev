@@ -1,22 +1,16 @@
 {
+    "Imports" :{
+        "DataTypes": "/service/test-service/test-data-types.json"
+    },
+
     "id":"testsrv",
-    "url":"http://localhost:4000/js/lib/service/test-service/",
-    "DataTypes": [
-        {
-            "name":"Res",
-            "attributes": [
-                { "name":"id", "type": "int", "required":true },
-                { "name":"value", "type": "string", "required":true }
-            ]
-        }
-    ],
+    "url":"http://localhost:4000/js/service/test-service/",
     "Resources": [
         { "id": "res1", "type":"Res", "key":"id", "methods": ["CREATE", "RETRIEVE", "UPDATE"] },
         { "id": "res2", "type":"Res", "key":"id", "methods": ["CREATE", "RETRIEVE", "UPDATE", "DELETE"] }
     ],
     "Endpoints": [
-        {
-            "id":"bind",
+        { "id":"bind",
             "calls": [
                 {   "method": "POST",
                     "request": {
@@ -39,8 +33,7 @@
                 }
             ]
         },
-        {
-            "id":"stats",
+        { "id":"stats",
             "calls": [
                 {   "method": "GET",
                     "request":{

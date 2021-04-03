@@ -7,10 +7,12 @@
         ]
     },
 
+    { "name":"MethodList", "type":"list", "elemType":"ref Method" },
+
     { "name":"Interface",
         "attributes": [
             { "name":"name", "type":"string" },
-            { "name":"methods", "type":"list", "elemType":"Method" }
+            { "name":"methods", "type":"MethodList" }
         ]
     },
 
@@ -18,17 +20,18 @@
         "attributes": [
             { "name":"name", "type":"string" },
             { "name":"extends", "type":"Class" },
-            { "name":"implements", "type":"list", "elemType":"Interface" },
+            { "name":"implements", "type":{ "type":"list", "elemType":"ref Interface" } },
             { "name":"attributes", "type":"AttributeList" },
-            { "name":"methods", "type":"list", "elemType":"Method" }
+            { "name":"methods", "type":"MethodList" }
         ]
     },
 
-    { "name":"Source",
+    { "name":"Design",
         "attributes": [
-            { "name":"methods", "type":"list", "elemType":"string" },
-            { "name":"interfaces", "type":"list", "elemType":"string" },
-            { "name":"classes", "type":"list", "elemType":"string" }
+            { "name":"types", "type":"list", "elemType":"type" },
+            { "name":"methods", "type":{"type":"list", "elemType":"Method" } },
+            { "name":"interfaces", "type":{ "type":"list", "elemType":"Interface" } },
+            { "name":"classes", "type":{ "type":"list", "elemType":"Class" }}
         ]        
     }
 ]

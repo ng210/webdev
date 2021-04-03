@@ -829,15 +829,30 @@ self.getObjectPath = function getObjectPath(obj, parentAttributeName, ancestor) 
 };
 self.getObjectAt = function getObjectAt(path, obj) {
     obj = obj || self;
+    var i = 0;
     var tokens = path.split('.');
-    for (var i=0; i<tokens.length; i++) {
+    for (; i<tokens.length-1; i++) {
         obj = obj[tokens[i]];
-        if (typeof obj !== 'object' && typeof obj !== 'function' || obj == null) {
-            if (i != tokens.length-1) obj = null;
-            break;
-        }
+        if (!obj) break;
     }
+    if (obj) obj = obj[tokens[i]];
     return obj;
+};
+self.setObjectAt = function setObjectAt(path, obj, value) {
+    var oldValue;
+    obj = obj || self;
+    var i = 0;
+    var tokens = path.split('.');
+    var field = tokens.pop();
+    for (; i<tokens.length; i++) {
+        obj = obj[tokens[i]];
+        if (!obj) break;
+    }
+    if (obj) {
+        oldValue = obj[field];
+        obj[field] = value;
+    }
+    return oldValue;
 };
 //#endregion
 

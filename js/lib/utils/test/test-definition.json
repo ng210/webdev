@@ -1,15 +1,27 @@
 {
+    "Imports" :{
+        "types": "./test/test-types.json"
+    },
+
     "methods": [
         { "name":"Read",
             "arguments": [
-                { "name":"path", "type":"string", "required":true }
+                { "name":"path", "type":"String256", "required":true },
+                { "name":"mode", "type":"Byte", "required":true }
             ],
             "return":"string"
         },
         { "name":"Write",
             "arguments": [
-                { "name":"path", "type":"string", "required":true },
+                { "name":"path", "type":"string256", "required":true },
+                { "name":"length", "type":"Word", "required":true },
                 { "name":"data", "type":"string", "required":true }
+            ],
+            "return":"int"
+        },
+        { "name":"Print",
+            "arguments": [
+                { "name":"args", "type":"AttributeList", "required":true }
             ],
             "return":"int"
         }
@@ -18,6 +30,6 @@
         { "name":"IAccess", "methods": ["Read", "Write"]}
     ],
     "classes": [
-        { "name":"IReader", "implements":["IAccess"], "methods": ["Print"]}
+        { "name":"Reader", "implements":["IAccess"], "methods": ["Print"]}
     ]
 }

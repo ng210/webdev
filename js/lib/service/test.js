@@ -22,8 +22,8 @@ include('service/api.js');
 
     async function test_api() {
         message('Test api', 1);
-        const URL = 'http://localhost:4000/js/lib/service/test-service/';
-        var api = await Api.Client('/lib/service/test-service/test-service-definition.json');
+        const URL = 'http://localhost:4000/js/service/test-service/';
+        var api = await Api.Client('/service/test-service/test-service-definition.json');
         test('Should create an API (explicit definition)', ctx => ctx.assert(api, '!null'));
         api = await Api.Client(URL);
         test('Should create an API (implicit  definition)', ctx => ctx.assert(api, '!null'));

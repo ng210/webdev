@@ -1,20 +1,11 @@
-const fs = require('fs');
-//global.http = require('http');
-require('service/nodejs.js');
 include('/lib/service/api.js');
 
-async function main(args, errors) {
-    if (errors.length > 0) {
-        for (var i=0; i<errors.length; i++) {
-            console.log('Error: ' + errors[i].message);
-        }
-        return 0;
-    }
+(function() {
     function TestApi(definition) {
         TestApi.base.constructor.call(this, definition);
     }
     extend(ApiServer, TestApi);
-    
+
     function createResponse(ep) {
         var typeName = ep.response.type;
         if (typeof typeName === 'object') typeName = typeName.name;
@@ -51,7 +42,6 @@ async function main(args, errors) {
         return res1;
     };
     TestApi.prototype.retrieve_res2 = function retrieve_res2(id) {
-debugger
         var res = createResponse(this);
         res.id = id;
         return res;
@@ -62,15 +52,5 @@ debugger
         return res;
     };
     //#endregion
-
-    try {
-        var api = await Api.Server(TestApi, './test-service-definition.json');
-        console.log(api.info());
-
-        api.run();
-    } catch (err) {
-        console.log(err);
-    }
-}
-
-run(main);
+    publish(TestApi, 'TestApi');
+})();
