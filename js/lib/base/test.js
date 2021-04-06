@@ -1,5 +1,5 @@
+include('/lib/base/html.js');
 (function(){
-
     async function test_load() {
         message('Test load', 1);
         var res = await load('./test-file.json');
@@ -104,7 +104,7 @@
         });
     }
 
-    function testGetSetObjectAt() {
+    function test_getSetObjectAt() {
         var text1 = 'Hello World!';
         var text2 = 'Test';
         var obj1 = {
@@ -131,10 +131,19 @@
         });
     }
 
+    function test_html() {
+        var text = '@me said: "Hello world!"\n@you said: "Go ahead & make my day!"'
+        var encoded = Html.encode(text);
+        var decoded = Html.decode(encoded);
+        test('Should Html encode text', ctx => ctx.assert(encoded, '=', '@me&nbsp;said:&nbsp;&quot;Hello&nbsp;world!&quot;<br/>@you&nbsp;said:&nbsp;&quot;Go&nbsp;ahead&nbsp;&amp;&nbsp;make&nbsp;my&nbsp;day!&quot;'));
+        test('Should Html decode text', ctx => ctx.assert(text, '=', decoded));
+    }
+
     var tests = () => [
-        testGetSetObjectAt,
+        test_getSetObjectAt,
         test_load,
-        test_binSearch
+        test_binSearch,
+        test_html
     ];
 
     publish(tests, 'BaseTests');

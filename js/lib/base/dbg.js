@@ -1,3 +1,4 @@
+include('/lib/base/html.js');
 (function() {
 	var Dbg = {};
 	if (!ISWORKER) {
@@ -45,7 +46,9 @@
 		};
 	}
 	Dbg.prln = function prln(txt) {
-		this.pr(txt.toString().replace(/\n/g, "<br/>") + '<br/>');
+		var html = Html.encode(txt+'\n');
+		this.pr(html);
+		//this.pr(txt.toString().replace(/\n/g, "<br/>") + '<br/>');
 	};
 	Dbg.measure = function measure(fn, count) {
 		if (isNaN(count) || count < 0) count = 1;
