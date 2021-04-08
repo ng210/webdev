@@ -1,26 +1,33 @@
 [
-    { "name":"Index",
+    { "name":"ConstraintTypes", "type":"enum", "values":["key", "link", "index"]},
+
+    { "name":"Constraint",
         "attributes": [
-            { "name":"name", "type":"string" },
-            { "name":"type", "type":"string" },
-            { "name":"attribute", "type":"string" },
-            { "name":"unique", "type":"bool" }
+            { "name":"name", "type":"string", "required":false },
+            { "name":"type", "type":"ConstraintTypes", "required":true },
+
+            { "name":"entity", "type":"string", "required":false },
+            { "name":"field", "type":"string", "required":false },
+            { "name":"unique", "type":"bool", "required":false },
+
+            { "name":"linkedEntity", "type":"string", "required":false },
+            { "name":"linkedField", "type":"string", "required":false }
         ]
     },
 
     { "name": "Query",
         "attributes": [
             { "name":"name", "type":"string" },
-            { "name":"arguments", "type":"list", "elemType":"string" },
+            { "name":"arguments", "type":"StringList" },
             { "name":"expression", "type":"string" }
         ]
     },
 
     { "name":"Repository",
         "attributes": [
-            { "name":"DataTypes", "type":"list", "elemType":"type" },
-            { "name":"Indices", "type":"list", "elemType":"Index" },
-            { "name":"Queries", "type":"list", "elemType":"Query" }
+            { "name":"DataTypes", "type":"TypeList" },
+            { "name":"Constraints", "type":{"type":"list", "elemType":"Constraint" }},
+            { "name":"Queries", "type":{"type":"list", "elemType":"Query" }}
         ]
     }
 ]

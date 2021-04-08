@@ -1,13 +1,13 @@
 // include('frmwrk/fw.js');
-include('utils/logger.js');
-include('ui/datalink.js')
-include('/lib/ui/textbox.js');
-include('/lib/ui/slider.js');
-include('/lib/ui/ddlist.js');
-include('/lib/ui/checkbox.js');
-include('/lib/ui/button.js');
-include('/lib/ui/board.js');
-include('/lib/ui/grid.js');
+include('/lib/utils/logger.js');
+// include('ui/datalink.js')
+// include('/lib/ui/textbox.js');
+// include('/lib/ui/slider.js');
+// include('/lib/ui/ddlist.js');
+// include('/lib/ui/checkbox.js');
+// include('/lib/ui/button.js');
+// include('/lib/ui/board.js');
+// include('/lib/ui/grid.js');
 
 // include('ge/synth.js');
 // include('ge/player.js');
@@ -408,9 +408,9 @@ function onpageload(errors) {
         }
     });
 
-    //loadTest(content);
+    loadTest(content);
 
-    uiTest();
+    //uiTest();
 
     // urlInfoTest();
 

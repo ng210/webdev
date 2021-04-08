@@ -1,6 +1,21 @@
 [
-    { "name":"string8", "type":"string", "length":8 },
-    { "name":"User", "attributes": [ { "name":"id", "type":"int" }, { "name":"name", "type":"string8" } ] },
-    { "name":"Item", "attributes": [ { "name":"id", "type":"int" }, { "name":"name", "type":"string8" }, { "name":"value", "type":"string" }, { "name":"ownerId", "type":"int" } ] },
-    { "name":"Group", "attributes": [ { "name":"id", "type":"int" }, { "name":"value", "type":"string" }, { "name":"members", "type":"list", "elemType":"User" } ] }
+    { "name":"int4", "type":"int", "min":0, "max":9999 },
+    { "name":"string12", "type":"string", "length":12 },
+
+    { "name":"User",
+        "attributes": [
+            { "name":"uid", "type":"int4" },
+            { "name":"name", "type":"string12" }
+        ]
+    },
+    { "name":"Item",
+        "attributes": [
+            { "name":"iid", "type":"int4" },
+            { "name":"type", "type":"string12" },
+            { "name":"size", "type":"string12" },
+            { "name":"color", "type":"string12" },
+            { "name":"material", "type":"string12" },
+            { "name":"ownerId", "type":"int4" }
+        ]
+    }
 ]

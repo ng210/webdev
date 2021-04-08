@@ -46,9 +46,7 @@ include('/lib/base/html.js');
 		};
 	}
 	Dbg.prln = function prln(txt) {
-		var html = Html.encode(txt+'\n');
-		this.pr(html);
-		//this.pr(txt.toString().replace(/\n/g, "<br/>") + '<br/>');
+		this.pr(txt.toString().replace(/\n/g, "<br/>") + '<br/>');
 	};
 	Dbg.measure = function measure(fn, count) {
 		if (isNaN(count) || count < 0) count = 1;

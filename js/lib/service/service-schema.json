@@ -45,7 +45,7 @@
         ]
     },
 
-    { "name":"DataTypeList", "type":"list", "elemType":"type" },
+    { "name":"DataTypeList", "type":"TypeList" },
     { "name":"ResourceList", "type":"list", "elemType":"Resource" },
     { "name":"EndpointList", "type":"list", "elemType":"Endpoint" },
 

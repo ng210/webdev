@@ -685,12 +685,19 @@ include('repository.js');
             this.id = id;
             this.name = name;
         }
-        function Item(id, name, value, ownerId) {
+        function Item(id, type, size, color, material, ownerId) {
             this.id = id;
-            this.name = name;
-            this.value = value;
+            this.type = type;
+            this.size = size;
+            this.color = color;
+            this.material = material;
             this.ownerId = ownerId;
         }
+        Item.prototype.toString = function toString() {
+            var first = this.size.charAt(0);
+            var pre = vowels.includes(first) && first != 'u' ? 'an' : 'a';
+            return `${pre} ${this.size} ${this.color} ${this.material} ${this.type}`;
+        };
         function rnd(range) {
             return Math.floor(range*Math.random());
         }
@@ -706,18 +713,12 @@ include('repository.js');
             }
             return name.charAt(0).toUpperCase() + name.slice(1, length);
         }
-        function createItemName() {
+        function createItem(id, ownerId) {
+            var type = ['pen', 'fork', 'spoon', 'knife', 'armor', 'mug', 'table', 'hat', 'shoe', 'sword', 'shield'];
             var size = ['epic', 'awesome', 'old', 'modern', 'unique', 'tiny', 'small', 'large', 'huge'];
             var color = ['red', 'green', 'blue', 'yellow', 'brown', 'purple', 'gray', 'white', 'black', 'cyan'];
             var material = ['wooden', 'iron', 'steel', 'plastic', 'textil', 'silk', 'leather'];
-            var item = ['pen', 'fork', 'spoon', 'knife', 'armor', 'mug', 'table', 'hat', 'shoe', 'sword', 'shield'];
-
-            var name = [];
-            name.push(size[rnd(size.length)]);
-            name.push(color[rnd(color.length)]);
-            name.push(material[rnd(material.length)]);
-            name.push(item[rnd(item.length)]);
-            return name.join(' ');
+            return new Item(id, type[rnd(type.length)], size[rnd(size.length)], color[rnd(color.length)], material[rnd(material.length)], ownerId);
         }
         var repo = await Repository.create('./test-repo.json');
         test('Should create a repository', ctx => ctx.assert(repo, '!null'));
@@ -725,6 +726,8 @@ include('repository.js');
             ctx.assert(Object.keys(repo.dataTypes).length, '=', 4);
             ctx.assert(Object.keys(repo.data).length, '=', 4);
         });
+        test('Should have 2 keys', ctx => ctx.assert(Object.values(repo.dataTypes).reduce((c,v) => v.key != undefined ? c+1 : c, 0), '=', 2));
+        test('Should have 1 link User->Item', ctx => ctx.assert(repo.dataTypes.User.links.uid.entity, '=', repo.dataTypes.Item));
         test('Should have 3 indices', ctx => ctx.assert(Object.keys(repo.indices).length, '=', 3));
         test('Should have 1 query', ctx => ctx.assert(Object.keys(repo.queries).length, '=', 1));
 
@@ -746,7 +749,7 @@ include('repository.js');
             ctx.assert(repo.indices.name.data.count, '=', 1000);
 
             for (var i=0; i<5000; i++) {
-                repo.add(new Item(i, createItemName(), Math.random(), rnd(1000)));
+                repo.add(createItem(i, rnd(repo.data.User.length)));
             }
             var count = 0;
             var block = repo.indices.owner.data.first();
@@ -767,8 +770,7 @@ include('repository.js');
                 if (items) {
                     message(`${user.name} has`, 1);
                     for (var i=0; i<items.length; i++) {
-                        var item = items[i];
-                        message((vowels.includes(item.name.charAt(0)) ? 'an ' : 'a ') + item.name);
+                        message(items[i]);
                     }
                     _indent--;
                 } else {
@@ -795,6 +797,9 @@ include('repository.js');
                     _indent--;
                 }
             }
+        });
+        test('Should query for user with items', ctx => {
+            var users = repo.queries.GetUserByName.commit({'name':repo.data.User[0].name});
         });
     }
 

@@ -49,7 +49,7 @@
     //#endregion
 
     //#region SIMPLE TYPE
-    function SimpleType(name, baseType,  args) {
+    function SimpleType(name, baseType, args) {
         SimpleType.base.constructor.call(this, name, baseType);
         this.min = NaN;
         this.max = NaN;
@@ -265,6 +265,11 @@
             ]
         });
         this.buildType({name:"AttributeList", type:"list", elemType:"Attribute"});
+        this.buildType({name:"TypeList", type:"list", elemType:"type"});
+        this.buildType({name:"StringList", type:"list", elemType:"string"});
+        this.buildType({name:"IntList", type:"list", elemType:"int"});
+        this.buildType({name:"FloatList", type:"list", elemType:"float"});
+        this.buildType({name:"BoolList", type:"list", elemType:"bool"});
         this.buildType({
             name:"ComplexType",
             attributes: [

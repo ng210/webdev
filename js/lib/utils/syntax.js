@@ -148,39 +148,28 @@
     Expression.prototype.mergeNodes = function(nodes) {
        //console.log('merge in' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
         // merge b into a if
-        // - a has an action attribute
-        // - b is a literal or has an action attribute
-        var merge = true;
+        // - a has an action attribute or has an edge
+        // - b is a literal
+        // - b has an action attribute or has an edge
         var aix = 0;
         if (nodes.length == 2) {
             // b is a literal
             var bix = nodes.findIndex(x => x.data.code == this.syntax.literalCode);
             if (bix == -1) {
-                // look for a node without action attribute
-                if (nodes.findIndex(x => typeof x.data.type.action == 'undefined') != -1) {
-                    merge = false;
-                    bix = -1;
-                } else {
-                    // both nodes have action attributes
-                    bix = 1 - aix;
-                }
+                var an = nodes[0].data.type.action != null || nodes[0].edges.length > 0;
+                var bn = nodes[1].data.type.action != null || nodes[1].edges.length > 0;
+            //  an  bn => 0  1
+            //  an !bn => 0 -1
+            // !an !bn => 0 -1
+            // !an  bn => 1 -1
+                aix = !an && bn ? 1 : 0;
+                bix = an && bn ? 1 : -1;
             } else {
                 aix = 1 - bix;
             }
             if (aix != -1 && bix != -1) {
                 this.tree.addEdge(nodes[aix], nodes[bix]);
             }
-            // // find a node
-            // aix = nodes.findIndex(x => typeof x.data.type.action !== 'undefined');
-            // if (aix != -1 && bix == -1) {
-            //     aix = 0;
-            //     //merge = false;
-            // } else {
-            //     //if (merge) {
-            //     //console.log(`${this.nodeToString(nodes[aix])} => ${this.nodeToString(nodes[bix])}`);
-            //         this.tree.addEdge(nodes[aix], nodes[bix]);
-            //     //}
-            //}
         } else {
             if (nodes.length > 2) {
                 throw new Error('More than 2 nodes passed.');
@@ -252,7 +241,7 @@
         //console.log(this.ruleMap.map(r => rs(r)).join('\n'));
     };
 
-    Syntax.prototype.parse = function(expr) {
+    Syntax.prototype.parse = function(expr, ignoreCase) {
         var expression = new Expression(this);
         expression.expression = expr;
         if (!expr || typeof expr !== 'string') {
@@ -265,8 +254,10 @@
         var start = 0, i = 0;
         while (i<expr.length) {
             var hasMatch = false;
+            var matched = expr.substring(i);
+            if (ignoreCase) matched = matched.toLowerCase();
             for (var nk in this.grammar.prototypes) {
-                if (expr.substring(i).startsWith(nk)) {
+                if (matched.startsWith(nk)) {
                     if (start < i) {
                         var term = expr.substring(start, i);
                         var code = this.symbols.indexOf(this.grammar.prototypes[this.literal].symbol);

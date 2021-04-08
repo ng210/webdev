@@ -28,7 +28,7 @@
 
     { "name":"Design",
         "attributes": [
-            { "name":"types", "type":"list", "elemType":"type" },
+            { "name":"types", "type":"TypeList" },
             { "name":"methods", "type":{"type":"list", "elemType":"Method" } },
             { "name":"interfaces", "type":{ "type":"list", "elemType":"Interface" } },
             { "name":"classes", "type":{ "type":"list", "elemType":"Class" }}

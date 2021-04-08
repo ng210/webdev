@@ -200,7 +200,7 @@ function testEquals() {
     var values = [undefined/10, null, undefined, 0, 1, '', '1', true,  false, [], [1,2], {}, {a:'a', b:'b'}];
     for (var i=0; i<values.length; i++) {
         var a = values[i];
-        console.log(values[i], equals(a, values[i]));
+        // console.log(values[i], equals(a, values[i]));
     }
 }
 

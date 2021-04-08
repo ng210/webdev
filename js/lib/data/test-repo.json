@@ -3,13 +3,19 @@
         "DataTypes": "./test-repo-datatypes.json"
     },
 
-    "Indices": [
-        { "name":"id", "type":"User", "attribute":"id", "unique":true },
-        { "name":"name", "type":"User", "attribute":"name" },
-        { "name":"owner", "type":"Item", "attribute":"ownerId" }
+    "Constraints": [
+        { "type":"key", "entity":"User", "field":"uid" },
+        { "type":"key", "entity":"Item", "field":"iid" },
+
+        { "type":"link", "entity":"User", "field":"uid", "linkedEntity":"Item", "linkedField":"ownerId" },
+
+        { "type":"index", "name":"id", "entity":"User", "field":"uid" },
+        { "type":"index", "name":"name", "entity":"User", "field":"name" },
+        { "type":"index", "name":"owner", "entity":"Item", "field":"ownerId" }
     ],
+
     "Queries": [
-        { "name": "GetUserGroups", "arguments": ["User.id"], "expression":"select g.name from Group g where User u on u in g.members"}
+        { "name": "GetUserByName", "expression":"SELECT User WHERE name=$name"}
     ]
 }
     
