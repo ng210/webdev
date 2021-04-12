@@ -17,7 +17,7 @@ function formatResult(value, color) {
         var c = Math.floor(color[i]*e + _indentColor[i]*f);
         rgb[i] = c < 256 ? c : 255;
     }
-    return `<pre>${_indentText.substr(0, _indent)}</pre><span style="color:rgb(${rgb})">${_bulletinSymbols[_indent<_bulletinSymbols.length-1 ? _indent : _bulletinSymbols.length-1]} ${value}</span>`;
+    return `<pre>${_indentText.substr(0, _indent)}</pre><span class="test" style="color:rgb(${rgb})">${_bulletinSymbols[_indent<_bulletinSymbols.length-1 ? _indent : _bulletinSymbols.length-1]} ${value}</span>`;
 }
 
 function print(node, color) {
@@ -31,13 +31,13 @@ function print(node, color) {
 }
 
 function print_result(context, result) {
-    var lbl = context.lbl;
+    var lbl = context.lbl.replace(/&apos;/g, '\'');
     var errorText = 'Failed';
     if (result instanceof Error) {
         errorText += ' => <div class="error-details"><pre>ERROR: ' + result.stack.replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v])) + '</pre></div>';
     };
     var text = (context.errors == 0 && !result) ? `${lbl}..<span style="color:#40ff40">Ok</span>` : `${lbl}..<span style="color:#ff4040">${errorText}</span>`;
-    var spans = Dbg.con.getElementsByTagName('span');
+    var spans = Dbg.con.querySelectorAll('.test'); //Dbg.con.getElementsByTagName('span');
     for (var i=0; i<spans.length; i++) {
         spans[i].innerHTML = spans[i].innerHTML.replace(`${lbl}..[result]`, text);
     }
@@ -73,6 +73,7 @@ async function button(text) {
 }
 
 async function test(lbl, action) {
+    lbl = Html.encode(lbl);
     println(lbl + '..[result]', [208, 208, 128]);
     _indent++;
     var result = null;

@@ -140,13 +140,14 @@
             if (typeof n.data.type.action === 'function') {
                 var args = n.edges.map(x => x.to);
                 // action returns a (calculated) value of the node
+                args.push(n);
                 n.data.value = n.data.type.action.apply(context, args);
             }
         });
         return this.lastNode.data.value;
     };
     Expression.prototype.mergeNodes = function(nodes) {
-       //console.log('merge in' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
+        if (this.syntax.isDebug) console.log('merge in' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
         // merge b into a if
         // - a has an action attribute or has an edge
         // - b is a literal
@@ -175,7 +176,7 @@
                 throw new Error('More than 2 nodes passed.');
             }
         }
-        //console.log('merge out ' + this.nodeToString(nodes[aix]));
+        if (this.syntax.isDebug) console.log('merge out ' + this.nodeToString(nodes[aix]));
         return nodes[aix];
     };
     Expression.prototype.nodeToString = function(node, simple) {
@@ -241,8 +242,11 @@
         //console.log(this.ruleMap.map(r => rs(r)).join('\n'));
     };
 
+    Syntax.prototype.createExpression = function createExpression() {
+        return new Expression(this);
+    };
     Syntax.prototype.parse = function(expr, ignoreCase) {
-        var expression = new Expression(this);
+        var expression = this.createExpression();
         expression.expression = expr;
         if (!expr || typeof expr !== 'string') {
             if (expr == '') {
@@ -270,6 +274,7 @@
                     i += nk.length;
                     start = i;
                     hasMatch = true;
+                    break;
                 }
             }
             if (!hasMatch) {
@@ -285,6 +290,7 @@
         //console.log('Nodes: ' + expression.tree.nodes.map(x => `${expression.nodeToString(x, true)}`).join('  '));
         return expression;
     };
+    Syntax.Expression = Expression;
 
     publish(Syntax, 'Syntax');
 })();

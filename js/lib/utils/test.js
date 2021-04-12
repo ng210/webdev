@@ -36,7 +36,7 @@ include('schema.js');
         for (var r in tests) {
             var expr = syntax.parse(tests[r]);
             var result = expr.resolve().evaluate(obj);
-            test(`Should evaluate '${tests[r]}' to ${r}`, context => context.assert(r, '=', result));
+            test(`Should evaluate -> '${tests[r]}' to ${r}`, context => context.assert(r, '=', result));
         }
 
         return results;

@@ -90,6 +90,7 @@
                     var edge = vertex.edges[i];
                     if (edge) {
                         var child = edge.to;
+                        child.parent = vertex;
                         if (child.flag == 0) {
                             child.flag = 1;
                             remaining.push(child);
@@ -128,6 +129,7 @@
                 var edge = vertex.edges[i];
                 if (edge) {
                     var child = edge.to;
+                    child.parent = vertex;
                     if (child.flag == 0) {
                         if (typeof edgeHandler !== 'function' || !edgeHandler.call(this, edge, args)) {
                             child.flag = 1;

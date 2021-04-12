@@ -142,7 +142,7 @@ include('/lib/data/graph.js');
                 if (ix < node.length) {
                     item = node.data[ix];
                 } else {
-                    // get first leaf from right
+                    // get first item from right
                     var pn = node.parent;
                     while (pn) {
                         ix = 0;
@@ -305,6 +305,28 @@ include('/lib/data/graph.js');
             }
             crs -= 2;
         }
+    };
+    BTree.prototype.getAt = function getAt(ix) {
+        var result = null;
+        if (ix < this.count) {
+            result = this.first();
+            while (ix >= 0) {
+                if (this.lastResult.node.isLeaf) {
+                    if (ix < this.lastResult.node.length) {
+                        result = this.lastResult.node.data[ix];
+                        break;
+                    } else {
+                        ix -= this.lastResult.node.length;
+                        this.lastResult.index = this.lastResult.node.length-1;
+                    }
+                }
+                if (ix > 0) {
+                    result = this.next();
+                    ix--;
+                }
+            }
+        }
+        return result;
     };
 
     publish(BTree, 'BTree');

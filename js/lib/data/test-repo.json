@@ -15,7 +15,7 @@
     ],
 
     "Queries": [
-        { "name": "GetUserByName", "expression":"SELECT User WHERE name=$name"}
+        { "name": "GetUsersByName", "expression":"SELECT User WHERE name<=$name1 AND name<$name2"}
     ]
 }
     

@@ -546,6 +546,7 @@ include('repository.js');
             item = tree.next(result);
             ctx.assert(item, 'null');
         });
+
         tree.destroy();
         //#endregion
 
@@ -567,6 +568,19 @@ include('repository.js');
             message('Added in ' + ms + 'ms');
             test_tree(tree, items, ctx);
         });
+
+        test('Should return item at index', ctx => {
+            var indices = [0, Math.floor(items.length/2), items.length-1];
+            for (var i=0; i<indices.length; i++) {
+                var item1 = tree.getAt(indices[i]);
+                var item2 = tree.first();
+                for (var j=0; j<indices[i]; j++) {
+                    item2 = tree.next();
+                }
+                ctx.assert(item1, '=', item2);
+            }
+        });
+
         tree.destroy();
         //#endregion
 
@@ -733,8 +747,8 @@ include('repository.js');
 
         test('Should add 1 User and set indices', ctx => {
             repo.add(new User(0, createUserName()));
-            ctx.assert(repo.indices.id.data.count, '=', 1);
-            ctx.assert(repo.indices.name.data.count, '=', 1);
+            ctx.assert(repo.indices.find(x => x.name == 'id'), '!null');
+            ctx.assert(repo.indices.find(x => x.name == 'name'), '!null');
         });
         test('Should add User and Item objects', ctx => {
             for (var i=1; i<1000; i++) {
@@ -745,17 +759,20 @@ include('repository.js');
                 }
                 repo.add(new User(i, name));
             }
-            ctx.assert(repo.indices.id.data.count, '=', 1000);
-            ctx.assert(repo.indices.name.data.count, '=', 1000);
+            ctx.assert(repo.indices.find(x => x.name == 'id'), '!null');
+            ctx.assert(repo.indices.find(x => x.name == 'id').data.count, '=', 1000);
+            ctx.assert(repo.indices.find(x => x.name == 'name'), '!null');
+            ctx.assert(repo.indices.find(x => x.name == 'name').data.count, '=', 1000);
 
             for (var i=0; i<5000; i++) {
                 repo.add(createItem(i, rnd(repo.data.User.length)));
             }
             var count = 0;
-            var block = repo.indices.owner.data.first();
+            var index = repo.indices.find(x => x.name == 'owner');
+            var block = index.data.first();
             do {
                 count += block._data.length;
-                block = repo.indices.owner.data.next();
+                block = index.data.next();
             } while (block != null);
             ctx.assert(count, '=', 5000);
         });
@@ -798,8 +815,22 @@ include('repository.js');
                 }
             }
         });
-        test('Should query for user with items', ctx => {
-            var users = repo.queries.GetUserByName.commit({'name':repo.data.User[0].name});
+        test('Should query users by name', ctx => {
+            var half = Math.floor(repo.data.User.length*0.5);
+            var ix1 = Math.floor(half*Math.random());
+            var ix2 = ix1 + half;
+            var user1 = repo.dataTypes.User.indices.name.getAt(ix1);
+            var user2 = repo.dataTypes.User.indices.name.getAt(ix2);
+            var users = repo.query('GetUsersByName', {
+                'name1': user1.name,
+                'name2': user2.name,
+            });
+            var count = 0;
+            for (var i=0; i<repo.data.User.length; i++) {
+                var user = repo.data.User[i];
+                if (user.name >= user1.name && user.name < user2.name) count++;
+            }
+            ctx.assert(users.length, '=', count);
         });
     }
 
