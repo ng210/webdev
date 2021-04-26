@@ -736,9 +736,9 @@ include('repository.js');
         }
         var repo = await Repository.create('./test-repo.json');
         test('Should create a repository', ctx => ctx.assert(repo, '!null'));
-        test('Should have 4 data types', ctx => {
+        test('Should have 4 data types and 2 entities', ctx => {
             ctx.assert(Object.keys(repo.dataTypes).length, '=', 4);
-            ctx.assert(Object.keys(repo.data).length, '=', 4);
+            ctx.assert(Object.keys(repo.data).length, '=', 2);
         });
         test('Should have 2 keys', ctx => ctx.assert(Object.values(repo.dataTypes).reduce((c,v) => v.key != undefined ? c+1 : c, 0), '=', 2));
         test('Should have 1 link User->Item', ctx => ctx.assert(repo.dataTypes.User.links.uid.entity, '=', repo.dataTypes.Item));

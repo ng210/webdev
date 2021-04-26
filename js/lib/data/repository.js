@@ -8,6 +8,9 @@ include('/lib/utils/syntax.js');
  - stores and executes queries
 ****************************************************************************************/
 (function() {
+
+    const DEFAULT_DATA_SIZE = 256;
+
     function Index(name, type, attribute, isUnique) {
         this.name = name;
         this.type = type;
@@ -44,6 +47,7 @@ include('/lib/utils/syntax.js');
     extend(Syntax.Expression, Expression);
     Expression.prototype.mergeNodes = function(nodes) {
         // terms should be treated as literals
+        var result = null;
         var bix = nodes.findIndex(x => Repository.syntax.symbols[x.data.code] == Repository.grammar.term.symbol);
         if (bix != -1) {
             var aix = 1 - bix;
@@ -64,7 +68,8 @@ include('/lib/utils/syntax.js');
         this.where = null;
 
         // compile expression
-        this.expression = Repository.syntax.parse(expression, true).resolve(this);
+        var parsed = Repository.syntax.parse(expression, true);
+        this.expression = parsed.resolve(this);
 
         var select = this.expression.lastNode;
         // select must have at least 2 children:
@@ -102,9 +107,11 @@ include('/lib/utils/syntax.js');
         this.definition = schemaInfo.definition;
         this.schema = schemaInfo.schema;
         if (this.definition) {
-            // get data types
-            for (var i=0; i<this.definition.DataTypes.length; i++) {
-                this.addType(this.definition.DataTypes[i]);
+            if (this.definition.DataTypes) {
+                // get data types
+                for (var i=0; i<this.definition.DataTypes.length; i++) {
+                    this.addType(this.definition.DataTypes[i]);
+                }
             }
             // process constraints
             for (var i=0; i<this.definition.Constraints.length; i++) {
@@ -137,7 +144,10 @@ include('/lib/utils/syntax.js');
             type: type,
             indices: []
         };
-        this.data[type.name] = [];
+
+        if (type instanceof Schema.ComplexType) {
+            this.data[type.name] = [];  //new Array(DEFAULT_DATA_SIZE);
+        }
     };
     Repository.prototype.addKey = function addKey(definition) {
         var entity = this.dataTypes[definition.entity];
@@ -171,14 +181,14 @@ include('/lib/utils/syntax.js');
         if (!typeName) {
             typeName = obj.constructor != Object ? obj.constructor.name : null;
         }
-        type = !typeName ? obj.__type__ : this.schema.types[typeName];
+        var type = !typeName ? obj.__type__ : this.schema.types[typeName];
         if (!type) throw new Error('Unknown type ' + typeName);
 
         // insert object
+        var dataType = this.dataTypes[type.name];
         this.data[type.name].push(obj);
 
         // update indices
-        var dataType = this.dataTypes[type.name];
         for (var i in dataType.indices) {
             if (dataType.indices.hasOwnProperty(i)) {
                 var index = dataType.indices[i];
@@ -200,12 +210,34 @@ include('/lib/utils/syntax.js');
                     }
                     block._data.push(obj);
                 }
-                
             }
         }
-    };
-    Repository.prototype.remove = function remove() {
 
+        return obj;
+    };
+    Repository.prototype.remove = function remove(typeName, attribute, value) {
+        var res = null;
+        var type = this.dataTypes[typeName];
+        if (type) {
+            var data = this.data[typeName];
+            var index = type.indices[attribute];
+            var contains = true;
+            if (index) {
+                var item = {};
+                item[attribute] = value;
+                var result = {};
+                contains = index.data.tryGet(item, result);
+            }
+
+            if (contains) {
+                for (var i=0; i<data.length; i++) {
+                    if (data[i][attribute] == value) {
+                        res = data.splice(i, 1)[0];
+                    }
+                }
+            }
+        }
+        return res;
     };
     Repository.prototype.get = function get(typeName, attribute, value) {
         var res = null;
@@ -226,6 +258,7 @@ include('/lib/utils/syntax.js');
                     for (var i=0; i<data.length; i++) {
                         if (data[i][attribute] == value) {
                             res = data[i];
+                            break;
                         }
                     }
                 }
@@ -274,7 +307,7 @@ include('/lib/utils/syntax.js');
     Repository.create = async function create(definition) {
         var errors = [];
         if (!Repository.grammar) {
-            await load('./repo-grammar.js');
+            await load('/lib/data/repo-grammar.js');
             Repository.syntax = new Syntax(Repository.grammar, false);
             Repository.syntax.createExpression = function createExpression() {
                 return new Expression(this);
@@ -289,9 +322,6 @@ include('/lib/utils/syntax.js');
         };
         schemaInfo.definition = await Schema.load(schemaInfo, definition, errors);
         if (errors.length > 0) throw new Error(errors.join('\n'));
-        for (var i=0; i<schemaInfo.definition.DataTypes.length; i++) {
-            schemaInfo.schema.buildType(schemaInfo.definition.DataTypes[i]);
-        }
         return new Repository(schemaInfo);
     };
     Repository.operator = function operator(left, right, node) {

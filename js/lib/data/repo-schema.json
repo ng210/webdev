@@ -6,7 +6,7 @@
             { "name":"name", "type":"string", "required":false },
             { "name":"type", "type":"ConstraintTypes", "required":true },
 
-            { "name":"entity", "type":"string", "required":false },
+            { "name":"entity", "type":"type", "required":false },
             { "name":"field", "type":"string", "required":false },
             { "name":"unique", "type":"bool", "required":false },
 

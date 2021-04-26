@@ -455,6 +455,11 @@
         if (t) {
             try {
                 var validateErrors = [];
+                for (var ai in t.attributes) {
+                    if (this.imports[ai] && !obj[ai]) {
+                        obj[ai] = this.imports[ai];
+                    }
+                }
                 t.validate(obj, validateErrors);
                 // any missing types during validation?
                 if (Object.keys(this.missingTypes).length > 0) {
@@ -483,9 +488,10 @@
                 definition.error = new Error("Imports failed!");
                 definition.error.details = errors;
             } else {
+                this.imports = {};
                 var ri = 0;
                 for (var i in imports) {
-                    var types = res[ri++].data;
+                    var types = this.imports[i] = res[ri++].data;
                     for (var ti=0; ti<types.length; ti++) {
                         this.buildType(types[ti]);
                     }
