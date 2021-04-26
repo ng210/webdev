@@ -473,7 +473,7 @@
             }
         }
     };
-    Schema.resolveImports = async function resolveImports(definition) {
+    Schema.prototype.resolveImports = async function resolveImports(definition) {
         var imports = definition.Imports;
         if (imports) {
             var links = Object.values(imports).map(x => { return { url:x, responseType:'json', charSet:'utf-8' }; });
@@ -484,9 +484,11 @@
                 definition.error.details = errors;
             } else {
                 var ri = 0;
-                //this.imports = {};
                 for (var i in imports) {
-                    definition[i] = res[ri++].data;
+                    var types = res[ri++].data;
+                    for (var ti=0; ti<types.length; ti++) {
+                        this.buildType(types[ti]);
+                    }
                 }
                 delete definition.Imports;
             }
@@ -505,7 +507,7 @@
                 if (res.error) errors.push(res.error);
             }
             if (!errors.length) {
-                definition = await Schema.resolveImports(res.data);
+                definition = await schemaInfo.schema.resolveImports(res.data);
                 if (definition.error) {
                     errors.push(definition.error);
                 } else {

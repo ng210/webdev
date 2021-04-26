@@ -1,13 +1,17 @@
 {
     "Imports" :{
-        "types": "./test/test-types.json"
+        "baka": "./test/test-types.json"
     },
+
+    "types": [
+        { "name":"ByteList", "type":"list", "elemType":"byte" }
+    ],
 
     "methods": [
         { "name":"Read",
             "arguments": [
                 { "name":"path", "type":"String256", "required":true },
-                { "name":"mode", "type":"Byte", "required":true }
+                { "name":"mode", "type":"ByteList", "required":true }
             ],
             "return":"string"
         },
