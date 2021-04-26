@@ -31,7 +31,7 @@ function print(node, color) {
 }
 
 function print_result(context, result) {
-    var lbl = context.lbl.replace(/&apos;/g, '\'');
+    var lbl = context.lbl.replace(/&apos;|&quot;/g, m => m == '&apos;' ? '\'' : '"');
     var errorText = 'Failed';
     if (result instanceof Error) {
         errorText += ' => <div class="error-details"><pre>ERROR: ' + result.stack.replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v])) + '</pre></div>';
@@ -39,7 +39,10 @@ function print_result(context, result) {
     var text = (context.errors == 0 && !result) ? `${lbl}..<span style="color:#40ff40">Ok</span>` : `${lbl}..<span style="color:#ff4040">${errorText}</span>`;
     var spans = Dbg.con.querySelectorAll('.test'); //Dbg.con.getElementsByTagName('span');
     for (var i=0; i<spans.length; i++) {
+        console.log(spans[i].innerHTML);
+        console.log(`${lbl}..[result]`);
         spans[i].innerHTML = spans[i].innerHTML.replace(`${lbl}..[result]`, text);
+        
     }
 }
 
@@ -276,15 +279,15 @@ async function onpageload(errors) {
     var url = new Url(location.href);
     var testUrl = new Url(`${url.fragment}/test.js`);
     Dbg.prln(`Load '${testUrl}'`);
+    var path = Url.relative(baseUrl, testUrl);
+    path = path.substr(0, path.lastIndexOf('/'));
+    self.appUrl = new Url(path);
     var module = await load(testUrl.toString());
     await load(new Url(`${url.fragment}/test.css`).toString());
     if (module && module.error == null && module.symbols != null) {
         var testName = Object.keys(module.symbols)[0];
         var test = module.symbols[testName];
         if (typeof test === 'function') {
-            var path = Url.relative(baseUrl.path, module.resolvedUrl.path);
-            path = path.substr(0, path.lastIndexOf('/'));
-            self.appUrl = new Url(path);
             Dbg.prln(`<b>Running '<i>${testName}</i>'...</b>`);
             var tests = test();
             for (var i=0; i<tests.length; i++) {
