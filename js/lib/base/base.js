@@ -71,11 +71,15 @@ self.inherits = function inherits(d, b) {
         xhr.responseType = options.responseType;
         xhr.setRequestHeader('Content-Type', options.contentType + '; charset=' + options.charSet);
         xhr.overrideMimeType(options.contentType + '; charset=' + options.charSet);
+        for (var i in options.headers) {
+            xhr.setRequestHeader(i, options.headers[i]);
+        }
         return xhr;
     },
     onReadyStateChange: function() {
         if (this.readyState == XMLHttpRequest.DONE) {
             this.options.response = this.response;
+            this.options.statusCode = this.status;
             if (this.status < 200 || this.status >= 400) {
                 // create error object
                 var sb = [this.options.url];
@@ -625,10 +629,14 @@ self.include = async function include(path, parentPath) {
     if (path.startsWith('/')) {
         searchPath = [self.baseUrl];
         path = path.substr(1);
+    } else if (path.startsWith('./')) {
+        searchPath = [self.appUrl];
+        path = path.substr(2);
     } else {
         searchPath = [parentPath, self.baseUrl.toString()];
         searchPath.push(...Resource.searchPath);
     }
+
     var attempts = [];
     for (var i=0; i<searchPath.length; i++) {
         var url = searchPath[i] + '/' + path;

@@ -4,10 +4,17 @@
         this.name = name;
         this.baseType = type;
         this.constraints = [];
+        if (type) {
+            for (var i=0; i<type.constraints.length; i++) {
+                this.addConstraint(type.constraints[i]);
+            }
+        } else {
+            this.addConstraint(Schema.checkType);
+        }
+
         this.isNumeric = false;
         this.isReference = false;
         this.schema = null;
-        this.addConstraint(this, Schema.checkType);
     }
     Object.defineProperties(Type.prototype, {
         "basicType": {
@@ -18,9 +25,9 @@
             }
         }
     });
-    Type.prototype.addConstraint = function addConstraint(obj, fn) {
-        if (this.constraints.find(x => x.fn == fn) == null) {
-            this.constraints.push({obj: obj, fn: fn});
+    Type.prototype.addConstraint = function addConstraint(fn) {
+        if (!this.constraints.includes(fn)) {
+            this.constraints.push(fn);
         }
     };
     Type.prototype.validate = function validate(value, results) {
@@ -35,7 +42,7 @@
             for (var i=0; i<this.constraints.length; i++) {
                 try {
                     var cst = this.constraints[i];
-                    cst.fn.call(cst.obj, value, results);
+                    var hasError = cst.call(this, value, results);
                 } catch (err) {
                     results.push(new Schema.ValidationResult(i, err));
                 }
@@ -53,7 +60,7 @@
         SimpleType.base.constructor.call(this, name, baseType);
         this.min = NaN;
         this.max = NaN;
-        this.length = -1;
+        this.length = 0;
         this.elemType = null;
         this.values = null;
         if (baseType) {
@@ -64,29 +71,29 @@
                 case 'length':
                     if (args.length) {
                         this.length = args.length;
-                        this.addConstraint(this, Schema.checkLength);
+                        this.addConstraint(Schema.checkLength);
                     }
                     break;
                 case 'elemType':
                     this.elemType = args.elemType;
-                    this.addConstraint(this, Schema.checkElemType);
+                    this.addConstraint(Schema.checkElemType);
                     break;
                 case 'values':
                     this.values = args.values;
-                    this.addConstraint(this, Schema.checkEnum);
+                    this.addConstraint(Schema.checkEnum);
                     break;
                 case 'min':
                     this.min = args.min;
-                    this.addConstraint(this, Schema.checkRange);
+                    this.addConstraint(Schema.checkRange);
                     break;
                 case 'max':
                     this.max = args.max;
-                    this.addConstraint(this, Schema.checkRange);
+                    this.addConstraint(Schema.checkRange);
                     break;
                 case 'keyValue':
                     this.keyType = args.keyValue[0] || Schema.Types.STRING;
                     this.valueType = args.keyValue[1] || Schema.Types.STRING;
-                    this.addConstraint(this, Schema.checkKeyValue);
+                    this.addConstraint(Schema.checkKeyValue);
                     break;
                 case 'schema':
                     this.schema = args.schema;
@@ -354,8 +361,9 @@
         // - attributes: list of types
         var res = null;
         var type = this.getOrBuildType(obj.type || Schema.Types.OBJECT);
+        var basicType = type.basicType;
         if (type) {
-            if (type.basicType.name == Schema.Types.OBJECT) {
+            if (basicType.name == Schema.Types.OBJECT) {
                 // complex type
                 var name = obj.name || `Complex${Object.keys(this.types).length}`;
                 debug_('build complex type ' + name, 2);
@@ -381,12 +389,12 @@
                 var name = obj.name || `${type.name.substr(0, 1).toUpperCase()}${type.name.substr(1)}${Object.keys(this.types).length}`;
                 var args = {};
                 debug_('build simple type ' + name, 2);
-                switch (type.name) {
+                switch (basicType.name) {
                     case Schema.Types.STRING:
-                        args.length = obj.length;
+                        args.length = obj.length || type.length;
                         break;
                     case Schema.Types.LIST:
-                        args.length = obj.length;
+                        args.length = obj.length || type.length;
                         args.elemType = null;
                         if (obj.elemType) {
                             var elemType = this.getOrBuildType(obj.elemType);
@@ -395,20 +403,22 @@
                                 this.missingTypes[obj.elemType].push({'path':`${name}.elemType`});
                             }
                             args.elemType = elemType;
+                        } else {
+                            args.elemType = type.elemType;
                         }
                         break;
                     case Schema.Types.ENUM:
-                        args.values = obj.values;
+                        args.values = obj.values != undefined ? obj.values : type.values;
                         break;
                     case Schema.Types.INT:
                     case Schema.Types.FLOAT:
-                        args.min = obj.min != undefined ? obj.min : Number.NEGATIVE_INFINITY;
-                        args.max = obj.max != undefined ? obj.max : Number.POSITIVE_INFINITY;
+                        args.min = obj.min != undefined ? obj.min : (type.min != undefined ? type.min : Number.NEGATIVE_INFINITY);
+                        args.max = obj.max != undefined ? obj.max : (type.max != undefined ? type.max : Number.POSITIVE_INFINITY);
                         break;
                     case Schema.Types.MAP:
-                        var keyType = this.getOrBuildType(obj.key || Schema.Types.STRING);
+                        var keyType = obj.key != undefined ? this.getOrBuildType(obj.key) : type.keyType || Schema.Types.STRING;
                         if (keyType.name != Schema.Types.STRING && keyType.name != Schema.Types.INT ) throw new Error(`Invalid key type ${keyType.name}!`);
-                        var valueType = this.getOrBuildType(obj.value);
+                        var valueType = obj.value != undefined ? this.getOrBuildType(obj.value) : type.valueType || Schema.Types.STRING;
                         if (!valueType) {
                             this.missingTypes[valueType].push({'path':`${name}.valueType`});
                         }
@@ -474,6 +484,7 @@
                 definition.error.details = errors;
             } else {
                 var ri = 0;
+                //this.imports = {};
                 for (var i in imports) {
                     definition[i] = res[ri++].data;
                 }
@@ -508,7 +519,7 @@
 
     //#region CHECK METHODS
     Schema.checkList = function checkList(list, type, label, results) {
-        var hasErrors = false;
+        var isOk = true;
         results = results || [];
         label = label || 'value';
         for (var i=0; i<list.length; i++) {
@@ -516,83 +527,97 @@
             for (var j=0; j<res.length; j++) {
                 res[j].field.push(i);
                 results.push(new Schema.ValidationResult(res[j].field, `Invalid ${label} - ${res[j].message}`));
-                hasErrors = true;
+                isOk = false;
             }
         }
-        return hasErrors;
+        return isOk;
     };
     Schema.checkType = function checkType(value, results) {
-        var res = false;
+        var isOk = false;
         var type = (typeof value).toUpperCase();
         if (this.name == Schema.Types.TYPE) {
             var it = this.schema.getOrBuildType(value);
-            if (typeof value === 'object' && value.name == undefined) {
-                value.name = it.name;
+            if (it != null) {
+                if (typeof value === 'object' && value.name == undefined) {
+                    type = value.name = it.name;
+                } else if (typeof value === 'string') {
+                    type = value;
+                }
+                isOk = true;
             }
-            res = it != null;
         } else {
             var basicType = this.basicType;
             switch (type) {
                 case 'BOOLEAN':
-                    res = basicType.name == Schema.Types.BOOL;
+                    isOk = basicType.name == Schema.Types.BOOL;
                     break;
                 case 'NUMBER':
                     switch (basicType.name) {
-                        case Schema.Types.INT: type = Schema.Types.INT; res = parseInt(value) == value; break;
-                        case Schema.Types.FLOAT: type = Schema.Types.FLOAT; res = parseFloat(value) == value; break;
+                        case Schema.Types.INT: type = Schema.Types.INT; isOk = parseInt(value) == value; break;
+                        case Schema.Types.FLOAT: type = Schema.Types.FLOAT; isOk = parseFloat(value) == value; break;
                     }
                     break;
                 case 'OBJECT':
-                    res = basicType.name == Schema.Types.OBJECT || basicType.name == Schema.Types.MAP || Array.isArray(value) && basicType.name == Schema.Types.LIST;
+                    isOk = basicType.name == Schema.Types.OBJECT || basicType.name == Schema.Types.MAP || Array.isArray(value) && basicType.name == Schema.Types.LIST;
                     break;
                 case 'STRING':
-                    res = basicType.name == Schema.Types.STRING || basicType.name == Schema.Types.ENUM;
+                    isOk = basicType.name == Schema.Types.STRING || basicType.name == Schema.Types.ENUM;
                     break;
                 default:
-                    res = false;
+                    isOk = false;
             }
         }
-        if (!res) {
-            results.push(new Schema.ValidationResult(null, `Type mismatch (expected ${basicType.name}, received ${type})`));
+        if (!isOk) {
+            results.push(new Schema.ValidationResult(null, `Type mismatch (expected ${this.basicType.name}, received ${type})`));
         }
-        return res;
+        return isOk;
     };
     Schema.checkLength = function checkLength(value, results) {
-        var res = true;
+        var isOk = true;
         if (this.length < value.length) {
             results.push(new Schema.ValidationResult(null, `Length of ${this.name} is ${value.length} greater than the allowed ${this.length}!`));
+            isOk = false;
         }
-        return res;
+        return isOk;
     };
     Schema.checkRange = function checkRange(value, results) {
-        var res = true;
+        var isOk = true;
         if (this.min != undefined && this.min > value) {
             results.push(new Schema.ValidationResult(null, `Value of ${this.name} is less than allowed (${value} < ${this.min})!`));
+            isOk = false;
         }
         if (this.max < value) {
             results.push(new Schema.ValidationResult(null, `Value is greater than allowed (${value} > ${this.max})!`));
+            isOk = false;
         }
-        return res;
+        return isOk;
     };
     Schema.checkElemType = function checkElemType(value, results) {
-        return (Array.isArray(value)) ? Schema.checkList(value, this.elemType, 'element', results) : results;
+        var isOk = false;
+        if (Array.isArray(value)) {
+            isOk = Schema.checkList(value, this.elemType, 'element', results);
+        } else {
+            results.push(new Schema.ValidationResult(null, `Value is not a list!`));
+        }
+        return isOk;
     };
     Schema.checkEnum = function checkEnum(value, results) {
-        var res = this.values.includes(value);
-        if (!res) {
+        var isOk = this.values.includes(value);
+        if (!isOk) {
             if (this.name == 'Types') {
                 var sch = this.schema;
                 if (!sch.missingTypes[value]) sch.missingTypes[value] = 0;
                 sch.missingTypes[value]++;
+                results.push(new Schema.ValidationResult(null, `Missing type ${value}!`))
             } else {
                 results.push(new Schema.ValidationResult(null, `Invalid item ${value}, allowed values are ${this.values}!`))
             }
         }
-        return res;
+        return isOk;
     };
     Schema.checkKeyValue = function checkKeyValue(value, results) {
         var keys = Object.keys(value);
-        var hasKeyErrors = false;
+        var areKeysOk = true;
         var basicType = this.keyType.basicType;
         for (var i=0; i<keys.length; i++) {
             var key = keys[i];
@@ -601,7 +626,7 @@
                 key = parseInt(key);
                 if (isNaN(key) || key.toString() != keys[i]) {
                     isKeyValid = false;
-                    hasKeyErrors = true;
+                    areKeysOk = false;
                     results.push(new Schema.ValidationResult(i, `Invalid key: Type mismatch (expected ${basicType.name}, received ${typeof keys[i]})`));
                 }
             }
@@ -610,12 +635,12 @@
                 for (var j=0; j<res.length; j++) {
                     res[j].field.unshift(i);
                     results.push(res[j]);
-                    hasKeyErrors = true;
+                    areKeysOk = false;
                 }
             }
         }
-        var hasValueErrors = Schema.checkList(Object.values(value), this.valueType, 'value', results);
-        return hasKeyErrors || hasValueErrors;
+        var areValuesOk = Schema.checkList(Object.values(value), this.valueType, 'value', results);
+        return areKeysOk || areValuesOk;
     };
 //     Schema.checkAttributes = function checkAttributes(value, results) {
 //         var errorCount = results.length;

@@ -1,5 +1,5 @@
 (function() {
-    include('data/graph.js');
+    include('/lib/data/graph.js');
 
     var rs = r => `${r.priority} ${r.input}(${r.in.join('.')})=>${r.output}(${r.out})`
 
@@ -191,7 +191,7 @@
         return this.tree.createVertex(node);
     };
 
-     function Syntax(grammar, debug) {
+    function Syntax(grammar, debug) {
         this.isDebug = debug;
         this.grammar = grammar;
 

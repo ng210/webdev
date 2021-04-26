@@ -13,7 +13,7 @@
         },
         { "name":"Write",
             "arguments": [
-                { "name":"path", "type":"string256", "required":true },
+                { "name":"path", "type":"String256", "required":true },
                 { "name":"length", "type":"Word", "required":true },
                 { "name":"data", "type":"string", "required":true }
             ],

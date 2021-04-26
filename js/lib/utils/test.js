@@ -62,10 +62,8 @@ include('schema.js');
             ctx.assert(type.elemType, 'null');
             var cst = type.constraints;
             ctx.assert(cst.length, '=', 2);
-            ctx.assert(cst[0].obj, '=', type);
-            ctx.assert(cst[0].fn, '=', Schema.checkType);
-            ctx.assert(cst[1].obj, '=', type);
-            ctx.assert(cst[1].fn, '=', Schema.checkLength);
+            ctx.assert(cst[0], '=', Schema.checkType);
+            ctx.assert(cst[1], '=', Schema.checkLength);
         });
         var text = "0123456789";
         test(`Should accept "${text}"`, ctx => {
@@ -103,10 +101,8 @@ include('schema.js');
             ctx.assert(type.elemType, 'null');
             var cst = type.constraints;
             ctx.assert(cst.length, '=', 2);
-            ctx.assert(cst[0].obj, '=', type);
-            ctx.assert(cst[0].fn, '=', Schema.checkType);
-            ctx.assert(cst[1].obj, '=', type);
-            ctx.assert(cst[1].fn, '=', Schema.checkRange);
+            ctx.assert(cst[0], '=', Schema.checkType);
+            ctx.assert(cst[1], '=', Schema.checkRange);
         });
         var num = 12;
         test(`Should accept ${num}`, ctx => {
@@ -139,12 +135,9 @@ include('schema.js');
             ctx.assert(type.elemType, '=', schema.types.Int100);
             var cst = type.constraints;
             ctx.assert(cst.length, '=', 3);
-            ctx.assert(cst[0].obj, '=', type);
-            ctx.assert(cst[0].fn, '=', Schema.checkType);
-            ctx.assert(cst[1].obj, '=', type);
-            ctx.assert(cst[1].fn, '=', Schema.checkLength);
-            ctx.assert(cst[2].obj, '=', type);
-            ctx.assert(cst[2].fn, '=', Schema.checkElemType);
+            ctx.assert(cst[0], '=', Schema.checkType);
+            ctx.assert(cst[1], '=', Schema.checkLength);
+            ctx.assert(cst[2], '=', Schema.checkElemType);
         });
         var arr = [1,2,3,4,5];
         test(`Should accept ${arr}`, ctx => {
@@ -232,7 +225,6 @@ include('schema.js');
             message_errors(errors);
             ctx.assert(errors.length, '=', 2);
         });
-
         schema.buildType({ name:'MyObject', type:Schema.Types.OBJECT, sealed:true, attributes: [
             { name:"id", type:"int" },
             { name:"text", type:"string" },
@@ -265,13 +257,18 @@ include('schema.js');
             ctx.assert(errors.length, '=', 0);
         });
 
-        schema.buildType({ name:'MySuperObject', attributes: [
-            { name:"sid", type:"int" },
-            { name:"guid", type:"string" },
-            { name:"parent", type:"MySuperObject" },
-            { name:"children", type:"MyObjectList"}
+        schema.buildType({ name:'MySuperObject',
+            type:"MyObject",
+            attributes: [
+                { name:"sid", type:"int" },
+                { name:"guid", type:"string" },
+                { name:"parent", type:"MySuperObject" },
+                { name:"children", type:"MyObjectList"}
         ]});
         var superObject = {
+            id: 1,
+            text: "Hello",
+            map: {1:'one', 2:'two', 3:'three'},
             sid: 12,
             guid: "a213-124f",
             parent: null,
@@ -406,8 +403,8 @@ include('schema.js');
     }
 
     var tests = () => [
-        test_syntax,
-        test_schema,
+        //test_syntax,
+        //test_schema,
         test_load_schema
     ];
 
