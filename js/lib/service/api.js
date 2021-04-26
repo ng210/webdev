@@ -1,4 +1,5 @@
 include('/lib/utils/schema.js');
+
 if (ISNODEAPP) {
     self.http = require('http');
 }
@@ -16,7 +17,9 @@ if (ISNODEAPP) {
     function Endpoint(id, api, def, handler) {
         this.id = id;
         this.api = api;
+        this.resourceType = def.resource;
         this.method = Api.actionVerbMap[def.method] || def.method;
+        this.access = def.access || (this.resourceType ? `${def.method.toLowerCase()}_${this.resourceType.name.toLowerCase()}` : null);
         this.request = mergeObjects(def.request);
         configTransfer(this.request.mimeType, this.request);
         this.response = mergeObjects(def.response);
@@ -37,6 +40,7 @@ if (ISNODEAPP) {
             var methods = {};
             this.id = this.definition.id;
             this.url = new Url(this.definition.url);
+            this.authorization = this.definition.authorization;
             if (!this.url.path.endsWith('/')) this.url.path += '/';
             // create endpoints
             this.endpoints = {};
@@ -55,7 +59,8 @@ if (ISNODEAPP) {
             }
             // create resources
             var def = {
-                "method": '',
+                "method": "",
+                "resource": "",
                 "request": {
                     "mimeType": "application/json",
                     "arguments": null
@@ -68,6 +73,7 @@ if (ISNODEAPP) {
             for (var i=0; i<this.definition.Resources.length; i++) {
                 var res = this.definition.Resources[i];
                 var resourceType = this.schema.types[res.type];
+                def.resource = resourceType;
                 var resId = res.id || resourceType.name.toLowerCase();
                 def.response.type = resourceType.name;
                 for (var j=0; j<res.methods.length; j++) {
@@ -80,7 +86,7 @@ if (ISNODEAPP) {
                         case 'update':
                             def.request.arguments = [ { "name":"res", "type":resourceType.name } ];
                             break;
-                        case 'retrieve':
+                        case 'read':
                         case 'delete':
                             def.request.arguments = [ { "name":res.key, "type":resourceType.attributes[res.key].type.name } ];
                             break;
@@ -94,25 +100,46 @@ if (ISNODEAPP) {
                 }
             }
             this.methods = Object.keys(methods);
+
+            if (this.authorization) {
+                // create login endpoint
+                this.endpoints.login = {
+                    post:  this.createEndpoint('login', {
+                            "method": "post",
+                            "request": {
+                                "mimeType": "application/json",
+                                "arguments": [
+                                    { "name":"id", "type":"string" },
+                                    { "name":"password", "type":"string" }
+                                ]
+                            },
+                            "response": {
+                                "mimeType": "application/json",
+                                "type": "string"
+                            }
+                        })
+                };
+            }
         }
     }
     Api.prototype.createEndpoint = function createEndpoint(id, def) {
         throw new Error('Not implemented!');
     };
-    Api.prototype.resourceAction = function resourceAction(arg, type, method) {
+    Api.prototype.resourceAction = function resourceAction(id, type, method) {
         // get type
         if (typeof type === 'string') type = this.schema.types[type];
         // call endpoint
         var verb = Api.actionVerbMap[method.toLowerCase()] || method;
-        var resp = this.endpoints[type.name.toLowerCase()][verb].call(arg);
+        var res = type.name.toLowerCase();
+        var resp = id != null ? this.endpoints[res][verb].call(id) : this.endpoints[res][verb].call();
         return resp;
     };
 
     Api.prototype.create = function create(obj, type) {
         return this.resourceAction(obj, type, 'create');
     };
-    Api.prototype.retrieve = function retrieve(id, type) {
-        return this.resourceAction(id, type, 'retrieve');
+    Api.prototype.read = function read(id, type) {
+        return this.resourceAction(id, type, 'read');
     };
     Api.prototype.update = function update(obj, type) {
         return this.resourceAction(obj, type, 'update');
@@ -132,8 +159,31 @@ if (ISNODEAPP) {
         var ep = new Endpoint(id, this, def, ApiClient.endpointCall);
         return ep;
     };
+    ApiClient.prototype.addAuthorization = function addAuthorization(options) {
+        if (this.authorization) {
+            // get token from local store
+            var token = localStorage.getItem(this.id + '-token');
+            if (token) options.headers.authorization = 'Bearer ' + token;
+        }
+    };
+    ApiClient.prototype.login = async function login(id, password) {
+        var result = null;
+        if (this.endpoints.login) {
+            result = await this.endpoints.login.post.call(id, password)
+            if (result.statusCode == 200) {
+                localStorage.setItem(this.id + '-token', result.data);
+                result = result.data;
+            } else {
+                var error = new Error('Login failed!');
+                error.statusCode = result.statusCode;
+                error.status = result.data;
+                result = error;
+            }
+        }
+        return result;
+    };
     ApiClient.endpointCall = async function ApiClientEndpointCall() {
-        var res = null;
+        var resp = { error:null, data:null, statusCode:200 };
         // validate args
         var argKeys = [];
         var argValues = [];
@@ -141,7 +191,8 @@ if (ISNODEAPP) {
         var options = {
             url: this.api.url + this.id,
             data: null,
-            method: this.method
+            method: this.method,
+            headers: {}
         };
         for (var i=0; i<arguments.length; i++) {
             var arg = arguments[i];
@@ -154,6 +205,7 @@ if (ISNODEAPP) {
         if (results.length == 0) {
             if (this.request.mimeType && this.request.mimeType != '*') options.contentType = this.request.mimeType;
             if (this.request.responseType) options.responseType = this.request.responseType;
+            if (this.response.responseType) options.responseType = this.response.responseType;
             if (this.request.charSet) options.contentType += '; charset=' + this.request.charSet;
             if (this.method == 'get') {
                 if (argKeys.length > 0) {
@@ -167,25 +219,31 @@ if (ISNODEAPP) {
             } else {
                 options.data = JSON.stringify(argValues);
             }
+
+            this.api.addAuthorization(options);
             // start ajax call
             await ajax.send(options);
-            
-            if (options.error) res = options.error;
-            var res = await ajax.processContent(options);
-            // validate response
-            var respType = this.response.type;
-            var type = typeof respType === 'string' ? this.api.schema.types[respType] : this.api.schema.types[respType.name];
-            var results = type.validate(res);
-            if (results.length > 0) {
-                res = new Error('Invalid response received!');
-                res.details = results;
+            resp.statusCode = options.statusCode;
+            if (options.response != null) {
+                resp.data = await ajax.processContent(options);
+            }
+            resp.error = options.error;
+            if (resp.statusCode == 200) {
+                // validate response
+                var respType = this.response.type;
+                var type = typeof respType === 'string' ? this.api.schema.types[respType] : this.api.schema.types[respType.name];
+                var results = type.validate(resp.data);
+                if (results.length > 0) {
+                    resp.error = new Error('Invalid response received!');
+                    resp.error.details = results;
+                }
             }
         } else {
-            options.error = new Error('Validation errors');
-            options.error.details = results;
-            res = Promise.resolve(options)
+            resp.error = new Error('Validation errors');
+            resp.error.details = results;
+            //res = Promise.resolve(options)
         }
-        return res;
+        return resp;
     };
 
     //#endregion
@@ -201,12 +259,9 @@ if (ISNODEAPP) {
         ApiServer.base.constructor.call(this, schemaInfo);
         if (this.definition) {
             this.fileUrl = new Url(this.url.path);
+            // create Info endpoint
             var p = this.createEndpoint('', {
                 "method": "get",
-                "request": {
-                    "mimeType": "*",
-                    "arguments": []
-                },
                 "response": {
                     "mimeType": "application/json",
                     "type": "Service"
@@ -216,8 +271,26 @@ if (ISNODEAPP) {
                 this.endpoints[''] = { get: p };
             }
         }
+        this.tokens = [];
     }
     extend(Api, ApiServer);
+
+    ApiServer.prototype.createToken = function createToken(userId) {
+        var token = {
+            id: Api.TOKEN_COUNTER++,
+            uid: userId,
+            expires: new Date().getTime() + (this.tokenExpiration || 3600000)
+        };
+        var ix = this.tokens.findIndex(x => x.uid == userId);
+        if (ix != -1) {
+            // replace token
+            this.tokens[ix] = token;
+        } else {
+            // store token
+            this.tokens.push(token);
+        }
+        return token;
+    };
 
     ApiServer.prototype.createEndpoint = function ApiServerCreateEndpoint(id, def) {
         var handler = this[`${def.method}_${id}`];
@@ -273,16 +346,16 @@ if (ISNODEAPP) {
     };
     
     ApiServer.prototype.processRequest = function processRequest(req, resp, reqBody) {
+        var headers = {};
         reqBody = Buffer.concat(reqBody).toString();
         if (reqBody.length == 0) reqBody = null;
         debug_(`Request from ${req.headers.referer} to ${req.url} (${req.method}) received.`, 1);
         // route request to the handler
         resp.statusCode = 200;
         var reqUrl = new Url(req.url);
-        var ix = reqUrl.path.indexOf(this.fileUrl.path);
         var body = null;
         var method = req.method.toLowerCase();
-        //var contentType = 'application/json';
+        var ix = reqUrl.path.indexOf(this.fileUrl.path);
         if (ix != 0) {
             resp.statusCode = 404;
             body = 'Invalid path!';
@@ -290,12 +363,14 @@ if (ISNODEAPP) {
             var path = reqUrl.path.substr(this.fileUrl.path.length+1);
             var ep = this.endpoints[path];
             if (ep) {
-                var endpoint = ep[method];
                 if (this.checkCORS(ep, req, resp)) {
+                    var endpoint = ep[method];
                     if (method != 'options') {
                         if (endpoint && endpoint.call) {
                             var args = [];
                             var results = [];
+
+                            //#region get call parameters from request
                             if (method == 'get') {
                                 for (var i in reqUrl.query) {
                                     var arg = endpoint.request.arguments.find(x => x.name == i);
@@ -314,53 +389,106 @@ if (ISNODEAPP) {
                                     }
                                 }
                             }
-                            // validate input
-                            for (var i=0; i<endpoint.request.arguments.length; i++) {
-                                var typeName = endpoint.request.arguments[i].type;
-                                if (typeof typeName === 'object') typeName = type.name;
-                                var type = this.schema.types[typeName];
-                                if (!type) {
-                                    results.push(new Schema.ValidationResult(i, 'Request argument has unknown type!'));
-                                } else {
-                                    type.validate(args[i], results);
+                            //#endregion
+                            
+                            //#region validate input
+                            if (endpoint.request.arguments) {
+                                for (var i=0; i<endpoint.request.arguments.length; i++) {
+                                    var typeName = endpoint.request.arguments[i].type;
+                                    if (typeof typeName === 'object') typeName = type.name;
+                                    var type = this.schema.types[typeName];
+                                    if (!type) {
+                                        results.push(new Schema.ValidationResult(i, 'Request argument has unknown type!'));
+                                    } else {
+                                        type.validate(args[i], results);
+                                    }
                                 }
                             }
+                            //#endregion
 
+                            //#region make call
                             if (results.length != 0) {
                                 resp.statusCode = 400;
                                 body = JSON.stringify(results);
                             } else {
-                                args.push(req, resp);
-                                body = endpoint.call.apply(endpoint, args);
-                                console.info(`Request handled by ${endpoint.call.name}`);
-
-                                // validate output
-                                switch (endpoint.response.mimeType) {
-                                    case 'application/json':
-                                        try {
-                                            body = JSON.stringify(body);
-                                        } catch (err) {
-                                            debugger
-                                        }
-                                        break;
+                                if (!this.authorization || this.authorize(endpoint, req, resp)) {
+                                    args.push(req, resp);
+                                    body = endpoint.call.apply(endpoint, args);
+                                    console.info(`Request handled by ${endpoint.call.name}`);
+                                    // validate output
+                                    switch (endpoint.response.mimeType) {
+                                        case 'application/json':
+                                            try {
+                                                if (body) {
+                                                    body = JSON.stringify(body);
+                                                }
+                                            } catch (err) {
+                                                debugger
+                                            }
+                                            break;
+                                    }
                                 }
-                                resp.setHeader('Content-Type', endpoint.response.mimeType);
                             }
+                            //#endregion
                         } else {
                             resp.statusCode = 405;
                             body = 'Method not supported!'
                         }
+                        // set endpoint-related headers here
+if (!endpoint) debugger
+                        resp.setHeader('Content-Type', endpoint.response.mimeType || 'plain/text');
                     }
                 }
-                resp.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+                // set Access-Control-Allow-Headers
+                var headers = resp.getHeaderNames().select(x => !x.toLowerCase().startsWith('access-control-'));
+                if (this.authorization) headers.push('authorization');
+                // add general headers
+                headers.push('content-type');
+                resp.setHeader('Access-Control-Allow-Headers', headers);
             } else {
                 resp.statusCode = 404;
                 body = 'Path not defined!';
             }
         }
+        if (resp.statusCode != 200 && !body) {
+            var error = 'Unhandled error!';
+            switch (resp.statusCode) {
+                case 401: error = 'Unauthorized access!'; break;
+                case 403: error = 'Access denied!'; break;
+            }
+            body = `{"error":"${error}"}`;
+        }
         if (body != undefined) resp.write(body);
         resp.end();
         debug_(`Response with status ${resp.statusCode} sent.`, 1);
+    };
+
+    ApiServer.prototype.authorize = function authorize(endpoint, req, resp) {
+        var identity = Api.ZERO_IDENTITY;
+        var result = true;
+        // has endpoint access control?
+        if (endpoint.access) {
+            var token = null;
+            // get token from header
+            if (req.headers.authorization) {
+                var match = req.headers.authorization.match(/bearer\s(\w+)/i);
+                if (match && match[1]) {
+                    token = JSON.parse(atob(match[1]));
+                    var now = new Date().getTime();
+                    if (this.tokens.find(x => x.uid == token.uid && x.id == token.id && x.expires > now)) {
+                        // token is valid
+                        identity = token.uid;
+                    }
+                }
+            }
+            if (!token) {
+                resp.statusCode = 403;
+                result = false;
+            } else {
+                result = this.checkAccess(endpoint, identity, req, resp);
+            }
+        }
+        return result
     };
 
     ApiServer.prototype.checkCORS = function checkCORS(endpoint, req, resp) {
@@ -378,11 +506,30 @@ if (ISNODEAPP) {
 
         // methods
         resp.setHeader('Access-Control-Allow-Methods', this.methods);
-
         return res;
     };
 
+    ApiServer.prototype.checkAccess = function checkAccess(endpoint, id, req, resp) {
+        return true;
+    };
+
+    ApiServer.prototype.post_login = function post_login(id, passw, req, resp) {
+        var result = null;
+        if (typeof this.api.login === 'function') {
+            result = this.api.login(id, passw);
+        }
+        if (!result) {
+            resp.statusCode = 401;
+            //result = 'Authentication failed!';
+        } else {
+            result.remote = req.socket.remoteAddress;
+            result = btoa(JSON.stringify(result));
+        }
+        return result;
+    };
+
     ApiServer.prototype.get_ = function get_() {
+debugger
         return this.api.definition;
     };
     //#endregion
@@ -391,10 +538,16 @@ if (ISNODEAPP) {
     Api.mimeTypeMap = null;
     Api.actionVerbMap = {
         'create': 'post',
-        'retrieve': 'get',
+        'read': 'get',
         'update': 'put',
         'delete': 'delete'
     };
+    Api.verbActionMap = (function() {
+        var map = {};
+        for (var i in Api.actionVerbMap) {
+            map[Api.actionVerbMap[i]] = i;
+        }
+    })();
     Api.schemaInfo = {
         schemaDefinition: '/lib/service/service-schema.json',
         schema: null,
@@ -424,8 +577,11 @@ if (ISNODEAPP) {
             throw new Error(errors.join('\n'));
         } else {
             // create ApiServer instance
+            for (var i=0; i<schemaInfo.definition.DataTypes.length; i++) {
+                schemaInfo.schema.buildType(schemaInfo.definition.DataTypes[i]);
+            }
             api = Reflect.construct(ApiType, [schemaInfo]);
-            if (typeof api.initalize === 'function') {
+            if (typeof api.initialize === 'function') {
                 await api.initialize();
             }
         }
@@ -447,6 +603,9 @@ if (ISNODEAPP) {
         }
         return api;
     };
+
+    Api.ZERO_IDENTITY = 0;
+    Api.TOKEN_COUNTER = 1;
     //#endregion
 
     publish(Api, 'Api');

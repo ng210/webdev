@@ -6,8 +6,8 @@
     "id":"testsrv",
     "url":"http://localhost:4000/js/service/test-service/",
     "Resources": [
-        { "id": "res1", "type":"Res", "key":"id", "methods": ["CREATE", "RETRIEVE", "UPDATE"] },
-        { "id": "res2", "type":"Res", "key":"id", "methods": ["CREATE", "RETRIEVE", "UPDATE", "DELETE"] }
+        { "id": "res1", "type":"Res", "key":"id", "methods": ["CREATE", "READ", "UPDATE"] },
+        { "id": "res2", "type":"Res", "key":"id", "methods": ["CREATE", "READ", "UPDATE", "DELETE"] }
     ],
     "Endpoints": [
         { "id":"bind",
@@ -29,22 +29,6 @@
                                 { "name":"res2", "type":"Res" }
                             ]
                         }
-                    }
-                }
-            ]
-        },
-        { "id":"stats",
-            "calls": [
-                {   "method": "GET",
-                    "request":{
-                        "mimeType": "application/json",
-                        "arguments": [
-                            { "name":"id", "type":"int" }
-                        ]
-                    },
-                    "response": {
-                        "mimeType": "application/json",
-                        "type": { "type":"map", "key":"int", "value":"Res" }
                     }
                 }
             ]

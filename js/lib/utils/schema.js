@@ -455,9 +455,11 @@
         if (t) {
             try {
                 var validateErrors = [];
-                for (var ai in t.attributes) {
-                    if (this.imports[ai] && !obj[ai]) {
-                        obj[ai] = this.imports[ai];
+                if (this.imports) {
+                    for (var ai in t.attributes) {
+                        if (this.imports[ai] && !obj[ai]) {
+                            obj[ai] = this.imports[ai];
+                        }
                     }
                 }
                 t.validate(obj, validateErrors);

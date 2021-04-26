@@ -24,7 +24,7 @@ include('/lib/service/api.js');
     TestApi.prototype.create_res1 = function create_res1(res1) {
         return res1;
     };
-    TestApi.prototype.retrieve_res1 = function retrieve_res1(id) {
+    TestApi.prototype.read_res1 = function read_res1(id) {
         var res = createResponse(this)
         res.id = id;
         return res;
@@ -41,7 +41,7 @@ include('/lib/service/api.js');
     TestApi.prototype.update_res2 = function update_res2(res1) {
         return res1;
     };
-    TestApi.prototype.retrieve_res2 = function retrieve_res2(id) {
+    TestApi.prototype.read_res2 = function read_res2(id) {
         var res = createResponse(this);
         res.id = id;
         return res;

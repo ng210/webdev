@@ -1,10 +1,12 @@
 [
     { "name":"String10", "type":"string", "length":10 },
-    { "name":"Methods", "type":"enum", "values": ["CREATE", "RETRIEVE", "UPDATE", "DELETE"] },
+    { "name":"Methods", "type":"enum", "values": ["CREATE", "READ", "UPDATE", "DELETE"] },
     { "name":"MethodsList", "type":"list", "elemType":"Methods" },
     { "name":"Verbs", "type":"enum", "values": ["POST", "GET", "PUT", "DELETE"] },
     { "name":"VerbList", "type":"list", "elemType":"Verbs" },
     { "name":"MimeTypes", "type":"enum", "values": ["application/json"] },
+    { "name":"Authorization", "type":"enum", "values": ["Basic"] },
+    
 
     { "name":"HttpRequest",
         "attributes": [
@@ -23,6 +25,7 @@
     { "name":"Call",
         "attributes": [
             { "name":"method", "type":"Verbs" },
+            { "name":"access", "type":"string" },
             { "name":"request", "type":"HttpRequest" },
             { "name":"response", "type":"HttpResponse" }
         ]
@@ -39,7 +42,7 @@
     { "name": "Resource",
         "attributes": [
             { "name":"id", "type":"String10", "required":false },
-            { "name":"type", "type":"String10", "required":true },
+            { "name":"type", "type":"type", "required":true },
             { "name":"key", "type":"String10", "required":false },
             { "name":"methods", "type":"MethodsList" }
         ]
@@ -54,6 +57,7 @@
         "attributes": [
             { "name":"id", "type":"String10", "required":true },
             { "name":"url", "type":"string", "required":true },
+            { "name":"authorization", "type":"Authorization" },
             { "name":"DataTypes", "type":"DataTypeList" },
             { "name":"Resources", "type":"ResourceList" },
             { "name":"Endpoints", "type":"EndpointList" }
