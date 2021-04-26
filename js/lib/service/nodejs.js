@@ -153,6 +153,14 @@ console.log('AppUrl: ' + appUrl.toString());
 //     }
 // })();
 
+global.btoa = function btoa(text) {
+    return Buffer.from(text, 'binary').toString('base64');
+};
+global.atob = function atob(code) {
+    return Buffer.from(code, 'base64').toString('binary');
+};
+
+
 global.run = async function run(main) {
     poll(async function() {
         var errors = [];
