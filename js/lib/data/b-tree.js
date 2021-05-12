@@ -43,6 +43,20 @@ include('/lib/data/graph.js');
         }
         return this;
     };
+    BTreeNode.prototype.remove = function remove(index) {
+        var obj = null;
+        if (index < this.length) {
+            obj = this.data[index];
+            this.length--;
+            for (var i=index;i<this.length;i++) this.data[i] = this.data[i+1];
+            this.data[this.length] = null;
+
+            if (this.tree.root != this && this.length < Math.ceil(this.size/2)) {
+                this.tree.rebalance(this);
+            }
+        }
+        return obj;
+    };
     
     function BTree(degree, pageSize, compare) {
         BTree.base.constructor.call(this);
@@ -200,42 +214,34 @@ include('/lib/data/graph.js');
             nodeA.add(item, index);
             if (nodeC) {
                 // insert edge at index+1
-                var ix = index+1;
-                for (var i=nodeA.length; i>ix; i--) nodeA.edges[i] = nodeA.edges[i-1];
-                nodeA.edges[ix] = this.createEdge(nodeA, nodeC);                
+                nodeA.edges.splice(index+1, 0, this.createEdge(nodeA, nodeC));
                 nodeC.parent = nodeA;
             }
         } else {
             // split node
             var nodeB = this.createVertex(null, nodeA.parent, nodeA.isLeaf);
-            var keys = new Array(nodeA.size+1);
-            var edges = new Array(nodeA.size+1);
-            for (var i=0; i<index; i++) keys[i] = nodeA.data[i];
-            keys[index] = item;
-            for (var i=index; i<nodeA.length; i++) keys[i+1] = nodeA.data[i];
-
+            var keys = Array.from(nodeA.data); keys.splice(index, 0, item);
+            var edges = null;
             if (!nodeA.isLeaf) {
-                // if index == 0 then edge[0] = createEdge, edge[1..n+1] = node.edges[0..n]
-                // else edge[0..index] = node.edge[0..index], edge[index+1] = createEdge, edge[index+2..n] = node.edge[index+1..n]
-                var ei = 0, ix = index+1;
-                for (var i=0; i<ix; i++) edges[ei++] = nodeA.edges[i];
-                edges[ei] = this.createEdge(nodeA, nodeC, ei); ei++;
-                for (var i=ix; i<=nodeA.length; i++) edges[ei++] = nodeA.edges[i];
+                // insert edge at index+1
+                edges = Array.from(nodeA.edges); edges.splice(index+1, 0, this.createEdge(nodeA, nodeC, index+1));
+            } else {
+                edges = new Array(nodeA.size+1);
             }
-// if (nodeA.isLeaf) console.log(keys.map(x => x.id));
-// else console.log(edges.map((x,i) => `${i<keys.length ? keys[i].id : '-'}: ${x ? x.from.id+'=>'+x.to.id : '-'}`));
-            var lengthA = Math.ceil(nodeA.size/2);
-            var lengthB = nodeA.size - lengthA;
+
+            var lengthA = Math.ceil(nodeA.size/2), lengthB = nodeA.size - lengthA;
             var j = 0;
+            // distribute keys between the 2 nodes
             for (var i=0; i<lengthA; i++) nodeA.data[i] = keys[j++];
             for (var i=lengthA; i<nodeA.size; i++) nodeA.data[i] = null;
-            j++;
+            j++;    // skip middle key
             for (var i=0; i<lengthB; i++) nodeB.data[i] = keys[j++];
             for (var i=lengthB; i<nodeB.size; i++) nodeB.data[i] = null;
             if (!nodeA.isLeaf) {
                 j = 0;
+                // distribute edges between the 2 nodes
                 for (var i=0; i<=lengthA; i++) nodeA.edges[i] = edges[j++];
-                for (var i=lengthA+1; i<lengthA+1; i++) nodeA.edges[i] = null;
+                for (var i=lengthA+1; i<nodeA.size+1; i++) nodeA.edges[i] = null;
                 for (var i=0; i<=lengthB; i++) {
                     var edge = edges[j++];
                     nodeB.edges[i] = edge;
@@ -246,15 +252,7 @@ include('/lib/data/graph.js');
                 }
                 for (var i=lengthB+1; i<nodeB.size+1; i++) nodeB.edges[i] = null;
             }
-            nodeA.length = lengthA;
-            nodeB.length = lengthB;
-// if (nodeA.isLeaf) {
-//     console.log(nodeA.id, nodeA.data.map((x,i) => i<nodeA.length ? x.id : '-'));
-//     console.log(nodeB.id, nodeB.data.map((x,i) => i<nodeB.length ? x.id : '-'));
-// } else {
-//     console.log(nodeA.id, nodeA.edges.map((x,i) => i<nodeA.length+1 ? `${i<nodeA.length ? nodeA.data[i].id : '-'}: ${x.from.id}=>${x.to.id}` : ''));
-//     console.log(nodeB.id, nodeB.edges.map((x,i) => i<nodeB.length+1 ? `${i<nodeB.length ? nodeB.data[i].id : '-'}: ${x.from.id}=>${x.to.id}` : ''));
-// }
+            nodeA.length = lengthA, nodeB.length = lengthB;
             var ix = 0;
             var mid = keys[lengthA];
             if (nodeA.parent) {
@@ -264,6 +262,137 @@ include('/lib/data/graph.js');
             result = this.insertAt(mid, nodeA.parent, ix, nodeB);
         }
         return result;
+    };
+    BTree.prototype.remove = function remove(item) {
+        var obj = null;
+        var result = {};
+        if (this.tryGet(item, result)) {
+            obj = this.removeAt(result.node, result.index);
+            this.count--;
+        }
+        return obj;
+    };
+    BTree.prototype.removeAt = function removeAt(nodeA, index) {
+        var obj = null;
+        if (!nodeA.isLeaf) {
+            obj = nodeA.data[index];
+            // move last item of child
+            var nodeB = nodeA.edges[index].to;
+            while (!nodeB.isLeaf) {
+                nodeB = nodeB.edges[nodeB.length].to;
+            }
+            nodeA.data[index] = nodeB.remove(nodeB.length-1);
+        } else {
+            obj = nodeA.remove(index);
+        }
+        return obj;
+    };
+    BTree.prototype.rebalance = function rebalance(node) {
+        var parent = node.parent;
+        var ei = parent.edges.findIndex(x => x.to == node);
+        var left = ei > 0 ? parent.edges[ei-1].to : null;
+        var right = ei < parent.length ? parent.edges[ei+1].to : null;
+        if (left && left.length > Math.ceil(left.size/2)) {
+            this.rotateRight(node, parent, ei, left);
+        } else if (right && right.length > Math.ceil(right.size/2)) {
+            this.rotateLeft(node, parent, ei, right);
+        } else {
+            if (left) {
+                this.mergeLeft(left, parent, ei-1, node);
+            } else if (right) {
+                this.mergeRight(right, parent, ei, node);
+            } else throw new Error('Could not process node ' + node.id);
+            if (parent.length < Math.ceil(parent.size/2)) {
+                this.rebalance(parent);
+            }
+        }
+    };
+    BTree.prototype.rotateLeft = function rotateLeft(node, parent, ei, right) {
+        // move parent key to the end of node
+        node.data[node.length] = parent.data[ei];
+        node.length++;
+        // move 1st key of right into parent
+        parent.data[ei] = right.data[0];
+        // shift keys of right to the left
+        for (var i=1; i<right.length; i++) right.data[i-1] = right.data[i];
+        right.data[right.length-1] = null;
+        if (!right.isLeaf) {
+            // shift edges of right to the left
+            for (var i=1; i<right.length+1; i++) right.edges[i-1] = right.edges[i];
+            right.edges[right.length] = null;
+            // move 1st edge of right to end of node
+            var edge = right.edges[0];
+            edge.from = node;
+            node.edges[node.length+1] = edge;
+        }        
+        right.length--;
+    };
+    BTree.prototype.rotateRight = function rotateRight(node, parent, ei, left) {
+        // shift keys and edges of node to the right
+        for (var i=node.length; i>0; i--) node.data[i] = node.data[i-1];
+        if (!node.isLeaf) {
+            // shift edges of node to the right
+            for (var i=node.length+1; i>0; i--) node.edges[i] = node.edges[i-1];
+            // move last edge of left to head of node
+            var edge = left.edges[left.length+1];
+            edge.from = node;
+            node.edges[0] = edge;
+            left.edges[left.length+1] = null;
+        }
+        // move parent key to the head of node
+        node.data[0] = parent.data[ei];
+        node.length++;
+        // move last key of left into parent
+        left.length--;
+        parent.data[ei] = left.data[left.length];
+        left.data[left.length] = null;
+    };
+    BTree.prototype.mergeLeft = function mergeLeft(left, parent, ei, node) {
+        var ki = left.length, li = left.length+1;
+        // move parent key at the end of left
+        left.data[ki++] = parent.data[ei];
+        parent.data[ei] = null;
+        parent.edges.splice(ei+1, 1);
+        parent.length--;
+        // move all keys from node to the end of left
+        for (var i=0; i<node.length; i++) left.data[ki++] = node.data[i];
+        if (!left.isLeaf && !node.isLeaf) {
+            // move all edges of node to the end of left
+            for (var i=0; i<node.length+1; i++) {
+                var edge = node.edges[i];
+                edge.from = left;
+                left.edges[li++] = node.edges[i];
+            }
+        } else if (left.isLeaf != node.isLeaf) {
+            throw new Error('Cannot merge a leaf and a non-leaf node!');
+        }
+        left.length = ki;
+        this.removeVertex(node);
+    };
+    BTree.prototype.mergeRight = function mergeLeft(right, parent, ei, node) {
+        var ki = right.length, li = right.length+1;
+        // shift keys of right to the right
+        var off = node.length + 1;
+        for (var i=ki; i>0; i--) right.data[ki+off] = right.data[ki];
+        // shift edges of right to the right
+        off++;
+        for (var i=li; i>0; i--) right.edges[li+off] = right.data[li];
+        // move parent key at the head of right
+        left.data[node.length] = parent.data[ei];
+        // move all keys from node to the head of right
+        for (var i=0; i<node.length; i++) left.data[i] = node.data[i];
+        if (!left.isLeaf && !node.isLeaf) {
+            // move all edges of node to the head of left
+            for (var i=0; i<node.length+1; i++) {
+                var edge = node.edges[i];
+                edge.from = left;
+                left.edges[i] = node.edges[i];
+            }
+        } else if (left.isLeaf != node.isLeaf) {
+            throw new Error('Cannot merge a leaf and a non-leaf node!');
+        }
+        left.length = ki;
+        this.removeVertex(node);
     };
     BTree.prototype.range = function range(from, to, action, args) {
         var start = {};

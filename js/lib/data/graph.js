@@ -44,7 +44,7 @@
         this.vertices = null;
         this.root = null;
     };
-    Graph.prototype.createVertex = function(vertexData, parent) {
+    Graph.prototype.createVertex = function createVertex(vertexData, parent) {
         var vertex = new Vertex(this.vertices.length, parent, vertexData);
         if (!this.root) {
             this.root = vertex;
@@ -52,12 +52,12 @@
         this.vertices.push(vertex);
         return vertex;
     };
-    Graph.prototype.createEdge = function(from, to, edgeData) {
+    Graph.prototype.createEdge = function createEdge(from, to, edgeData) {
         var edge = new Edge(from, to, edgeData);
         this.edges.push(edge);
         return edge;
     };
-    Graph.prototype.addVertex = function(parentVertex, vertexData, edgeData) {
+    Graph.prototype.addVertex = function addVertex(parentVertex, vertexData, edgeData) {
         parentVertex = parentVertex || this.root;
         var vertex = this.createVertex(vertexData, parentVertex);
         if (vertex != this.root) {
@@ -65,12 +65,28 @@
         }
         return vertex;
     };
-    Graph.prototype.addEdge = function(from, to, edgeData) {
+    Graph.prototype.removeVertex = function removeVertex(vertex) {
+        if (this.vertices[vertex.id] != vertex) throw new Error('Vertex invalid!');
+        var last = this.vertices.pop();
+        last.id = vertex.id;
+        this.vertices[vertex.id] = last;
+    };
+    Graph.prototype.addEdge = function addEdge(from, to, edgeData) {
         var edge = this.createEdge(from, to, edgeData);
         from.edges.push(edge);
         return edge;
     };
-    Graph.prototype.DFS = function(startVertex, preHandler, postHandler, edgehandler, args) {
+    Graph.prototype.removeEdge = function removeEdge(edge) {
+        var ix = this.edges.findIndex(x => x == edge);
+        if (ix != -1) {
+            this.edges[ix] = this.edges.pop();
+            ix = edge.from.edges.findIndex(x => x == edge);
+            edge.from.edges.slice(ix, 1);
+            ix = edge.to.edges.findIndex(x => x == edge);
+            edge.to.edges.slice(ix, 1);
+        }
+    };
+    Graph.prototype.DFS = function DFS(startVertex, preHandler, postHandler, edgehandler, args) {
         // reset flags
         for (var i=0; i<this.vertices.length; i++) {
             this.vertices[i].flag = 0;
@@ -112,7 +128,7 @@
             }
         }
     };
-    Graph.prototype.BFS = function(startVertex, preHandler, postHandler, edgeHandler, args) {
+    Graph.prototype.BFS = function BFS(startVertex, preHandler, postHandler, edgeHandler, args) {
         // reset flags
         for (var i=0; i<this.vertices.length; i++) {
             this.vertices[i].flag = 0;
@@ -146,7 +162,7 @@
         }
     };
 
-    Graph.prototype.findPath = function(start, end, checkEdge) {
+    Graph.prototype.findPath = function findPath(start, end, checkEdge) {
         // distance(start, v)
         var links = new Array(this.vertices.length);
         links.fill(null);
@@ -176,7 +192,7 @@
 // else console.log('No path');
         return path;
     };
-    Graph.createComplete = function(vertexCount, directed, vertexHandler, edgeHandler) {
+    Graph.createComplete = function createComplete(vertexCount, directed, vertexHandler, edgeHandler) {
         var graph = new Graph();
         // add vertices
         var label = '00000000';
@@ -209,7 +225,7 @@
         }
         return graph;
     };
-    Graph.createCompleteTree = function(vertexDegree, levelCount, directed, vertexHandler, edgeHandler) {
+    Graph.createCompleteTree = function createCompleteTree(vertexDegree, levelCount, directed, vertexHandler, edgeHandler) {
         var tree = new Graph();
         var vertexCount = 1;
         var vertexId = 0;
