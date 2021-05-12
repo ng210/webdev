@@ -10,7 +10,7 @@
             { "name":"field", "type":"string", "required":false },
             { "name":"unique", "type":"bool", "required":false },
 
-            { "name":"linkedEntity", "type":"string", "required":false },
+            { "name":"linkedEntity", "type":"type", "required":false },
             { "name":"linkedField", "type":"string", "required":false }
         ]
     },

@@ -171,56 +171,61 @@ self.Resource = function Resource(url) {
     this.error = null;
 }
 Resource.load = async function(options) {
-    // check resource cache
-    var url = new Url(options.url).toString();
-    options.url = url;
-    var resource = Resource.cache[url];
-    if (!resource) {
-        // resource not found in cache
-        resource = new Resource(url);
-        // it will be loaded
-        resource.status = Resource.LOADING;
-        Resource.cache[url] = resource;
-        // load
-        debug_('LOAD ' + resource.toString(), 1);
-        await ajax.send(options);
-        resource.data = options.response;
-        if (options.error != null) {
-            resource.error = options.error;
-            resource.status = Resource.ERROR;
+    try {
+        // check resource cache
+        var url = new Url(options.url).toString();
+        options.url = url;
+        var resource = Resource.cache[url];
+        if (!resource) {
+            // resource not found in cache
+            resource = new Resource(url);
+            // it will be loaded
+            resource.status = Resource.LOADING;
+            Resource.cache[url] = resource;
+            // load
+            debug_('LOAD ' + resource.toString(), 1);
+            await ajax.send(options);
+            resource.data = options.response;
+            if (options.error != null) {
+                resource.error = options.error;
+                resource.status = Resource.ERROR;
+            } else {
+                resource.resolvedUrl = new Url(options.resolvedUrl);
+                resource.status = Resource.LOADED;
+                if (options.process) {
+                    await resource.processContent(options);
+                    // update resource
+                    resource = Resource.cache[url];
+                }
+            }
         } else {
-            resource.resolvedUrl = new Url(options.resolvedUrl);
-            resource.status = Resource.LOADED;
-            if (options.process) {
-                await resource.processContent(options);
-                // update resource
-                resource = Resource.cache[url];
+            if (resource.status != Resource.COMPLETE && resource.status != Module.RESOLVED) {
+                return new Promise( async function(resolve, reject) {
+                    var timeOut = 100;
+                    poll( function() {
+                        if (timeOut > 30000) {
+                            resource.status = Resource.ERROR;
+                            resource.error = new Error('Time-out reached!');
+                            reject(resource);
+                            return true;
+                        }
+                        if (Resource.cache[resource.url].status != Resource.LOADING) {
+                            resolve(resource);
+                            return true;
+                        } else {
+                            timeOut *= 1.8;
+                            return false;
+                        }
+                    }, timeOut);
+                });
             }
         }
-    } else {
-        if (resource.status != Resource.COMPLETE && resource.status != Module.RESOLVED) {
-            return new Promise( async function(resolve, reject) {
-                var timeOut = 100;
-                poll( function() {
-                    if (timeOut > 30000) {
-                        resource.status = Resource.ERROR;
-                        resource.error = new Error('Time-out reached!');
-                        reject(resource);
-                        return true;
-                    }
-                    if (Resource.cache[resource.url].status != Resource.LOADING) {
-                        resolve(resource);
-                        return true;
-                    } else {
-                        timeOut *= 1.8;
-                        return false;
-                    }
-                }, timeOut);
-            });
-        }
+        debug_('CACHED ' + resource.toString(), 1);
+        //debug_('Cached\n' + Object.values(Resource.cache).map(x=>'-'+x.toString()).join('\n'), 3);
+    } catch (err) {
+        resource.status = Resource.ERROR;
+        resource.error = err;
     }
-    debug_('CACHED ' + resource.toString(), 1);
-    //debug_('Cached\n' + Object.values(Resource.cache).map(x=>'-'+x.toString()).join('\n'), 3);
     return resource;
 };
 Resource.prototype.processContent = async function(options) {
@@ -233,7 +238,7 @@ Resource.prototype.processContent = async function(options) {
             if (mdl.error == null) {
                 Resource.cache[this.url] = mdl;
                 debug_('CHANGED ' + mdl.toString(), 2);
-                return mdl.resolveIncludes();
+                await mdl.resolveIncludes();
             }
             break;
         case 'x-shader/*':
@@ -396,6 +401,7 @@ self.Url = function Url(url) {
     this.path = '';
     this.query = {};
     this.fragment = '';
+    this.fileNamePos = 0;
     if (url) {
         if (url instanceof Url) {
             this.hasQuery = url.hasQuery;
@@ -407,13 +413,18 @@ self.Url = function Url(url) {
             this.path = url.path;
             this.query = mergeObjects(url.query);
             this.fragment = url.fragment;
+            this.fileNamePos = url.fileNamePos;
         } else if (typeof url === 'string') {
-            var pos = this.getSchema(url, 0);
-            pos = this.getLogin(url, pos);
-            pos = this.getHostAndPort(url, pos);
-            pos = this.getPath(url, pos);
-            pos = this.getQuery(url, pos);
-            pos = this.getFragment(url, pos);
+            var pos = this.getSchema_(url, 0);
+            pos = this.getLogin_(url, pos);
+            pos = this.getHostAndPort_(url, pos);
+            pos = this.getPath_(url, pos);
+            pos = this.getQuery_(url, pos);
+            pos = this.getFragment_(url, pos);
+            this.fileNamePos = this.path.lastIndexOf('/');
+            if (this.fileNamePos == -1) {
+                this.fileNamePos = this.path.lastIndexOf('\\');
+            }
         }
     }
     // ensure a full URL
@@ -427,7 +438,7 @@ self.Url = function Url(url) {
         }
     }
 };
-Url.prototype.getSchema = function getSchema(str, pos) {
+Url.prototype.getSchema_ = function getSchema_(str, pos) {
     var schemas = [ 'http://', 'https://', 'file://', 'ftp://', 'mailto:' ];
     for (var i=0; i<schemas.length; i++) {
         if (str.indexOf(schemas[i]) == 0) {
@@ -439,7 +450,7 @@ Url.prototype.getSchema = function getSchema(str, pos) {
     }
     return pos;
 };
-Url.prototype.getLogin = function getLogin(str, pos) {
+Url.prototype.getLogin_ = function getLogin_(str, pos) {
     var ix = str.indexOf('@', pos);
     if (ix != -1) {
         var tokens = str.substring(pos, ix).split(':');
@@ -450,7 +461,7 @@ Url.prototype.getLogin = function getLogin(str, pos) {
     }
     return pos;
 };
-Url.prototype.getHostAndPort = function getHost(str, pos) {
+Url.prototype.getHostAndPort_ = function getHostAndPort_(str, pos) {
     if (this.schema.startsWith('http')) {
         var ix = str.indexOf('/', pos);
         if (ix != -1) {
@@ -464,7 +475,7 @@ Url.prototype.getHostAndPort = function getHost(str, pos) {
     }
     return pos;
 };
-Url.prototype.getPath = function getPath(str, pos) {
+Url.prototype.getPath_ = function getPath_(str, pos) {
     var ix = str.indexOf('?', pos);
     if (ix == -1) ix = str.indexOf('#', pos);
     if (ix == -1) ix = str.length;
@@ -487,7 +498,7 @@ Url.prototype.getPath = function getPath(str, pos) {
     }
     return pos;
 };
-Url.prototype.getQuery = function getQuery(str, pos) {
+Url.prototype.getQuery_ = function getQuery_(str, pos) {
     if (str.charAt(pos) == '?') {
         this.hasQuery = true;
         pos++;
@@ -502,7 +513,7 @@ Url.prototype.getQuery = function getQuery(str, pos) {
     }
     return pos;
 };
-Url.prototype.getFragment = function getFragment(str, pos) {
+Url.prototype.getFragment_ = function getFragment_(str, pos) {
     if (str.charAt(pos) == '#') {
         this.fragment = str.substring(pos+1);
         pos += this.fragment.length;
@@ -510,9 +521,10 @@ Url.prototype.getFragment = function getFragment(str, pos) {
     return pos;
 };
 Url.prototype.getFilename = function getFilename() {
-    var ix = this.path.lastIndexOf('/');
-    if (ix == -1) ix = this.path.lastIndexOf('\\');
-    return ix != -1 ? this.path.substring(ix) : this.path;
+    return this.fileNamePos != -1 ? this.path.substring(this.fileNamePos) : this.path;
+};
+Url.prototype.getPath = function getFilename() {
+    return this.fileNamePos != -1 ? this.path.substring(0, this.fileNamePos) : '';
 };
 Url.prototype.toString = function toString() {
     var sb = [this.schema];

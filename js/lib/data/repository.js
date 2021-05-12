@@ -216,28 +216,25 @@ include('/lib/utils/syntax.js');
         return obj;
     };
     Repository.prototype.remove = function remove(typeName, attribute, value) {
-        var res = null;
-        var type = this.dataTypes[typeName];
-        if (type) {
-            var data = this.data[typeName];
-            var index = type.indices[attribute];
-            var contains = true;
-            if (index) {
-                var item = {};
-                item[attribute] = value;
-                var result = {};
-                contains = index.data.tryGet(item, result);
+        var item = this.get(typeName, attribute, value);
+debugger
+        if (item) {
+            // remove index entries
+            var type = this.dataTypes[typeName];
+            for (var ii in type.indices) {
+                if (type.indices.hasOwnProperty(ii)) {
+                    type.indices[ii].data.remove(item);
+                }
             }
-
-            if (contains) {
-                for (var i=0; i<data.length; i++) {
-                    if (data[i][attribute] == value) {
-                        res = data.splice(i, 1)[0];
-                    }
+            // remove item from data
+            var data = this.data[typeName];
+            for (var i=0; i<data.length; i++) {
+                if (data[i][attribute] == value) {
+                    item = data.splice(i, 1)[0];
                 }
             }
         }
-        return res;
+        return item;
     };
     Repository.prototype.get = function get(typeName, attribute, value) {
         var res = null;
@@ -298,6 +295,46 @@ include('/lib/utils/syntax.js');
             if (stack.pop()) {
                 results.push(entity);
             }
+        }
+        return results;
+    };
+    Repository.prototype.setLink = function setLink(entity, field, typeName) {
+        var result = false;
+        typeName = typeName || entity.constructor.name;
+        var type = this.dataTypes[typeName];
+        if (type) {
+            var link = type.links[field];
+            var value = entity[field];
+            if (value && link) {
+                var target = this.get(link.entity.type.name, link.field, value);
+                if (target) {
+                    entity[field] = target;
+                    result = true;
+                }
+            }
+        }
+        return result;
+    };
+    Repository.prototype.updateLinks = function updateLinks(entity, typeName) {
+        var results = [];
+        typeName = typeName || entity.constructor.name;
+        var type = this.dataTypes[typeName];
+        if (type) {
+            for (var lk in type.links) {
+                var link = type.links[lk];
+                var value = entity[lk];
+                var target = null;
+                if (value && link) {
+                    target = this.get(link.entity.type.name, link.field, value);
+                    if (target) {
+                        entity[lk] = target;
+                    } else {
+                        results.push(new Error(`Link '${lk}: ${link.entity.type.name}.${link.field}' not valid!`));
+                    }
+                }
+            }
+        } else {
+            results.push(new Error(`Type '${typeName}' not found!`));
         }
         return results;
     };

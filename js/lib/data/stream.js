@@ -55,35 +55,6 @@
                     this.length = length;
                 }                
              }
-
-        // } else if (arg.buffer && arg.buffer instanceof ArrayBuffer) {
-        //     var bytes = arg.buffer.byteLength/arg.length;
-        //     if (offset == undefined) {
-        //         this.buffer = arg.buffer.slice();
-        //         this.length = bytes*arg.length;
-        //      } else {
-        //         this.buffer = arg.buffer;
-        //         offset *= bytes;
-        //         if (length == undefined) {
-        //             this.length = arg.buffer.byteLength - offset;
-        //         } else {
-        //             length *= bytes;
-        //             this.length = length;
-        //         }                
-        //      }
-
-        // } else if (arg instanceof Stream) {
-        //     if (offset == undefined) {
-        //     }
-        //     this.buffer = new Uint8Array(arg.buffer);
-
-        // } else if (arg instanceof DataView) {
-        //     this.buffer = arg.buffer;
-        //     this.view = arg;
-        //     this.length = this.size;
-        // } else if (arg.buffer && arg.buffer instanceof ArrayBuffer) {
-        //     this.buffer = new Uint8Array(arg.buffer, offset, length).buffer;
-        //     this.length = this.size;
         } else {
             throw new Error('Invalid argument!');
         }
@@ -224,7 +195,6 @@
         separator = separator || '';
         var dump = [];
         var ri = 0, j = 0, k = 0;
-        //width += Math.floor(width/4);
         var row = new Array(256);
         for (var i=0; i<this.length; i++) {
             var b = this.readUint8(i);
@@ -267,14 +237,14 @@
         link.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(link);
-        delete link;
+        link = undefined;
     };
     
     Stream.fromFile = async function fromFile(path, options) {
-        // options
-        // - contentType
-        // - responseType
-        // - charSet
+        /* options
+         - contentType
+         - responseType
+         - charSet */
         var loadOptions = mergeObjects({
             'url': path,
             'contentType': 'application/octet-stream',
