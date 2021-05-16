@@ -1,5 +1,5 @@
-include('glui/controls/grid.js');
-include('synth/synth-adapter.js');
+include('/lib/glui/controls/grid.js');
+include('./synth-adapter.js');
 
 (function() {
     function ScoreRenderer2d(control, context) {

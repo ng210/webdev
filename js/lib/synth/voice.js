@@ -1,7 +1,7 @@
-include('env.js');
-include('osc.js');
-include('lfo.js');
-include('filter.js')
+include('./env.js');
+include('./osc.js');
+include('./lfo.js');
+include('./filter.js')
 (function() {
     function Voice(parent) {
         this.velocity = new psynth.Pot(0, 1, 0);

@@ -1,4 +1,4 @@
-include('/utils/syntax.js');
+include('/lib/utils/syntax.js');
 include('grammar.js');
 
 (function() {

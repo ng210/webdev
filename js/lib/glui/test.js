@@ -232,7 +232,7 @@ include('/lib/data/dataseries.js');
             { 'name': 'Sissy', 'age': 29, 'rank': 3 },
             { 'name': 'Poppy', 'age': 27, 'rank': 4 }
         ],
-        'list': [ 'James', 'Ivy',  'Alfred', 'Henry', 'Blange', 'Wilson', 'George', 'Teddy', 'Sissy', 'Poppy' ],
+        'list': [ 'James', 'Ivy',  'Alfred', 'Henry', 'Blange', 'Wilson', 'George', 'Teddy', 'Sissy', 'Poppy', 'Mable', 'Jerry' ],
         'grid': [
             { 'x': 5, 'y': 5, 'value': 0.1},
             { 'x':15, 'y':11, 'value': 0.3},
@@ -412,7 +412,7 @@ include('/lib/data/dataseries.js');
         await createControls();
         for (var i=0; i<glui.screen.items.length; i++) {
             var control = glui.screen.items[i];
-            test(`Should create <b><i>${control.type}</i></b> from template`, ctx => {                
+            test(`Should create ${control.type} from template`, ctx => {                
                 ctx.assert(control, '!=', null);
                 if (control instanceof glui.ValueControl) {
                     ctx.assert(control.id, '=', `${control.constructor.name}${i}`);
@@ -425,7 +425,7 @@ include('/lib/data/dataseries.js');
                 }
             });
         }
-
+        await button('Next');
         teardown();
     }
 
@@ -476,6 +476,8 @@ console.log(glui.screen.items.map(x => x.id+': '+x.width+'x'+x.height))
         }
 
         glui.render();
+        await button('Next');
+        teardown();
     }
 
     async function test_container() {
@@ -513,7 +515,7 @@ console.log(glui.screen.items.map(x => x.id+': '+x.width+'x'+x.height))
                         'width':'96px', 'height':'96px',
                         'border':'#c0c0f0 2px solid'
                     },
-                    'source': 'glui/res/test.png'
+                    'source': '/lib/glui/res/test.png'
                 }
             }
         };
@@ -549,7 +551,7 @@ console.log(glui.screen.items.map(x => x.id+': '+x.width+'x'+x.height))
                         'width':'66px', 'height':'48px',
                         'border':'#4080e0 1px solid'
                     },
-                    'source': 'glui/res/test.png'
+                    'source': 'res/test.png'
                 }
             }
         };
@@ -681,11 +683,11 @@ console.log(glui.screen.items.map(x => x.id+': '+x.width+'x'+x.height))
         table4.move(600, 60);
         table4.render();
 
-        var table5 = await glui.create('table5', dialogTemplate.items[0], null, App);
-        table5.size('14em', '5em');
-        await table5.build();
-        table5.move(60,200);
-        table5.render();
+        // var table5 = await glui.create('table5', dialogTemplate.items[0], null, App);
+        // table5.size('14em', '5em');
+        // await table5.build();
+        // table5.move(60,200);
+        // table5.render();
 
         glui.animate();
 
@@ -909,15 +911,15 @@ console.log(glui.screen.items.map(x => x.id+': '+x.width+'x'+x.height))
     // }
 
     var tests = () => [
-        // test_mergeObjects,
-        // test_getObjectAt,
-        // test_clipping,
-        // test_construct,
-        // test_align,
-        // test_container,
-        // test_table,
+        test_mergeObjects,
+        test_getObjectAt,
+        test_clipping,
+        test_construct,
+        test_align,
+        test_container,
+        test_table,
         test_menu,
-        // test_dialog,
+        test_dialog,
         test_render
 
         //test_grid

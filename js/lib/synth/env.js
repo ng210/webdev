@@ -1,4 +1,4 @@
-include('input.js');
+include('./input.js');
 (function() {
     function Env(parent, controls) {
         this.parent = parent;

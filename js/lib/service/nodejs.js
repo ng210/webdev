@@ -5,7 +5,7 @@ const fs = require('fs');
 const http = require('http');
 require('url');
 const path = require('path');
-const { getHeapCodeStatistics, getHeapSnapshot } = require('v8');
+//const { getHeapCodeStatistics, getHeapSnapshot } = require('v8');
 global.self = global;
 global.jsLib = process.env.jslib || path.resolve(__dirname, '..');
 console.log('jslib: ' + jsLib);
@@ -48,12 +48,12 @@ ajax.send = function send(options) {
     // load from file system
     // download from URL
     var res = null;
-    debug_('FETCH: ' + target, 1);
+    debug_('AJX.FETCH: ' + target, 2);
     if (target.startsWith('/')) target = target.substr(1);
     var targetUrl = new Url(target);
     switch (targetUrl.schema) {
         case 'http://':
-            debug_('GETFILE: ' + options.url, 1);
+            debug_('AJX.GETFILE: ' + options.url, 3);
             res = new Promise(resolve => {
                 var url = new URL(options.url);
                 res = http.get({
@@ -75,7 +75,7 @@ ajax.send = function send(options) {
                     }
                     
                     if (options.error) {
-                        debug_(options.error, 2);
+                        debug_('AJX.' + options.error, 2);
                         resp.resume();
                         resolve(options);
                     } else {
@@ -100,7 +100,7 @@ ajax.send = function send(options) {
             break;
         case 'file://':
         default:
-            debug_('READFILE: ' + target, 1);
+            debug_('AJX.READFILE: ' + target, 3);
             //if (fs.existsSync(target))
             res = new Promise(resolve => {
                 try {

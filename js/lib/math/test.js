@@ -283,11 +283,11 @@ include('fn.js');
     }
 
     var tests = () => [
-        // test_v2, test_v3, test_v4,
+        test_v2, test_v3, test_v4,
         test_m33,
         test_m44,
-        // test_performance,
-        // test_intersect
+        test_performance,
+        test_intersect
     ];
 
     publish(tests, 'Math tests');

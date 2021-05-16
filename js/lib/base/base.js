@@ -1,11 +1,12 @@
 'use strict';
 
 self.DBGLVL = self.DBGLVL || 0;
+self.DBGTRACE = self.DBGTACE || false;
 self.ISWORKER = self.document == undefined;
 self.ISNODEAPP = self.jsLib != undefined;
 
 self.extend = function extend(b, e) {
-    debug_('EXTEND @' + (b ? b.name :'?') + ' by ' + (e ? e.name : '?'), 1);
+    debug_('EXTEND @' + (b ? b.name :'?') + ' by ' + (e ? e.name : '?'), 3);
     e.prototype = Reflect.construct(b, []);
     e.prototype.constructor = e;
     e.base = b.prototype;
@@ -150,9 +151,13 @@ self.inherits = function inherits(d, b) {
 self.debug_ = function debug_(txt, lvl) {
     //if (txt.indexOf('player.') == -1) return;
     if (DBGLVL >= lvl) {
-        var err = new Error();
-        var lines = err.stack.split('\n');
-        console.log(`${txt} (${lines[2].trim()})`);
+        var line = '';
+        if (!DBGTRACE) {
+            var err = new Error();
+            var lines = err.stack.split('\n');
+            line = '(' + lines[2].trim() + ')';
+        }
+        console.log(`${txt} ${line}`);
     }
 };
 
@@ -171,11 +176,13 @@ self.Resource = function Resource(url) {
     this.error = null;
 }
 Resource.load = async function(options) {
+    var resource = null;
     try {
         // check resource cache
-        var url = new Url(options.url).toString();
+        var url = new Url(options.url, options.currentPath).toString();
         options.url = url;
-        var resource = Resource.cache[url];
+        debug_('R.LOAD ' + url.toString(), 3);
+        resource = Resource.cache[url];
         if (!resource) {
             // resource not found in cache
             resource = new Resource(url);
@@ -183,7 +190,6 @@ Resource.load = async function(options) {
             resource.status = Resource.LOADING;
             Resource.cache[url] = resource;
             // load
-            debug_('LOAD ' + resource.toString(), 1);
             await ajax.send(options);
             resource.data = options.response;
             if (options.error != null) {
@@ -220,16 +226,16 @@ Resource.load = async function(options) {
                 });
             }
         }
-        debug_('CACHED ' + resource.toString(), 1);
-        //debug_('Cached\n' + Object.values(Resource.cache).map(x=>'-'+x.toString()).join('\n'), 3);
+        debug_('R.LOADED ' + resource.toString(), 1);
     } catch (err) {
+        resource = resource || {};
         resource.status = Resource.ERROR;
         resource.error = err;
     }
     return resource;
 };
 Resource.prototype.processContent = async function(options) {
-    debug_('PROCESS @' + this.url, 1);
+    debug_('R.PROCESS @' + this.url, 3);
     var data = await ajax.processContent(options);
     switch (options.contentType) {
         case 'text/javascript':
@@ -237,7 +243,7 @@ Resource.prototype.processContent = async function(options) {
             var mdl = Module.fromResource(this);
             if (mdl.error == null) {
                 Resource.cache[this.url] = mdl;
-                debug_('CHANGED ' + mdl.toString(), 2);
+                debug_('R.SCRIPT ' + mdl.toString(), 3);
                 await mdl.resolveIncludes();
             }
             break;
@@ -312,13 +318,13 @@ self.Module = function Module(url) {
 extend(Resource, Module);
 
 Module.prototype.resolveIncludes = async function() {
-    debug_('RESOLVE @' + this.url);
+    debug_('M.RESOLVE @' + this.url);
     // replace #include '...' and trigger loading of the resource
     //var re = /include\('([^']+)'\)/g;
     var re = /\/\/.*include\('([^']+)'\)|include\('([^']+)'\)/g;
     var loads = [];
     //var mdl = this;
-    var currentPath = this.resolvedUrl.toString();
+    var currentPath = this.resolvedUrl.path;
     currentPath = currentPath.substr(0, currentPath.lastIndexOf('/'));
     this.data = this.data.replace(re, (match, p1, p2) => {
         if (p1 != undefined) {
@@ -332,8 +338,7 @@ Module.prototype.resolveIncludes = async function() {
     });
     // load every includes
     var includes = await Promise.all(loads);
-    debug_('DEPENDS @'+this.toString()+'\n' + includes.map(x=>`-${x.toString()}\n`).join(''), 2);
-    debug_('CACHE\n' + Object.values(Resource.cache).map(x=>`-${x.toString()}\n`).join(''), 3);
+    debug_('M.DEPENDS @'+this.toString()+'\n' + includes.map(x=>`-${x.toString()}`).join('\n'), 2);
     this.includes = [];
     for (var i=0; i<includes.length; i++) {
         var im = includes[i];
@@ -348,9 +353,7 @@ Module.prototype.resolveIncludes = async function() {
     // at this point every included module should be loaded and resolved
 
     this.status = Module.RESOLVED;
-    debug_('ADD @' + this.toString() + '\n' + this.includes.map(x=>`-${x}\n`).join(''), 2);
-
-    debug_('ADD INCLUDE ' + this.url, 1);
+    debug_('M.ADD @' + this.toString(), 3);
     if (!ISWORKER) {
         this.node = document.createElement('script');
         this.node.url = this.url;
@@ -365,7 +368,7 @@ Module.prototype.resolveIncludes = async function() {
                 if (args.length < 3) args.push(' null');
                 args.push(` '${this.url.replace(/\\/g, '\\\\')}'`);
                 lines[i] = `${match[1]}(${args.join(',')});`;
-                debug_('MATCH @:' + this.toString() + '\n' + lines[i], 1);
+                debug_('M.PUBLISH @:' + this.toString() + ' ' + args[1], 3);
             }
         }
         this.data = lines.join('\n');
@@ -391,7 +394,7 @@ Module.RESOLVED = 'resolved';
 //#endregion
 
 //#region URL
-self.Url = function Url(url) {
+self.Url = function Url(url, currentPath) {
     this.hasQuery = false;
     this.schema = '';
     this.user = '';
@@ -418,7 +421,7 @@ self.Url = function Url(url) {
             var pos = this.getSchema_(url, 0);
             pos = this.getLogin_(url, pos);
             pos = this.getHostAndPort_(url, pos);
-            pos = this.getPath_(url, pos);
+            pos = this.getPath_(url, currentPath || '', pos);
             pos = this.getQuery_(url, pos);
             pos = this.getFragment_(url, pos);
             this.fileNamePos = this.path.lastIndexOf('/');
@@ -475,26 +478,34 @@ Url.prototype.getHostAndPort_ = function getHostAndPort_(str, pos) {
     }
     return pos;
 };
-Url.prototype.getPath_ = function getPath_(str, pos) {
+Url.prototype.getPath_ = function getPath_(str, currentPath, pos) {
     var ix = str.indexOf('?', pos);
+    var start = pos;
     if (ix == -1) ix = str.indexOf('#', pos);
     if (ix == -1) ix = str.length;
-    var pth = str.substring(pos, ix);
+    var path = str.substring(pos, ix);
     pos = ix;
-    if (pth.charAt(0) == '.' || pth.charAt(0) == '/') {
-        // allow path.resolve
-        var basePathParts = (pth.charAt(0) == '/' ? baseUrl.path : appUrl.path).split('/');
-        var pathParts = pth.split('/');
-        for (var i=0; i<pathParts.length; i++) {
-            var part = pathParts[i];
-            if (part == '' || part == '.') continue;
-            else if (part == '..') basePathParts.pop();
-            else basePathParts.push(part);
+    if (start == 0) {
+        if (path.charAt(0) == '.' || path.charAt(0) == '/') {
+            // allow path.resolve
+            var basePathParts = (path.charAt(0) == '/' ? baseUrl.path : currentPath).split('/');
+            var pathParts = path.split('/');
+            for (var i=0; i<pathParts.length; i++) {
+                var part = pathParts[i];
+                if (part == '' || part == '.') continue;
+                else if (part == '..') basePathParts.pop();
+                else basePathParts.push(part);
+            }
+            this.path = basePathParts.join('/');
+        } else {
+            var pathParts = [];
+            if (this.schema.startsWith('http')) pathParts.push('');
+            if (currentPath) pathParts.push(currentPath);
+            pathParts.push(path);
+            this.path = pathParts.join('/');
         }
-        this.path = basePathParts.join('/');
     } else {
-        if (this.schema.startsWith('http')) pth = '/' + pth;
-        this.path = pth;
+        this.path = '/' + path;
     }
     return pos;
 };
@@ -523,7 +534,7 @@ Url.prototype.getFragment_ = function getFragment_(str, pos) {
 Url.prototype.getFilename = function getFilename() {
     return this.fileNamePos != -1 ? this.path.substring(this.fileNamePos) : this.path;
 };
-Url.prototype.getPath = function getFilename() {
+Url.prototype.getPath = function getPath() {
     return this.fileNamePos != -1 ? this.path.substring(0, this.fileNamePos) : '';
 };
 Url.prototype.toString = function toString() {
@@ -580,9 +591,9 @@ self.appUrl = (function(){
  *  - load([ { url: 'user.html', contentType: 'html', method: 'get' },
  *              { url: 'app.cfg', contentType: 'xml', method: 'post' } ]);
  ******************************************************************************/
-self.load = function load(obj) {
+self.load = function load(obj, currentPath) {
     if (!Array.isArray(obj)) {
-        var options = { error: null };
+        var options = { error: null, currentPath: currentPath || self.appUrl.path };
         if (typeof obj === 'string') {
             options.url = obj;
         } else {
@@ -599,6 +610,7 @@ self.load = function load(obj) {
         for (var i=0; i<obj.length; i++) {
             var item = obj[i];
             var options = typeof item === 'string' ? { url: item } : item;
+            if (options.currentPath == undefined) options.currentPath = currentPath || self.appUrl.path;
             // process response by default
             if (options.process === undefined) {
                 options.process = true;
@@ -621,49 +633,44 @@ self.load = function load(obj) {
 //     return res;
 // };
 self.publish = function publish(obj, name, context, url) {
+    if (typeof name !== 'string') throw new Error(`Second argument has to be a string! (${name})`);
+
     if (!ISWORKER) {
         var script = document.currentScript;
         url = script.src || script.url;
     }
     var mdl = Resource.cache[url];
-    if (mdl === undefined) {
-        throw new Error('Module \'' + url + '\' not found!');
-    }
+    if (mdl === undefined) throw new Error('Module \'' + url + '\' not found!');
+    
     context = context || self;
     mdl.symbols[name] = obj;
     context[name] = obj;
 };
-self.include = async function include(path, parentPath) {
-    debug_('INCLUDE @' + path, 1);
-    parentPath = parentPath || appUrl.toString();
-    var mdl = null;
-    var searchPath = null;
-    if (path.startsWith('/')) {
-        searchPath = [self.baseUrl];
-        path = path.substr(1);
-    } else if (path.startsWith('./')) {
-        searchPath = [self.appUrl];
-        path = path.substr(2);
-    } else {
-        searchPath = [parentPath, self.baseUrl.toString()];
-        searchPath.push(...Resource.searchPath);
-    }
+self.include = async function include(path, currentPath) {
+    debug_('INCLUDE @' + path, 3);
+    currentPath = currentPath || appUrl.path;
 
-    var attempts = [];
-    for (var i=0; i<searchPath.length; i++) {
-        var url = searchPath[i] + '/' + path;
-        mdl = await load(url);
-        if (!mdl.error) {
-            for (var j=0; j<attempts.length; j++) {
-                attempts[j].status = Resource.ALIAS;
-                attempts[j].alias = mdl;
+    var mdl = null;
+    if (!path.startsWith('.') && !path.startsWith('/')) {
+        var searchPath = [currentPath, self.appUrl.path, self.baseUrl.path];
+        searchPath.push(...Resource.searchPath)
+        var attempts = [];
+        for (var i=0; i<searchPath.length; i++) {
+            mdl = await load(path, currentPath);
+            if (!mdl.error) {
+                for (var j=0; j<attempts.length; j++) {
+                    attempts[j].status = Resource.ALIAS;
+                    attempts[j].alias = mdl;
+                }
+                break;
+            } else {
+                attempts.push(mdl);
             }
-            break;
-        } else {
-            attempts.push(mdl);
         }
+    } else {
+        mdl = await load(path, currentPath);
     }
-    debug_('INCLUDED @' + mdl.toString()), 2;
+    debug_('INCLUDED @' + mdl.toString(), 2);
     return mdl;
 };
 self.addToSearchPath = function addToSearchPath(url) {

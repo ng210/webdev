@@ -226,7 +226,7 @@ include('label.js');
     Textbox.prototype.onfocus = function onfocus() {
         //Textbox.base.onmouseover.call(this);
         // set cursor
-        this.cursorAnimation = glui.addAnimation(this.renderer.animateCursor, this.renderer, 500);
+        this.cursorAnimation = glui.addAnimation(this.renderer.animateCursor, this.renderer, 1000);
         this.isFocused = true;
     };
     Textbox.prototype.onblur = function onblur(e) {

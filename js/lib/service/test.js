@@ -1,5 +1,5 @@
-include('utils/schema.js');
-include('service/api.js');
+include('/lib/utils/schema.js');
+include('./api.js');
 (function() {
     
     function checkApi(api, ctx) {

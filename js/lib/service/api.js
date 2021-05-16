@@ -151,12 +151,15 @@ if (ISNODEAPP) {
 
     //#region API CLIENT
     function ApiClient(schemaInfo) {
+        this.rest = {};
         ApiClient.base.constructor.call(this, schemaInfo);
     }
     extend(Api, ApiClient);
 
     ApiClient.prototype.createEndpoint = function ApiClientCreateEndpoint(id, def) {
         var ep = new Endpoint(id, this, def, ApiClient.endpointCall);
+        if (!this.rest[id]) this.rest[id] = {};
+        this.rest[id][def.method] = async function() { return await ApiClient.endpointCall.apply(ep, arguments) };
         return ep;
     };
     ApiClient.prototype.addAuthorization = function addAuthorization(options) {
@@ -430,13 +433,13 @@ if (ISNODEAPP) {
                                 }
                             }
                             //#endregion
+
+                            // set endpoint-related headers here
+                            resp.setHeader('Content-Type', endpoint.response.mimeType || 'plain/text');
                         } else {
                             resp.statusCode = 405;
                             body = 'Method not supported!'
                         }
-                        // set endpoint-related headers here
-if (!endpoint) debugger
-                        resp.setHeader('Content-Type', endpoint.response.mimeType || 'plain/text');
                     }
                 }
                 // set Access-Control-Allow-Headers
@@ -529,8 +532,18 @@ if (!endpoint) debugger
     };
 
     ApiServer.prototype.get_ = function get_() {
-debugger
-        return this.api.definition;
+        var definition = {};
+        var dataTypes = {};
+        for (var i in this.api.schema.imports) {
+            for (var j=0; j<this.api.schema.imports[i].length; j++) {
+                var type = this.api.schema.imports[i][j];
+                dataTypes[type.name] = type;
+            }
+        }            
+        for (var i in this.api.definition) {
+            definition[i] = i != 'DataTypes' ? this.api.definition[i] : Object.values(dataTypes);
+        }
+        return definition;
     };
     //#endregion
 

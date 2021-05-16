@@ -1,8 +1,8 @@
-include('/ge/player/iadapter-ext.js');
-include('/data/dataseries.js');
-include('/data/stream.js');
-include('/synth/synth-adapter.js');
-include('/lib/ui/ui-lib.js');
+include('/lib/player/iadapter-ext.js');
+include('/lib/data/dataseries.js');
+include('/lib/data/stream.js');
+include('./synth-adapter.js');
+include('/lib/glui/glui-lib.js');
 
 // Extensions to the synth-adapter
 (function() {

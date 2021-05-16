@@ -1,4 +1,4 @@
-include('noise.js');
+include('/lib/math/noise.js');
 
 var a_ = [];
 var canvas_ = null;

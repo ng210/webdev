@@ -1,4 +1,4 @@
-include('/lib//player/player.js');
+include('./player.js');
 include('/lib/data/stream.js');
 
 (function() {

@@ -1,9 +1,9 @@
-include('player/iadapter-ext.js');
-include('player/player.js');
-include('data/dataseries.js');
-include('data/stream.js');
-include('/synth/synth-adapter.js');
-include('ui/ui-lib.js');
+include('/lib/player/iadapter-ext.js');
+include('/lib/player/player.js');
+include('/lib/data/dataseries.js');
+include('/lib/data/stream.js');
+include('/lib/synth/synth-adapter.js');
+include('/lib/glui/glui-lib.js');
 
 // Extensions to the player-adapter
 (function() {

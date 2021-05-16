@@ -1,9 +1,9 @@
-include('/player/player-lib.js');
-include('/ge/sound.js');
-include('glui/glui-lib.js');
-include('synth.js');
-include('synth-adapter.js');
-include('score-control.js');
+include('/lib/player/player-lib.js');
+include('/lib/ge/sound.js');
+include('/lib/glui/glui-lib.js');
+include('./synth.js');
+include('./synth-adapter.js');
+include('./score-control.js');
 // include('/synth/synth-adapter-ext.js');
 // include('/utils/syntax.js');
 // include('/synth/grammar.js');

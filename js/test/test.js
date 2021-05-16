@@ -39,8 +39,6 @@ function print_result(context, result) {
     var text = (context.errors == 0 && !result) ? `${lbl}..<span style="color:#40ff40">Ok</span>` : `${lbl}..<span style="color:#ff4040">${errorText}</span>`;
     var spans = Dbg.con.querySelectorAll('.test'); //Dbg.con.getElementsByTagName('span');
     for (var i=0; i<spans.length; i++) {
-        console.log(spans[i].innerHTML);
-        console.log(`${lbl}..[result]`);
         spans[i].innerHTML = spans[i].innerHTML.replace(`${lbl}..[result]`, text);
         
     }

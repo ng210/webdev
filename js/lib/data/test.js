@@ -1,3 +1,4 @@
+include('map.js');
 include('stream.js');
 include('dataseries.js');
 include('datalink.js');
@@ -6,6 +7,46 @@ include('b-tree.js');
 include('repository.js');
 
 (function() {
+
+    function test_map() {
+        var map = new Map();
+        test('Should add 100 items', ctx => {
+            for (var i=0; i<100; i++) {
+                map.add('k'+i, 'v'+i);
+            }
+            ctx.assert(map.length, '=', 100);
+        });
+        test('Should get 100 items', ctx => {
+            var errors = 0;
+            for (var i=0; i<100; i++) {
+                if (map.get('k'+i) != 'v'+i) errors++;
+            }
+            ctx.assert(errors, '=', 0);
+        });
+        test('Should contain keys', ctx => {
+            var errors = 0;
+            for (var i=0; i<100; i++) {
+                if (!map.containsKey('k'+i)) errors++;
+            }
+            ctx.assert(errors, '=', 0);
+        });
+        test('Should map keys', ctx => {
+            var errors = 0;
+            var keys = map.keys(k => '_' + k);
+            for (var i=0; i<100; i++) {
+                if (keys[i] != '_k'+i) errors++;
+            }
+            ctx.assert(errors, '=', 0);
+        });
+        test('Should map values', ctx => {
+            var errors = 0;
+            var values = map.values(v => '_' + v);
+            for (var i=0; i<100; i++) {
+                if (values[i] != '_v'+i) errors++;
+            }
+            ctx.assert(errors, '=', 0);
+        });
+    }
 
     function test_Stream() {
         message('Test Stream', 1);
@@ -950,6 +991,7 @@ include('repository.js');
     }
 
     var tests = () => [
+        test_map,
         test_Stream,
         test_DataSeries,
         test_DataSeriesCompare,

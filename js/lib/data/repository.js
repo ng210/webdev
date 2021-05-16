@@ -217,7 +217,6 @@ include('/lib/utils/syntax.js');
     };
     Repository.prototype.remove = function remove(typeName, attribute, value) {
         var item = this.get(typeName, attribute, value);
-debugger
         if (item) {
             // remove index entries
             var type = this.dataTypes[typeName];

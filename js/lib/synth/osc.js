@@ -1,4 +1,4 @@
-include('input.js');
+include('./input.js');
 (function() {
     function Osc(parent, controls) {
         this.parent = parent;

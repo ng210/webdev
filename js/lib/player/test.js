@@ -1,4 +1,4 @@
-include('player-lib.js');
+include('./player-lib.js');
 
 (function(){
 
