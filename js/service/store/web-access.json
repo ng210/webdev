@@ -1,0 +1,6 @@
+{
+    "default": "deny",
+    "allow": [
+        "test.js"
+    ]
+}

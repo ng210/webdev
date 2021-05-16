@@ -9,19 +9,59 @@ tokens.pop(); tokens.pop();
 const documentPath = process.argv[2] || tokens.join(path.sep);
 console.log(`documentPath=${documentPath}`);
 
-app.get('/*', function(req, resp) {
-    var resPath = path.normalize(path.join(documentPath, req.path));
-    var exists = fs.existsSync(resPath);
-    if (exists) {
-        if (fs.statSync(resPath).isDirectory()) {
-            resPath += 'index.html';
+const webAccess = {};
+
+function readWebAccessFile(dir) {
+    var allow = false;
+    var fileName = dir + '\\web-access.json';
+    if (fs.existsSync(fileName)) {
+        // process file
+        var file = fs.readFileSync(fileName, { encoding: 'utf-8' });
+        var content = JSON.parse(file);
+        allow = content.default.toLowerCase() == 'allow';
+        if (content.allow) {
+            for (var i=0; i<content.allow.length; i++) {
+                var entry = dir + '\\' + content.allow[i];
+                webAccess[entry] = true;
+            }
         }
-        if ((exists = fs.existsSync(resPath)) == true)  {
-            //console.log(`requested: ${resPath}`);
-            resp.sendFile(resPath);
+        if (content.deny) {
+            for (var i=0; i<content.deny.length; i++) {
+                var entry = dir + '\\' + content.deny[i];
+                webAccess[entry] = false;
+            }
+        }
+    } else {
+        // inherit from parent
+        if (dir != documentPath) {
+            var parent = path.dirname(dir);
+            readWebAccessFile(parent);
+            allow = webAccess[dir] != undefined ? webAccess[dir] : webAccess[parent];
         }
     }
-    if (!exists) {
+    webAccess[dir] = allow;
+}
+
+function checkWebAccess(resPath) {
+    if (resPath.toLowerCase().endsWith('web-access.json')) return false;
+    var dir = path.dirname(resPath);
+    if (webAccess[dir] == undefined) {
+        // read the web-access file
+        readWebAccessFile(dir);
+    }
+    return webAccess[resPath] != undefined ? webAccess[resPath] : webAccess[dir];
+}
+
+app.get('/*', function(req, resp) {
+    var resPath = path.normalize(path.join(documentPath, req.path));
+    try {
+        if (fs.statSync(resPath).isDirectory()) resPath += 'index.html';
+        if (fs.existsSync(resPath) && checkWebAccess(resPath)) {
+            resp.sendFile(resPath);
+        } else {
+            throw new Error('File not found!');
+        }
+    } catch (err) {
         resp.status(404).sendFile(`${__dirname}/404.html`);
     }
 });

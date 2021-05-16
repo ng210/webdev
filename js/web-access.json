@@ -1,0 +1,10 @@
+{
+    "default": "deny",
+    "allow": [
+        "demo",
+        "synth",
+        "service",
+        "test",
+        "index.html"
+    ]
+}

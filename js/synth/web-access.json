@@ -1,0 +1,7 @@
+{
+    "default": "allow",
+    "deny": [
+        "temp",
+        "design.md"
+    ]
+}

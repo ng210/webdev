@@ -1,0 +1,7 @@
+{
+    "default": "allow",
+    "deny": [
+        "nodejs.js",
+        "test-nodejs.js"
+    ]
+}
