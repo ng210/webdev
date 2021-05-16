@@ -1,0 +1,151 @@
+{
+    "id":"store",
+    "url":"http://localhost:4000/store",
+    "authorization": "Basic",
+
+    "Imports": {
+        "BaseTypes": "./base-types.json",
+        "DataTypes": "./view-types.json"
+    },
+
+    "Resources": [
+        { "type":"Domain", "key":"id", "methods": ["CREATE", "READ", "UPDATE", "DELETE"] },
+        { "type":"Right", "key":"id", "methods": ["CREATE", "READ", "UPDATE", "DELETE"] },
+        { "type":"Group", "key":"id", "methods": ["CREATE", "READ", "UPDATE", "DELETE"] },
+        { "type":"User", "key":"id", "methods": ["CREATE", "READ", "UPDATE", "DELETE"] },
+        { "type":"Item", "key":"id", "methods": ["CREATE", "READ", "UPDATE", "DELETE"] }
+    ],
+    "Endpoints": [
+        { "id":"domains",
+            "calls": [
+                {
+                    "access":"admin",
+                    "method":"GET",
+                    "response": {
+                        "mimeType":"application/json",
+                        "type": { "type":"list", "elemType":"Domain" }
+                    }
+                }
+            ]
+        },
+        { "id":"rights",
+            "calls": [
+                {
+                    "method":"GET",
+                    "response": {
+                        "mimeType":"application/json",
+                        "type": { "type":"list", "elemType":"Right" }
+                    }
+                }
+            ]
+        },
+        { "id":"groups",
+            "calls": [
+                {
+                    "method":"GET",
+                    "response": {
+                        "mimeType":"application/json",
+                        "type": { "type":"list", "elemType":"Group" }
+                    }
+                }
+            ]
+        },
+        { "id":"users",
+            "calls": [
+                {
+                    "method":"GET",
+                    "response": {
+                        "mimeType":"application/json",
+                        "type": { "type":"list", "elemType":"User" }
+                    }
+                }
+            ]
+        },
+        { "id":"member",
+            "calls": [
+                {
+                    "method":"POST",
+                    "request": {
+                        "mimeType":"application/json",
+                        "arguments": [
+                            { "name":"user", "type":"dbid", "required":true },
+                            { "name":"group", "type":"dbid", "required":true }
+                        ]
+                    },
+                    "response": {
+                        "mimeType":"application/json"
+                    }
+                },
+                {
+                    "method":"GET",
+                    "request": {
+                        "mimeType":"application/json",
+                        "arguments": [
+                            { "name":"group", "type":"dbid", "required":true }
+                        ]
+                    },
+                    "response": {
+                        "mimeType":"application/json",
+                        "type": { "type":"list", "elemType":"User" }
+                    }
+                },
+                {
+                    "method":"DELETE",
+                    "request": {
+                        "mimeType":"application/json",
+                        "arguments": [
+                            { "name":"user", "type":"dbid", "required":true },
+                            { "name":"group", "type":"dbid", "required":true }
+                        ]
+                    },
+                    "response": {
+                        "mimeType":"application/json"
+                    }
+                }
+            ]
+        },
+        { "id":"access",
+            "calls": [
+                {
+                    "method":"POST",
+                    "request": {
+                        "mimeType":"application/json",
+                        "arguments": [
+                            { "name":"group", "type":"dbid", "required":true },
+                            { "name":"right", "type":"dbid", "required":true }
+                        ]
+                    },
+                    "response": {
+                        "mimeType":"application/json"
+                    }
+                },
+                {
+                    "method":"GET",
+                    "request": {
+                        "mimeType":"application/json",
+                        "arguments": [
+                            { "name":"group", "type":"dbid", "required":true }
+                        ]
+                    },
+                    "response": {
+                        "mimeType":"application/json",
+                        "type": { "type":"list", "elemType":"Right" }
+                    }
+                },
+                {
+                    "method":"DELETE",
+                    "request": {
+                        "mimeType":"application/json",
+                        "arguments": [
+                            { "name":"group", "type":"dbid", "required":true },
+                            { "name":"right", "type":"dbid", "required":true }
+                        ]
+                    },
+                    "response": {
+                        "mimeType":"application/json"
+                    }
+                }
+            ]
+        }
+    ]
+}

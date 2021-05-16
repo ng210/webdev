@@ -1,0 +1,32 @@
+[
+    {   "name":"User", "type":"Entity",
+        "attributes": [
+            { "name":"password", "type":"string", "required":false },
+            { "name":"groups", "type":"IntList", "required":false }
+        ]
+    },
+
+    {   "name":"Group", "type":"Entity",
+        "attributes": [
+            { "name":"rights", "type":"StringList" },
+            { "name":"users", "type":"StringList" },
+            { "name":"subgroups", "type":"StringList" },
+            { "name":"parent", "type":"string" }
+        ]
+    },
+
+    {   "name":"Right", "type":"Entity" },
+
+    {   "name":"Domain", "type":"Entity",
+        "attributes": [
+            { "name":"parent", "type":"dbid" }
+        ]
+    },
+
+    {   "name":"Item", "type":"Entity",
+        "attributes": [
+            { "name":"domain", "type":"dbid" },
+            { "name":"right", "type":"dbid" }
+        ]
+    }
+]

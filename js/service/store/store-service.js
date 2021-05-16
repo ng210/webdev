@@ -1,5 +1,5 @@
 require('service/nodejs.js');
-include('/lib/service/store/store-api.js');
+include('./api/store-api.js');
 
 async function main(args, errors) {
     if (errors.length > 0) {
@@ -10,13 +10,12 @@ async function main(args, errors) {
     }
 
     try {
-        StoreApi.create('./store-service.json').then(x => {
-            console.log(x.info());
-            x.run()
-        });
-        
+        var api = await StoreApi.create('./schema/store-service.json')
+        console.log(api.info());
+        api.run();
     } catch (err) {
-        console.log(err);
+        console.log(err.message);
+        if (err.details) console.log(err.details);
     }
 }
 

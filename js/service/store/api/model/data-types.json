@@ -1,0 +1,43 @@
+[
+    {   "name":"DbUser", "type":"Entity",
+        "attributes": [
+            { "name":"password", "type":"string16", "required":true }
+        ]
+    },
+
+    {   "name":"DbGroup", "type":"Entity",
+        "attributes": [
+            { "name":"parent", "type":"dbid" }
+        ]
+    },
+
+    {   "name":"DbRight", "type":"Entity" },
+
+    {   "name":"DbDomain", "type":"Entity",
+        "attributes": [
+            { "name":"parent", "type":"dbid" }
+        ]
+    },
+
+    {   "name":"DbItem", "type":"Entity",
+        "attributes": [
+            { "name":"domain", "type":"dbid" },
+            { "name":"right", "type":"dbid" },
+            { "name":"slot", "type":"slotid" }
+        ]
+    },
+
+    {   "name":"DbAccess",
+        "attributes": [
+            { "name":"group", "type":"dbid" },
+            { "name":"right", "type":"dbid" }
+        ]
+    },
+
+    {   "name":"DbMember",
+        "attributes": [
+            { "name":"group", "type":"dbid" },
+            { "name":"user", "type":"dbid" }
+        ]
+    }
+]
