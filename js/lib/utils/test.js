@@ -48,6 +48,29 @@ include('schema.js');
         }
     }
 
+    function test_types() {
+        message('Test types', 1);
+        var schema = new Schema();
+        var colors = ['red', 'green', 'blue'];
+        schema.buildType({ 'name':'uint8', 'type':'int', 'min':0, 'max':255 });
+        schema.buildType({ 'name':'uint16', 'type':'int', 'min':0, 'max':65536 });
+        schema.buildType({ 'name':'uint32', 'type':'int', 'min':0, 'max':4294967296 });
+
+        test('Should parse and validate values successfully', ctx => {
+            for (var key in schema.types) {
+                var type = schema.types[key];
+                if (!type.isAbstract) {
+                    var value = type.createValue();
+                    message(type.name);
+                    ctx.assert(value, '!null');
+                    var errors = type.validate(value);
+                    ctx.assert(errors, 'empty');
+                    message_errors(errors);
+                }
+            }
+        });
+    }
+
     function test_schema() {
         message('Test schema', 1);
         var schema = new Schema();
@@ -183,7 +206,6 @@ include('schema.js');
             message_errors(errors);
             ctx.assert(errors.length, '=', 1);
         });
-
         schema.buildType({ name:'Person', attributes: [
             { "name":"id", type:{ name:'Int1000', type:Schema.Types.INT, min:1, max:1000 }, required:true },
             { "name":"name", type:'string' },
@@ -403,8 +425,9 @@ include('schema.js');
     }
 
     var tests = () => [
-        //test_syntax,
-        //test_schema,
+        test_syntax,
+        test_types,
+        test_schema,
         test_load_schema
     ];
 

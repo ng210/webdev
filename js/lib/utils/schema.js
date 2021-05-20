@@ -42,7 +42,7 @@
             for (var i=0; i<this.constraints.length; i++) {
                 try {
                     var cst = this.constraints[i];
-                    var hasError = cst.call(this, value, results);
+                    cst.call(this, value, results);
                 } catch (err) {
                     results.push(new Schema.ValidationResult(i, err));
                 }
@@ -51,6 +51,9 @@
         return results;
     };
     Type.prototype.createValue = function createValue() {
+        throw new Error('Not implemented!');
+    };
+    Type.prototype.parse = function parse(term) {
         throw new Error('Not implemented!');
     };
     //#endregion
@@ -63,6 +66,7 @@
         this.length = 0;
         this.elemType = null;
         this.values = null;
+        this.isAbstract = false;
         if (baseType) {
             this.isNumeric = baseType.basicType.isNumeric;
         }
@@ -106,6 +110,13 @@
     }
     extend(Type, SimpleType);
 
+    function random(min, max) {
+        var range = !isNaN(max) ? max : 4294967296;
+        if (!isNaN(min)) range -= min;
+        else min = 0;
+        return range * Math.random() + min;
+    }
+
     SimpleType.prototype.createValue = function createValue() {
         var res = null;
         switch (this.basicType.name) {
@@ -128,10 +139,10 @@
                 res = this.values[Math.floor(Math.random()*this.values.length)];
                 break;
             case Schema.Types.INT:
-                res = Math.floor(Math.random()*65536);
+                res = Math.round(random(this.min, this.max));
                 break;
             case Schema.Types.FLOAT:
-                res = Math.random()*65536;
+                res = random(this.min, this.max);
                 break;
             case Schema.Types.MAP:
                 res = {};
@@ -143,9 +154,63 @@
                     res[key] = this.valueType.createValue();
                 }
                 break;
+            case Schema.Types.BOOL:
+                res = Math.random() < 0.5;
+                break;
+            case Schema.Types.TYPE:
+                var types = Object.values(this.schema.types);
+                res = types[Math.floor(types.length * Math.random())];
+                break;
         }
         return res;
     };
+    SimpleType.prototype.parse = function parse(term) {
+        var res = null;
+        switch (this.basicType.name) {
+            case Schema.Types.STRING:
+                res = term;
+                break;
+            case Schema.Types.BOOL:
+                var t = term.toLowerCase();
+                if (t == 'true') res = true;
+                else if (t == 'false') res = false;
+                break;
+            case Schema.Types.INT:
+                res = Math.floor(Number(term));
+                break;
+            case Schema.Types.FLOAT:
+                res = Number(term);
+                break;
+            case Schema.Types.LIST:
+                var sep = arguments[1] || ',';
+                var values = term.split(sep);
+                res = [];
+                for (var i=0; i<values.length; i++) {
+                    res.push(this.elemType.parse(values[i]));
+                }
+                break;
+            case Schema.Types.ENUM:
+                res = this.values.includes(term) ? term : null;
+                break;
+            case Schema.Types.MAP:  // key[sep1]value[sep2]
+                var sep1 = arguments[1] || '=';
+                var sep2 = arguments[2] || ',';
+                var keyValues = term.split(sep1);
+                res = {};
+                for (var i=0; i<keyValues.length; i++) {
+                    var tokens = keyValues[i].split(sep2);
+                    var key = this.keyType.parse(tokens[0]);
+                    var value = this.valueType.parse(tokens[1]);
+                    if (key != null && value != null) {
+                        res[key] = value;
+                    }
+                }
+
+                break;
+        }
+        return res;
+    };
+
     //#endregion
 
     //#region COMPLEX TYPE
@@ -178,9 +243,10 @@
         if (typeof obj === 'object') {
             for (var i in obj) {
                 if (obj.hasOwnProperty(i)) {
-                    if (this.attributes[i]) {
-                        if (this.attributes[i].type) {
-                            var res = this.attributes[i].type.validate(obj[i]);
+                    var attr = this.attributes[i];
+                    if (attr) {
+                        if (attr.type) {
+                            var res = attr.type.validate(obj[i]);
                             for (var j=0; j<res.length; j++) {
                                 res[j].field.unshift(i);
                                 results.push(res[j]);
@@ -255,10 +321,10 @@
         this.types.bool   = new Schema.SimpleType(Schema.Types.BOOL);
         this.types.int    = new Schema.SimpleType(Schema.Types.INT); this.types.int.isNumeric = true;
         this.types.float  = new Schema.SimpleType(Schema.Types.FLOAT); this.types.float.isNumeric = true;
-        this.types.list   = new Schema.SimpleType(Schema.Types.LIST);
-        this.types.enum   = new Schema.SimpleType(Schema.Types.ENUM);
-        this.types.map    = new Schema.SimpleType(Schema.Types.MAP);
-        this.types.object = new Schema.ComplexType(Schema.Types.OBJECT);
+        this.types.list   = new Schema.SimpleType(Schema.Types.LIST); this.types.list.isAbstract = true;
+        this.types.enum   = new Schema.SimpleType(Schema.Types.ENUM); this.types.enum.isAbstract = true;
+        this.types.map    = new Schema.SimpleType(Schema.Types.MAP); this.types.map.isAbstract = true;
+        this.types.object = new Schema.ComplexType(Schema.Types.OBJECT); this.types.object.isAbstract = true;
         this.types.type   = new Schema.SimpleType(Schema.Types.TYPE, undefined, {schema:this});
 
         // schema types
@@ -291,7 +357,7 @@
         if (definition) {
             for (var i=0; i<definition.length; i++) {
                 var t = definition[i];
-                debug_(`- adding type '${t.name}'`, 1);
+                debug_(`- adding type '${t.name}'`, 3);
                 if (!this.buildType(t)) throw new Error('Bad schema definition!');
             }
         }
@@ -366,10 +432,10 @@
             if (basicType.name == Schema.Types.OBJECT) {
                 // complex type
                 var name = obj.name || `Complex${Object.keys(this.types).length}`;
-                debug_('build complex type ' + name, 2);
+                debug_('build complex type ' + name, 3);
                 res = new Schema.ComplexType(name, type, obj);
-                debug_('Add ComplexType ' + name, 1);
-                this.types[name] = res;
+                debug_('Add ComplexType ' + name, 2);
+                //this.types[name] = res;
                 if (obj.res) {
                     this.isReference = true;
                 } else if (obj.attributes) {
@@ -378,7 +444,7 @@
                         if (typeof attr === 'string') {
                             res.addAttribute(i, this.types[attr]);
                         } else {
-                            var attrType = this.getOrBuildType(attr.type);
+                            var attrType = attr.type != res.name ? this.getOrBuildType(attr.type) : res;
                             if (!attrType) this.missingTypes[attr.type].push({'path':`${name}.attributes.${attr.name}.type`});
                             res.addAttribute(attr.name, attrType, obj.attributes[i].required);
                         }                    
@@ -388,7 +454,7 @@
                 // simple type
                 var name = obj.name || `${type.name.substr(0, 1).toUpperCase()}${type.name.substr(1)}${Object.keys(this.types).length}`;
                 var args = {};
-                debug_('build simple type ' + name, 2);
+                debug_('build simple type ' + name, 3);
                 switch (basicType.name) {
                     case Schema.Types.STRING:
                         args.length = obj.length || type.length;
@@ -430,11 +496,11 @@
                 }
                 args.ref = obj.ref;
                 res = new Schema.SimpleType(name, type, args);
-                debug_('Add SimpleType ' + name, 1);
+                debug_('Add SimpleType ' + name, 2);
             }
             this.types[name] = res;
             this.types.Types.values.push(name);
-            this.typeDefinitions.push(res);
+            if (!this.typeDefinitions.includes(res)) this.typeDefinitions.push(res);
             res.schema = this;
         }
         return res;
@@ -480,15 +546,14 @@
             }
         }
     };
-    Schema.prototype.resolveImports = async function resolveImports(definition) {
+    Schema.prototype.resolveImports = async function resolveImports(definition, currentPath) {
         var imports = definition.Imports;
         if (imports) {
             var links = Object.values(imports).map(x => { return { url:x, responseType:'json', charSet:'utf-8' }; });
-            var res = await load(links);
-            var errors = res.reduce((a, x) => { if (x.error) a.push(x.error); return a; }, []);
+            var res = await load(links, currentPath);
+            var errors = res.reduce((a, x) => { if (x.error) a.push('Import failed: ' + x.error); return a; }, []);
             if (errors.length > 0) {
-                definition.error = new Error("Imports failed!");
-                definition.error.details = errors;
+                definition.error = errors;
             } else {
                 this.imports = {};
                 var ri = 0;
@@ -507,17 +572,22 @@
         if (schemaInfo.schema == null) {
             var res = await load(schemaInfo.schemaDefinition);
             if (res.error) errors.push(res.error);
-            else schemaInfo.schema = new Schema(res.data);
+            else {
+                schemaInfo.schema = new Schema(res.data);
+                schemaInfo.schema.url = res.resolvedUrl;
+            };
         }
         if (!errors.length) {
+            var currentPath = schemaInfo.schema.url.getPath();
             if (typeof definition === 'string') {
-                res = await load({ url:definition, responseType:'json', charSet:'utf-8' });
+                res = await load({ url:definition, responseType:'json', charSet:'utf-8' }, appUrl.path);
                 if (res.error) errors.push(res.error);
+                else currentPath = res.resolvedUrl.getPath();
             }
             if (!errors.length) {
-                definition = await schemaInfo.schema.resolveImports(res.data);
+                definition = await schemaInfo.schema.resolveImports(res.data, currentPath);
                 if (definition.error) {
-                    errors.push(definition.error);
+                    errors.push(...definition.error);
                 } else {
                     schemaInfo.schema.validate(schemaInfo.validate, definition, errors);
                 }
@@ -568,7 +638,9 @@
                     }
                     break;
                 case 'OBJECT':
-                    isOk = basicType.name == Schema.Types.OBJECT || basicType.name == Schema.Types.MAP || Array.isArray(value) && basicType.name == Schema.Types.LIST;
+                    isOk = basicType.name == Schema.Types.OBJECT || basicType.name == Schema.Types.MAP ||
+                            Array.isArray(value) && basicType.name == Schema.Types.LIST ||
+                            basicType.name == Schema.Types.STRING && value == null;
                     break;
                 case 'STRING':
                     isOk = basicType.name == Schema.Types.STRING || basicType.name == Schema.Types.ENUM;
@@ -692,14 +764,6 @@
     };
     _BasicTypes.int.isNumeric = true;
     _BasicTypes.float.isNumeric = true;
-
-    // Schema.serialize = function serialize(obj) {
-    //     return JSON.stringify(obj, (key, value) => if (key.startsWith('__')))
-    // };
-
-    // Schema.deserialize = function deserialize(json) {
-    //     return JSON.parse(json);
-    // }
 
     publish(Schema, 'Schema');
     publish(SimpleType, 'SimpleType', Schema);
