@@ -1,46 +1,46 @@
-include('map.js');
+include('dictionary.js');
 include('stream.js');
 include('dataseries.js');
 include('datalink.js');
 include('graph.js');
 include('b-tree.js');
-include('repository.js');
 
 (function() {
 
-    function test_map() {
-        var map = new Map();
+    function test_dictionary() {
+        header('Test dictionary');
+        var dictionary = new Dictionary();
         test('Should add 100 items', ctx => {
             for (var i=0; i<100; i++) {
-                map.add('k'+i, 'v'+i);
+                dictionary.add('k'+i, 'v'+i);
             }
-            ctx.assert(map.length, '=', 100);
+            ctx.assert(dictionary.length, '=', 100);
         });
         test('Should get 100 items', ctx => {
             var errors = 0;
             for (var i=0; i<100; i++) {
-                if (map.get('k'+i) != 'v'+i) errors++;
+                if (dictionary.get('k'+i) != 'v'+i) errors++;
             }
             ctx.assert(errors, '=', 0);
         });
         test('Should contain keys', ctx => {
             var errors = 0;
             for (var i=0; i<100; i++) {
-                if (!map.containsKey('k'+i)) errors++;
+                if (!dictionary.containsKey('k'+i)) errors++;
             }
             ctx.assert(errors, '=', 0);
         });
-        test('Should map keys', ctx => {
+        test('Should dictionary keys', ctx => {
             var errors = 0;
-            var keys = map.keys(k => '_' + k);
+            var keys = dictionary.keys(k => '_' + k);
             for (var i=0; i<100; i++) {
                 if (keys[i] != '_k'+i) errors++;
             }
             ctx.assert(errors, '=', 0);
         });
-        test('Should map values', ctx => {
+        test('Should dictionary values', ctx => {
             var errors = 0;
-            var values = map.values(v => '_' + v);
+            var values = dictionary.values(v => '_' + v);
             for (var i=0; i<100; i++) {
                 if (values[i] != '_v'+i) errors++;
             }
@@ -49,7 +49,7 @@ include('repository.js');
     }
 
     function test_Stream() {
-        message('Test Stream', 1);
+        header('Test Stream');
 
         test('Should create an empty Stream with capacity of 10', context => {
             var s = new Stream(10);
@@ -231,12 +231,13 @@ include('repository.js');
     }
 
     function test_DataSeries() {
+        header('Test DataSeries');
+
         var arr = [];
         for (var i=0; i<10; i++) {
             arr[i] = [2*i,  Math.floor(5*i + (i%2)*20)];
         }
         var ds = new DataSeries(arr);
-        message('Test DataSeries', 1);
 
         test('Should iterate through all items', function (context) {
             ds.iterate( (value, it, series) => {
@@ -303,7 +304,7 @@ include('repository.js');
     }
 
     function test_DataSeriesCompare() {
-        message('Test DataSeries.compare', 1);
+        header('Test DataSeries.compare');
         var ds = new DataSeries();
 
         test('Compare([0, 0], [1, 1])', context => context.assert(ds.compare([0, 0], [1, 1]), '<', 0) );
@@ -328,7 +329,7 @@ include('repository.js');
     }
 
     function test_DataLink() {
-        message('Test DataLink', 1);
+        header('Test DataLink');
         var obj1 = {
             name: 'Joe',
             id: 1,
@@ -409,7 +410,7 @@ include('repository.js');
     }
 
     function test_Graph() {
-        message('Test Graph', 1);
+        header('Test Graph');
         test('Should create a graph with 6 vertices and 7 edges', context => {
             var graph = createTestGraph();
             context.assert(graph.vertices.length, '=', 7);
@@ -480,7 +481,7 @@ include('repository.js');
     }
 
     function test_BTree() {
-        message('Test B-Tree', 1);
+        header('Test B-Tree');
 
         function test_tree(tree, items, ctx) {
             var result = {};
@@ -849,156 +850,14 @@ include('repository.js');
         //#endregion
     }
 
-    async function test_Repository() {
-        message('Test Repository', 1);
-        function User(id, name) {
-            this.id = id;
-            this.name = name;
-        }
-        function Item(id, type, size, color, material, ownerId) {
-            this.id = id;
-            this.type = type;
-            this.size = size;
-            this.color = color;
-            this.material = material;
-            this.ownerId = ownerId;
-        }
-        Item.prototype.toString = function toString() {
-            var first = this.size.charAt(0);
-            var pre = vowels.includes(first) && first != 'u' ? 'an' : 'a';
-            return `${pre} ${this.size} ${this.color} ${this.material} ${this.type}`;
-        };
-        function rnd(range) {
-            return Math.floor(range*Math.random());
-        }
-        var consonants = 'bcdfghjklmnpqrstvxyzw';
-        var vowels = 'aeiou';
-        function createUserName() {
-            var length = Math.floor(4*Math.random()) + 3;
-            var name = '';
-            while (name.length < length) {
-                name += Math.random() > 0.5 ? consonants.charAt(rnd(consonants.length)) : '';
-                name += vowels.charAt(rnd(vowels.length));
-                name += consonants.charAt(rnd(consonants.length));
-            }
-            return name.charAt(0).toUpperCase() + name.slice(1, length);
-        }
-        function createItem(id, ownerId) {
-            var type = ['pen', 'fork', 'spoon', 'knife', 'armor', 'mug', 'table', 'hat', 'shoe', 'sword', 'shield'];
-            var size = ['epic', 'awesome', 'old', 'modern', 'unique', 'tiny', 'small', 'large', 'huge'];
-            var color = ['red', 'green', 'blue', 'yellow', 'brown', 'purple', 'gray', 'white', 'black', 'cyan'];
-            var material = ['wooden', 'iron', 'steel', 'plastic', 'textil', 'silk', 'leather'];
-            return new Item(id, type[rnd(type.length)], size[rnd(size.length)], color[rnd(color.length)], material[rnd(material.length)], ownerId);
-        }
-        var repo = await Repository.create('./test-repo.json');
-        test('Should create a repository', ctx => ctx.assert(repo, '!null'));
-        test('Should have 4 data types and 2 entities', ctx => {
-            ctx.assert(Object.keys(repo.dataTypes).length, '=', 4);
-            ctx.assert(Object.keys(repo.data).length, '=', 2);
-        });
-        test('Should have 2 keys', ctx => ctx.assert(Object.values(repo.dataTypes).reduce((c,v) => v.key != undefined ? c+1 : c, 0), '=', 2));
-        test('Should have 1 link User->Item', ctx => ctx.assert(repo.dataTypes.User.links.uid.entity, '=', repo.dataTypes.Item));
-        test('Should have 3 indices', ctx => ctx.assert(Object.keys(repo.indices).length, '=', 3));
-        test('Should have 1 query', ctx => ctx.assert(Object.keys(repo.queries).length, '=', 1));
-
-        test('Should add 1 User and set indices', ctx => {
-            repo.add(new User(0, createUserName()));
-            ctx.assert(repo.indices.find(x => x.name == 'id'), '!null');
-            ctx.assert(repo.indices.find(x => x.name == 'name'), '!null');
-        });
-        test('Should add User and Item objects', ctx => {
-            for (var i=1; i<1000; i++) {
-                var name = null;
-                while (true) {
-                    name = createUserName();
-                    if (repo.get('User', 'name', name) == null) break;
-                }
-                repo.add(new User(i, name));
-            }
-            ctx.assert(repo.indices.find(x => x.name == 'id'), '!null');
-            ctx.assert(repo.indices.find(x => x.name == 'id').data.count, '=', 1000);
-            ctx.assert(repo.indices.find(x => x.name == 'name'), '!null');
-            ctx.assert(repo.indices.find(x => x.name == 'name').data.count, '=', 1000);
-
-            for (var i=0; i<5000; i++) {
-                repo.add(createItem(i, rnd(repo.data.User.length)));
-            }
-            var count = 0;
-            var index = repo.indices.find(x => x.name == 'owner');
-            var block = index.data.first();
-            do {
-                count += block._data.length;
-                block = index.data.next();
-            } while (block != null);
-            ctx.assert(count, '=', 5000);
-        });
-        test('Should return users and items', ctx => {
-            var user = null;
-            var id = 0;
-            for (var ui=0; ui<10; ui++) {
-                id += rnd(100);
-                user = repo.get('User', 'id', id);
-                ctx.assert(user, '!null');
-                var items = repo.get('Item', 'ownerId', id);
-                if (items) {
-                    message(`${user.name} has`, 1);
-                    for (var i=0; i<items.length; i++) {
-                        message(items[i]);
-                    }
-                    _indent--;
-                } else {
-                    message(`${user.name} has nothing`);
-                }
-            }
-        });
-        test('Should be sorted by indices', ctx => {
-            for (var i in repo.indices) {
-                if (repo.indices.hasOwnProperty(i)) {
-                    var index = repo.indices[i];
-                    message(index.name, 1);
-                    var last = index.data.first();
-                    ctx.assert(last, '!null');
-                    if (from) {
-                        message(`Iterate from '${from[index.attribute]}'`);
-                        var from = index.data.next();
-                        var error = 0;
-                        index.data.range(from, null, item => {
-                            if (index.data.compare.method(last, item) > 0) error++;
-                            return error > 0;
-                        }, null);
-                    }
-                    _indent--;
-                }
-            }
-        });
-        test('Should query users by name', ctx => {
-            var half = Math.floor(repo.data.User.length*0.5);
-            var ix1 = Math.floor(half*Math.random());
-            var ix2 = ix1 + half;
-            var user1 = repo.dataTypes.User.indices.name.getAt(ix1);
-            var user2 = repo.dataTypes.User.indices.name.getAt(ix2);
-            var users = repo.query('GetUsersByName', {
-                'name1': user1.name,
-                'name2': user2.name,
-            });
-            var count = 0;
-            for (var i=0; i<repo.data.User.length; i++) {
-                var user = repo.data.User[i];
-                if (user.name >= user1.name && user.name < user2.name) count++;
-            }
-            ctx.assert(users.length, '=', count);
-        });
-    }
-
     var tests = () => [
-        test_map,
+        test_dictionary,
         test_Stream,
         test_DataSeries,
         test_DataSeriesCompare,
         test_DataLink,
         test_Graph,
         test_BTree,
-        test_Repository
     ];
 
     publish(tests, 'Data tests');

@@ -190,19 +190,24 @@
         return this.view.getFloat32(r);
     };
 
-    Stream.prototype.dump = function dump(width, separator, linebreaks) {
+    Stream.prototype.dump = function dump(offset, length, width, separator, linebreaks) {
         width = width || this.length;
         separator = separator || '';
+        offset = offset || 0;
+        length = length || this.length;
+        this.readPosition = length || this.length;
         var dump = [];
         var ri = 0, j = 0, k = 0;
         var row = new Array(256);
-        for (var i=0; i<this.length; i++) {
+        length += offset;
+        if (length > this.length) length = this.length - offset;
+        for (var i=offset; i<length; i++) {
             var b = this.readUint8(i);
             b = b.toString(16);
             if (b.length < 2) b = '0' + b;
             row[ri++] = b;
             j++;
-            if (j == width && j < this.length) {
+            if (j == width && j < length) {
                 dump.push(row.slice(0, ri).join(separator));
                 j = 0;
                 k = 0;
@@ -221,8 +226,8 @@
         return dump.join(linebreaks ? '\n' : separator+separator);
     };
 
-    Stream.prototype.hexdump = function hexdump(width) {
-        return this.dump(width, ' ', true);
+    Stream.prototype.hexdump = function hexdump(width, offset, length) {
+        return this.dump(offset, length, width, ' ', true);
     };
 
     Stream.prototype.toFile = function toFile(fileName, type, offset, length) {
