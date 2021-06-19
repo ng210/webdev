@@ -24,12 +24,12 @@ include('./sequence.js');
         this.isActive = false;
         this.currentTick = 0;
         this.loopCount = 1;
-        this.cursor = 0;
+        this.cursor = 1;
     };
 
     Channel.prototype.assign = function(deviceId, sequence) {
         this.sequence = sequence;
-        this.cursor = 0;
+        this.cursor = 1;
         this.adapter = sequence.adapter;
         if (!this.adapter) {
             throw new Error(`Missing adapter!`);
@@ -39,7 +39,7 @@ include('./sequence.js');
     };
 
     Channel.prototype.reset = function() {
-        this.cursor = 0;
+        this.cursor = 1;
         if (--this.loopCount > 0) {
             this.currentTick = 0;
             this.isActive = true;
@@ -59,9 +59,9 @@ include('./sequence.js');
                     // read command code, 1 byte
                     var cmd = this.sequence.getUint8(this.cursor++);
                     if (cmd > 1) {
-                        this.cursor = this.adapter.processCommand(this.device, cmd, this.sequence, this.cursor);
+                        this.cursor = this.adapter.processCommand(this, cmd);   //this.device, cmd, this.sequence, this.cursor);
                     } else {
-                        if (cmd === Ps.Player.EOS) {
+                        if (cmd === Ps.Player.Commands.EOS) {
                             // end of sequence
                             this.reset();
                             isRestarted = this.isActive;
@@ -70,7 +70,7 @@ include('./sequence.js');
                         break;
                     }
                 }
-                if (cmd === Ps.Player.EOS) {
+                if (cmd === Ps.Player.Commands.EOS) {
                     // end of sequence
                     break;
                 }

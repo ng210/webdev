@@ -34,7 +34,7 @@ include('/lib/data/stream.js');
     };
     IAdapter.getInfo = function() { throw new Error('Not implemented!'); };
     IAdapter.prototype.createDeviceImpl = function(deviceType, initData) { throw new Error('Not implemented!'); };
-    IAdapter.prototype.processCommand = function(device, command, sequence, cursor) { throw new Error('Not implemented!'); };
+    IAdapter.prototype.processCommand = function(channel, command) { throw new Error('Not implemented!'); };
 
     publish(Ps, 'Ps');
     publish(IAdapter, 'IAdapter', Ps);

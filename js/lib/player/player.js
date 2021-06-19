@@ -2,19 +2,21 @@ include('./iadapter-ext.js');
 (function () {
     function Player() {
         Player.base.constructor.call(this, this);
-        this.adapters = {};
+        this.adapters = [];
         this.sequences = [];
-        this.dataBlocks = [];
+        this.datablocks = [];
         this.channels = [];
         this.masterChannel = null;
         this.refreshRate = 25.0;
     };
     extend(Ps.IAdapterExt, Player);
 
-    Player.EOF = 0;
-    Player.EOS = 1;
-    Player.ASSIGN = 2;
-    Player.TEMPO = 3;
+    Player.Commands = {
+        'EOF': 0,
+        'EOS': 1,
+        'ASSIGN': 2,
+        'TEMPO': 3
+    };
 
     // IAdapter implementation
     Player.prototype.createDeviceImpl = function createDeviceImpl(deviceType, initData) {
@@ -30,9 +32,12 @@ include('./iadapter-ext.js');
         }
         return device;
     };
-    Player.prototype.processCommand = function processCommand(device, command, sequence, cursor) {
+    Player.prototype.processCommand = function processCommand(channel, command) {   //device, command, sequence, cursor) {
+        var device = channel.device;
+        var sequence = channel.sequence;
+        var cursor = channel.cursor;
         switch (command) {
-            case Player.ASSIGN:
+            case Player.Commands.ASSIGN:
                 var channelId = sequence.getUint8(cursor++);
                 var sequenceId = sequence.getUint8(cursor++);
                 var deviceId = sequence.getUint8(cursor++);
@@ -40,8 +45,8 @@ include('./iadapter-ext.js');
                 var sequence = this.sequences[sequenceId];
                 this.channels[channelId].assign(deviceId, sequence);
                 break;
-            case Player.TEMPO:
-                for (var i in Player.adapters) {
+            case Player.Commands.TEMPO:
+                for (var i=0; i<Player.adapters.length; i++) {
                     var adapter = Player.adapters[i];
                     if (typeof adapter.updateRefreshRate === 'function') {
                         adapter.updateRefreshRate(sequence.readFloat32(cursor++));
@@ -55,12 +60,15 @@ include('./iadapter-ext.js');
     // IAdapterExt implementation
     Player.prototype.makeCommand = function(command)  {
         var stream = new Stream(128);
+        if (typeof command == 'string') {
+            command = Player.Commands[command.toUpperCase()];
+        }
         stream.writeUint8(command);
         var inputStream = null;
         if (arguments[1] instanceof Ps.Sequence) inputStream = arguments[1].stream;
         else if (arguments[1] instanceof Stream) inputStream = arguments[1];
         switch (command) {
-            case Player.ASSIGN:
+            case Player.Commands.ASSIGN:
                 if (inputStream) {
                     stream.writeStream(inputStream, arguments[2], 4);
                 } else {
@@ -70,18 +78,18 @@ include('./iadapter-ext.js');
                     stream.writeUint8(arguments[4]);    // loop count
                 }
                 break;
-            case Player.TEMPO:
+            case Player.Commands.TEMPO:
                 if (inputStream) {
                     stream.writeStream(inputStream, arguments[2], 4);
                 } else {
                     stream.writeFloat32(arguments[1]);
                 }
                 break;
-            case Player.EOF:
-                stream.writeUint8(Player.EOF);
+            case Player.Commands.EOF:
+                stream.writeUint8(Player.Commands.EOF);
                 break;
-            case Player.EOS:
-                stream.writeUint8(Player.EOS);
+            case Player.Commands.EOS:
+                stream.writeUint8(Player.Commands.EOS);
                 break;
         }
 
@@ -90,38 +98,41 @@ include('./iadapter-ext.js');
     };
 
     // Player methods
-    Player.prototype.addAdapter = function addAdapter(adapterType) {
+    Player.prototype.addAdapter = function addAdapter(adapterType, datablockId) {
         var id = adapterType.getInfo().id;
         var adapter = Reflect.construct(adapterType, [this]);
-        this.adapters[id] = adapter;
+        if (!this.adapters.find(x => x.adapter.getInfo().id == id)) {
+            this.adapters.push({ adapter:adapter, datablock:datablockId });
+        }
         return adapter;
     };
     Player.prototype.load = async function load(data) {
         var stream = null;
         if (typeof data === 'string') {
-            stream = await Stream.fromFile(url);
+            stream = await Stream.fromFile(data);
         } else if (data instanceof Stream) {
             stream = data;
         }
         // get data blocks
-        this.dataBlocks = [];
+        this.datablocks = [];
         var offset = stream.readUint16(6);
         var count = stream.readUint16(offset);
         offset += 2;
         for (var i=0; i<count; i++) {
-            this.dataBlocks.push(new Stream(stream, stream.readUint32(offset), stream.readUint32(offset+4)));
+            this.datablocks.push(new Stream(stream, stream.readUint32(offset), stream.readUint32(offset+4)));
             offset += 8;
         }
         // add adapters, prepare context
-        this.adapters = {};
-        this.adapters[this.getInfo().id] = this;
-        this.prepareContext(this.dataBlocks[0]);
+        this.adapters = [];
+        this.adapters.push({ adapter:this, datablock:0 });
+        await this.prepareContext(this.datablocks[0]);
         offset = stream.readUint16(2);
         count = stream.readUint8(offset++);
         for (var i=0; i<count; i++) {
             var adapterType = stream.readUint8(offset++);
-            var adapter = this.addAdapter(Ps.Player.adapterTypes[adapterType]);
-            adapter.prepareContext(this.dataBlocks[stream.readUint8(offset++)]);
+            var datablockId = stream.readUint8(offset++);
+            var adapter = this.addAdapter(Ps.Player.adapterTypes[adapterType], datablockId);
+            await adapter.prepareContext(this.datablocks[datablockId]);
         }
         // create sequences
         this.sequences = [];
@@ -137,9 +148,11 @@ include('./iadapter-ext.js');
         this.masterChannel.assign(0, this.sequences[0]);
     };
     Player.prototype.createSequence = function createSequence(stream, offset, length) {
-        var adapter = this.adapters[stream.readUint8(offset)];
-        var sequence = new Ps.Sequence(adapter);
-        sequence.stream.writeStream(stream, offset+1, length-1);
+        var adapterInfo = this.adapters.find(x => x.adapter.getInfo().id == stream.readUint8(offset));
+        if (adapterInfo) {
+            var sequence = new Ps.Sequence(adapterInfo.adapter);
+            sequence.stream.writeStream(stream, offset, length);
+        }
         return sequence;
     };
     Player.prototype.run = function run(ticks) {
@@ -154,7 +167,6 @@ include('./iadapter-ext.js');
         this.masterChannel.assign(0, this.sequences[0]);
         this.masterChannel.loopCount = 0;
         this.masterChannel.isActive = true;
-
     };
     Object.defineProperties(Player.prototype, {
         isActive: {
@@ -167,60 +179,59 @@ include('./iadapter-ext.js');
     Player.registerAdapter = adapterType => Ps.Player.adapterTypes[adapterType.getInfo().id] = adapterType;
     Player.createBinaryData = function createBinaryData(player, createAdapterList, createSequences, createDataBlocks) {
         var data = new Stream(256);
-
         if (typeof createAdapterList != 'function') createAdapterList = () => player.adapters;
         if (typeof createSequences != 'function') createSequences = () => player.sequences;
-        if (typeof createDataBlocks != 'function') createDataBlocks = () => player.dataBlocks;
+        if (typeof createDataBlocks != 'function') createDataBlocks = () => player.datablocks;
         var adapterList = createAdapterList.call(this);
         var sequences = createSequences.call(this, player);
-        var dataBlocks = createDataBlocks.call(this);
+        var datablocks = createDataBlocks.call(this);
 
         // create header
         var offset = 2+3*2;
         data.writeUint16(offset);                   // header size
         data.writeUint16(offset);                   // offset of adapter list
-        offset += 1 + adapterList.length*2;
+        offset += 1 + (adapterList.length-1)*2;
         data.writeUint16(offset);                   // offset of sequence table
         offset += 2 + sequences.length*4;
         data.writeUint16(offset);                   // offset of data block table
-        offset += 2 + dataBlocks.length*8;
+        offset += 2 + datablocks.length*8;
 
         // write adapter list
-        data.writeUint8(adapterList.length);        // adapter count
-        for (var i=0; i<adapterList.length; i++) {
-            var type = adapterList[i][0];
-            if (!player.adapters[type]) {
+        data.writeUint8(adapterList.length - 1);    // adapter count
+        for (var i=1; i<adapterList.length; i++) {  // skip first as it is ALWAYS the Player
+            var type = adapterList[i].adapter;
+            if (!player.adapters.find(x => x.adapter == type)) {
                 throw new Error(`Adapter type '${type}' not found!`);
             }
-            data.writeUint8(type);                    // adapter type
-            data.writeUint8(adapterList[i][1]);       // id of data block of adapter initialization
+            data.writeUint8(type.getInfo().id);                    // adapter type
+            data.writeUint8(adapterList[i].datablock);       // id of data block of adapter initialization
         }
 
         // write sequence table
         data.writeUint16(sequences.length);         // sequence count
         for (var i=0; i<sequences.length; i++) {
             data.writeUint16(offset);               // sequence offset
-            var length = 1 + sequences[i].stream.length;
+            var length = sequences[i].stream.length;
             offset += length;
             data.writeUint16(length);               // sequence length
         }
         // write data block table
-        data.writeUint16(dataBlocks.length);        // data block count
-        for (var i=0; i<dataBlocks.length; i++) {
+        data.writeUint16(datablocks.length);        // data block count
+        for (var i=0; i<datablocks.length; i++) {
             data.writeUint32(offset);                 // data block offset
-            offset += dataBlocks[i].length;
-            data.writeUint32(dataBlocks[i].length);   // data block length
+            offset += datablocks[i].length;
+            data.writeUint32(datablocks[i].length);   // data block length
         }
 
         // write sequences
         for (var i=0; i<sequences.length; i++) {
-            data.writeUint8(sequences[i].adapter.getInfo().id);
+            //data.writeUint8(sequences[i].adapter.getInfo().id);
             data.writeStream(sequences[i].stream);
         }
 
         // write data blocks
-        for (var i=0; i<dataBlocks.length; i++) {
-            data.writeStream(dataBlocks[i]);
+        for (var i=0; i<datablocks.length; i++) {
+            data.writeStream(datablocks[i]);
         }
 
         return data;
@@ -228,7 +239,7 @@ include('./iadapter-ext.js');
     Player.create = function create() {
         var player = Reflect.construct(Ps.Player, []);
         // set adapter #0
-        player.adapters[player.getInfo().id] = player;
+        player.adapters.push({ adapter:player, datablock:0 });
         // set device #0
         player.devices.push(player);
         // crate master channel

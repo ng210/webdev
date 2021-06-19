@@ -17,8 +17,8 @@ include('/lib/data/stream.js');
     };
     Sequence.prototype.writeDelta = function(delta) { this.stream.writeUint16(delta); };
     Sequence.prototype.writeCommand = function(cmd) { this.stream.writeUint8(cmd); };
-    Sequence.prototype.writeEOF = function() { this.stream.writeUint8(Ps.Player.EOF); };
-    Sequence.prototype.writeEOS = function() { this.stream.writeUint8(Ps.Player.EOS); };
+    Sequence.prototype.writeEOF = function() { this.stream.writeUint8(Ps.Player.Commands.EOF); };
+    Sequence.prototype.writeEOS = function() { this.stream.writeUint8(Ps.Player.Commands.EOS); };
     Sequence.prototype.writeString = function(str) { this.stream.writeString(str); };
     Sequence.prototype.writeUint8 = function(value) { this.stream.writeUint8(value); };
     Sequence.prototype.writeUint16 = function(value) { this.stream.writeUint16(value); };
@@ -31,7 +31,7 @@ include('/lib/data/stream.js');
 
     Sequence.prototype.toFrames = function() {
         var frames = [];
-        var cursor = 0;
+        var cursor = 1;         // skip 1st byte adapter id
         while (true) {
             var frame = new Ps.Frame();
             frame.delta = this.getUint16(cursor); cursor += 2;
@@ -39,11 +39,11 @@ include('/lib/data/stream.js');
             while (true) {
                 // read command code byte
                 cmd = this.getUint8(cursor++);
-                if (cmd > Ps.Player.EOS) {
+                if (cmd > Ps.Player.Commands.EOS) {
                     var command = this.adapter.makeCommand(cmd, this, cursor);
                     frame.commands.push(command);
                     cursor += command.length - 1;
-                } else if (cmd == Ps.Player.EOF) {
+                } else if (cmd == Ps.Player.Commands.EOF) {
                     if (frame.commands.length == 0) {
                         cmd = new Stream(1);
                         cmd.writeUint8(0);
@@ -55,7 +55,7 @@ include('/lib/data/stream.js');
                 }
             }
             frames.push(frame);
-            if (cmd === Ps.Player.EOS) {
+            if (cmd === Ps.Player.Commands.EOS) {
                 break;
             }
         }
@@ -64,6 +64,7 @@ include('/lib/data/stream.js');
 
     Sequence.fromFrames = function fromFrames(frames, adapter) {
         var sequence = new Sequence(adapter);
+        sequence.writeHeader();
         var hasEOS = false;
         for (var fi=0; fi<frames.length; fi++) {
             var frame = frames[fi];
