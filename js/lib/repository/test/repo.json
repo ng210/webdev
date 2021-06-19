@@ -1,0 +1,20 @@
+{
+    "Imports" :{
+        "DataTypes": "./datatypes.json"
+    },
+
+    "Constraints": [
+        { "type":"key", "entity":"User", "field":"uid" },
+        { "type":"key", "entity":"Item", "field":"iid" },
+
+        { "type":"index", "name":"name", "entity":"User", "field":"name" },
+        { "type":"index", "name":"owner", "entity":"Item", "field":"owner" },
+
+        { "type":"link", "entity":"User", "field":"items", "query":"GetUserItems", "parameters":{"owner":"uid"} }
+    ],
+
+    "Queries": [
+        { "name": "GetUsersByName", "expression":"SELECT User WHERE name<=$name1 AND name<$name2" },
+        { "name": "GetUserItems", "expression":"SELECT Item WHERE owner=$owner"}
+    ]
+}

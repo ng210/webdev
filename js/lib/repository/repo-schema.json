@@ -1,6 +1,14 @@
 [
     { "name":"ConstraintTypes", "type":"enum", "values":["key", "link", "index"]},
 
+    { "name": "Query",
+        "attributes": [
+            { "name":"name", "type":"string" },
+            { "name":"arguments", "type":"StringList" },
+            { "name":"expression", "type":"string" }
+        ]
+    },
+
     { "name":"Constraint",
         "attributes": [
             { "name":"name", "type":"string", "required":false },
@@ -10,16 +18,10 @@
             { "name":"field", "type":"string", "required":false },
             { "name":"unique", "type":"bool", "required":false },
 
-            { "name":"linkedEntity", "type":"type", "required":false },
-            { "name":"linkedField", "type":"string", "required":false }
-        ]
-    },
-
-    { "name": "Query",
-        "attributes": [
-            { "name":"name", "type":"string" },
-            { "name":"arguments", "type":"StringList" },
-            { "name":"expression", "type":"string" }
+            { "name":"__linkedEntity", "type":"type", "required":false },
+            { "name":"__linkedField", "type":"string", "required":false },
+            { "name":"query", "type":"ref Query", "required":false },
+            { "name":"parameters", "type":"map", "required":false }
         ]
     },
 
