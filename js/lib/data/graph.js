@@ -1,6 +1,7 @@
 (function() {
     function Vertex(id, parentVertex, vertexData) {
         this.id = id;
+        this.graph = null;
         this.parent = parentVertex || null;
         this.data = vertexData;
         this.edges = [];
@@ -16,6 +17,7 @@
         this.flag = 0;
     };
     function Edge(from, to, edgeData) {
+        this.graph = null;
         this.from = from;
         this.to = to;
         this.data = edgeData;
@@ -46,6 +48,7 @@
     };
     Graph.prototype.createVertex = function createVertex(vertexData, parent) {
         var vertex = new Vertex(this.vertices.length, parent, vertexData);
+        vertex.graph = this;
         if (!this.root) {
             this.root = vertex;
         }
@@ -54,6 +57,7 @@
     };
     Graph.prototype.createEdge = function createEdge(from, to, edgeData) {
         var edge = new Edge(from, to, edgeData);
+        edge.graph = this;
         this.edges.push(edge);
         return edge;
     };
