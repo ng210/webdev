@@ -1,9 +1,9 @@
 attribute vec4 a_position;
 attribute float a_vertexId;
 
-attribute float a_rotateZ;
-attribute vec2 a_scale;
 attribute vec3 a_translate;
+attribute vec2 a_scale;
+attribute float a_rotateZ;
 attribute vec4 a_texcoord;
 attribute vec4 a_color;
 
@@ -24,7 +24,7 @@ void main() {
   m[2][3] = 1.0;
   m[3][0] = a_translate.x;
   m[3][1] = a_translate.y;
-  m[3][2] = 1.0;  //a_translate.z;
+  m[3][2] = a_translate.z;
   m[3][3] = 1.0;
   gl_Position = u_projection*m*a_position;
   

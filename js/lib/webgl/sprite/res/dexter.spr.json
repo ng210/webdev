@@ -1,5 +1,5 @@
 {
-    "image": "/lib/webgl/sprite/dexter.png",
+    "image": "./dexter.png",
     "frames": [
       [  0,  0, 41, 52 ],
       [ 41,  0, 28,  9 ],

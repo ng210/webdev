@@ -1,8 +1,8 @@
 (function() {
-    include('math/v2.js');
-    include('math/v3.js');
-    include('math/quaternion.js');
-    include('webgl/webgl.js');
+    include('/lib/math/v2.js');
+    include('/lib/math/v3.js');
+    include('/lib/math/quaternion.js');
+    include('./webgl.js');
 
     var _vbo = null;
     var _ibo = null;
@@ -457,6 +457,7 @@
     }
 
     function test_simple_rendering() {
+        header('Test simple rendering');
         setup();
     }
 

@@ -1,5 +1,6 @@
-include('glui/glui-lib.js');
-include('webgl/sprite/sprite.js');
+include('/lib/glui/glui-lib.js');
+include('./sprite.js');
+include('./sprite-manager.js');
 
 (function() {
 
@@ -21,7 +22,7 @@ include('webgl/sprite/sprite.js');
     var fpsRange = 20;
     var fpsDisplay = null;
     async function setup(url, count) {
-        url = url || '/lib/webgl/sprite/fighter.spr.json';
+        url = url || './res/fighter.spr.json';
         count = count || 100;
         glui.initialize();
         glui.canvas.style.position = 'absolute';
@@ -77,7 +78,7 @@ include('webgl/sprite/sprite.js');
         test('Should create a sprite', context => {
             context.assert(spr.ix, '=', 0);
             var data = _sprMgr.spriteAttributeData.slice(spr.ix*webGL.Sprite.AttributeSize, (spr.ix+1)*webGL.Sprite.AttributeSize);
-            context.assert(data, ':=', new Float32Array([
+            var expected = new Float32Array([
                 spr.position.x,
                 spr.position.y,
                 spr.position.z,
@@ -92,7 +93,8 @@ include('webgl/sprite/sprite.js');
                 expectedFrame[1],
                 expectedFrame[2],
                 expectedFrame[3]
-            ]));
+            ]);
+            context.assert(data, ':=', expected);
         });
         tearDown();
     }
@@ -178,7 +180,7 @@ include('webgl/sprite/sprite.js');
     }
     async function test_animateSprites2() {
         message('Animate sprites #2', 1);
-        await setup('/lib/webgl/sprite/stone.spr.json', 50000);
+        await setup('./res/stone.spr.json', 50000);
         for (var i=0; i<_sprMgr.sprites.length; i++) {
             var spr = _sprMgr.addSprite();
             setBall(spr);
@@ -199,7 +201,7 @@ include('webgl/sprite/sprite.js');
     }
     async function test_animateWithPlayer() {
         message('Animate sprites with player', 1);
-        await setup('webgl/sprite/dexter.spr.json', 10);
+        await setup('./res/dexter.spr.json', 10);
 
         tearDown();
     }
