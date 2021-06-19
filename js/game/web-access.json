@@ -1,0 +1,10 @@
+{
+    "default": "deny",
+    "allow": [
+        "index.html",
+        "main.js",
+        "grammar.js",
+        "compiler.js",
+        "res"
+    ]
+}
