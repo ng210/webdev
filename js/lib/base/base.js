@@ -421,6 +421,7 @@ self.Url = function Url(url, currentPath) {
             var pos = this.getSchema_(url, 0);
             pos = this.getLogin_(url, pos);
             pos = this.getHostAndPort_(url, pos);
+            if (currentPath instanceof Url) currentPath = currentPath.path;
             pos = this.getPath_(url, currentPath || '', pos);
             pos = this.getQuery_(url, pos);
             pos = this.getFragment_(url, pos);
@@ -716,6 +717,10 @@ Array.prototype.select = function select(filter) {
     }
     return res;
 };
+Array.prototype.tail = function tail() {
+    return this[this.length - 1];
+};
+
 
 //#region UTILITIES: POLL,LOCK,MERGEOBJECTS,OBJECT-PATH
 self.poll = function poll(action, timeout) {

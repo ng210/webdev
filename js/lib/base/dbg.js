@@ -16,11 +16,12 @@ include('/lib/base/html.js');
 				this.con.style.zIndex = 100;
 				//this.con.style.width = window.clientWidth;
 			};
-			Dbg.pr = function pr(txt) {
+			Dbg.pr = function pr(txt, tag) {
+				tag = tag || 'span';
 				if (this.con != null) {
-					var span = document.createElement('span');
-					span.innerHTML += txt || '';
-					this.con.appendChild(span);
+					var el = document.createElement(tag);
+					el.innerHTML += txt || '';
+					this.con.appendChild(el);
 				} else {
 					console.debug(txt);
 				}
@@ -41,12 +42,13 @@ include('/lib/base/html.js');
 			alert(error.message + '\n' + error.stack);
 		}
 	} else {
-		Dbg.pr = function pr(txt) {
-			self.postMessage({'code':'dbg', 'id':self.messageId++, 'body':'<small>worker</small>:' + txt});
+		Dbg.pr = function pr(txt, tag) {
+			tag = tag || 'span';
+			self.postMessage({'code':'dbg', 'id':self.messageId++, 'body':`<small>worker</small>: + <${tag}>${txt}</${tag}>`});
 		};
 	}
-	Dbg.prln = function prln(txt) {
-		this.pr(txt.toString().replace(/\n/g, "<br/>") + '<br/>');
+	Dbg.prln = function prln(txt, tag) {
+		this.pr(txt.toString().replace(/\n/g, "<br/>") + '<br/>', tag);
 	};
 	Dbg.measure = function measure(fn, count) {
 		if (isNaN(count) || count < 0) count = 1;

@@ -1,7 +1,7 @@
 include('/lib/base/html.js');
 (function(){
     async function test_load() {
-        message('Test load', 1);
+        header('Test load');
         var res = await load('./test-file.json');
         test('Should load test-file from current folder (app\'s path) sync', ctx => {
             ctx.assert(res, '!null');
@@ -55,7 +55,7 @@ include('/lib/base/html.js');
     }
 
     function test_binSearch() {
-        message('Test binary search', 1);
+        header('Test binary search');
         var arr = new Array(100);
         for (var i=0; i<100; i++) {
             arr[i] = i;
@@ -105,6 +105,7 @@ include('/lib/base/html.js');
     }
 
     function test_getSetObjectAt() {
+        header('Test get/set object at path');
         var text1 = 'Hello World!';
         var text2 = 'Test';
         var obj1 = {
@@ -132,6 +133,7 @@ include('/lib/base/html.js');
     }
 
     function test_html() {
+        header('Test html functions');
         var text = '@me said: "Hello world!"\n@you said: "Go ahead & make my day!"'
         var encoded = Html.encode(text);
         var decoded = Html.decode(encoded);
