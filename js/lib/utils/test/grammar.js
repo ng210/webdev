@@ -21,15 +21,15 @@ var grammar = {
         '__F2': { 'symbol': 'F2' }
     },
     'rules': [
-        { input:'FB1',  output:'F1', priority: 100,  action: null },
+        { input:'FB1',  output:'F1', priority: 100,  action: f => f },
         { input:'B1LB2',output:'L',  priority:  90,  action: (b1,l,b2) => l },
         { input:'M1L',  output:'L',  priority:  80,  action: null },
         { input:'LM',   output:'M1', priority:  70,  action: null },
         { input:'A1L',  output:'L',  priority:  60,  action: null },
         { input:'LA',   output:'A1', priority:  50,  action: null },
         { input:'F1L',  output:'F2', priority:  46,  action: null },
-        { input:'F2C',  output:'F1', priority:  30,  action: null },
-        { input:'F2B2', output:'L',  priority:  20,  action: null },
+        { input:'F2C',  output:'F1', priority:  30,  action: f2 => f2 },
+        { input:'F2B2', output:'L',  priority:  20,  action: f2 => f2 },
         { input:'L',    output:null, priority:  10,   action: null }
     ],
 };

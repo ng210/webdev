@@ -53,6 +53,9 @@
     Type.prototype.createValue = function createValue() {
         throw new Error('Not implemented!');
     };
+    Type.prototype.create = function create() {
+        throw new Error('Not implemented!');
+    };
     Type.prototype.parse = function parse(term) {
         throw new Error('Not implemented!');
     };
@@ -103,7 +106,7 @@
                     this.schema = args.schema;
                     break;
                 case 'ref':
-                    this.isReference = args.ref;
+                    this.isReference = args.ref || false;
                     break;
             }
         }
@@ -164,6 +167,37 @@
         }
         return res;
     };
+    SimpleType.prototype.create = function create() {
+        var res = null;
+        switch (this.basicType.name) {
+            case Schema.Types.STRING:
+                res = '';
+                break;
+            case Schema.Types.LIST:
+                res = [];
+                break;
+            case Schema.Types.ENUM:
+                res = this.values[0];
+                break;
+            case Schema.Types.INT:
+                res = 0;
+                break;
+            case Schema.Types.FLOAT:
+                res = 0.0;
+                break;
+            case Schema.Types.MAP:
+                res = {};
+                break;
+            case Schema.Types.BOOL:
+                res = false;
+                break;
+            case Schema.Types.TYPE:
+                res = this.schema.types.string;
+                break;
+        }
+        return res;
+    };
+
     SimpleType.prototype.parse = function parse(term) {
         var res = null;
         switch (this.basicType.name) {
@@ -279,21 +313,31 @@
         }
         return results;
     };
-    ComplexType.prototype.createValue = function createValue() {
+    function create(type, hasValue) {
         var res = null;
-        switch (this.basicType.name) {
+        switch (type.basicType.name) {
             case Schema.Types.OBJECT:
                 res = {};
-                for (var i in this.attributes) {
-                    if (this.attributes.hasOwnProperty(i)) {
-                        res[i] = this.attributes[i].type.createValue();
+                for (var i in type.attributes) {
+                    if (type.attributes.hasOwnProperty(i)) {
+                        res[i] = hasValue ? type.attributes[i].type.createValue() : type.attributes[i].type.create();
                     }
                 }
                 break;
         }
         if (res) {
-            Object.defineProperty(res, '__type__', { configurable:false, enumerable:false, writable:false, value:this});
+            Object.defineProperty(res, '__type__', { configurable:false, enumerable:false, writable:false, value:type});
         }
+        return res;   
+    }
+    ComplexType.prototype.createValue = function createValue() {
+        return create(this, true);
+    };
+    ComplexType.prototype.create = function create() {
+        return create(this, false);
+    };
+    ComplexType.prototype.parse = function parse(term) {
+        var res = null;
         return res;
     };
     //#endregion
@@ -390,10 +434,13 @@
     };
     Schema.prototype.getOrBuildType = function getOrBuildType(obj) {
         var type = null;
-        if (typeof obj === 'string') {
-            if (obj.toUpperCase().startsWith('REF')) {
+        if (obj instanceof Type) {
+            type = this.types[obj.name];
+        } else if (typeof obj === 'string') {
+            var match = obj.match(/ref\s+(\w+)/i);
+            if (match) {
                 // else error
-                var refType = obj.substring(4);
+                var refType = match[1];
                 var ref = '*'  + refType;
                 type = this.types[ref];
                 if (!type) {
@@ -530,7 +577,7 @@
                 }
                 t.validate(obj, validateErrors);
                 // any missing types during validation?
-                if (Object.keys(this.missingTypes).length > 0) {
+                if (Object.keys(this.missingTypes).length > 0 || this.missingReferences.length > 0) {
                     validateErrors = [];
                     // revalidate
                     this.missingReferences = [];

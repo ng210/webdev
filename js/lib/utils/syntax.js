@@ -73,7 +73,7 @@
     Expression.prototype.resolve = function(context) {
         this.lastNode = null;
         var nodes = Array.from(this.tree.vertices);
-        if (this.syntax.isDebug) console.log(`input: ${nodes.map(x => `${this.syntax.symbols[x.data.code]}['${x.data.term}']`)}`);
+        if (this.syntax.debug > 0) console.log(`input: ${nodes.map(x => `${this.syntax.symbols[x.data.code]}['${x.data.term}']`)}`);
         // try to apply rules as long as there are nodes
         while (nodes.length > 0) {
             for (var r=0; r<this.syntax.ruleMap.length;) {
@@ -84,14 +84,18 @@
                     var i = 0;
                     // rule's input is shorter than the rest of the input
                     if (rule.in.length <= nodes.length - n) {
-                        while (i<rule.in.length && (rule.in[i] == nodes[n+i].data.code)) i++;
+                        //while (i<rule.in.length && rule.in[i] == nodes[n+i].data.code) i++;
+                        while (i<rule.in.length) {
+                            if (rule.in[i] != nodes[n+i].data.code && rule.in[i] != this.syntax.wildcardCode) break;
+                            i++;
+                        }
                     } else {
                         // skip to next rule (iteration with r)
                         break;
                     }
                     if (i == rule.in.length) {
                         // match found, replace input by output
-                        if (this.syntax.isDebug) console.log(`match: ${rs(rule)}`);
+                        if (this.syntax.debug > 0) console.log(`match: ${rs(rule)}`);
                         // extract rule's input
                         var args = nodes.slice(n, n+i);
                         var output = null;
@@ -113,7 +117,7 @@
                             nodes.splice(n, i, output);
                         } else if (!rule.out && !output) {
                             // remove the input (no output)
-                            nodes.slice(n, i);
+                            nodes.splice(n, i);
                         } else if (!rule.out && output) {
                             // replace the input by the output returned by the rule's action
                             nodes.splice(n, i, output);
@@ -124,7 +128,7 @@
                             this.lastNode = output;
                         }
                         hasMatch = true;
-                        if (this.syntax.isDebug) console.log(`result: ${nodes.map(x => `${this.syntax.symbols[x.data.code]}['${x.data.term}']`)}`);
+                        if (this.syntax.debug > 0) console.log(`result: ${nodes.map(x => `${this.syntax.symbols[x.data.code]}['${x.data.term}']`)}`);
                         break;
                     } else n++;
                 }
@@ -147,7 +151,7 @@
         return this.lastNode.data.value;
     };
     Expression.prototype.mergeNodes = function(nodes) {
-        if (this.syntax.isDebug) console.log('merge in' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
+        if (this.syntax.debug > 1) console.log('merge in: ' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
         // merge b into a if
         // - a has an action attribute or has an edge
         // - b is a literal
@@ -160,23 +164,24 @@
                 var an = nodes[0].data.type.action != null || nodes[0].edges.length > 0;
                 var bn = nodes[1].data.type.action != null || nodes[1].edges.length > 0;
             //  an  bn => 0  1
-            //  an !bn => 0 -1
-            // !an !bn => 0 -1
-            // !an  bn => 1 -1
+            //  an !bn => 0  1
+            // !an  bn => 1  0
+            // !an !bn => 0  0
                 aix = !an && bn ? 1 : 0;
-                bix = an && bn ? 1 : -1;
+                bix = an ? 1 : 0;
             } else {
                 aix = 1 - bix;
             }
-            if (aix != -1 && bix != -1) {
+            if (this.syntax.debug > 1) console.log(`aix=${aix}, bix=${bix}`);
+            if (aix != bix) {
                 this.tree.addEdge(nodes[aix], nodes[bix]);
-            }
+            } else bix = 1 - aix;
         } else {
             if (nodes.length > 2) {
                 throw new Error('More than 2 nodes passed.');
             }
         }
-        if (this.syntax.isDebug) console.log('merge out ' + this.nodeToString(nodes[aix]));
+        if (this.syntax.debug > 1) console.log('merge out: ' + this.nodeToString(nodes[aix]));
         return nodes[aix];
     };
     Expression.prototype.nodeToString = function(node, simple) {
@@ -192,13 +197,17 @@
     };
 
     function Syntax(grammar, debug) {
-        this.isDebug = debug;
+        this.debug = debug;
         this.grammar = grammar;
 
         // add the literal symbol for non-keyword terms
         this.literal = '_L';
         this.literalType = { 'symbol': 'L'}
         this.grammar.prototypes[this.literal] = this.literalType;
+        // add the wildcard symbol
+        this.wildcard = '_*';
+        this.wildcardType = { 'symbol': '*'}
+        this.grammar.prototypes[this.wildcard] = this.wildcardType;
 
         // build list of symbols
         this.symbols = [];
@@ -208,7 +217,8 @@
                 this.symbols.push(symbol);
             }
         }
-        this.literalCode = this.symbols.length - 1;
+        this.literalCode = this.symbols.length - 2;
+        this.wildcardCode = this.symbols.length - 1;
 
         //for (var i=0; i<this.symbols.length; i++)//console.log(`${i} => '${this.symbols[i]}'`);
 
@@ -228,7 +238,7 @@
                         ci = symbol.length;
                     }
                  }
-                 if (candidate > 0) {
+                 if (candidate > -1) {
                      key.push(candidate);
                      i += ci;
                  } else {
@@ -237,7 +247,7 @@
             }
             var value = this.symbols.indexOf(rule.output);
             rule.in = key;
-            rule.out = value;
+            rule.out = value != -1 ? value : null;
         }
         //console.log(this.ruleMap.map(r => rs(r)).join('\n'));
     };
@@ -290,7 +300,8 @@
         //console.log('Nodes: ' + expression.tree.nodes.map(x => `${expression.nodeToString(x, true)}`).join('  '));
         return expression;
     };
-    Syntax.Expression = Expression;
 
+    Syntax.Node = Node;
+    Syntax.Expression = Expression;
     publish(Syntax, 'Syntax');
 })();

@@ -1,6 +1,6 @@
 {
     "Imports" :{
-        "baka": "./test/test-types.json"
+        "baka": "./test-types.json"
     },
 
     "types": [

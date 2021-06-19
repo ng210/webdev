@@ -8,7 +8,7 @@ include('schema.js');
             await load('./test/grammar.js');
         }
 
-        message('Test syntax', 1);
+        header('Test syntax');
         var results = [
             'Test syntax'
         ];
@@ -27,7 +27,7 @@ include('schema.js');
            '60': '2*pow(4,2)+sqrt(pow(5,4))+3',
            '30': '2*get(id)+get(key)+1'
         };
-        var syntax = new Syntax(grammar, false);
+        var syntax = new Syntax(grammar, 1);
         var obj = {
             'id': 12,
             'key': 5
@@ -49,30 +49,63 @@ include('schema.js');
     }
 
     function test_types() {
-        message('Test types', 1);
+        header('Test types');
         var schema = new Schema();
         var colors = ['red', 'green', 'blue'];
-        schema.buildType({ 'name':'uint8', 'type':'int', 'min':0, 'max':255 });
-        schema.buildType({ 'name':'uint16', 'type':'int', 'min':0, 'max':65536 });
-        schema.buildType({ 'name':'uint32', 'type':'int', 'min':0, 'max':4294967296 });
+        var type = schema.buildType({ 'name':'uint8', 'type':'int', 'min':0, 'max':255 });
+        message(`${type.name}:${type.baseType.name} added`);
+        type = schema.buildType({ 'name':'uint16', 'type':'int', 'min':0, 'max':65536 });
+        message(`${type.name}:${type.baseType.name} added`);
+        type = schema.buildType({ 'name':'uint32', 'type':'int', 'min':0, 'max':4294967296 });
+        message(`${type.name}:${type.baseType.name} added`);
 
-        test('Should parse and validate values successfully', ctx => {
-            for (var key in schema.types) {
-                var type = schema.types[key];
-                if (!type.isAbstract) {
-                    var value = type.createValue();
-                    message(type.name);
-                    ctx.assert(value, '!null');
-                    var errors = type.validate(value);
-                    ctx.assert(errors, 'empty');
-                    message_errors(errors);
+//         type = schema.types.type;
+//         var value = schema.types.Types; //type.createValue();
+//         Dbg.prln('\n *** ' + value.name)
+// debugger
+//         var errors = type.validate(value);
+//         message_errors(errors);
+
+        var totalResults = [];
+        var totalErrors = 0;
+        test('Should parse and validate all 500 random values of all types successfully', ctx => {
+            for (var ci=0; ci<500; ci++) {
+                for (var key in schema.types) {
+                    var type = schema.types[key];
+                    if (!type.isAbstract) {
+                        var value = type.createValue();
+                        var totalResult = { type:type.name, value:null, errors:null };
+                        if (value == null) {
+                            totalResult.errors = [new Error('Value was null!')];
+                            totalErrors++;
+                        } else {
+                            if (type == schema.types.type || type == schema.types.Types || type == schema.types.TypeList) {
+                                totalResult.value = `{${value.name}}`;
+                            } else {
+                                totalResult.value = JSON.stringify(value);
+                            }
+                            var errors = type.validate(value);
+                            if (errors.length > 0) {
+                                totalResult.errors = errors;
+                                totalErrors++;
+                            }
+                        }
+                        totalResults.push(totalResult);
+                    }
+                }
+            }
+            ctx.assert(totalErrors, '=', 0);
+            for (var ei=0; ei<totalResults.length; ei++) {
+                if (totalResults[ei].errors) {
+                    message(`${totalResults[ei].type} = ${totalResults[ei].value}`);
+                    message_errors(totalResults[ei].errors);
                 }
             }
         });
     }
 
     function test_schema() {
-        message('Test schema', 1);
+        header('Test schema');
         var schema = new Schema();
 
         schema.buildType({ name:'String10', type:Schema.Types.STRING, length:10 });
@@ -303,6 +336,16 @@ include('schema.js');
             ctx.assert(errors.length, '=', 0);
         });
 
+        test('Should create reference types', ctx => {
+            schema.buildType({ type:'ref     MyObject' });
+            schema.buildType({ name:'MyRefList', type:'list', elemType:'ref \n  MyObject' });
+            schema.buildType({ name:'MyIndex', attributes: [{ name:'persons', type:{ type:'list', elemType:'ref Person' }}] });
+            ctx.assert(schema.types['*MyObject'], '!null');
+            ctx.assert(schema.types['*Person'], '!null');
+            ctx.assert(schema.types['MyIndex'].attributes.persons.type.baseType, '=', schema.types.list);
+            ctx.assert(schema.types['MyIndex'].attributes.persons.type.elemType, '=', schema.types['*Person']);
+        });
+
         schema.buildType({ name:'MyDataTypes', type:Schema.Types.LIST, elemType:'type'});
         test('Should accept run-time types', ctx => {
             var rtTypes = [
@@ -408,7 +451,7 @@ include('schema.js');
     }
 
     async function test_load_schema() {
-        message('Test load schema and definition', 1);
+        header('Test load schema and definition');
         var schemaInfo = {
             schema: null,
             schemaDefinition: './test/test-schema.json',
@@ -425,10 +468,10 @@ include('schema.js');
     }
 
     var tests = () => [
-        test_syntax,
-        test_types,
+        // test_syntax,
+        // test_types,
         test_schema,
-        test_load_schema
+        // test_load_schema
     ];
 
     publish(tests, 'Util tests');
