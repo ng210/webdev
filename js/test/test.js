@@ -1,100 +1,152 @@
 include('/lib/base/dbg.js');
 
 //var _indentText = ['&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;'];
-var _indentText = '        ';
-var _bulletinSymbols = ['►', '▪', '∙'];
-var _pending = 0;
-var _indent = 0;
-var _indentColor = [240,224,192];
-var _defaultColor = [192, 240, 208];
+
+var TestConfig = {
+    indentText: '        ',
+    bulletinSymbols: ['', '►', '▪', '∙'],
+    pending: 0,
+    indent: 0,
+    indentColor: [240,224,192],
+    defaultColor: [192, 240, 208],
+    buttonCount: 0,
+
+    isNonInteractive: false,
+    isSilent: false,
+
+    assertion_operators: {
+            "=": { "term": "equal", "action": (a, b) => equals(a,b) },
+            "~": { "term": "match", "action": (a, b) => approx(a, b) },
+            "!=": { "term": "not be", "action": (a, b) => a != b },
+            "<": { "term": "be less", "action": (a, b) => a < b },
+            ">": { "term": "be greater", "action": (a, b) => a > b },
+            "<=": { "term": "be less or equal", "action": (a, b) => a <= b },
+            ">=": { "term": "be greater or equal", "action": (a, b) => a >= b },
+            ":=": { "term": "match", "action": (a, b) => deepCompare(a, b) },
+        "empty": { "term": "be empty", "action": a => isEmpty(a) },
+        "!empty": { "term": "have an element", "action": a => !isEmpty(a) },
+        "true":   { "term": "be true", "action": a => a == true },
+        "false":  { "term": "be false", "action": a => a == false },
+        "null":   { "term": "be null", "action": a => a == null },
+        "!null":  { "term": "be not null", "action": a => a != null }
+    }
+};
 
 function formatResult(value, color) {
-    color = color || _defaultColor;
-    var f = _indent < 8 ? _indent/8 : 1;
+    color = color || TestConfig.defaultColor;
+    var f = TestConfig.indent < 8 ? TestConfig.indent/8 : 1;
     var e = 1 - f;
     var rgb = new Array(3);
     for (var i=0; i<3; i++) {
-        var c = Math.floor(color[i]*e + _indentColor[i]*f);
+        var c = Math.floor(color[i]*e + TestConfig.indentColor[i]*f);
         rgb[i] = c < 256 ? c : 255;
     }
-    return `<pre>${_indentText.substr(0, _indent)}</pre><span class="test" style="color:rgb(${rgb})">${_bulletinSymbols[_indent<_bulletinSymbols.length-1 ? _indent : _bulletinSymbols.length-1]} ${value}</span>`;
+    return `<pre>${TestConfig.indentText.substr(0, TestConfig.indent)}</pre><span class="test" style="color:rgb(${rgb})">${TestConfig.bulletinSymbols[TestConfig.indent<TestConfig.bulletinSymbols.length-1 ? TestConfig.indent : TestConfig.bulletinSymbols.length-1]} ${value}</span>`;
 }
 
 function print(node, color) {
-    if (Array.isArray(node)) {
-        for (var i=0; i<node.length; i++) {
-            print(node[i], color);
+    if (!TestConfig.isSilent) {
+        if (Array.isArray(node)) {
+            for (var i=0; i<node.length; i++) {
+                print(node[i], color);
+            }
+        } else {
+            Dbg.pr(formatResult(node, color));
         }
-    } else {
-        Dbg.pr(formatResult(node, color));
     }
 }
 
 function print_result(context, result) {
-    var lbl = context.lbl.replace(/&apos;|&quot;/g, m => m == '&apos;' ? '\'' : '"');
-    var errorText = 'Failed';
-    if (result instanceof Error) {
-        errorText += ' => <div class="error-details"><pre>ERROR: ' + result.stack.replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v])) + '</pre></div>';
-    };
-    var text = (context.errors == 0 && !result) ? `${lbl}..<span style="color:#40ff40">Ok</span>` : `${lbl}..<span style="color:#ff4040">${errorText}</span>`;
-    var spans = Dbg.con.querySelectorAll('.test'); //Dbg.con.getElementsByTagName('span');
-    for (var i=0; i<spans.length; i++) {
-        spans[i].innerHTML = spans[i].innerHTML.replace(`${lbl}..[result]`, text);
-        
+    if (!TestConfig.isSilent) {
+        var lbl = context.lbl.replace(/&apos;|&quot;/g, m => m == '&apos;' ? '\'' : '"');
+        var errorText = 'Failed';
+        if (result instanceof Error) {
+            errorText += ' => <div class="error-details"><pre>ERROR: ' + result.stack.replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v])) + '</pre></div>';
+        };
+        var text = (context.errors == 0 && !result) ? `${lbl}..<span style="color:#40ff40">Ok</span>` : `${lbl}..<span style="color:#ff4040">${errorText}</span>`;
+        var spans = Dbg.con.querySelectorAll('.test'); //Dbg.con.getElementsByTagName('span');
+        for (var i=0; i<spans.length; i++) {
+            spans[i].innerHTML = spans[i].innerHTML.replace(`${lbl}..[result]`, text);
+        }
     }
 }
 
 function println(text, color) {
+    if (text == undefined) text = '';
     print(text+'<br/>', color);
+}
+
+function printBlankRow() {
+    if (!TestConfig.isSilent) {
+        Dbg.pr('<hr style="margin-left:1em;left;width:16em;height:0px;padding:px;border-style:outset;border-width:1px;opacity:0.4" />');
+    }
 }
 
 function message(text, indent) {
     println(text, [144, 160, 144]);
-    if (indent) _indent+=indent;
+    if (indent) TestConfig.indent += indent;
+}
+
+function header(text) {
+    TestConfig.indent++;
+    println(text, [176, 200, 192]);
+    TestConfig.indent++;
 }
 
 function error(text) {
     println(text, [255, 64, 64]);
 }
 
-var _buttonCount = 0;
 function addButton(text, handler) {
-    var id = 'btn_' + _buttonCount++;
-    Dbg.prln(`<button id="${id}">${text}</button>`);
-    var button = document.getElementById(id);
-    button.onclick = handler;
+    var button = null;
+    if (!TestConfig.isSilent) {
+        var id = 'btn_' + TestConfig.buttonCount++;
+        Dbg.prln(`<button id="${id}">${text}</button>`);
+        button = document.getElementById(id);
+        button.onclick = handler;
+    }
     return button;
 }
 
 async function button(text) {
     var isDone = false;
     var btn = addButton(text, e => isDone = true);
+    var timer = null;
+    if (TestConfig.isNonInteractive) {
+        timer = setTimeout( () => isDone = true, 2000);
+    }
     await poll( () => isDone, 10);
-    btn.innerHTML = 'Done';
+    clearTimeout(timer);
+    if (btn) btn.innerHTML = 'Done';
 }
 
 async function test(lbl, action) {
     lbl = Html.encode(lbl);
     println(lbl + '..[result]', [208, 208, 128]);
-    _indent++;
+    TestConfig.indent++;
     var result = null;
     var context = new test_context(lbl);
     try {
         result = action.constructor.name != 'AsyncFunction' ? action(context) : await action(context);
     } catch (err) {
         result = err;
+        this.hasErrors = true;
     }
+    if (context.errors > 0) this.hasErrors = true;
+
     if (result instanceof Promise) {
-        _pending++;
+        TestConfig.pending++;
         result.lbl = lbl;
+//console.log('111')
         result.then(
-            value => { _pending--; print_result(context, value); },
-            error => { _pending--; print_result(context, error); }
+            value => { console.log('222'); TestConfig.pending--; print_result(context, value); },
+            error => { debugger; this.hasErrors = true; TestConfig.pending--; print_result(context, error); }
         );
     } else {
         print_result(context, result);
     }
-    _indent--;
+    TestConfig.indent--;
+//console.log('333')
 }
 
 async function measure(lbl, action, batchSize) {
@@ -112,17 +164,18 @@ async function measure(lbl, action, batchSize) {
         if (duration < 1000) {
             var tick = Math.floor(duration/100);
             if (tick > lastTick) {
-                Dbg.pr('.');
+                if (!TestConfig.isSilent) Dbg.pr('.');
                 lastTick = tick;
             }
             return false;
         } else {
-            Dbg.prln('done');
+            if (!TestConfig.isSilent) Dbg.prln('done');
             return true;
         }
     }, 5);  
-    
-    Dbg.prln(`<span style="color:#f0e080">${count} iterations took <b>${duration}ms</b> (avg: ${(duration/count).toPrecision(4)})</span>`);
+    if (!TestConfig.isSilent) {
+        Dbg.prln(`<span style="color:#f0e080">${count} iterations took <b>${duration}ms</b> (avg: ${(duration/count).toPrecision(4)})</span>`);
+    }
 }
 
 function test_context(lbl) {
@@ -221,23 +274,6 @@ function approx(a, b, precision) {
     return (!isNaN(a) && !isNaN(b)) ? Math.abs(a-b) <= precision : false;
 }
 
-var _assertion_operators = {
-        "=": { "term": "equal", "action": (a, b) => equals(a,b) },
-        "~": { "term": "match", "action": (a, b) => approx(a, b) },
-       "!=": { "term": "not be", "action": (a, b) => a != b },
-        "<": { "term": "be less", "action": (a, b) => a < b },
-        ">": { "term": "be greater", "action": (a, b) => a > b },
-        "<=": { "term": "be less or equal", "action": (a, b) => a <= b },
-        ">=": { "term": "be greater or equal", "action": (a, b) => a >= b },
-       ":=": { "term": "match", "action": (a, b) => deepCompare(a, b) },
-    "empty": { "term": "be empty", "action": a => isEmpty(a) },
-   "!empty": { "term": "have an element", "action": a => !isEmpty(a) },
-   "true":   { "term": "be true", "action": a => a == true },
-   "false":  { "term": "be false", "action": a => a == false },
-   "null":   { "term": "be null", "action": a => a == null },
-   "!null":  { "term": "be not null", "action": a => a != null }
-};
-
 test_context.prototype.assert = function assert(value, operator, expected) {
     if (operator == undefined) {
         var err = new Error();
@@ -245,7 +281,7 @@ test_context.prototype.assert = function assert(value, operator, expected) {
         error(`Assertion failed ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);
         this.errors++;
     } else {
-        var op = _assertion_operators[operator];
+        var op = TestConfig.assertion_operators[operator];
         if (op) {
             var result = op.action(value, expected);
             if (operator == ':=') {
@@ -267,47 +303,62 @@ test_context.prototype.assert = function assert(value, operator, expected) {
     }
 };
 
+async function run_test(testUrl) {
+    message(`Load '${testUrl}'`);
+    var path = Url.relative(baseUrl, testUrl);
+    path = path.substr(0, path.lastIndexOf('/'));
+    var appUrl = self.appUrl;
+    self.appUrl = new Url(path);
+    var module = await load(testUrl.toString());
+    await load(new Url(`${path}/test.css`).toString());
+    if (module && module.error == null && module.symbols != null) {
+        var testName = Object.keys(module.symbols)[0];
+        var test = module.symbols[testName];
+        if (typeof test === 'function') {
+            message(`<b>Running '<i>${testName}</i>'...</b>`);
+            var tests = test();
+            var errors = 0;
+            for (var i=0; i<tests.length; i++) {
+                if (typeof tests[i] === 'function') {
+                    var indent = TestConfig.indent;
+                    try {
+                        var context = { hasError:false };
+                        await tests[i].call(context);
+                        if (context.hasError) errors++;
+                    } catch (err) {
+                        TestConfig.indent = indent;
+                        error('Test raised an error!');
+                        error(`<pre>${err.stack}</pre>`);
+                        errors++;
+                    }
+                    TestConfig.indent = indent;
+                }
+                //TestConfig.indent = 0;
+                printBlankRow();
+            }
+            poll( () => {
+                if (TestConfig.pending == 0) {
+                    message('<b>Test finished</b>');
+                    return true;
+                }
+            }, 100);            
+        }
+    } else {
+        message(`Error loading ${module.error}`, );
+    }
+    self.appUrl = appUrl;
+
+    return errors == 0;
+}
+
 async function onpageload(errors) {
     Dbg.init('con');
     Dbg.prln('Tests 0.1');
     Dbg.con.style.visibility = 'visible';
 
     //testDeepCompare();
-    testEquals();
+    //testEquals();
     var url = new Url(location.href);
     var testUrl = new Url(`${url.fragment}/test.js`);
-    Dbg.prln(`Load '${testUrl}'`);
-    var path = Url.relative(baseUrl, testUrl);
-    path = path.substr(0, path.lastIndexOf('/'));
-    self.appUrl = new Url(path);
-    var module = await load(testUrl.toString());
-    await load(new Url(`${url.fragment}/test.css`).toString());
-    if (module && module.error == null && module.symbols != null) {
-        var testName = Object.keys(module.symbols)[0];
-        var test = module.symbols[testName];
-        if (typeof test === 'function') {
-            Dbg.prln(`<b>Running '<i>${testName}</i>'...</b>`);
-            var tests = test();
-            for (var i=0; i<tests.length; i++) {
-                _indent = 0;
-                if (typeof tests[i] === 'function') {
-                    try {
-                        await tests[i]();
-                    } catch (err) {
-                        error('Test raised an error!');
-                        error(`<pre>${err.stack}</pre>`);
-                    }
-                }
-                Dbg.prln('');
-            }
-            poll( () => {
-                if (_pending == 0) {
-                    Dbg.prln('<b>Test finished</b>');
-                    return true;
-                }
-            }, 100);            
-        }
-    } else {
-        Dbg.prln(`Error loading ${module.error}`);
-    }
+    run_test(testUrl);
 }
