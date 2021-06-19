@@ -8,7 +8,7 @@ include('fn.js');
 (function(){
 
     function test_v2() {
-        message('Test V2');
+        header('Test V2');
         var u = new V2([4.0, 5.0]);
         var v = new V2(2.0, 3.0);
         var s = new V2(8.0);
@@ -53,7 +53,7 @@ include('fn.js');
     }
 
     function test_v3() {
-        message('Test V3');
+        header('Test V3');
         var u = new V3([4.0, 5.0, 6.0]);
         var v = new V3(2.0, 3.0, 1.0);
         var s = new V3(8.0);
@@ -92,7 +92,7 @@ include('fn.js');
     }
 
     function test_v4() {
-        message('Test V4');
+        header('Test V4');
         var u = new V4([4.0, 5.0, 6.0, 7.0]);
         var v = new V4(2.0, 3.0, 1.0, -1.0);
         var s = new V4(8.0);
@@ -131,7 +131,7 @@ include('fn.js');
     }
 
     function test_m33() {
-        message('Test M33');
+        header('Test M33');
         var arr = [ 1,  2,  3,    2,  4,  6,    3,  6,  9 ];
         var m33 = new M33(arr);
         var n33 = new M33(new Float32Array(arr));
@@ -162,7 +162,7 @@ include('fn.js');
     }
 
     function test_m44() {
-        message('Test M44');
+        header('Test M44');
         var arr = [ 1,  2,  3,  4,    2,  4,  6,  8,    3,  6,  9, 12,    4,  8, 12, 16 ];
         var m44 = new M44(arr);
         var n44 = new M44(new Float32Array(arr));
@@ -194,7 +194,7 @@ include('fn.js');
     }
 
     async function test_performance() {
-        message('Test performance of matrix calculations', 1);
+        header('Test performance of matrix calculations', 1);
         var m44 = new M44();
         var n44 = new M44();
         for (var i=0; i<16; i++) {
@@ -205,7 +205,7 @@ include('fn.js');
     }
 
     async function test_intersect() {
-        message('Test intersecting rectangles');
+        header('Test intersecting rectangles');
 
         var canvas = document.createElement('canvas');
         canvas.width = 300; canvas.height = 300;
