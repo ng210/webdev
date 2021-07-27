@@ -63,7 +63,9 @@
 	}
 	Program.prototype.destroy = function destroy() {
 		for (var i=0; i<this.shaders.length; i++) {
-			gl.deleteShader(this.shaders[i]);
+			var sh = this.shaders[i];
+			gl.detachShader(this.prg, sh);
+			gl.deleteShader(sh);
 		}
 		gl.deleteProgram(this.prg);
 	};
@@ -109,6 +111,18 @@
 
 		buffers: [],
 		extensions: {}
+	};
+
+	webGL.init = function init(canvas, useWebGl2) {
+		if (!canvas) {
+			var canvas = document.createElement('canvas');
+			canvas.id = 'canvas';
+			canvas.width = window.innerWidth/2;
+			canvas.height = window.innerHeight/2;
+			document.body.appendChild(canvas);
+		}
+		var ver = useWebGl2 ? 'webgl2': 'webgl';
+		window.gl = canvas.getContext(ver);
 	};
 
 	webGL.createBuffer = function createBuffer(target, source, usage) {

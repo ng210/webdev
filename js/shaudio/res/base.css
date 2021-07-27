@@ -1,0 +1,55 @@
+body {
+	margin: 0px;
+	background-color:#204060;
+	font-family:Arial;
+	font-size:10pt;
+}
+
+#canvas {
+	background-color: #000000;
+	position:absolute;
+	left:0; top:0;
+	width:50vw; height:60vh;
+}
+
+#gl-canvas {
+	background-color: #102040;
+	position:absolute;
+	left:50vw; top:0;
+	width:50vw; height:100vh;
+}
+
+#con {
+	position:absolute;
+	left:0; top:60vh;
+	width:50vw; height:40vh;
+	font-size:12pt;
+	font-family:Consolas;
+	text-align:left;
+	padding:2 4;
+
+	box-sizing: border-box;
+	margin:0;
+	background-color:#102030;
+	color:#3f9159;
+	opacity:0.5;
+	overflow:hidden auto
+}
+
+hd {
+	position:relative;
+	display:block;
+	width:10em;
+	font-size: large;
+	font-weight: bold;
+	border-bottom: solid 1px;
+	padding: 0.1em 0.2em;
+	margin: 0.6em 0em 0.2em 0em;
+}
+
+error {
+	position:relative;
+	display:block;
+	color:#e08080
+}
+
