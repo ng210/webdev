@@ -35,9 +35,12 @@ function readWebAccessFile(dir) {
     } else {
         // inherit from parent
         if (dir != documentPath) {
+            console.log(`read access of parent dir '${dir}'`);
             var parent = path.dirname(dir);
             readWebAccessFile(parent);
             allow = webAccess[dir] != undefined ? webAccess[dir] : webAccess[parent];
+        } else {
+            console.log(`access documentPath '${dir}'`);
         }
     }
     if (webAccess[dir] == undefined) {
