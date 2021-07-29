@@ -13,7 +13,8 @@ const webAccess = {};
 
 function readWebAccessFile(dir) {
     var allow = false;
-    var fileName = dir + '\\web-access.json';
+    var fileName = path.resolve(dir, 'web-access.json');
+    console.log(`check access file '${fileName}'`);
     if (fs.existsSync(fileName)) {
         // process file
         console.log(`read access file '${fileName}'`);
@@ -22,25 +23,25 @@ function readWebAccessFile(dir) {
         allow = content.default.toLowerCase() == 'allow';
         if (content.allow) {
             for (var i=0; i<content.allow.length; i++) {
-                var entry = dir + '\\' + content.allow[i];
+                var entry = path.resolve(dir, content.allow[i]);
                 webAccess[entry] = true;
             }
         }
         if (content.deny) {
             for (var i=0; i<content.deny.length; i++) {
-                var entry = dir + '\\' + content.deny[i];
+                var entry = path.resolve(dir, content.deny[i]);
                 webAccess[entry] = false;
             }
         }
     } else {
         // inherit from parent
+        console.log(`check parent dir '${dir}'`);
         if (dir != documentPath) {
-            console.log(`read access of parent dir '${dir}'`);
             var parent = path.dirname(dir);
             readWebAccessFile(parent);
             allow = webAccess[dir] != undefined ? webAccess[dir] : webAccess[parent];
         } else {
-            console.log(`access documentPath '${dir}'`);
+            console.log(`documentPath accessed: '${dir}'`);
         }
     }
     if (webAccess[dir] == undefined) {
