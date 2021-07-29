@@ -16,6 +16,7 @@ function readWebAccessFile(dir) {
     var fileName = dir + '\\web-access.json';
     if (fs.existsSync(fileName)) {
         // process file
+        console.log(`read access file '${fileName}'`);
         var file = fs.readFileSync(fileName, { encoding: 'utf-8' });
         var content = JSON.parse(file);
         allow = content.default.toLowerCase() == 'allow';
@@ -39,17 +40,22 @@ function readWebAccessFile(dir) {
             allow = webAccess[dir] != undefined ? webAccess[dir] : webAccess[parent];
         }
     }
-    webAccess[dir] = allow;
+    if (webAccess[dir] == undefined) {
+        webAccess[dir] = allow;
+    }
 }
 
 function checkWebAccess(resPath) {
     if (resPath.toLowerCase().endsWith('web-access.json')) return false;
     var dir = path.dirname(resPath);
+    console.log(`check access for '${dir}'`);
     if (webAccess[dir] == undefined) {
         // read the web-access file
         readWebAccessFile(dir);
     }
-    return webAccess[resPath] != undefined ? webAccess[resPath] : webAccess[dir];
+    var isGranted = webAccess[resPath] != undefined ? webAccess[resPath] : webAccess[dir];
+    console.log(`Access granted: ${isGranted}`);
+    return isGranted;
 }
 
 app.get('/*', function(req, resp) {
