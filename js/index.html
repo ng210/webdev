@@ -211,15 +211,22 @@ function test_canvas_translate() {
 async function onpageload() {
     //await include('/lib/ui/ui-lib.js');
     cons = document.getElementById('cons');
+    
+    var error = null;
+    var result = null;
+
+    fetch("http://localhost:3000/js/test.json").then(
+        response => response.json())
+        .then(data => console.log(data));
 
     // test_mousedown();
     // await test_load();
     // await test_poll();
     // test_lock();
-    //test_panel();
-    test_canvas_translate();
+    // test_panel();
+    // test_canvas_translate();
 
-    out('Tests');
+    // out('Tests');
 }
 
         </script>
