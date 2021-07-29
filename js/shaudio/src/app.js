@@ -3,6 +3,7 @@ include('sequencer.js');
 include('gpu-com.js');
 include('pass.js');
 include('/lib/math/m44.js');
+include('/lib/webgl/compute-shader.js');
 //include('gui.js');
 
 //include('/lib/utils/syntax.js');
@@ -90,7 +91,6 @@ include('/lib/math/m44.js');
             -0.5, 0.0, -0.5,  -0.5, 0.0,  0.5,   0.0, -r22, 0.0
 
         ]);
-
         // create Vertex Array Object
         var vao = gl.createVertexArray();
         // work with the vao
@@ -102,23 +102,19 @@ include('/lib/math/m44.js');
         var res = await load(['res/test.vs', 'res/test.fs']);
         shaders[gl.VERTEX_SHADER] = res[0].data;
         shaders[gl.FRAGMENT_SHADER] = res[1].data;
-        var uniforms = {
-            u_viewProjection: { type:webGL.FLOAT4x4M, size:16, value:new Float32Array(16) },
-            u_model: { type:webGL.FLOAT4x4M, size:16, value:new Float32Array(16) }
-        };
-        var prg = webGL.createProgram(shaders,
-            { a_position: { type:webGL.FLOAT, size:3, buffer:0 } },
-            uniforms
-        );
-
+        var prg = webGL.createProgram(shaders);
+        // set view-projection matrix
         var fov = Math.PI*60/180;
         var aspect = gl.canvas.width/gl.canvas.height;
         var zNear = 0;
         var zFar = 100;
-        M44.perspective(fov, aspect, zNear, zFar, uniforms.u_viewProjection.value);
-        var m44 = M44.rotateY(0.8)
-            .mul(M44.translate([0.0, 0.0, -2.0]));
-        m44.put(uniforms.u_model.value);
+        var viewProjection = new Float32Array(16);
+        M44.perspective(fov, aspect, zNear, zFar, viewProjection);
+        prg.setUniform('u_viewProjection', viewProjection);
+        // set model matrix
+        var model = new Float32Array(16);
+        M44.rotateY(0.8).mul(M44.translate([0.0, 0.0, -2.0]), model);
+        prg.setUniform('u_model', model);
 
         // render
         gl.clearColor(0.0625, 0.09375, 0.125, 1.0);
@@ -129,7 +125,6 @@ include('/lib/math/m44.js');
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         webGL.useProgram(prg);
         prg.updateUniform('u_viewProjection');
-
         var isDone = false;
         var frames = 0;
         var start = 0;
@@ -144,12 +139,11 @@ include('/lib/math/m44.js');
                 elapsed = time - start;
                 //var dt = time - lastTime;
                 //lastTime = time;
-                //M44.perspective(fov, aspect, zNear, zFar, uniforms.u_viewProjection.value);
-                var rotY = M44.rotateY(2.0*elapsed*Math.PI/4000);
-                var rotX = M44.rotateX(Math.PI/12); 
-                var m44 = rotY.mul(rotX)
+                var model =
+                    M44.rotateY(2.0*elapsed*Math.PI/4000)
+                    .mul(M44.rotateX(Math.PI/12))
                     .mul(M44.translate([0.0, 0.1, -2.0]));
-                m44.put(uniforms.u_model.value);
+                prg.setUniform('u_model', model);
                 prg.updateUniform('u_model');
                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
                 gl.drawArrays(gl.TRIANGLES, 0, 32);
@@ -178,84 +172,13 @@ include('/lib/math/m44.js');
         webGL.init(null, true);
         webGL.useExtension('EXT_color_buffer_float');
 
-        function createDataBuffer(cols, rows) {
-            var buffer = {
-                data: new Float32Array(cols*rows),
-                texture: gl.createTexture()
-            };
-            gl.bindTexture(gl.TEXTURE_2D, buffer.texture);
-            //gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32UI, dataSize[0], dataSize[1], 0, gl.RGBA_INTEGER, gl.UNSIGNED_INT, input.data, 0);
-            //gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32UI, dataSize[0], dataSize[1], 0, gl.RED_INTEGER, gl.UNSIGNED_INT, input.data, 0);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, cols, rows, 0, gl.RED, gl.FLOAT, buffer.data, 0);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            return buffer;    
-        }
-
-        //#region setup data
-        var cols = 4, rows = 4;
-        var input = createDataBuffer(cols, rows);
-        for (var i=0; i<input.data.length; i++) {
-            input.data[i] = i;
-        }
-        var output = createDataBuffer(cols, rows);
-        //#endregion
-
-        //#region setup framebuffer, vertex buffer and program
-        var fbo = gl.createFramebuffer();
-        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, fbo);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, output.texture, 0);
-
-        // create 2 triangle "canvas" 
-        var vbo = webGL.createBuffer(gl.ARRAY_BUFFER, new Float32Array([ -1.0, -1.0,   1.0, -1.0,   1.0, 1.0,  -1.0, 1.0 ]), gl.STATIC_DRAW);
-        //var vbo = webGL.createBuffer(gl.ARRAY_BUFFER, new Float32Array([ 0.0, 0.0,   1.0, 0.0,   1.0, 1.0,  0.0, 1.0 ]), gl.STATIC_DRAW);
-
-        // build shader program
-        var shaders = {};
-        var res = await load(['res/flat.vs', 'res/compute1.fs']);
-        shaders[gl.VERTEX_SHADER] = res[0].data;
-        shaders[gl.FRAGMENT_SHADER] = res[1].data;
-        var uniforms = {};
-        var prg = webGL.createProgram(shaders,
-            {
-                a_position: { type:webGL.FLOAT, size:2, buffer:0 }
-            },
-            uniforms
-        );
-        //#endregion
-
-        //#region render to do calculations
-        gl.viewport(0, 0, cols, rows);
-        gl.clearColor(2, 2, 3, 1);
-        webGL.useProgram(prg);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.bindTexture(gl.TEXTURE_2D, input.texture);
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        //#endregion
-
-        // read data
-        var results = new Float32Array(cols*rows);
-        //gl.readPixels(0, 0, dataSize[0], dataSize[1], gl.RGBA_INTEGER, gl.UNSIGNED_INT, result.data);
-        //gl.readPixels(0, 0, dataSize[0], dataSize[1], gl.RED_INTEGER, gl.UNSIGNED_INT, result.data);
-        gl.readPixels(0, 0, cols, rows, gl.RED, gl.FLOAT, results);
-console.log(results)
-
-        for (var i=0; i<input.data.length; i++) {
-            if (input.data[i] != results[i]) console.log(`Mismatch at ${i}: expected ${input.data[i]}, received ${results[i]}`)
-        }
-
-        //#region clean up
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.useProgram(null);
-        prg.destroy();
-        gl.deleteTexture(input.texture);
-        gl.deleteTexture(output.texture);
-        gl.deleteBuffer(vbo);
-        gl.deleteFramebuffer(fbo);
-        //#endregion
+        var cs = new webGL.ComputeShader(16, gl.R32F, (k, i, j) => k);
+        console.log('Input: ' + cs.input.data);
+        await cs.setup('res/compute1.fs');
+        cs.compute();
+        cs.feedback();
+        cs.destroy();
+        console.log('Results: ' + cs.results);
     };
 
     publish(App, 'App');

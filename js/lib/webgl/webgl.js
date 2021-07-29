@@ -4,11 +4,14 @@
 	// Program
 	//
 	// ********************************************************************************************
-	function Program(shaders, attributes, uniforms) {
+	function Program(shaders, attribs) {
     	this.prg = gl.createProgram();
 		this.attributes = {};
+		attribs = attribs || {};
 		this.uniforms = {};
 		this.shaders = [];
+		//// 2k buffer for uniforms
+		//this.uniformData = new DataView(new ArrayBuffer(2048));
 
 		this.attributesByBufferId = [];
 
@@ -22,44 +25,41 @@
         if (!gl.getProgramParameter(this.prg, gl.LINK_STATUS)) {
             throw new Error('Error linking shader program: ' + gl.getProgramInfoLog(this.prg));
         }
-		//this.size = 0;
-        for (var ak in attributes) {
-            var ref = gl.getAttribLocation(this.prg, ak);
-			var attrib = attributes[ak];
-			var bufferId = attrib.buffer || 0;
-			var aBucket = this.attributesByBufferId[bufferId];
-			if (aBucket == undefined) {
-				aBucket = this.attributesByBufferId[bufferId] = [0];	// first element is total size of attributes in bytes
-			}
-			var sizem = {};
-			sizem[gl.BYTE] = 1;
-			sizem[gl.SHORT] = 2;
-			sizem[gl.FLOAT] = 4;
-			var sizeInBytes = sizem[attrib.type] * attrib.size;
-			if (attrib.type == webGL.FLOAT4x4M) {
-				sizeInBytes = 4*16;
-				attrib.size = 4;
-			}
-			this.attributes[ak] = {
-				'ref': ref,
-				'type': attrib.type,
-				'size': attrib.size,
-				'sizeInBytes': sizeInBytes,
-				'offset': attrib.offset != undefined ? attrib.offset : aBucket[0],
-				'divisor': attrib.divisor || 0
-			};
-			aBucket.push(this.attributes[ak]);
-			aBucket[0] += sizeInBytes; 
-			//this.size += 
-		}
 
+		var attributes = this.extractVariables(shaders[gl.VERTEX_SHADER]);
+		var vsUniforms = this.extractVariables(shaders[gl.VERTEX_SHADER], true);
+		var fsUniforms = this.extractVariables(shaders[gl.FRAGMENT_SHADER], true);
+		var uniforms = mergeObjects(vsUniforms, fsUniforms);
+        for (var ak in attributes) {
+			var attrib = attributes[ak];
+			attrib.ref = gl.getAttribLocation(this.prg, ak);
+			if (attrib.ref != -1) {
+				var bufferId = attrib.buffer || 0;
+				var aBucket = this.attributesByBufferId[bufferId];
+				if (aBucket == undefined) {
+					aBucket = this.attributesByBufferId[bufferId] = [0];	// first element is total size of attributes in bytes
+				}
+				attrib.offset = attribs[ak] || aBucket[0];
+				attrib.divisor = attribs[ak] || 0;
+				this.attributes[ak] = attrib;
+				aBucket.push(this.attributes[ak]);
+				aBucket[0] += attrib.type.size;
+			}
+		}
+		var offset = 0;
         for (var uk in uniforms) {
 			var uniform = uniforms[uk];
+			var type = uniform.type;
 			uniform.ref = gl.getUniformLocation(this.prg, uk);
-			uniform.update = uniform.ref ? webGL.uniformUpdaters[uniform.type] : () => {};
-			this.uniforms[uk] = uniform;
+			if (uniform.ref != -1) {
+				uniform.update =type.updater;
+				uniform.set = type.set;
+				uniform.offset = offset;
+				uniform.value = type.name.startsWith('FLOAT') ? new Float32Array(type.length) : new Uint32Array(type.length);
+				this.uniforms[uk] = uniform;
+				offset += type.size;
+			}
 		}
-        
 	}
 	Program.prototype.destroy = function destroy() {
 		for (var i=0; i<this.shaders.length; i++) {
@@ -69,48 +69,191 @@
 		}
 		gl.deleteProgram(this.prg);
 	};
-	Program.prototype.updateUniform = function(name) {
-		var uniform = this.uniforms[name];
-		if (uniform) {
-			uniform.update(uniform);
+	Program.prototype.extractVariables = function extractVariables(shader, isUniform) {
+		var type = isUniform ? 'uniform' : 'in';
+        var re = new RegExp(`\\s*${type}\\s+(?<type>\\w+)\\s+(?<name>\\w+)\\s*;\\s*`, 'gi');
+        var m = [...shader.matchAll(re)];
+        var variables = {};
+        for (var i=0; i<m.length; i++) {
+            var t = m[i].groups.type.toUpperCase();
+            var n = m[i].groups.name;
+			var type = webGL.types[t];
+			if (type) {
+            	variables[n] = {
+					'name': n,
+					'type': type,
+					'ref':0,
+					'size':type.size
+				};
+			}
+        }
+		return variables;
+    };
+	Program.prototype.setUniform = function setUniform(name, value) {
+		var u = this.uniforms[name];
+		if (u) {
+			u.set(value);
 		}
 	};
-    Program.prototype.setUniforms = function(uniforms) {
-		if (uniforms) {
-			for (var uk in uniforms) {
-				var uniform = this.uniforms[uk];
-				if (uniform !== undefined && uniform.ref) {
-					uniform.value = uniforms[uk];
-					uniform.update(uniform);
-				}
-			}
-		} else {
-			for (var uk in this.uniforms) {
-				var uniform = this.uniforms[uk];
-				uniform.update(uniform);
-			}
-		}
+	Program.prototype.updateUniform = function updateUniform(name) {
+		var u = this.uniforms[name];
+		if (u) u.update(u);
 	};
 
+	var Uniform = {
+		setFloat: function setFloat(buffer, offset, value) {
+			buffer.setFloat32(offset, value);
+		},
+		setVec2: function setVec2(buffer, offset, value) {
+			buffer.setFloat32(offset, 	value[0]);
+			buffer.setFloat32(offset+4, value[1]);
+		},
+		setVec3: function setVec3(buffer, offset, value) {
+			buffer.setFloat32(offset, 	value[0]);
+			buffer.setFloat32(offset+4, value[1]);
+			buffer.setFloat32(offset+8, value[2]);
+		},
+		setVec4: function setVec4(buffer, offset, value) {
+			buffer.setFloat32(offset, 	value[0]);
+			buffer.setFloat32(offset+4, value[1]);
+			buffer.setFloat32(offset+8, value[2]);
+			buffer.setFloat32(offset+12,value[3]);
+		},
+	
+		setBool: function setUint(buffer, offset, value) {
+			buffer.setUint32(offset, value);
+		},
+		setBool2: function setUint2(buffer, offset, value) {
+			buffer.setUint8(offset, 	value[0]);
+			buffer.setUint8(offset+4,	value[1]);
+		},
+		setBool3: function setUint3(buffer, offset, value) {
+			buffer.setUint8(offset, 	value[0]);
+			buffer.setUint8(offset+4,	value[1]);
+			buffer.setUint8(offset+8,	value[2]);
+		},
+		setBool4: function setUint4(buffer, offset, value) {
+			buffer.setUint8(offset, 	value[0]);
+			buffer.setUint8(offset+4,	value[1]);
+			buffer.setUint8(offset+8,	value[2]);
+			buffer.setUint8(offset+12,	value[3]);
+		},
+	
+		setInt: function setUint(buffer, offset, value) {
+			buffer.setInt32(offset, value);
+		},
+		setInt2: function setInt2(buffer, offset, value) {
+			buffer.setInt32(offset, 	value[0]);
+			buffer.setInt32(offset+4,	value[1]);
+		},
+		setInt3: function setInt3(buffer, offset, value) {
+			buffer.setInt32(offset, 	value[0]);
+			buffer.setInt32(offset+4,	value[1]);
+			buffer.setInt32(offset+8,	value[2]);
+		},
+		setInt4: function setInt4(buffer, offset, value) {
+			buffer.setInt32(offset, 	value[0]);
+			buffer.setInt32(offset+4,	value[1]);
+			buffer.setInt32(offset+8,	value[2]);
+			buffer.setInt32(offset+12,	value[3]);
+		},
+	
+		setUint: function setUint(buffer, offset, value) {
+			buffer.setUint32(offset, value);
+		},
+		setUint2: function setUint2(buffer, offset, value) {
+			buffer.setUint32(offset, 	value[0]);
+			buffer.setUint32(offset+4,	value[1]);
+		},
+		setUint3: function setUint3(buffer, offset, value) {
+			buffer.setUint32(offset, 	value[0]);
+			buffer.setUint32(offset+4,	value[1]);
+			buffer.setUint32(offset+8,	value[2]);
+		},
+		setUint4: function setUint4(buffer, offset, value) {
+			buffer.setUint32(offset, 	value[0]);
+			buffer.setUint32(offset+4,	value[1]);
+			buffer.setUint32(offset+8,	value[2]);
+			buffer.setUint32(offset+12,	value[3]);
+		},
+	
+		setMat2: function setMat2(buffer, offset, value) {
+			for (var i=0; i<4; i++) {
+				buffer.setFloat32(offset, value[i]);
+				offset += 4;
+			}
+		},
+		setMat3: function setMat3(buffer, offset, value) {
+			for (var i=0; i<9; i++) {
+				buffer.setFloat32(offset, value[i]);
+				offset += 4;
+			}
+		},
+		setMat4: function setMat4(value) {
+			for (var i=0; i<16; i++) {
+				this.value[i] = value[i];
+			}
+		}	
+	};
+
+	//#region uniform setter
+
+	//#endregion
+
 	var webGL = {
-		INT: 0x00,
-		INTV: 0x10,
-		FLOAT:  0x01,
-		FLOATV: 0x20,
-		FLOAT2V:  0x02,
-		FLOAT3V:  0x03,
-		FLOAT4V:  0x04,
-		FLOAT2x2M:  0x05,
-		FLOAT3x3M:  0x06,
-		FLOAT4x4M:  0x07,
-		VERTEX_ATTRIB_POSITION:  0x01,
-		VERTEX_ATTRIB_NORMAL:  0x02,
-		VERTEX_ATTRIB_COLOR:  0x04,
-		VERTEX_ATTRIB_TEXTURE1:  0x08,
-		VERTEX_ATTRIB_TEXTURE2:  0x10,
+		VERTEX_ATTRIB_POSITION:		0x01,
+		VERTEX_ATTRIB_NORMAL:		0x02,
+		VERTEX_ATTRIB_COLOR:		0x04,
+		VERTEX_ATTRIB_TEXTURE1:		0x08,
+		VERTEX_ATTRIB_TEXTURE2:		0x10,
 
 		buffers: [],
 		extensions: {}
+	};
+
+	webGL.types = {
+		FLOAT:	{ 'name': 'FLOAT', 				'id': 0, 'size':  4, 'length':  1, 'set': Uniform.setFloat,	'updater': un => gl.uniform1f(un.ref, un.value) },
+		VEC2:	{ 'name': 'FLOAT_VEC2', 		'id': 0, 'size':  8, 'length':  2, 'set': Uniform.setVec2, 	'updater': un => gl.uniform2f(un.ref, un.value) },
+		VEC3:	{ 'name': 'FLOAT_VEC3', 		'id': 0, 'size': 12, 'length':  3, 'set': Uniform.setVec3, 	'updater': un => gl.uniform3f(un.ref, un.value) },
+		VEC4:	{ 'name': 'FLOAT_VEC4', 		'id': 0, 'size': 16, 'length':  4, 'set': Uniform.setVec4, 	'updater': un => gl.uniform4f(un.ref, un.value) },
+		BOOL:	{ 'name': 'BOOL', 				'id': 0, 'size':  1, 'length':  1, 'set': Uniform.setBool, 	'updater': un => gl.uniform1i(un.ref, un.value) },
+		BVEC2:	{ 'name': 'BOOL_VEC2',			'id': 0, 'size':  2, 'length':  2, 'set': Uniform.setBool2, 'updater': un => gl.uniform2i(un.ref, un.value) },
+		BVEC3:	{ 'name': 'BOOL_VEC3',			'id': 0, 'size':  3, 'length':  3, 'set': Uniform.setBool3, 'updater': un => gl.uniform3i(un.ref, un.value) },
+		BVEC4:	{ 'name': 'BOOL_VEC4',			'id': 0, 'size':  4, 'length':  4, 'set': Uniform.setBool4, 'updater': un => gl.uniform4i(un.ref, un.value) },
+		INT:	{ 'name': 'INT',				'id': 0, 'size':  4, 'length':  1, 'set': Uniform.setInt, 	'updater': un => gl.uniform1i(un.ref, un.value) },
+		IVEC2:	{ 'name': 'INT_VEC2',			'id': 0, 'size':  8, 'length':  2, 'set': Uniform.setInt2, 	'updater': un => gl.uniform2i(un.ref, un.value) },
+		IVEC3:	{ 'name': 'INT_VEC3',			'id': 0, 'size': 12, 'length':  3, 'set': Uniform.setInt3, 	'updater': un => gl.uniform3i(un.ref, un.value) },
+		IVEC4:	{ 'name': 'INT_VEC4',			'id': 0, 'size': 16, 'length':  4, 'set': Uniform.setInt4, 	'updater': un => gl.uniform4i(un.ref, un.value) },
+		UINT:	{ 'name': 'UNSIGNED_INT',		'id': 0, 'size':  4, 'length':  1, 'set': Uniform.setUint, 	'updater': un => gl.uniform1i(un.ref, un.value) },
+		UVEC2:	{ 'name': 'UNSIGNED_INT_VEC2',	'id': 0, 'size':  8, 'length':  2, 'set': Uniform.setUint2, 'updater': un => gl.uniform2i(un.ref, un.value) },
+		UVEC3:	{ 'name': 'UNSIGNED_INT_VEC3',	'id': 0, 'size': 12, 'length':  3, 'set': Uniform.setUint3, 'updater': un => gl.uniform3i(un.ref, un.value) },
+		UVEC4:	{ 'name': 'UNSIGNED_INT_VEC4',	'id': 0, 'size': 16, 'length':  4, 'set': Uniform.setUint4,	'updater': un => gl.uniform4i(un.ref, un.value) },
+		MAT2:	{ 'name': 'FLOAT_MAT2',			'id': 0, 'size': 16, 'length':  4, 'set': Uniform.setMat2, 	'updater': un => gl.uniformMatrix2fv  (un.ref, false, un.value) },
+		MAT2x3:	{ 'name': 'FLOAT_MAT2x3',		'id': 0, 'size': 24, 'length':  6, 'set': Uniform.setMat23,	'updater': un => gl.uniformMatrix2x3fv(un.ref, false, un.value) },
+		MAT2x4:	{ 'name': 'FLOAT_MAT2x4',		'id': 0, 'size': 32, 'length':  8, 'set': Uniform.setMat24,	'updater': un => gl.uniformMatrix2x4fv(un.ref, false, un.value) },
+		MAT3:	{ 'name': 'FLOAT_MAT3',			'id': 0, 'size': 36, 'length':  9, 'set': Uniform.setMat3, 	'updater': un => gl.uniformMatrix3fv  (un.ref, false, un.value) },
+		MAT3x2:	{ 'name': 'FLOAT_MAT3x2',		'id': 0, 'size': 24, 'length':  6, 'set': Uniform.setMat32,	'updater': un => gl.uniformMatrix3x2fv(un.ref, false, un.value) },
+		MAT3x4:	{ 'name': 'FLOAT_MAT3x4',		'id': 0, 'size': 48, 'length': 12, 'set': Uniform.setMat34,	'updater': un => gl.uniformMatrix3x4fv(un.ref, false, un.value) },
+		MAT4:	{ 'name': 'FLOAT_MAT4',			'id': 0, 'size': 64, 'length': 16, 'set': Uniform.setMat4, 	'updater': un => gl.uniformMatrix4fv  (un.ref, false, un.value) },
+		MAT4x2:	{ 'name': 'FLOAT_MAT4x2',		'id': 0, 'size': 32, 'length':  8, 'set': Uniform.setMat42,	'updater': un => gl.uniformMatrix4x2fv(un.ref, false, un.value) },
+		MAT4x3:	{ 'name': 'FLOAT_MAT4x3',		'id': 0, 'size': 48, 'length': 12, 'set': Uniform.setMat43,	'updater': un => gl.uniformMatrix4x3fv(un.ref, false, un.value) },
+
+		// FLOATV:	{ 'name': 'FLOAT', 				'id': 0, 'size':  4,'length':  1, 'updater': (ref, value) => gl.uniform1fv(ref, value) },
+		// VEC2V:	{ 'name': 'FLOAT_VEC2', 		'id': 0, 'size':  8,'length':  2, 'updater': (ref, value) => gl.uniform2fv(ref, value) },
+		// VEC3V:	{ 'name': 'FLOAT_VEC3', 		'id': 0, 'size': 12,'length':  3, 'updater': (ref, value) => gl.uniform3fv(ref, value) },
+		// VEC4V:	{ 'name': 'FLOAT_VEC4', 		'id': 0, 'size': 16,'length':  4, 'updater': (ref, value) => gl.uniform4fv(ref, value) },
+		// BOOLV:	{ 'name': 'BOOL', 				'id': 0, 'size':  1,'length':  1, 'updater': (ref, value) => gl.uniform1iv(ref, value) },
+		// BVEC2V:	{ 'name': 'BOOL_VEC2',			'id': 0, 'size':  2,'length':  2, 'updater': (ref, value) => gl.uniform2iv(ref, value) },
+		// BVEC3V:	{ 'name': 'BOOL_VEC3',			'id': 0, 'size':  3,'length':  3, 'updater': (ref, value) => gl.uniform3iv(ref, value) },
+		// BVEC4V:	{ 'name': 'BOOL_VEC4',			'id': 0, 'size':  4,'length':  4, 'updater': (ref, value) => gl.uniform4iv(ref, value) },
+		// INTV:	{ 'name': 'INT',				'id': 0, 'size':  4,'length':  1, 'updater': (ref, value) => gl.uniform1iv(ref, value) },
+		// IVEC2V:	{ 'name': 'INT_VEC2',			'id': 0, 'size':  8,'length':  2, 'updater': (ref, value) => gl.uniform2iv(ref, value) },
+		// IVEC3V:	{ 'name': 'INT_VEC3',			'id': 0, 'size': 12,'length':  3, 'updater': (ref, value) => gl.uniform3iv(ref, value) },
+		// IVEC4V:	{ 'name': 'INT_VEC4',			'id': 0, 'size': 16,'length':  4, 'updater': (ref, value) => gl.uniform4iv(ref, value) },
+		// UINTV:	{ 'name': 'UNSIGNED_INT',		'id': 0, 'size':  4,'length':  1, 'updater': (ref, value) => gl.uniform1iv(ref, value) },
+		// UVEC2V:	{ 'name': 'UNSIGNED_INT_VEC2',	'id': 0, 'size':  8,'length':  2, 'updater': (ref, value) => gl.uniform2iv(ref, value) },
+		// UVEC3V:	{ 'name': 'UNSIGNED_INT_VEC3',	'id': 0, 'size': 12,'length':  3, 'updater': (ref, value) => gl.uniform3iv(ref, value) },
+		// UVEC4V:	{ 'name': 'UNSIGNED_INT_VEC4',	'id': 0, 'size': 16,'length':  4, 'updater': (ref, value) => gl.uniform4iv(ref, value) }
 	};
 
 	webGL.init = function init(canvas, useWebGl2) {
@@ -123,6 +266,16 @@
 		}
 		var ver = useWebGl2 ? 'webgl2': 'webgl';
 		window.gl = canvas.getContext(ver);
+		// translate uniform types
+		for (var i in this.types) {
+			var ut = this.types[i];
+			var id = gl[ut.name];
+			if (id != undefined) {
+				window[`gl_${i.toLowerCase()}`] = ut.id = id;
+				this.types[id] = ut;
+			} else console.warn(`Type '${i}' not valid.`);
+
+		}
 	};
 
 	webGL.createBuffer = function createBuffer(target, source, usage) {
@@ -171,13 +324,14 @@
 	};
 	webGL.useProgram = function(p, uniforms) {
 		gl.useProgram(p.prg);
-        for (var i=0; i<p.attributesByBufferId.length; i++) {
+		for (var i=0; i<p.attributesByBufferId.length; i++) {
             gl.bindBuffer(webGL.buffers[i].type, webGL.buffers[i].ref);
             for (var j=1; j<p.attributesByBufferId[i].length; j++) {
                 var a = p.attributesByBufferId[i][j];
                 gl.enableVertexAttribArray(a.ref);
-                gl.vertexAttribPointer(a.ref, a.size, gl.FLOAT, false, p.attributesByBufferId[i][0], a.offset);
-                if (a.divisor) webGL.extensions.ANGLE_instanced_arrays.vertexAttribDivisorANGLE(a.ref, a.divisor);
+                gl.vertexAttribPointer(a.ref, a.type.length, gl.FLOAT, false, p.attributesByBufferId[i][0], a.offset);
+                //if (a.divisor) webGL.extensions.ANGLE_instanced_arrays.vertexAttribDivisorANGLE(a.ref, a.divisor);
+				if (a.divisor) gl.vertexAttribDivisor(a.ref, a.divisor);
             }
 		}
 		if (uniforms) {
@@ -194,27 +348,11 @@
 		gl.generateMipmap(gl.TEXTURE_2D);
 		return texture;
 	};
-
 	webGL.useExtension = function useExtension(extensionName) {
 		var ext = gl.getExtension(extensionName);
 		if (ext) webGL.extensions[extensionName] = ext;
 		return ext;
 	}
-
-	webGL.uniformUpdaters = (function() {
-		var map = {};
-		map[webGL.INT] = uniform => gl.uniform1i(uniform.ref, uniform.value);
-		map[webGL.INTV] = uniform => gl.uniform1iv(uniform.ref, uniform.value);
-		map[webGL.FLOAT] = uniform => gl.uniform1f(uniform.ref, uniform.value);
-		map[webGL.FLOATV] = uniform => gl.uniform1fv(uniform.ref, uniform.value);
-		map[webGL.FLOAT2V] = uniform => gl.uniform2fv(uniform.ref, uniform.value);
-		map[webGL.FLOAT3V] = uniform => gl.uniform3fv(uniform.ref, uniform.value);
-		map[webGL.FLOAT4V] = uniform => gl.uniform4fv(uniform.ref, uniform.value);
-		map[webGL.FLOAT2x2M] = uniform => gl.uniformMatrix2fv(uniform.ref, false, uniform.value);
-		map[webGL.FLOAT3x3M] = uniform => gl.uniformMatrix3fv(uniform.ref, false, uniform.value);
-		map[webGL.FLOAT4x4M] = uniform => gl.uniformMatrix4fv(uniform.ref, false, uniform.value);
-		return map;
-	})();
 
 	publish(webGL, 'webGL');
 
