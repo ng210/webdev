@@ -117,10 +117,7 @@
                     var k2 = (i-1)*m + j;
                     var k3 = i*m + (j-1)%(m+1);
                     var k4 = i*m + j;
-                    sphere.indices.push(k3,k4,k2, k2,k1,k3);
-//Dbg.prln(`${x.toFixed(2)},${y.toFixed(2)},${z.toFixed(2)}, ${u},${v}`)
-// function prtc(ii) { return `${sphere.vertices[ii*11+3]},${sphere.vertices[ii*11+4]}` };
-// Dbg.prln(`${prtc(k1)}, ${prtc(k2)}, ${prtc(k3)}, ${prtc(k4)}`)
+                    sphere.indices.push(k1,k2,k3, k3,k2,k4);
                 }
             }
             a -= da;
@@ -143,14 +140,15 @@
             'res/simple.fs',
             'res/blank.png',
             'res/checkered.png',
-            'res/world_map.png',
-            'res/world_height_map.jpg'
+            'res/worldmap.jpg',
+            'res/worldmap2.png',
+            'res/world_heightmap.png'
         ]);
 
         var errors = res.select(x => x.error instanceof Error).map(x => x.error);
         if (errors.length == 0) {
             // #region create geometry
-            scene.models = [createCube(), createSphere(64)];
+            scene.models = [createCube(), createSphere(30)];
             // combine vertices into 1 buffer
             // combine indices into 1 buffer
             var vb = [];
@@ -180,10 +178,11 @@
                 webGL.createProgram(shaders)
             ];
             scene.textures = [
-                webGL.createTexture(res[2].node), // blank
-                webGL.createTexture(res[3].node), // checkered
-                webGL.createTexture(res[4].node), // earth color
-                webGL.createTexture(res[5].node)  // earth height
+                webGL.createTexture(res[2].node), // 0: blank
+                webGL.createTexture(res[3].node), // 1: checkered
+                webGL.createTexture(res[6].node), // 2: earth height
+                webGL.createTexture(res[4].node), // 3: earth color1
+                webGL.createTexture(res[5].node)  // 4: earth color2
             ];
 
             scene.materials = [
@@ -202,6 +201,7 @@
                 {
                     'shader': scene.shaders[0],
                     'textures': [
+                        scene.textures[1],
                         scene.textures[1]
                     ],
                     'args': {
@@ -215,13 +215,13 @@
                     'shader': scene.shaders[0],
                     'textures': [
                         scene.textures[2],
-                        scene.textures[3]
+                        scene.textures[4]
                     ],
                     'args': {
                         'color': new V3(1.0, 1.0, 1.0),
                         'diffuse': 0.8,
-                        'specular1': 0.4,
-                        'specular2': 2.0
+                        'specular1': 0.6,
+                        'specular2': 10.0
                     }
                 }
             ];
@@ -229,8 +229,8 @@
 
             scene.lights = [
                 { 'id':'sun',   'type':'diffuse', 'color': [1.00, 0.95, 0.80], 'direction': new V3( 2.0, 1.0, 1.0) },
-                { 'id':'lamp1', 'type':'point',   'color': [0.50, 0.60, 1.00], 'position':  new V3(-3.0, 0.0, -8.0) },
-                { 'id':'lamp2', 'type':'point',   'color': [1.00, 0.95, 0.90], 'position':  new V3( 0.0, 0.0, -10.0) }
+                { 'id':'lamp1', 'type':'point',   'color': [0.50, 0.60, 1.00], 'position':  new V3(-3.0, 0.0, -3.0) },
+                { 'id':'lamp2', 'type':'point',   'color': [1.00, 0.95, 0.90], 'position':  new V3( 4.0, 0.0, 0.0) }
             ];
 
             // set view-projection matrix
@@ -248,6 +248,7 @@
     function setMaterial(mat, shaderArgs) {
         // set texture
         for (var i=0; i<mat.textures.length; i++) {
+            shaderArgs['u_texture'+i] = i;
             gl.activeTexture(gl['TEXTURE'+i]);
             gl.bindTexture(gl.TEXTURE_2D, mat.textures[i]);
         }
@@ -272,8 +273,8 @@
         if (errors.length == 0) {
             // #region prepare rendering
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-            gl.clearColor(0.11, 0.1, 0.2, 1.0);
-            gl.frontFace(gl.CW);
+            gl.clearColor(0.01, 0.02, 0.04, 1.0);
+            gl.frontFace(gl.CCW);
             gl.cullFace(gl.BACK);
             gl.enable(gl.CULL_FACE);
             gl.enable(gl.DEPTH_TEST);
@@ -306,8 +307,8 @@
                     // #region update
                     var rotZ = -22/180*Math.PI;
                     var rotY = time*Math.PI/12000;
-                    var pos = new V3(0.0, 0.0, -4.0);
-                    var posInv = new V3(0.0, 0.0, 4.0);
+                    var pos = new V3(0.0, 0.0, -3.5);
+                    var posInv = new V3(0.0).sub(pos);
                     var modelMat = M44.rotateY(rotY).mul(M44.rotateZ(rotZ)).mul(M44.translate(pos));
                     var normalMat = M44.translate(posInv).mul(M44.rotateZ(-rotZ)).mul(M44.rotateY(-rotY)).transpose();
                     // #endregion
