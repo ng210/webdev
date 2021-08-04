@@ -5,17 +5,13 @@ include('repo-item.js');
 //
 // ********************************************************************************************
 (function() {
-    function Actor(id, data) {
+    function Actor(id) {
         Actor.base.constructor.call(this, id);
-
-		this.meshes = [];
-		this.materials = [];
-		this.bones = [];
-        this.logic = [];
-        
-        if (data) {
-
-        }
+        // statics
+        this.components = [];
+        // dynamics
+        this.modifiers = [];
+        this.constraints = [];
     }
 	extend(webGL.RepoItem, Actor);
 

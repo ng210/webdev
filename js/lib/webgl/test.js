@@ -1,471 +1,357 @@
 (function() {
-    include('/lib/math/v2.js');
+    // include('/lib/math/v2.js');
     include('/lib/math/v3.js');
-    include('/lib/math/quaternion.js');
-    include('./webgl.js');
+    include('/lib/math/m44.js');
+    // include('/lib/math/quaternion.js');
+    include('webgl.js');
+    include('compute-shader.js');
 
-    var _vbo = null;
-    var _ibo = null;
-    var _program = null;
-    var _programs = {};
-
-    var _lastTick = 0;
-    var _frames = 0;
-    var _elapsedTime = 0;
-
-    var _instances = [];
-
-    var _size = new V3();
-    var _world = new V3(500, 500, 1000);
-    var BOX = { min: new V3(), max: new V3() };
-
-    var _controls = {
-        fps: { value: 0, control: null },
-        count: { value: 300, control: null },
-        mode: { value: true, control: null },
-        start: { value: true, control: null }
-    };
-
-    var _viewProjection2D = new Float32Array(16);
-    var _viewProjection3D = new Float32Array(16);
-
-    var _controlsElem = null;
-
-    function Instance() {
-        this.time = 0;
-        this.velocity = V3.fromPolar(2*Math.PI*Math.random(), 2*Math.PI*Math.random(), 20*(0.4*Math.random() + 0.6));
-        this.position = new V3(0, 0, -450).add(this.velocity.prodC(0.1));
-        this.scale = new V3(Math.random()+0.5);
-        var rot = [0, 0, 0];
-        for (var i=0; i<3; i++) {
-            var r = 0.3*(Math.random() - 0.5);
-            rot[i] = r < 0 ? -1-r : 1-r;
-        }
-        this.rot = [
-            Quaternion.fromAxisAngle([1, 0, 0, 0], 2*Math.PI*rot[0]),
-            Quaternion.fromAxisAngle([0, 1, 0, 0], 2*Math.PI*rot[1]),
-            Quaternion.fromAxisAngle([0, 0, 1, 0], 2*Math.PI*rot[2]),
-            new Quaternion(0, 0, 0, 1)
-        ];
-        this.color = new Float32Array([Math.random(), Math.random(), Math.random(), 1.0]);
-        
-        this.model = new Float32Array(16);
-    }
-
-    Instance.prototype.setMode = function setMode(is3D) {
-        if (is3D) {
-            this.update = this.update3D;
-            this.render = this.render3D;
-        } else {
-            this.update = this.update2D;
-            this.render = this.render2D;
-        }
-    };
-
-    Instance.prototype.update2D = function update2D(dt) {
-        this.time += dt;
-        this.position.add(this.velocity.prodC(dt));
-        // adjustPosition
-        var min = this.position.diff(BOX.min);
-        var max = this.position.diff(BOX.max);
-        if (min.x < 0) {
-            this.velocity.x = -this.velocity.x;
-            this.position.x = BOX.min.x;
-        } else if (max.x > 0) {
-            this.velocity.x = -this.velocity.x;
-            this.position.x = BOX.max.x;
-        }
-        if (min.y < 0) {
-            this.velocity.y = -this.velocity.y;
-            this.position.y = BOX.min.y;
-        } else if (max.y > 0) {
-            this.velocity.y = -this.velocity.y;
-            this.position.y = BOX.max.y;
-        }
-
-        var dRot = this.rot[2].prodC(dt);
-        dRot[3] /= dt;
-        this.rot[3] = this.rot[3].mul(dRot);
-        this.rot[3].norm().toMatrix()
-            .mul(M44.scale(this.scale))
-            .mul(M44.translate(this.position), this.model);
-
-        this.rot[2].w *= 1.001;
-        //this.velocity.scale(0.998);
-    };
-
-    Instance.prototype.update3D = function update3D(dt) {
-        this.time += dt;
-        this.position.add(this.velocity.prodC(dt));
-        // adjustPosition
-        var min = this.position.diff(BOX.min);
-        var max = this.position.diff(BOX.max);
-        if (min.x < 0) {
-            this.velocity.x = -this.velocity.x;
-            this.position.x = BOX.min.x;
-        } else if (max.x > 0) {
-            this.velocity.x = -this.velocity.x;
-            this.position.x = BOX.max.x;
-        }
-        if (min.y < 0) {
-            this.velocity.y = -this.velocity.y;
-            this.position.y = BOX.min.y;
-        } else if (max.y > 0) {
-            this.velocity.y = -this.velocity.y;
-            this.position.y = BOX.max.y;
-        }
-        if (min.z > 0) {
-            this.velocity.z = -this.velocity.z;
-            this.position.z = BOX.min.z;
-        } else if (max.z < 0) {
-            this.velocity.z = -this.velocity.z;
-            this.position.z = BOX.max.z;
-        }
-
-        var matrix = M44.scale(this.scale).mul(M44.translate(this.position));
-        var dRot = this.rot[0].mul(this.rot[1]).mul(this.rot[2]);
-        dRot[3] /= dt;
-        this.rot[3] = this.rot[3].mul(dRot).norm();
-        this.rot[3].toMatrix().mul(matrix, this.model);
-        this.rot[0].w *= 1.001;
-        this.rot[1].w *= 1.001;
-        this.rot[2].w *= 1.001;
-        //this.velocity.scale(0.998);
-    };
-
-    Instance.prototype.render2D = function render2D() {
-        _program.uniforms.u_color.value = this.color;
-        _program.updateUniform('u_color');
-        _program.uniforms.u_model.value = this.model;
-        _program.updateUniform('u_model');
-        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
-    };
-
-    Instance.prototype.render3D = function render3D() {
-        _program.uniforms.u_color.value = this.color;
-        _program.updateUniform('u_color');
-        _program.uniforms.u_translationScale.value = this.model;
-        _program.updateUniform('u_translationScale');
-        // _program.uniforms.u_rotation.value = this.rotation;
-        // _program.updateUniform('u_rotation');
-        gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_BYTE, 0);
-    };
-
-    function setGeometry3D() {
-        var vb = new Float32Array(6*4*2*3);
-        var p = new V4(-1, -1, 1, 0);
-        var n = new V4(0, 0, 1, 0);
-        var rotX = Quaternion.fromAxisAngle([1, 0, 0], Math.PI/2);
-        var rotY = Quaternion.fromAxisAngle([0, 1, 0], Math.PI/2);
-        var rotZ = Quaternion.fromAxisAngle([0, 0, 1], Math.PI/2);
-        var rot = new Quaternion([0, 0, 0, 1]);
-        var ix = 0;
-        for (var j=0; j<6; j++) {
-            for (var i=0; i<4; i++) {
-                p.x = Math.round(p.x); p.y = Math.round(p.y); p.z = Math.round(p.z);
-                vb[ix++] = p.x; vb[ix++] = p.y; vb[ix++] = p.z;
-                vb[ix++] = n.x; vb[ix++] = n.y; vb[ix++] = n.z;
-                rot = rot.mul(rotZ);
-                p = rot.rotate([-1,-1,1,0]);
-            }
-            if (j % 2 == 1) {
-                rot = rot.mul(rotX);
+    async function animate(callback) {
+        var start = 0;
+        var elapsed = 0;
+        var hraf = 0;
+        var isDone = false;
+        function loop(time) {
+            if (start == 0) {
+                start = time;
             } else {
-                rot = rot.mul(rotY);
+                elapsed = time - start;
             }
-            p = rot.rotate([-1,-1,1,0]);
-            n = rot.rotate([0,0,1,0]);
-            n.x = Math.round(n.x); n.y = Math.round(n.y); n.z = Math.round(n.z);
+            callback(elapsed);
+            if (!isDone) hraf = requestAnimationFrame(loop);
         }
-        _vbo = webGL.createBuffer(gl.ARRAY_BUFFER, vb, gl.STATIC_DRAW);
-        var ib = new Uint8Array(36);
-        ix = 0;
-        for (var i=0; i<6; i++) {
-            ib[ix++] = i*4; ib[ix++] = i*4+1; ib[ix++] = i*4+2;
-            ib[ix++] = i*4; ib[ix++] = i*4+2; ib[ix++] = i*4+3;
-        }
-        _ibo = webGL.createBuffer(gl.ELEMENT_ARRAY_BUFFER, ib, gl.STATIC_DRAW);
 
-        var ix = 0;
-        for (var i=0; i<6; i++) {
-            //console.log(`Side #${i}`);
-            for (var j=0; j<6; j++) {
-                var ix = ib[6*i+j];
-                var p = new V3(vb, 6*ix);
-                var n = new V3(vb, 6*ix+3);
-                //console.log(` ${ix}: p=${p.toString()}, n=${n}`);
-            }
+        message('Start.');
+        hraf = requestAnimationFrame(loop);
+        await button('Stop');
+        isDone = true;
+        cancelAnimationFrame(hraf);
+        message('Done.');
+    }
+
+    function initWebGL() {
+        if (!window.gl) {
+            webGL.init(null, true);
         }
     }
 
-    function run() {
-        _frames++;
-        _elapsedTime = new Date().getTime() - _startTime;
-        if (_frames % 20 == 0) {
-            _controls.fps.control.innerHTML = (''+_frames*1000/_elapsedTime).slice(0, 4);
-        }
-        var t = new Date().getTime();
-        var dt = 0.0005*(t - _lastTick);
+    // function Actor(id, type) {
+    //     this.id = id;
+    //     this.mesh = null;
+    //     this.materials = [];
+    // }
 
-        // update
-        for (var i=0; i<_controls.count.value; i++) {
-            _instances[i].update(dt);
+    function createCube() {
+        var cube = {};
+        // create cube
+        //   7-+- *----------* 6++-
+        //       /|         /|
+        // 3-++ *-+--------* | 2+++
+        //      | |        | |
+        //      | |        | |
+        // 4--- | *--------+-* 5+--
+        //      |/         |/
+        // 0--+ *----------* 1+-+
+        cube.vertices = [
+            -1,-1, 1, 0,0, 0.0, 0.0, 0.0,  0,0,1,    1,-1, 1, 1,0, 0.0, 0.0, 0.0,  0,0,1,    1, 1, 1, 1,1, 0.0, 0.0, 0.0,  0,0,1,  -1, 1, 1, 0,1, 0.0, 0.0, 0.0,  0,0,1,
+             1,-1, 1, 1,0, 0.0, 0.0, 0.0,  1,0,0,    1,-1,-1, 0,0, 0.0, 0.0, 0.0,  1,0,0,    1, 1,-1, 0,1, 0.0, 0.0, 0.0,  1,0,0,   1, 1, 1, 1,1, 0.0, 0.0, 0.0,  1,0,0,
+             1,-1,-1, 0,0, 0.0, 0.0, 0.0,  0,0,-1,  -1,-1,-1, 1,0, 0.0, 0.0, 0.0,  0,0,-1,  -1, 1,-1, 1,1, 0.0, 0.0, 0.0,  0,0,-1,  1, 1,-1, 0,1, 0.0, 0.0, 0.0,  0,0,-1,
+            -1,-1,-1, 1,0, 0.0, 0.0, 0.0, -1,0,0,   -1,-1, 1, 0,0, 0.0, 0.0, 0.0, -1,0,0,   -1, 1, 1, 0,1, 0.0, 0.0, 0.0, -1,0,0,  -1, 1,-1, 1,1, 0.0, 0.0, 0.0, -1,0,0,
+            -1, 1, 1, 1,0, 0.0, 0.0, 0.0,  0,1,0,    1, 1, 1, 0,0, 0.0, 0.0, 0.0,  0,1,0,    1, 1,-1, 0,1, 0.0, 0.0, 0.0,  0,1,0,  -1, 1,-1, 1,1, 0.0, 0.0, 0.0,  0,1,0,
+            -1,-1,-1, 1,0, 0.0, 0.0, 0.0,  0,-1,0,   1,-1,-1, 0,0, 0.0, 0.0, 0.0,  0,-1,0,   1,-1, 1, 0,1, 0.0, 0.0, 0.0,  0,-1,0, -1,-1, 1, 1,1, 0.0, 0.0, 0.0,  0,-1,0
+        ];
+        cube.vertexCount = 0;
+        // set color from position
+        for (var i=0; i<cube.vertices.length; i+=11) {
+            cube.vertices[i+5] = 0.5*(cube.vertices[i]+1);
+            cube.vertices[i+6] = 0.5*(cube.vertices[i+1]+1);
+            cube.vertices[i+7] = 0.5*(cube.vertices[i+2]+1);
+            cube.vertexCount++;
         }
 
-        // render
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        //gl.blendFunc(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA);
-        gl.clearColor(0.02, 0.1, 0.2, 1.0);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        gl.enable(gl.DEPTH_TEST);
-        gl.frontFace(gl.CCW);
-        gl.cullFace(gl.BACK);
-        gl.enable(gl.CULL_FACE);
-        webGL.useProgram(_program);
-        //update projection*view
-        if (_controls.mode.value) {
-            _program.uniforms.u_viewProjection.value = _viewProjection3D;
-            // _program.uniforms.u_lightPos.value[0] = 100;
-            // _program.uniforms.u_lightPos.value[1] = Math.sin(0.03*_frames)*_world.y;
-            // _program.uniforms.u_lightPos.value[2] = Math.cos(0.03*_frames)*_world.z;
-            _program.updateUniform('u_lightPos');
-        } else {
-            _program.uniforms.u_viewProjection.value = _viewProjection2D;    
-        }
-        _program.updateUniform('u_viewProjection');
-
-        for (var i=0; i<_controls.count.value; i++) {
-            _instances[i].render();
-        }
-        _lastTick = t;
+        cube.indices = [
+            0,1,2, 2,3,0,  4,5,6, 6,7,4,
+            8,9,10, 10,11,8,  12,13,14, 14,15,12,
+            16,17,18, 18,19,16,  20,21,22, 22,23,20
+        ];
+        cube.indexCount = cube.indices.length;
         
-        if (_controls.start.value) requestAnimationFrame(run);
-        else {
-            gl.clearColor(0.0625, 0.09375, 0.125, 1.0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-        }
+        
+        return cube;
     }
 
-    function start() {
-        _lastTick = new Date().getTime();
-        _startTime = _lastTick;
-        _frames = 0;
-        requestAnimationFrame(run);
-    }
-
-    function createShaders() {
-        var shaders = {};
-        shaders[gl.FRAGMENT_SHADER] =
-           `precision mediump float;
-            uniform vec4 u_color;
-            void main() {
-                gl_FragColor = u_color;
-            }`;
-        shaders[gl.VERTEX_SHADER] = 
-           `attribute vec4 a_position;
-
-            uniform mat4 u_viewProjection;
-            uniform mat4 u_model;
-
-            void main() {
-                gl_Position = u_viewProjection*u_model*a_position;
-            }`;
-
-        _programs['2D'] = webGL.createProgram(shaders, {
-            a_position: { type:gl.FLOAT, size:3 },
-            a_normal: { type:gl.FLOAT, size:3 }
-        }, {
-            u_viewProjection: { type: webGL.FLOAT4x4M },
-            u_model: { type: webGL.FLOAT4x4M },
-            u_color: { type: webGL.FLOAT4V }
-        });
-    
-        shaders[gl.VERTEX_SHADER] = 
-           `attribute vec4 a_position;
-            attribute vec4 a_normal;
-
-            uniform vec4 u_color;
-            uniform mat4 u_viewProjection;
-            uniform mat4 u_translationScale;
-            uniform mat4 u_rotation;
-
-            varying vec3 v_pos;
-            varying vec3 v_normal;
-            varying vec3 v_color;            
-
-            mat3 extract3x3(mat4 m) {
-                return mat3(m[0].xyz, m[1].xyz, m[2].xyz);
-            }
-
-            void main() {
-                // mat4 model = u_translationScale*u_rotation;
-                // vec4 worldPos = model*a_position;
-                // v_normal = (u_rotation*a_normal).xyz;
-                vec4 worldPos = u_translationScale*a_position;
-                v_normal = extract3x3(u_translationScale)*a_normal.xyz;
-                v_pos = worldPos.xyz;
-                gl_Position = u_viewProjection*worldPos;
-                v_color = u_color.rgb;
-            }`;
-
-        shaders[gl.FRAGMENT_SHADER] =
-           `precision mediump float;
-
-            uniform vec3 u_lightPos;
-
-            varying vec3 v_pos;
-            varying vec3 v_color;
-            varying vec3 v_normal;
-
-            void main() {
-                vec3 ambient = vec3(0.1, 0.2, 0.4);
-                float z = 1.0 - (v_pos.z - 10.0)/500.0;
-                vec3 norm = normalize(v_normal);
-                vec3 lightDir = normalize(u_lightPos - v_pos);
-                float diff = max(dot(norm, lightDir), 0.0);
-                vec3 diffuse = diff*vec3(1.0)*(1.0 - distance(u_lightPos, v_pos)/1000.0);
-                vec3 color = (ambient + diffuse)*v_color;
-                gl_FragColor = vec4(mix(vec3(0.02, 0.1, 0.2), color, z), 1.0);
-            }`;
-
-        _programs['3D'] = webGL.createProgram(shaders, {
-            a_position: { type:gl.FLOAT, size:3 },
-            a_normal: { type:gl.FLOAT, size:3 }
-        }, {
-            u_viewProjection: { type: webGL.FLOAT4x4M },
-            u_translationScale: { type: webGL.FLOAT4x4M },
-            u_rotation: { type: webGL.FLOAT4x4M },
-            u_color: { type: webGL.FLOAT4V },
-            u_lightPos: { type: webGL.FLOAT3V }
-        });
-        _programs['3D'].uniforms.u_lightPos.value = new Float32Array([0, 0, 1]);
-        _programs['3D'].uniforms.u_translationScale.value = new Float32Array(16);
-        _programs['3D'].uniforms.u_rotation.value = new Float32Array(16);
-    }
-
-    function createUI() {
-        _controlsElem = document.createElement('div');
-        _controlsElem.id = "controls";
-        _controlsElem.innerHTML =
-        `<table width="100%">
-            <tr><th colspan="2">Settings</th></tr>
-            <tr><td>FPS</td><td id="fps">00.00</td></tr>
-            <tr><td>Count</td><td><input id="count" type="text" value="${_controls.count.value}"/></td></tr>
-            <tr><td>3D</td><td><input id="mode" type="checkbox"${_controls.mode.value ? ' CHECKED' : ''}/></td></tr>
-            <tr><td colspan="2"align="center"><button id="start">${_controls.start.value ? 'Stop' : 'Start'}</button></td></tr>
-        </table>`;
-        document.body.appendChild(_controlsElem);
-        for (var k in _controls) {
-            var el = document.getElementById(k);
-            if (el != null) _controls[k].control = el;
-        }
-        _controls.count.control.onchange = setCount;
-        _controls.mode.control.onclick = setMode;
-        _controls.start.control.onclick = startStop;
-        if (_controls.start.value == true) {
-            start();
-        }
-    }
-
-    function setup() {
-        var canvas = document.createElement('canvas');
-        canvas.id = 'canvas';
-        canvas.width = window.innerWidth/2;
-        canvas.height = window.innerHeight/2;
-        document.body.appendChild(canvas);
-        window.gl = canvas.getContext('webgl2');
-
-        canvas.onmousemove = function(e) {
-            // _program.uniforms.u_lightPos.value[0] = _world.x*(2*e.clientX/gl.canvas.clientWidth - 1);
-            // _program.uniforms.u_lightPos.value[1] = -_world.y*(2*e.clientY/gl.canvas.clientHeight - 1);
+    function createSphere(n) {
+        n = n || 6;
+        var sphere = {
+            vertices: [],
+            vertexCount: 0,
+            indices: [],
+            indexCount: 0
         };
-
-        createUI();
-
-        createShaders();
-
-        window.onresize = onResize;
-
-        onResize();
-
-        for (var i=0; i<_controls.count.value; i++) {
-            var instance = new Instance();
-            instance.setMode(_controls.mode.value);
-            _instances.push(instance);
+        var da = 2.0*Math.PI/n;
+        var a = Math.PI/2, b = 0;
+        for (var i=0; i<=n/2; i++) {
+            var r = Math.cos(a);
+            var y = Math.sin(a);
+            b = 0;
+            for (var j=0; j<=n; j++) {
+                var x = r*Math.cos(b);
+                var z = r*Math.sin(b);
+                // position
+                sphere.vertices.push(x, y, z);
+                // texcoord
+                var u = 1-j/n, v = 2*i/n;
+                sphere.vertices.push(u, v);
+                // color
+                //sphere.vertices.push(0.5*(x + r), 0.5*(y + r), 0.5*(z + r));
+                sphere.vertices.push(1,1,1);
+                // normal
+                var normal = new V3(x, y, z).norm();
+                sphere.vertices.push(normal.x, normal.y, normal.z);
+                sphere.vertexCount++;
+                b += da;
+                if (b > 2*Math.PI) b = 0;
+                if (i > 0 && j > 0) {
+                    var m = n+1;
+                    var k1 = (i-1)*m + (j-1)%(m+1);
+                    var k2 = (i-1)*m + j;
+                    var k3 = i*m + (j-1)%(m+1);
+                    var k4 = i*m + j;
+                    sphere.indices.push(k3,k4,k2, k2,k1,k3);
+//Dbg.prln(`${x.toFixed(2)},${y.toFixed(2)},${z.toFixed(2)}, ${u},${v}`)
+// function prtc(ii) { return `${sphere.vertices[ii*11+3]},${sphere.vertices[ii*11+4]}` };
+// Dbg.prln(`${prtc(k1)}, ${prtc(k2)}, ${prtc(k3)}, ${prtc(k4)}`)
+                }
+            }
+            a -= da;
         }
-
-        setGeometry3D();
-
-        setMode();
+        sphere.indexCount = sphere.indices.length;
+        return sphere;
     }
 
-    function onResize() {
-        var aspect = canvas.width/canvas.height;
-        _controlsElem.style.left = (window.innerWidth - _controlsElem.clientWidth - 10) + 'px';
-        
-        new M44([
-            1/_world.x, 0.0, 0.0, 0.0,
-            0.0, aspect/_world.y, 0.0, 0.0,
-            0, 0, 1/_world.z, 0.0,
-            0.0, 0.0, 0.0, 1.0
-        ]).put(_viewProjection2D);
-        //M44.projection(_world.x, aspect*_world.y, _world.z, _viewProjection2D);
+    async function setup(scene) {
+        // create a simple scene containing
+        // - 1 model: a cube 
+        // - 1 material: a shader and texture
+        // - 2 lights: sun (direct), lamp (point)
+        var errors = null;
+        initWebGL();
 
-        var fov = Math.PI*60/180;
-        var zNear = 1;
-        var zFar = 2000;    //_world.z;
-        M44.perspective(fov, aspect, zNear, zFar, _viewProjection3D);
+        // load resources
+        var res = await load([
+            'res/simple.vs',
+            'res/simple.fs',
+            'res/blank.png',
+            'res/checkered.png',
+            'res/world_map.png',
+            'res/world_height_map.jpg'
+        ]);
 
-        BOX.min.set([-_world.x, -_world.y/aspect, _world.z]);
-        BOX.max.set([_world.x, _world.y/aspect, -_world.z]);
+        var errors = res.select(x => x.error instanceof Error).map(x => x.error);
+        if (errors.length == 0) {
+            // #region create geometry
+            scene.models = [createCube(), createSphere(64)];
+            // combine vertices into 1 buffer
+            // combine indices into 1 buffer
+            var vb = [];
+            var ib = [];
+            var vertexCount = 0;
+            for (var i=0; i<scene.models.length; i++) {
+                var model = scene.models[i];
+                model.vertexOffset = vb.length;
+                for (var vi=0; vi<model.vertices.length; vi++) {
+                    vb.push(model.vertices[vi]);
+                }
+                model.indexOffset = ib.length;
+                for (var ii=0; ii<model.indices.length; ii++) {
+                    ib.push(model.indices[ii] + vertexCount);
+                }
+                vertexCount += model.vertexCount;
+            }
+            scene.vbo = webGL.createBuffer(gl.ARRAY_BUFFER, new Float32Array(vb), gl.STATIC_DRAW);
+            scene.ibo = webGL.createBuffer(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(ib), gl.STATIC_DRAW);
+            //#endregion
+
+            // #region create material
+            var shaders = {};
+            shaders[gl.VERTEX_SHADER] = res[0].data;
+            shaders[gl.FRAGMENT_SHADER] = res[1].data;
+            scene.shaders = [
+                webGL.createProgram(shaders)
+            ];
+            scene.textures = [
+                webGL.createTexture(res[2].node), // blank
+                webGL.createTexture(res[3].node), // checkered
+                webGL.createTexture(res[4].node), // earth color
+                webGL.createTexture(res[5].node)  // earth height
+            ];
+
+            scene.materials = [
+                {
+                    'shader': scene.shaders[0],
+                    'textures': [
+                        scene.textures[0]
+                    ],
+                    'args': {
+                        'color': new V3(1.0, 1.0, 1.0),
+                        'diffuse': 1.0,
+                        'specular1': 2.5,
+                        'specular2': 300
+                    }
+                },
+                {
+                    'shader': scene.shaders[0],
+                    'textures': [
+                        scene.textures[1]
+                    ],
+                    'args': {
+                        'color': new V3(0.8, 0.9, 1.0),
+                        'diffuse': 1.0,
+                        'specular1': 2.2,
+                        'specular2': 240
+                    }
+                },
+                {
+                    'shader': scene.shaders[0],
+                    'textures': [
+                        scene.textures[2],
+                        scene.textures[3]
+                    ],
+                    'args': {
+                        'color': new V3(1.0, 1.0, 1.0),
+                        'diffuse': 0.8,
+                        'specular1': 0.4,
+                        'specular2': 2.0
+                    }
+                }
+            ];
+            //#endregion
+
+            scene.lights = [
+                { 'id':'sun',   'type':'diffuse', 'color': [1.00, 0.95, 0.80], 'direction': new V3( 2.0, 1.0, 1.0) },
+                { 'id':'lamp1', 'type':'point',   'color': [0.50, 0.60, 1.00], 'position':  new V3(-3.0, 0.0, -8.0) },
+                { 'id':'lamp2', 'type':'point',   'color': [1.00, 0.95, 0.90], 'position':  new V3( 0.0, 0.0, -10.0) }
+            ];
+
+            // set view-projection matrix
+            var fov = Math.PI*60/180;
+            var aspect = gl.canvas.width/gl.canvas.height;
+            var zNear = 1, zFar = -100;
+            scene.viewProjection = M44.perspective(fov, aspect, zNear, zFar);
+        }
+        return errors;
     }
 
-    function setCount(e) {
-        var oldCount = _controls.count.value;
-        var newCount = parseInt(this.value);
-        for (var i=oldCount; i<newCount; i++) {
-            var instance = new Instance();
-            instance.setMode(_controls.mode.value);
-            _instances.push(instance);
-        }
-        if (oldCount > newCount) {
-            _instances.splice(newCount, oldCount-newCount);
-        }
-        _controls.count.value = newCount;
-        Dbg.prln(`New count is ${_instances.length}.`);
+    function teardown() {
     }
 
-    function setMode() {
-        var mode = this.checked != undefined ? this.checked : _controls.mode.value;
-        _controls.mode.value = mode;
-        for (var i=0; i<_controls.count.value; i++) {
-            _instances[i].setMode(mode);
+    function setMaterial(mat, shaderArgs) {
+        // set texture
+        for (var i=0; i<mat.textures.length; i++) {
+            gl.activeTexture(gl['TEXTURE'+i]);
+            gl.bindTexture(gl.TEXTURE_2D, mat.textures[i]);
         }
-        _program = mode ? _programs['3D'] : _programs['2D'];
-        Dbg.prln(`Mode set to ${mode ? '3D' : '2D'}.`);
+
+        // set shader and uniforms
+        for (var i in mat.args) {
+            shaderArgs['u_' + i] = mat.args[i]
+        }
+        webGL.useProgram(mat.shader, shaderArgs);
     }
 
-    function startStop() {
-        if (_controls.start.value) {
-            this.innerHTML = 'Start';
-            _controls.start.value = false;
-        } else {
-            this.innerHTML = 'Stop';
-            _controls.start.value = true;
-            start();
-        }
-    }
-
-    function test_simple_rendering() {
+    async function test_simple_render() {
+        // Includes
+        // - geometry
+        // - material: shader and texture
+        // - vertex color
+        // - directional and point lights
         header('Test simple rendering');
-        setup();
+        var scene = {};
+        var errors = await setup(scene);
+        test('Should setup the scene', ctx => ctx.assert(errors.length, '=', 0));
+        if (errors.length == 0) {
+            // #region prepare rendering
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+            gl.clearColor(0.11, 0.1, 0.2, 1.0);
+            gl.frontFace(gl.CW);
+            gl.cullFace(gl.BACK);
+            gl.enable(gl.CULL_FACE);
+            gl.enable(gl.DEPTH_TEST);
+            // bind vertex and index buffers
+            gl.bindBuffer(gl.ARRAY_BUFFER, scene.vbo);
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, scene.ibo);
+            // #endregion
+
+            // set basic uniforms
+            var shaderArgs = {
+                'u_viewProjectionMat4': scene.viewProjection,
+                'u_camera_position': new V3(0.0, 0.0, 0.0)
+            };
+            // set lights
+            for (var i=0; i<scene.lights.length; i++) {
+                var li = scene.lights[i];
+                var lid = li.id;
+                shaderArgs[`u_${lid}_color`] = new Float32Array(li.color);
+                switch (li.type) {
+                    case 'diffuse': shaderArgs[`u_${lid}_direction`] = li.direction.norm(); break;
+                    case 'point': shaderArgs[`u_${lid}_position`] = li.position; break;
+                }
+            }
+
+            await animate(
+                time => {
+                    // select model
+                    var model = scene.models[1];
+
+                    // #region update
+                    var rotZ = -22/180*Math.PI;
+                    var rotY = time*Math.PI/12000;
+                    var pos = new V3(0.0, 0.0, -4.0);
+                    var posInv = new V3(0.0, 0.0, 4.0);
+                    var modelMat = M44.rotateY(rotY).mul(M44.rotateZ(rotZ)).mul(M44.translate(pos));
+                    var normalMat = M44.translate(posInv).mul(M44.rotateZ(-rotZ)).mul(M44.rotateY(-rotY)).transpose();
+                    // #endregion
+
+                    // set material
+                    setMaterial(scene.materials[2], shaderArgs);
+                    // #region render
+                    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+                    //gl.blendFunc(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA);
+                    scene.shaders[0].setUniform('u_normalMat4', normalMat);
+                    scene.shaders[0].updateUniform('u_normalMat4');
+                    scene.shaders[0].setUniform('u_modelMat4', modelMat);
+                    scene.shaders[0].updateUniform('u_modelMat4');
+                    // render
+                    gl.drawElements(gl.TRIANGLES, model.indexCount, gl.UNSIGNED_SHORT, 2*model.indexOffset);
+                    //setMaterial(scene.materials[0], shaderArgs);
+                    //gl.drawElements(gl.LINES, model.indexCount, gl.UNSIGNED_SHORT, 2*model.indexOffset);
+                }
+            );
+        }
+        for (var i=0; i<errors.length; i++) error(errors[i]);
+        teardown();
     }
 
-    function test_instanced_rendering() {
-        setup();
+    async function test_compute_shader() {
+        initWebGL();
+        webGL.useExtension('EXT_color_buffer_float');
+
+        var cs = new webGL.ComputeShader(16, gl.R32F, (k, i, j) => k);
+        await cs.setup('res/compute1.fs');
+        cs.compute();
+        Dbg.prln(cs.results);
+        test(`Should compute '${cs.input.data}' into ${cs.results}`, context => context.assert(cs.results, ':=', [0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]));
+        cs.feedback();
+        cs.compute();
+        Dbg.prln(cs.results);
+        test(`Should compute '${cs.input.data}' into ${cs.results}`, context => context.assert(cs.results, ':=', [0,4,8,12,16,20,24,28,32,36,40,44,48,52,56,60]));
+        cs.destroy();
     }
 
-    var tests = () => [test_simple_rendering];
+    var tests = () => [
+        //test_compute_shader,
+        test_simple_render
+    ];
 
     publish(tests, 'WebGL tests');
 

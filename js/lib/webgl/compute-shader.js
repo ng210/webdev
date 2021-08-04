@@ -51,7 +51,6 @@ include('webgl.js');
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.bindTexture(gl.TEXTURE_2D, null);
     };
 
     ComputeShader.prototype.createDataBuffer = function createDataBuffer(fill) {
@@ -77,7 +76,6 @@ include('webgl.js');
         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this.fbo);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.output.texture, 0);
         this.vbo = webGL.createBuffer(gl.ARRAY_BUFFER, new Float32Array([ -1.0, -1.0,   1.0, -1.0,  -1.0, 1.0,  1.0, 1.0 ]), gl.STATIC_DRAW);
-
         this.shaders = {};
         var res = await load(['res/flat.vs', shaderPath]);
         this.shaders[gl.VERTEX_SHADER] = res[0].data;
@@ -130,7 +128,7 @@ include('webgl.js');
         this.prg.destroy();
         gl.deleteTexture(this.input.texture);
         gl.deleteTexture(this.output.texture);
-        gl.deleteBuffer(this.vbo);
+        webGL.deleteBuffer(this.vbo);
         gl.deleteFramebuffer(this.fbo);
     };
 

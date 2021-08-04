@@ -3,8 +3,8 @@
 ## Entities
 - a pass contains models (items and actors) pre-selected by render type (opaque, translucent, transparent, ...)
 - a model consists of sub-models or parts
-- a part consits of meshes and materials
-- a material consits of a shader program, textures and parameters
+- a part consists of meshes and materials
+- a material consists of a shader program, textures and parameters
 - a program is compiled from a vertex and a fragment shader
 - a texture is a 2D image or a video
 
@@ -85,4 +85,3 @@ for (pass in scene.passes)
       render(object);
     }
 }
-
