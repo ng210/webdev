@@ -32,9 +32,11 @@ include('/lib/data/stream.js');
             this.devices[i].updateRefreshRate(fps)
         }
     };
-    IAdapter.getInfo = function() { throw new Error('Not implemented!'); };
     IAdapter.prototype.createDeviceImpl = function(deviceType, initData) { throw new Error('Not implemented!'); };
     IAdapter.prototype.processCommand = function(channel, command) { throw new Error('Not implemented!'); };
+
+    IAdapter.getInfo = function() { throw new Error('Not implemented!'); };
+    IAdapter.create = function(player) { throw new Error('Not Implemented!'); };
 
     publish(Ps, 'Ps');
     publish(IAdapter, 'IAdapter', Ps);

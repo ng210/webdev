@@ -203,7 +203,7 @@ include('./iadapter-ext.js');
             if (!player.adapters.find(x => x.adapter == type)) {
                 throw new Error(`Adapter type '${type}' not found!`);
             }
-            data.writeUint8(type.getInfo().id);                    // adapter type
+            data.writeUint8(type.getInfo().id);              // adapter type
             data.writeUint8(adapterList[i].datablock);       // id of data block of adapter initialization
         }
 

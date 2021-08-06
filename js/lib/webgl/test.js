@@ -140,15 +140,19 @@
             'res/simple.fs',
             'res/blank.png',
             'res/checkered.png',
+            'res/box.png',
+            'res/box_heightmap.png',
+            'res/world_heightmap.png',
+            'res/world_heightmap2.jpg',
             'res/worldmap.jpg',
             'res/worldmap2.png',
-            'res/world_heightmap.png'
+            'res/worldmap3.png'
         ]);
 
         var errors = res.select(x => x.error instanceof Error).map(x => x.error);
         if (errors.length == 0) {
             // #region create geometry
-            scene.models = [createCube(), createSphere(30)];
+            scene.models = [createCube(), createSphere(60)];
             // combine vertices into 1 buffer
             // combine indices into 1 buffer
             var vb = [];
@@ -180,13 +184,17 @@
             scene.textures = [
                 webGL.createTexture(res[2].node), // 0: blank
                 webGL.createTexture(res[3].node), // 1: checkered
-                webGL.createTexture(res[6].node), // 2: earth height
-                webGL.createTexture(res[4].node), // 3: earth color1
-                webGL.createTexture(res[5].node)  // 4: earth color2
+                webGL.createTexture(res[4].node), // 2: box
+                webGL.createTexture(res[5].node), // 3: box heightmap
+                webGL.createTexture(res[6].node), // 4: earth height1
+                webGL.createTexture(res[7].node), // 5: earth height2
+                webGL.createTexture(res[8].node), // 6: earth color1
+                webGL.createTexture(res[9].node), // 7: earth color2
+                webGL.createTexture(res[10].node) // 8: earth color3
             ];
 
             scene.materials = [
-                {
+                { // blank
                     'shader': scene.shaders[0],
                     'textures': [
                         scene.textures[0]
@@ -198,7 +206,7 @@
                         'specular2': 300
                     }
                 },
-                {
+                { // checkered
                     'shader': scene.shaders[0],
                     'textures': [
                         scene.textures[1],
@@ -211,17 +219,43 @@
                         'specular2': 240
                     }
                 },
-                {
+                { // metal box
                     'shader': scene.shaders[0],
                     'textures': [
                         scene.textures[2],
+                        scene.textures[3]
+                    ],
+                    'args': {
+                        'color': new V3(0.8, 0.7, 0.4),
+                        'diffuse': 1.0,
+                        'specular1': 5.8,
+                        'specular2': 40
+                    }
+                },
+                { // earth1
+                    'shader': scene.shaders[0],
+                    'textures': [
+                        scene.textures[6],
                         scene.textures[4]
                     ],
                     'args': {
                         'color': new V3(1.0, 1.0, 1.0),
                         'diffuse': 0.8,
-                        'specular1': 0.6,
-                        'specular2': 10.0
+                        'specular1': 2.0,
+                        'specular2': 30.0
+                    }
+                },
+                { // earth2
+                    'shader': scene.shaders[0],
+                    'textures': [
+                        scene.textures[7],
+                        scene.textures[5]
+                    ],
+                    'args': {
+                        'color': new V3(1.0, 1.0, 1.0),
+                        'diffuse': 0.8,
+                        'specular1': 2.0,
+                        'specular2': 30.0
                     }
                 }
             ];
@@ -238,6 +272,8 @@
             var aspect = gl.canvas.width/gl.canvas.height;
             var zNear = 1, zFar = -100;
             scene.viewProjection = M44.perspective(fov, aspect, zNear, zFar);
+            scene.camera = new V3(0.0, 0.0, 0.0);
+            scene.lookAt = new V3(0.0, 0.0, -1.0);
         }
         return errors;
     }
@@ -271,6 +307,7 @@
         var errors = await setup(scene);
         test('Should setup the scene', ctx => ctx.assert(errors.length, '=', 0));
         if (errors.length == 0) {
+
             // #region prepare rendering
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
             gl.clearColor(0.01, 0.02, 0.04, 1.0);
@@ -302,10 +339,12 @@
             await animate(
                 time => {
                     // select model
-                    var model = scene.models[1];
+                    var model = scene.models[0];
 
                     // #region update
-                    var rotZ = -22/180*Math.PI;
+                    var rotZ = 0//time*Math.PI/24000;
+                               //-22/180*Math.PI
+                               ;
                     var rotY = time*Math.PI/12000;
                     var pos = new V3(0.0, 0.0, -3.5);
                     var posInv = new V3(0.0).sub(pos);
@@ -328,6 +367,13 @@
                     //gl.drawElements(gl.LINES, model.indexCount, gl.UNSIGNED_SHORT, 2*model.indexOffset);
                 }
             );
+            // setup controls
+            document.addEventListener('mouseup', glui.onevent);
+            document.addEventListener('mousedown', glui.onevent);
+            document.addEventListener('mousemove', glui.onevent);
+            document.addEventListener('dragging', glui.onevent);
+
+
         }
         for (var i=0; i<errors.length; i++) error(errors[i]);
         teardown();
@@ -350,7 +396,7 @@
     }
 
     var tests = () => [
-        //test_compute_shader,
+        test_compute_shader,
         test_simple_render
     ];
 

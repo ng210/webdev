@@ -9,6 +9,5 @@ async function onpageload(e) {
 
     Dbg.init('con');
     App = new App();
-    //await App.test();
-    await App.testCompute();
+    await App.test();
 }

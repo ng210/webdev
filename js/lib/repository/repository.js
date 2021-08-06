@@ -1,5 +1,5 @@
-include('data-store.js');
-include('entity-mgr.js');
+include('idata-store.js');
+include('ientity-mgr.js');
 include('/lib/utils/schema.js');
 include('/lib/utils/syntax.js');
 

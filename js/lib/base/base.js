@@ -739,6 +739,14 @@ self.poll = function poll(action, timeout) {
         poll_(action, timeout || 100, resolve, args_);
     });
 };
+self.sleep = function sleep(milliseconds) {
+    var isFirst = true;
+    return poll( () => {
+        //var p = isFirst;
+        isFirst = !isFirst;
+        return isFirst;
+    }, milliseconds);
+};
 self.locks__ = {};
 self.lock = function lock(token, action) {
     if (locks__[token] == undefined) {

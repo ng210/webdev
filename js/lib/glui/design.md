@@ -1,5 +1,43 @@
 # GLUI - UI controls with webGL
 
+## Modules
+ - Input
+   - Event management
+ - Logic
+   - State management
+   - Template handling
+   - Data bind
+   - Test support
+ - Output
+   - 2d/3d Rendering
+   - Sounds
+ --
+
+## Input - Event management
+### Keyboard
+ - Events
+   - keydown
+   - keyup
+   - keypress
+ - Key buffer
+### Mouse
+ - Events
+   - mousedown
+   - mouseup
+   - mousemove
+### Touch
+ - Events (TODO)
+### Custom
+ - Simulate events from other inputs
+   - web request (API)
+   - test call
+### Event structure
+ - type
+ - arguments
+ - target (optional)
+
+
+
 ## Core (IControl)
 - create from template
 - create from HTML node

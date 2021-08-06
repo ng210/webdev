@@ -6,28 +6,35 @@
 - Entity manager
 
 ## 2.1. Container
-- container implements CRUD
-- retrieve/store data using offsets
+- implements CRUD
+- supports seek: retrieve/store uses offset
 - no support for types
 
 ### 2.2. Functions
-- create: create a new empty container
-- read: read length bytes from a container at a given offset
-- update: write length bytes into a container at a given offset
-- delete: delete a container
+- create(): create a new empty container
+- read(offset, length): read length bytes from a container at a given offset
+- update(bytes, offset, length): write length bytes into a container at a given offset
+- delete(id): delete a container
+
+---
 
 ## 3.1. Data manager
-- uses tables that are data types defined by schema
-- indexing on selected data items
-- uses views defined as queries
-- does not support references only keys and foreign keys
+- uses tables that store datasets of types defined by schema
+- supports indexing on selected data items
+- supports views defined as queries
+- supports keys and foreign keys
+- no support for references
 
 ### 3.2. Functions
-- addType: add a type to the schema
-- addIndex: add indexing to an attribute of a type
-- addKey: set an attribute as key or foreign key of a type, keys can be manual or automatic (auto=true)
-- addQuery: define a query; fields can be standard attributes, keys or expressions
-- addSchema: add types, indices and keys and queries
+- addType(typeDef): add a type to the schema
+- addIndex(indexDef): add indexing to an attribute of a type
+- addKey(keyDef): set an attribute as key or foreign key of a type, keys can be manual or automatic (auto=true)
+- addQuery(queryDef): define a query; fields can be standard attributes, keys or expressions
+- addSchema(schema): add types, indices and keys and queries
+- getByAttribute(type, attribute, value): retrieve dataset or list of datasets selected by attribute = value
+- runQuery(query): execute the given query and return the list of selected datasets
+
+---
 
 ## 4.1. Entity manager
 - entities are logical objects using methods and references
@@ -42,6 +49,8 @@
 - read: read an entity selected by its key attribute, resolve any calculated attributes
 - update: update an entity selected by its key attribute
 - delete: delete an entity selected by its key attribute
+
+---
 
 ## 5. Example
 System stores items and users, users can have multiple items.

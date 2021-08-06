@@ -141,7 +141,109 @@ include('/lib/base/html.js');
         test('Should Html decode text', ctx => ctx.assert(text, '=', decoded));
     }
 
+    function test_mergeObjects() {
+        message('Test mergeObjects', 1);
+        var person = {
+            "id": 12,
+            "name": "James",
+        };
+        var itemList = {
+            "id": 113,
+            "items": [
+                { "name": "knife", "value": 10 },
+                { "name": "bottle", "value": 5 }            
+            ]
+        };
+
+        test('should merge 2 objects', ctx => {
+            var merged = mergeObjects(itemList, person);
+            var expected = {
+                "id": 12,
+                "name": "James",
+                "items": [
+                    { "name": "knife", "value": 10 },
+                    { "name": "bottle", "value": 5 }            
+                ]
+            };
+            ctx.assert(merged, ':=', expected);
+            merged.id = 1;
+            ctx.assert(merged.id, '!=', expected.id);
+        });
+
+        test('should merge 2 objects keep source only', ctx => {
+            var merged = mergeObjects(itemList, person, true);
+            var expected = {
+                "id": 12,
+                "items": [
+                    { "name": "knife", "value": 10 },
+                    { "name": "bottle", "value": 5 }            
+                ]
+            };
+            ctx.assert(merged, ':=', expected);
+            merged.id = 1;
+            ctx.assert(merged.id, '!=', expected.id);
+        });
+
+        test('should merge an object with null', ctx => {
+            var merged = mergeObjects(null, person);
+            var expected = {
+                "id": 12,
+                "name": "James"
+            };
+            ctx.assert(merged, ':=', expected);
+            merged.id = 1;
+            ctx.assert(merged.id, '!=', expected.id);
+        });
+
+        test('should merge an object with null subobject', ctx => {
+            var merged = mergeObjects({"id": 12, "items": null}, itemList);
+            var expected = {
+                "id": 113,
+                "items": [
+                    { "name": "knife", "value": 10 },
+                    { "name": "bottle", "value": 5 }            
+                ]
+            };
+            ctx.assert(merged, ':=', expected);
+            merged.id = 1;
+            ctx.assert(merged.id, '!=', expected.id);
+        });
+     
+        test('should clone an object', ctx => {
+            var expected = {
+                "id": 12,
+                "name": "James"
+            };
+            var merged = mergeObjects(person);
+            ctx.assert(merged, ':=', person);
+            merged.id = 1;
+            ctx.assert(merged.id, '!=', expected.id);
+        });
+    }
+
+    function test_getObjectAt() {
+        header('Test get object');
+        var testData = {
+            'person': {
+                "id": 12,
+                "name": "James",
+            },
+            'itemList': {
+                "id": 113,
+                "items": [
+                    { "name": "knife", "value": 10 },
+                    { "name": "bottle", "value": 5 }            
+                ]
+            }
+        };
+        test('Should get value at global path', ctx => ctx.assert(getObjectAt('Resource.NEW'), '=',  Resource.NEW));
+        test('Should get value at relative path', ctx => ctx.assert(getObjectAt('id', testData.person), '=',  testData.person.id));
+        test('Should get value from a list at path', ctx => ctx.assert(getObjectAt('itemList.items.0.name', testData), '=',  testData.itemList.items[0].name));
+    }
+
     var tests = () => [
+        test_getObjectAt,
+        test_mergeObjects,
         test_getSetObjectAt,
         test_load,
         test_binSearch,

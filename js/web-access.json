@@ -5,6 +5,7 @@
         "synth",
         "service",
         "test",
-        "index.html"
+        "index.html",
+        "test.json"
     ]
 }

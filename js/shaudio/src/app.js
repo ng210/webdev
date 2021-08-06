@@ -79,22 +79,20 @@ include('/lib/webgl/compute-shader.js');
     App.prototype.test = async function test() {
         webGL.init(null, true);
 
-        var r22 = 0.5*Math.sqrt(2);
         var vertices = new Float32Array([
-            -0.5, 0.0, -0.5,   0.5, 0.0, -0.5,   0.0,  r22, 0.0,
-             0.5, 0.0, -0.5,   0.5, 0.0,  0.5,   0.0,  r22, 0.0,
-             0.5, 0.0,  0.5,  -0.5, 0.0,  0.5,   0.0,  r22, 0.0,
-            -0.5, 0.0,  0.5,  -0.5, 0.0, -0.5,   0.0,  r22, 0.0,
-             0.5, 0.0, -0.5,  -0.5, 0.0, -0.5,   0.0, -r22, 0.0,
-             0.5, 0.0,  0.5,   0.5, 0.0, -0.5,   0.0, -r22, 0.0,
-            -0.5, 0.0,  0.5,   0.5, 0.0,  0.5,   0.0, -r22, 0.0,
-            -0.5, 0.0, -0.5,  -0.5, 0.0,  0.5,   0.0, -r22, 0.0
-
+            -0.5, 0.0, -0.5,   0.5, 0.0, -0.5,   0.0,  0.7, 0.0,
+             0.5, 0.0, -0.5,   0.5, 0.0,  0.5,   0.0,  0.7, 0.0,
+             0.5, 0.0,  0.5,  -0.5, 0.0,  0.5,   0.0,  0.7, 0.0,
+            -0.5, 0.0,  0.5,  -0.5, 0.0, -0.5,   0.0,  0.7, 0.0,
+             0.5, 0.0, -0.5,  -0.5, 0.0, -0.5,   0.0, -0.7, 0.0,
+             0.5, 0.0,  0.5,   0.5, 0.0, -0.5,   0.0, -0.7, 0.0,
+            -0.5, 0.0,  0.5,   0.5, 0.0,  0.5,   0.0, -0.7, 0.0,
+            -0.5, 0.0, -0.5,  -0.5, 0.0,  0.5,   0.0, -0.7, 0.0
         ]);
         // create Vertex Array Object
-        var vao = gl.createVertexArray();
+    //var vao = gl.createVertexArray();
         // work with the vao
-        gl.bindVertexArray(vao);
+    //gl.bindVertexArray(vao);
         // create Vertex Buffer Object to hold vertex coordinates
         var vbo = webGL.createBuffer(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
         // build shader program
@@ -118,7 +116,7 @@ include('/lib/webgl/compute-shader.js');
 
         // render
         gl.clearColor(0.0625, 0.09375, 0.125, 1.0);
-        //gl.enable(gl.DEPTH_TEST);
+        gl.enable(gl.DEPTH_TEST);
         gl.enable(gl.CULL_FACE);
         gl.frontFace(gl.CW);
         gl.cullFace(gl.BACK);
@@ -165,20 +163,7 @@ include('/lib/webgl/compute-shader.js');
         //gl.disableVertexAttribArray(1);
         prg.destroy();
         gl.deleteBuffer(vbo);
-        gl.deleteVertexArray(vao);
-    };
-
-    App.prototype.testCompute = async function testCompute() {
-        webGL.init(null, true);
-        webGL.useExtension('EXT_color_buffer_float');
-
-        var cs = new webGL.ComputeShader(16, gl.R32F, (k, i, j) => k);
-        console.log('Input: ' + cs.input.data);
-        await cs.setup('res/compute1.fs');
-        cs.compute();
-        cs.feedback();
-        cs.destroy();
-        console.log('Results: ' + cs.results);
+    //gl.deleteVertexArray(vao);
     };
 
     publish(App, 'App');

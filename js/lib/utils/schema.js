@@ -197,7 +197,6 @@
         }
         return res;
     };
-
     SimpleType.prototype.parse = function parse(term) {
         var res = null;
         switch (this.basicType.name) {

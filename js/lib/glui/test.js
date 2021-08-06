@@ -383,7 +383,7 @@ include('/lib/data/dataseries.js');
                 'font': 'Arial 20',
                 'width':'14em', 'height':'4em',
                 'align':'center middle',
-                'border':'#308060 2px outset',
+                'border':'#308060 4px outset',
                 'color': '#184030',
                 'background-color': '#308060'
             },
@@ -394,11 +394,10 @@ include('/lib/data/dataseries.js');
                 'border':'#308060 1px inset',
                 'color': '#184030'
             },
-            'cols': 3,
+            'cols': 2, 'rows': 2,
             'data-source': 'data',
             'data-field': 'list'
-        }
-
+        };
         var cnt = await glui.create('cnt1', tmpl1, null, App); await cnt.build();
         cnt.render();
         glui.animate();
@@ -772,95 +771,6 @@ console.log(glui.screen.items.map(x => x.id+': '+x.width+'x'+x.height))
         teardown();
     }
 
-    function test_mergeObjects() {
-        message('Test mergeObjects', 1);
-        var person = {
-            "id": 12,
-            "name": "James",
-        };
-        var itemList = {
-            "id": 113,
-            "items": [
-                { "name": "knife", "value": 10 },
-                { "name": "bottle", "value": 5 }            
-            ]
-        };
-
-        test('should merge 2 objects', ctx => {
-            var merged = mergeObjects(itemList, person);
-            var expected = {
-                "id": 12,
-                "name": "James",
-                "items": [
-                    { "name": "knife", "value": 10 },
-                    { "name": "bottle", "value": 5 }            
-                ]
-            };
-            ctx.assert(merged, ':=', expected);
-            merged.id = 1;
-            ctx.assert(merged.id, '!=', expected.id);
-        });
-
-        test('should merge 2 objects keep source only', ctx => {
-            var merged = mergeObjects(itemList, person, true);
-            var expected = {
-                "id": 12,
-                "items": [
-                    { "name": "knife", "value": 10 },
-                    { "name": "bottle", "value": 5 }            
-                ]
-            };
-            ctx.assert(merged, ':=', expected);
-            merged.id = 1;
-            ctx.assert(merged.id, '!=', expected.id);
-        });
-
-        test('should merge an object with null', ctx => {
-            var merged = mergeObjects(null, person);
-            var expected = {
-                "id": 12,
-                "name": "James"
-            };
-            ctx.assert(merged, ':=', expected);
-            merged.id = 1;
-            ctx.assert(merged.id, '!=', expected.id);
-        });
-
-        test('should merge an object with null subobject', ctx => {
-            var merged = mergeObjects({"id": 12, "items": null}, itemList);
-            var expected = {
-                "id": 113,
-                "items": [
-                    { "name": "knife", "value": 10 },
-                    { "name": "bottle", "value": 5 }            
-                ]
-            };
-            ctx.assert(merged, ':=', expected);
-            merged.id = 1;
-            ctx.assert(merged.id, '!=', expected.id);
-        });
-     
-        test('should clone an object', ctx => {
-            var expected = {
-                "id": 12,
-                "name": "James"
-            };
-            var merged = mergeObjects(person);
-            ctx.assert(merged, ':=', person);
-            merged.id = 1;
-            ctx.assert(merged.id, '!=', expected.id);
-        });
-    }
-
-    function test_getObjectAt() {
-        message('Test get object', 1);
-        test('Should get object at path', context => {
-            context.assert(getObjectAt('data.label1'), '=', data.label1);
-            context.assert(getObjectAt('label1', data), '=', data.label1);
-            context.assert(getObjectAt('data.table.0.name'), '=', data.table[0].name);
-        });
-    }
-
     async function test_grid() {
         message('Test grid', 1);
         await setup();
@@ -911,17 +821,14 @@ console.log(glui.screen.items.map(x => x.id+': '+x.width+'x'+x.height))
     // }
 
     var tests = () => [
-        test_mergeObjects,
-        test_getObjectAt,
         test_clipping,
-        test_construct,
-        test_align,
-        test_container,
-        test_table,
-        test_menu,
-        test_dialog,
-        test_render
-
+        // test_construct,
+        // test_align,
+        // test_container,
+        // test_table,
+        // test_menu,
+        // test_dialog,
+        // test_render
         //test_grid
     ];
     publish(tests, 'glUi tests');
