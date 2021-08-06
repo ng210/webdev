@@ -1,0 +1,11 @@
+{
+    "DataTypes": [
+        {   "name":"Repo-Actor", "type":"Repo-Component",
+            "attributes": [
+                { "name":"components", "type":{ "type":"list", "elemType":"Repo-Part", "required":true }},
+                { "name":"modifiers", "type":{ "type":"list", "elemType":"Repo-Logic" }},
+                { "name":"constraints", "type":{ "type":"list", "elemType":"Repo-Logic" }}
+            ]
+        }
+    ]
+}

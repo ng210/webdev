@@ -1,0 +1,15 @@
+{
+    "DataTypes": [
+        { "name":"v2", "type":"list", "elem-type":"float", "length":2 },
+        { "name":"v3", "type":"list", "elem-type":"float", "length":3 },
+        { "name":"v4", "type":"list", "elem-type":"float", "length":4 },
+        { "name":"m33", "type":"list", "elem-type":"v3", "length":3 },
+        { "name":"m44", "type":"list", "elem-type":"v4", "length":4 },
+        { "name":"dbid", "type":"int", "min":0, "max":9999 }
+    ],
+
+    "Constraints": [],
+
+    "Queries": []
+}
+    

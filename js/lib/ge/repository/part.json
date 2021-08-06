@@ -1,0 +1,10 @@
+{
+    "DataTypes": [
+        {   "name":"Repo-Part",
+            "attributes": [
+                { "name":"parent", "type":"dbid" },
+                { "name":"child", "type":"dbid" }
+            ]
+        }
+    ]
+}
