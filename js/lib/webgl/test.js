@@ -29,6 +29,12 @@
         message('Done.');
     }
 
+    function onevent(e) {
+        switch (e.type) {
+            case 'mousemove': break
+        }
+    }
+
     function initWebGL() {
         if (!window.gl) {
             webGL.init(null, true);
@@ -349,6 +355,12 @@
                 }
             }
 
+            // setup controls
+            document.addEventListener('mouseup', onevent);
+            document.addEventListener('mousedown', onevent);
+            document.addEventListener('mousemove', onevent);
+            document.addEventListener('dragging', onevent);
+
             await animate(
                 time => {
                     // select model
@@ -365,7 +377,7 @@
                     // #endregion
 
                     // set material
-                    setMaterial(scene.materials[5], shaderArgs);
+                    setMaterial(scene.materials[4], shaderArgs);
                     // #region render
                     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
                     //gl.blendFunc(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA);
@@ -379,13 +391,6 @@
                     //gl.drawElements(gl.LINES, model.indexCount, gl.UNSIGNED_SHORT, 2*model.indexOffset);
                 }
             );
-            // setup controls
-            document.addEventListener('mouseup', glui.onevent);
-            document.addEventListener('mousedown', glui.onevent);
-            document.addEventListener('mousemove', glui.onevent);
-            document.addEventListener('dragging', glui.onevent);
-
-
         }
         for (var i=0; i<errors.length; i++) error(errors[i]);
         teardown();
