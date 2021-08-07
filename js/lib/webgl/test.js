@@ -152,7 +152,7 @@
         var errors = res.select(x => x.error instanceof Error).map(x => x.error);
         if (errors.length == 0) {
             // #region create geometry
-            scene.models = [createCube(), createSphere(60)];
+            scene.models = [createCube(), createSphere(150)];
             // combine vertices into 1 buffer
             // combine indices into 1 buffer
             var vb = [];
@@ -257,6 +257,19 @@
                         'specular1': 2.0,
                         'specular2': 30.0
                     }
+                },
+                { // earth3
+                    'shader': scene.shaders[0],
+                    'textures': [
+                        scene.textures[8],
+                        scene.textures[5]
+                    ],
+                    'args': {
+                        'color': new V3(1.0, 1.0, 1.0),
+                        'diffuse': 0.8,
+                        'specular1': 2.0,
+                        'specular2': 30.0
+                    }
                 }
             ];
             //#endregion
@@ -339,12 +352,11 @@
             await animate(
                 time => {
                     // select model
-                    var model = scene.models[0];
+                    var model = scene.models[1];
 
                     // #region update
-                    var rotZ = 0//time*Math.PI/24000;
-                               //-22/180*Math.PI
-                               ;
+                    var rotZ = //time*Math.PI/24000;
+                               -22/180*Math.PI
                     var rotY = time*Math.PI/12000;
                     var pos = new V3(0.0, 0.0, -3.5);
                     var posInv = new V3(0.0).sub(pos);
@@ -353,7 +365,7 @@
                     // #endregion
 
                     // set material
-                    setMaterial(scene.materials[2], shaderArgs);
+                    setMaterial(scene.materials[5], shaderArgs);
                     // #region render
                     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
                     //gl.blendFunc(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA);

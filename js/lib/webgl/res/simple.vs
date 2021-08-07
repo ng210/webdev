@@ -14,10 +14,13 @@ out vec3 v_color;
 out vec3 v_normal;
 out vec4 v_position;
 
+uniform sampler2D u_texture1;
+
 void main(void) {
     v_texcoord = a_texcoord;
     v_color = a_color;
     v_normal = mat3(u_normalMat4) * a_normal;
-    v_position = u_modelMat4 * vec4(a_position, 1.);
+    vec4 position = vec4(a_position + a_normal * .06 * texture(u_texture1, a_texcoord).x, 1.);
+    v_position = u_modelMat4 * position;
     gl_Position = u_viewProjectionMat4 * v_position;
 }

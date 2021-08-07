@@ -50,7 +50,7 @@ void main(void) {
     vec3 delta = vec3(.001, .001, .0);
     float h1 = texture(u_texture1, v_texcoord).x;
     float h2 = texture(u_texture1, v_texcoord + delta.xx).x;
-    delta.z = 2.4*(h1 - h2);
+    delta.z = 3.4*(h1 - h2);
     vec3 normal = normalize(v_normal + delta);
 
     // sun: directional light

@@ -174,8 +174,8 @@
         o = o || 0;
         r44 = M44.identity(r44, o);
         r44[o+0] = 2/width;
-        r44[o+5] = -2/height;
-        r44[o+10] = 1/depth;
+        r44[o+5] = 2/height;
+        r44[o+10] = 2/depth;
         r44[o+12] = -1;
         r44[o+13] = 1;
         return r44;
