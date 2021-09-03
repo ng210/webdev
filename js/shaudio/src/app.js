@@ -33,7 +33,7 @@ include('/lib/ge/sound.js');
             Dbg.prln('Initialize gpu...');
             await this.gpu.init(8192);
             await this.gpu.setCode(res[1].data, res[0].data);
-            Dbg.prln('Start sound playback.');
+            Dbg.prln('<button onclick="App.start()">Start sound playback</button>');
             sound.init(48000, App.renderSamples);
         } else {
             Dbg.prln(errors.map(x => x.error).join('\n'));

@@ -7,5 +7,4 @@ async function onpageload(e) {
 
     Dbg.init('con');
     await App.init();
-    App.start();
 }
