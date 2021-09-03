@@ -154,7 +154,6 @@ function playNote() {
         var time = window.performance.now();
         //var time = new Date().getTime();
         var dt = time - lastTime;
-        //console.log(dt)
         restTime -= dt;
         if (restTime <= 0) {
             //_audioWorklet.port.postMessage({code:'setNote', note: _note+sequence[counter], velocity: sequence[counter+1] });
@@ -162,12 +161,11 @@ function playNote() {
             counter += 2;
             if (counter == sequence.length) counter = 0;
             restTime += msPerFrame;
-            //console.log(restTime);
         }
         //_audioWorklet.port.postMessage({code:'setControl', id: 81, value: Math.random()/*0.1 - 0.1*Math.cos(frame*2*Math.PI/512)*/ });
         //_audioWorklet.port.postMessage({code:'setControl', id: 81, value: 0.4 - 0.4*Math.cos(frame*2*Math.PI/256) });
-        // duration = msPerFrame - duration;
-        // if (duration < 0) duration += msPerFrame;
+        //duration = msPerFrame - duration;
+        //if (duration < 0) duration += msPerFrame;
         lastTime = time;
         frame++;
         _timer = setTimeout(playNote, 20);

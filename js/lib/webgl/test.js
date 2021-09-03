@@ -396,12 +396,13 @@
         teardown();
     }
 
-    async function test_compute_shader() {
+    async function test_compute_shader_single() {
+        header('Test compute shader single call');
         initWebGL();
         webGL.useExtension('EXT_color_buffer_float');
-
-        var cs = new webGL.ComputeShader(16, gl.R32F, (k, i, j) => k);
-        await cs.setup('res/compute1.fs');
+        var cs = new webGL.ComputeShader(16, gl.R32F);
+        await cs.loadShader('res/compute1.fs');
+        cs.fillBuffer((k, i, j) => k);
         cs.compute();
         Dbg.prln(cs.results);
         test(`Should compute '${cs.input.data}' into ${cs.results}`, context => context.assert(cs.results, ':=', [0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]));
@@ -412,8 +413,29 @@
         cs.destroy();
     }
 
+    async function test_compute_shader_multiple() {
+        header('Test compute shader multiple calls');
+        initWebGL();
+        webGL.useExtension('EXT_color_buffer_float');
+
+        var cs = new webGL.ComputeShader(16, gl.R32F);
+        await cs.loadShader('res/compute2.fs');
+        var base = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
+        var offset = 0;
+        for (var i=0; i<4; i++) {
+            cs.fillBuffer((k, i, j) => k);
+            cs.compute(null, null, { 'u_offset': offset } );
+            Dbg.prln(cs.results);
+            var expected = base.map(x => offset + 2*x);
+            test(`Should compute '${cs.input.data}' into ${expected}`, context => context.assert(cs.results, ':=', expected));
+            offset += 16;
+        }
+        cs.destroy();
+    }
+
     var tests = () => [
-        test_compute_shader,
+        test_compute_shader_single,
+        test_compute_shader_multiple,
         test_simple_render
     ];
 
