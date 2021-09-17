@@ -259,16 +259,14 @@ float fadeInOut(float time) {
 }
 
 // misc.
-float hash11(float p)
-{
+float hash11(float p) {
     p = fract(p * .1031);
     p *= p + 33.33;
     p *= 2.*p;
     return fract(p);
 }
 
-float hash21(vec2 p)
-{
+float hash21(vec2 p) {
 	vec3 p3  = fract(vec3(p.xyx) * .1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return fract((p3.x + p3.y) * p3.z);
@@ -404,8 +402,7 @@ vec2 chords(float time) {
     );
 }
 
-vec2 allSound(float time )
-{
+vec2 allSound(float time) {
     // panning
     vec4 pan1 = vec4(.4, .5, .8, .45);
     vec4 pan2 = vec4(.4, .0, .4, .0);

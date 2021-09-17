@@ -1,6 +1,7 @@
 include('/lib/base/dbg.js');
 include('sequencer.js');
 include('gpu.js');
+include('script.js');
 //include('gui.js');
 include('/lib/ge/sound.js');
 
@@ -27,16 +28,17 @@ include('/lib/ge/sound.js');
     App.init = async function init() {
         //this.gui = await Gui.create(this);
         Dbg.prln('Loading resources...');
-        var res = await load(['res/visuals.fs', 'res/sound.fs']);
-        var errors = res.select(x => x.error);
-        if (errors.length == 0) {
+        var res = await load('res/visuals.fs');
+        if (!res.error) {
             Dbg.prln('Initialize gpu...');
             await this.gpu.init(8192);
-            await this.gpu.setCode(res[1].data, res[0].data);
+            var description = null;
+            var code = await Script.createCode(description);
+            await this.gpu.setCode(code, res.data);
             Dbg.prln('<button onclick="App.start()">Start sound playback</button>');
             sound.init(48000, App.renderSamples);
         } else {
-            Dbg.prln(errors.map(x => x.error).join('\n'));
+            Dbg.prln(res.error);
         }
     };
 
