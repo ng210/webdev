@@ -334,9 +334,6 @@
             gl.cullFace(gl.BACK);
             gl.enable(gl.CULL_FACE);
             gl.enable(gl.DEPTH_TEST);
-            // bind vertex and index buffers
-            gl.bindBuffer(gl.ARRAY_BUFFER, scene.vbo);
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, scene.ibo);
             // #endregion
 
             // set basic uniforms

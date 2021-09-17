@@ -2,35 +2,8 @@ body {
     background-color: #182630;
 }
 
-#controls {
-    position: absolute;
-    width: 7em;
-    background: silver;
-    opacity: 0.5;
-    font-family: sans-serif;
-    font-weight: bold;
-}
-
-th {
-    background-color: gray;
-    border-bottom: lightgray 3px groove;
-}
-
 #fps {
     width: 2em;
-}
-
-#count {
-    font-size:12pt;
-    padding: 0px;
-    width: 2em;
-}
-
-#start {
-    width: 5em;
-    height: 1.5em;
-    font-size: 12pt;
-    border-width: 2px;
 }
 
 #canvas {
@@ -41,12 +14,12 @@ th {
 }
 
 #gl-canvas {
-    position: 'absolute';
-    width: '10vw';
-    height: '10vh';
-    left: '90vw';
-    top: '0px';
-    opacity: 0.5;
+    position: absolute;
+    width: 10vw;
+    height: 10vh;
+    left: 90vw;
+    top: 0px;
+    opacity:0.5;
     background: transparent;
 }
 

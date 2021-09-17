@@ -4,12 +4,10 @@
 	// Program
 	//
 	// ********************************************************************************************
-	function Program(shaders, attribs) {
+	function Program(shaders, attribInfo) {
     	this.prg = gl.createProgram();
-		this.attributes = {};
-		attribs = attribs || {};
-		this.uniforms = {};
 		this.shaders = [];
+		this.uniforms = {};
 		//// 2k buffer for uniforms
 		//this.uniformData = new DataView(new ArrayBuffer(2048));
 
@@ -34,16 +32,22 @@
 			var attrib = attributes[ak];
 			attrib.ref = gl.getAttribLocation(this.prg, ak);
 			if (attrib.ref != -1) {
-				var bufferId = attrib.buffer || 0;
+				var bufferId = 0;
+				var divisor = 0;
+				var offset = -1;
+				if (attribInfo && attribInfo[ak]) {
+					if (attribInfo[ak].buffer != undefined) bufferId = attribInfo[ak].buffer;
+					if (attribInfo[ak].divisor != undefined) divisor = attribInfo[ak].divisor;
+					if (attribInfo[ak].offset != undefined) offset = attribInfo[ak].offset;
+				}
 				var aBucket = this.attributesByBufferId[bufferId];
 				if (aBucket == undefined) {
 					aBucket = this.attributesByBufferId[bufferId] = [0];	// first element is total size of attributes in bytes
 				}
-				attrib.offset = attribs[ak] || aBucket[0];
-				attrib.divisor = attribs[ak] || 0;
-				this.attributes[ak] = attrib;
-				aBucket.push(this.attributes[ak]);
-				aBucket[0] += attrib.type.size;
+				attrib.offset = offset == -1 ? aBucket[0] : offset;
+				attrib.divisor = divisor;
+				aBucket.push(attrib);
+				aBucket[0] += attrib.size;
 			}
 		}
 		var offset = 0;
@@ -52,7 +56,7 @@
 			var type = uniform.type;
 			uniform.ref = gl.getUniformLocation(this.prg, uk);
 			if (uniform.ref != -1) {
-				uniform.update =type.updater;
+				uniform.update = type.updater;
 				uniform.set = type.set;
 				uniform.offset = offset;
 				uniform.value = type.name.startsWith('FLOAT') ? new Float32Array(type.length) : new Uint32Array(type.length);
@@ -334,8 +338,8 @@
 		}
 		return shader;
 	};
-	webGL.createProgram = function(shaders, attributes, uniforms) {
-		return new Program(shaders, attributes, uniforms);
+	webGL.createProgram = function(shaders, attribInfo) {
+		return new Program(shaders, attribInfo);
 	};
 	webGL.useProgram = function(p, uniforms) {
 		if (p != null) {
@@ -350,12 +354,12 @@
 					if (a.divisor) gl.vertexAttribDivisor(a.ref, a.divisor);
 				}
 			}
+
 			if (uniforms) {
 				for (var i in uniforms) {
 					p.setUniform(i, uniforms[i]);
 					p.updateUniform(i);
 				}
-				
 			}
 		} else gl.useProgram(null);
 		return p;

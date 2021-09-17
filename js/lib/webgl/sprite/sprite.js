@@ -1,6 +1,7 @@
 include('/lib/webgl/webgl.js');
 include('/lib/math/v2.js');
 include('/lib/math/v3.js');
+include('/lib/math/v4.js');
 include('/lib/math/m44.js');
 //include('/lib/player/player-lib.js');
 
@@ -14,18 +15,14 @@ include('/lib/math/m44.js');
         this.position = new V3(0);
         this.scale = new V3(1.0);
         this.rotationZ = 0.0;
-        this.color = [1.0, 1.0, 1.0, 1.0];
+        this.color = new V4(1.0);
     }
     Sprite.prototype.setPosition = function setPosition(p) {
-        this.position[0] = p[0];
-        this.position[1] = p[1];
-        this.position[2] = p[2];
+        this.position.set(p);
         this.isDirty = true;
     };
     Sprite.prototype.setScale = function setScale(s) {
-        this.scale[0] = s[0];
-        this.scale[1] = s[1];
-        this.scale[2] = s[2];
+        this.scale.set(s);
         this.isDirty = true;
     };
     Sprite.prototype.setRotationZ = function setRotationZ(r) {
@@ -36,6 +33,10 @@ include('/lib/math/m44.js');
         this.frame = f;
         this.isDirty = true;
     };
+    Sprite.prototype.setColor = function setColor(c) {
+        this.color.set(c);
+        this.isDirty = true;
+    }
 
     // Sprite.Fields = {
     //     POSITION_X:     0,

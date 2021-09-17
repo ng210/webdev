@@ -5,13 +5,6 @@ include('./sprite-manager.js');
 (function() {
 
     var _sprMgr = null;
-    var _screen = new glui.Buffer(window.innerWidth, window.innerHeight, true);
-    document.body.appendChild(_screen.canvas);
-    _screen.canvas.style.position = 'absolute';
-    _screen.canvas.style.left = '0px';
-    _screen.canvas.style.top = '0px';
-    gl = _screen.canvas.getContext('webgl');
-    if (gl == null) throw new Error('webGL not supported!');
 
     function update() {
         _sprMgr.update();
@@ -23,18 +16,12 @@ include('./sprite-manager.js');
     var fpsDisplay = null;
     async function setup(url, count) {
         url = url || './res/fighter.spr.json';
-        count = count || 100;
-        glui.initialize();
-        glui.canvas.style.position = 'absolute';
-        glui.canvas.style.width = '10vw';
-        glui.canvas.style.height = '10vh';
-        glui.canvas.style.left = '90vw';
-        glui.canvas.style.top = '0px';
-        glui.canvas.style.opacity = 0.5;
         if (_sprMgr == null) {
             _sprMgr = new webGL.SpriteManager();
             await _sprMgr.initialize(url, count);
         }
+        count = count || 100;
+        glui.initialize();
         fpsDisplay = await glui.create('fps', {
             'type':'Label',
             'style': {
@@ -43,7 +30,7 @@ include('./sprite-manager.js');
                 'border': 'none',
                 'color': '#80c0a0',
                 'width':'8em', 'height': '1.4em',
-                'top': '1em', 'left': '0px',
+                'top': '1em', 'left': '8em',
                 'align': 'center middle'
             }
         });
@@ -62,18 +49,19 @@ include('./sprite-manager.js');
         await setup();
         test('Should have a map', context => context.assert(_sprMgr.map, '!=', null));
         test('Should have a texture', context => context.assert(_sprMgr.map.texture, '!=', null));
+        tearDown();
     }
 
     async function test_createSprite() {
         message('Create 1 sprite', 1);
-        await setup();
+        await setup(null, 1);
         var spr = _sprMgr.addSprite(0);
         var frameId = 1;
         var expectedFrame = _sprMgr.map.data.slice(6*frameId, 6*frameId+6);
         spr.setFrame(frameId);
-        spr.setPosition([10, 20, 1.0]);
-        spr.setScale([0.5, 0.5, 1.0]);
-        spr.setRotationZ(1.57);
+        spr.setPosition([1, 1, 0]);
+        spr.setScale([1.0, 1.0, 1.0]);
+        spr.setRotationZ(0.0);
         _sprMgr.update();
         test('Should create a sprite', context => {
             context.assert(spr.ix, '=', 0);
@@ -101,7 +89,7 @@ include('./sprite-manager.js');
 
     async function test_renderSprites() {
         message('Render sprites', 1);
-        await setup();
+        await setup(null, 20);
         var unit = (gl.canvas.width - 20)/_sprMgr.map.frames.length;
         var y = (gl.canvas.height - _sprMgr.map.frames[0][3])/2;
         for (var i=0; i<_sprMgr.map.frames.length; i++) {
@@ -160,7 +148,7 @@ include('./sprite-manager.js');
         isRunning = true;
 
         animateSprites( spr => {
-            if (totalFrame % 8 == 7) {
+            if (totalFrame % 5 == 4) {
                 spr.setFrame(frames[spr.frameId]);
                 spr.frameId = (spr.frameId + 1) % 3;
             }
@@ -180,7 +168,7 @@ include('./sprite-manager.js');
     }
     async function test_animateSprites2() {
         message('Animate sprites #2', 1);
-        await setup('./res/stone.spr.json', 50000);
+        await setup('./res/stone.spr.json', 20000);
         for (var i=0; i<_sprMgr.sprites.length; i++) {
             var spr = _sprMgr.addSprite();
             setBall(spr);

@@ -14,17 +14,18 @@ include('sprite.js');
         this.sprites = [];
         this.spriteAttributeBuffer = null;
         this.spriteAttributeData = null;
-        this.angleExtension = null;
         this.projection = new Float32Array(16);
     }
     extend(Ps.IAdapter, SpriteManager);
 
     SpriteManager.prototype.initialize = async function initialize(mapUrl, spriteCount) {
+        if (!window.gl) {
+            webGL.init(null, true);
+        }
         spriteCount = spriteCount || 100;
         this.sprites = new Array(spriteCount || SPRITE_COUNT);
-        this.angleExtension = webGL.useExtension('ANGLE_instanced_arrays');
-        var shaderName = 'sprite';
-        if (this.angleExtension) shaderName += '-inst';
+        //this.angleExtension = webGL.useExtension('ANGLE_instanced_arrays');
+        var shaderName = 'sprite-inst';
         // load resources
         var resources = await Promise.all([
             load({ url: `/lib/webgl/sprite/${shaderName}.vs`, contentType: 'x-shader/x-vertex', shaderType:gl.VERTEX_SHADER }),
@@ -41,19 +42,16 @@ include('sprite.js');
         shaders[gl.VERTEX_SHADER] = resources[0].data;
         shaders[gl.FRAGMENT_SHADER] = resources[1].data;
         this.program = webGL.createProgram(shaders, {
-            a_position: { type:gl.FLOAT, size:2, buffer:0 },
-            a_vertexId: { type:gl.FLOAT, size:1, buffer:0 },
-            a_translate: { type:gl.FLOAT, size:3, divisor: 1, buffer:1 },
-            a_scale: { type:gl.FLOAT, size:2, divisor: 1, buffer:1 },
-            a_rotateZ: { type:gl.FLOAT, size:1, divisor: 1, buffer:1 },
-            a_color: { type:gl.FLOAT, size:4, divisor: 1, buffer:1 },
-            a_texcoord: { type:gl.FLOAT, size:4, divisor: 1, buffer:1 },
-        }, {
-            u_projection: { type: webGL.FLOAT4x4M, value: this.projection }
+            a_position: { buffer:0 },
+            a_vertexId: { buffer:0 },
+            a_translate: { divisor: 1, buffer:1 },
+            a_scale: { divisor: 1, buffer:1 },
+            a_rotateZ: { divisor: 1, buffer:1 },
+            a_color: { divisor: 1, buffer:1 },
+            a_texcoord: { divisor: 1, buffer:1 }
         });
 
-        this.vertexData = new Float32Array([ -1.0, -1.0, 0.0,   1.0,  1.0, 3.0,  -1.0,  1.0, 2.0,  -1.0, -1.0, 0.0,   1.0, -1.0, 1.0,   1.0,  1.0, 3.0 ]);
-        this.vertexBuffer = webGL.createBuffer(gl.ARRAY_BUFFER, this.vertexData, gl.STATIC_DRAW);
+        this.vertexBuffer = webGL.createBuffer(gl.ARRAY_BUFFER, new Float32Array([ .5,-.5, .5,.5, -.5,-.5, -.5,.5 ]), gl.STATIC_DRAW);
         this.spriteAttributeData = new Float32Array(webGL.Sprite.AttributeSize*spriteCount);
         this.spriteAttributeBuffer = webGL.createBuffer(gl.ARRAY_BUFFER, this.spriteAttributeData.length*4, gl.DYNAMIC_DRAW);
     };
@@ -75,7 +73,7 @@ include('sprite.js');
         delete this.sprites;
 
         webGL.deleteBuffer(this.vertexBuffer);
-        delete this.vertexData;
+        //delete this.vertexData;
         webGL.deleteBuffer(this.spriteAttributeBuffer);
         delete this.spriteAttributeData;
 
@@ -141,7 +139,6 @@ include('sprite.js');
                 this.spriteAttributeData[spr.offset+12] = this.map.data[frameOffset+2];
                 this.spriteAttributeData[spr.offset+13] = this.map.data[frameOffset+3];
                 spr.isDirty = false;
-    //console.log(this.spriteAttributeData.slice(spr.offset, spr.offset+Sprite.AttributeSize));
             }
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteAttributeBuffer);
@@ -150,18 +147,24 @@ include('sprite.js');
 
     SpriteManager.prototype.render = function render(frame) {
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+        gl.clearColor(0.01, 0.02, 0.04, 1.0);
+        gl.frontFace(gl.CCW);
+        gl.cullFace(gl.BACK);
+        gl.enable(gl.CULL_FACE);
+        gl.enable(gl.DEPTH_TEST);
         //gl.colorMask(false, false, false, true);
         gl.clearDepth(1.0);
         gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-
-        webGL.useProgram(this.program).setUniforms();
+        webGL.useProgram(this.program, { 'u_projection': this.projection });
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.map.texture);
 
-        this.angleExtension.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, this.count);
+        //this.angleExtension.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, this.count);
+        //gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, this.count);
+        gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, this.count);
     };
 
     SpriteManager.prototype.selectRadius = function selectRadius(x, y, r, action, args) {
