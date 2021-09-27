@@ -2,9 +2,9 @@
     function RoamingUnit(speed, variance) {
         this.speed = speed;
         this.variance = variance;
-        this.velocity = new V2();
-        this.velocity1 = new V2();
-        this.velocity2 = new V2();
+        this.velocity = new V3();
+        this.velocity1 = new V3();
+        this.velocity2 = new V3();
         this.ttl = 0;
     }
 
@@ -17,7 +17,7 @@
         } else {
             this.ttl = 0.5 + 0.5*Math.random();
             this.velocity1 = this.velocity2;
-            this.velocity2 = V2.fromPolar(2*Math.PI*Math.random(), this.speed*(1 + Math.random()));
+            this.velocity2 = V3.fromPolar(2*Math.PI*Math.random(), 0, this.speed*(1 + Math.random()));
         }
 
     };

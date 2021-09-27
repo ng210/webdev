@@ -15,6 +15,7 @@ include('/lib/base/html.js');
 				this.con.style.opacity = 0.2;
 				this.con.style.zIndex = 100;
 				//this.con.style.width = window.clientWidth;
+				document.addEventListener('mouseover', Dbg.con_onmouseover);
 			};
 			Dbg.pr = function pr(txt, tag) {
 				tag = tag || 'span';
@@ -36,7 +37,6 @@ include('/lib/base/html.js');
 				}
 				Dbg.con.style.opacity = Dbg.mouseOver ? (Dbg.clicked ? 0.75 : 0.5) : 0.2;
 			};
-			document.addEventListener('mouseover', Dbg.con_onmouseover);
 	
 		} catch (error) {
 			alert(error.message + '\n' + error.stack);

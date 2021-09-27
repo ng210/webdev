@@ -64,9 +64,12 @@
         initialize: async function initialize(app, isFullscreen) {
             document.body.style.display = 'block';
             this.context = app;
-            this.canvas = document.createElement('canvas');
-            this.canvas.id = 'gl-canvas';
-            document.body.appendChild(this.canvas);
+            if (!this.canvas) {
+                this.canvas = document.createElement('canvas');
+                this.canvas.id = 'gl-canvas';
+                document.body.appendChild(this.canvas);
+            }
+            
             if (isFullscreen) {
                 this.canvas.style.position = 'absolute';
                 this.canvas.style.top = '0px';
