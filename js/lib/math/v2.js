@@ -1,20 +1,9 @@
 (function() {
 
-    function V2(x, y, z, w) {
-        if (x === undefined || typeof x === 'number') {
-            if (arguments.length < 2) y = x, z = x, w = x;
-            this[0] = x || .0;
-            this[1] = y || .0;
-        } else if (Array.isArray(x)) {
-            this[0] = x[0] || .0;
-            this[1] = x[1] || .0;
-        } else if (x instanceof Float32Array) {
-            var o = y || 0;
-            this[0] = x[0+o];
-            this[1] = x[1+o];
-        } else {
-            throw new Error('Could not create V2 from these arguments!');
-        }
+    function V2(x, y) {
+        this[0] = 0.0;
+        this[1] = 0.0;
+        this.set(x, y);
     }
     V2.prototype = new Float32Array(2);
     Object.defineProperties(V2.prototype,
@@ -43,6 +32,12 @@
         r[o+0] = this[0] - v[0];
         r[o+1] = this[1] - v[1];
         return r;
+    };
+    // return this/v
+    V2.prototype.div = function div(v) {
+        this[0] /= v[0];
+        this[1] /= v[1];
+        return this;
     };
     // return this · v
     V2.prototype.dot = function dot(v) {
@@ -84,9 +79,20 @@
         return this;
     };
     // return this = (v.x, v.y, v.z)
-    V2.prototype.set = function set(v) {
-        this[0] = v[0];
-        this[1] = v[1];
+    V2.prototype.set = function set(x, y) {
+        if (x === undefined || typeof x === 'number') {
+            this[0] = x || 0.0;
+            this[1] = y || 0.0;
+        } else if (Array.isArray(x)) {
+            this[0] = x[0] || 0.0;
+            this[1] = x[1] || 0.0;
+        } else if (x instanceof Float32Array) {
+            var o = y || 0;
+            this[0] = x[0+o] || 0.0;
+            this[1] = x[1+o] || 0.0;
+        } else {
+            throw new Error('Could not create V2 from these arguments!');
+        }
         return this;
     };
     // return this -= v

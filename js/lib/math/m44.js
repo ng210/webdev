@@ -177,10 +177,9 @@
         r44[o+5] = 2/height;
         r44[o+10] = 2/depth;
         r44[o+12] = -1;
-        r44[o+13] = 1;
+        r44[o+13] = -1;
         return r44;
     };
-
     M44.perspective = function perspective(fov, aspect, near, far, r44, o) {
         // f/a,   0,   0,            0,
         //   0,   f,   0,            0,
