@@ -1,0 +1,10 @@
+{
+    "default": "deny",
+    "allow": [
+        "index.html",
+        "main.js",
+        "ball.js",
+        "res",
+        "components"
+    ]
+}
