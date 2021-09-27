@@ -2,10 +2,12 @@
     "default": "deny",
     "allow": [
         "demo",
+        "dune",
         "synth",
         "service",
         "test",
         "index.html",
-        "test.json"
+        "test.json",
+        "wasm"
     ]
 }

@@ -1,0 +1,93 @@
+body {
+	margin: 0px;
+	background-color:#204060;
+	font-family:Arial;
+	font-size:10pt;
+}
+
+#con {
+	position:absolute;
+	top:77vh;
+	font-size:14pt;
+	font-family:Consolas;
+	text-align:left;
+	padding:2 4;
+	box-sizing: border-box;
+	margin:0;
+	background-color:#102030;
+	color:#208040;
+	opacity:0.9;
+	height:23vh; width:100vw;
+	overflow:hidden auto;
+}
+
+#middle {
+	margin-left: auto;
+	margin-right: auto;
+	width: 80vw;
+	height: 75vh;
+	text-align: center;
+	color: #b0e0ff;
+	text-shadow: 1px 1px #304060;
+	overflow: auto;
+	font-size: 18pt;
+}
+
+table {
+	border: none;
+	color: 'white';
+	font-family: Consolas;
+}
+
+#current {
+	text-align: right;
+	margin-left: auto;
+}
+
+.current {
+	background-color: #6080c0;
+	border: 2px outset #78a0f0;
+}
+
+#planned {
+	text-align: right;
+	margin-right: auto;
+}
+
+.planned {
+	background-color: #60c080;
+	border: 2px outset #78f0a0;
+}
+
+td, th {
+	padding: 4px;
+}
+
+td {
+	color: #000020;
+	text-shadow: none;
+	white-space: pre;
+}
+
+th {
+	text-align: center;
+	color: white;
+}
+
+input {
+	text-align: right;
+	width: 3em;
+	font-family: 'Courier New', Courier, monospace;
+	font-weight: bold;
+	font-size: 16pt;
+}
+
+h1 {
+	font-size: 24pt;
+	margin: .5em;
+}
+
+h3 {
+	font-size: 16pt;
+	margin: .5em;
+}
