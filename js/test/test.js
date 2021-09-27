@@ -99,18 +99,21 @@ function error(text) {
 
 function addButton(text, handler) {
     var button = null;
-    if (!TestConfig.isSilent) {
-        var id = 'btn_' + TestConfig.buttonCount++;
-        Dbg.prln(`<button id="${id}">${text}</button>`);
-        button = document.getElementById(id);
-        button.onclick = handler;
-    }
+    var id = 'btn_' + TestConfig.buttonCount++;
+    Dbg.prln(`<button id="${id}">${text}</button>`);
+    button = document.getElementById(id);
+    button.onclick = handler;
+
+    //if (!TestConfig.isNonInteractive) {
+    //}
+
     return button;
 }
 
-async function button(text) {
+async function button(text, handler) {
     var isDone = false;
-    var btn = addButton(text, e => isDone = true);
+    handler = handler || (e => isDone = true);
+    var btn = addButton(text, handler);
     var timer = null;
     if (TestConfig.isNonInteractive) {
         timer = setTimeout( () => isDone = true, 2000);
@@ -118,6 +121,7 @@ async function button(text) {
     await poll( () => isDone, 10);
     clearTimeout(timer);
     if (btn) btn.innerHTML = 'Done';
+    return btn;
 }
 
 async function test(lbl, action) {
@@ -328,7 +332,7 @@ async function run_test(testUrl) {
                     } catch (err) {
                         TestConfig.indent = indent;
                         error('Test raised an error!');
-                        error(`<pre>${err.stack}</pre>`);
+                        error(`<pre>${err}</pre>`);
                         errors++;
                     }
                     TestConfig.indent = indent;
