@@ -55,7 +55,7 @@ include('./sprite-manager.js');
     async function test_createSprite() {
         message('Create 1 sprite', 1);
         await setup(null, 1);
-        var spr = _sprMgr.addSprite(0);
+        var spr = _sprMgr.addSprite();
         var frameId = 1;
         var expectedFrame = _sprMgr.map.data.slice(6*frameId, 6*frameId+6);
         spr.setFrame(frameId);
@@ -97,6 +97,7 @@ include('./sprite-manager.js');
             spr.setFrame(i);
             spr.setPosition([unit/2 + i*unit, y, 0]);
             spr.setRotationZ(0);
+            spr.setScale([4.0, 4.0]);
         }
         _sprMgr.update();
         _sprMgr.render();
@@ -160,7 +161,7 @@ include('./sprite-manager.js');
     function setBall(spr) {
         spr.setFrame(Math.round(Math.random()*(_sprMgr.map.frames.length - 1)));
         spr.setPosition([gl.canvas.width/2, gl.canvas.height/2, 0]);
-        var scale = 0.1*(0.4*Math.random() + 0.6);
+        var scale = 0.4*(0.4*Math.random() + 0.6);
         spr.setScale([scale, scale, 1.0]);
         spr.setRotationZ(2*Math.PI*Math.random());
         spr.velocity = V3.fromPolar(2*Math.PI*Math.random(), 0, 5*(0.6*Math.random() + 0.4));

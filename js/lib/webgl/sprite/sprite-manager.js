@@ -1,4 +1,5 @@
 include('/lib/webgl/webgl.js');
+include('/lib/math/fn.js')
 include('/lib/math/v2.js');
 include('/lib/math/v3.js');
 include('/lib/math/m44.js');
@@ -10,8 +11,10 @@ include('sprite.js');
         SpriteManager.base.constructor.call(this, player);
         this.map = null;
         this.count = 0;
-        this.vertexBuffer = null;
         this.sprites = [];
+
+        this.vertexBuffer = null;
+        this.program = null;
         this.spriteAttributeBuffer = null;
         this.spriteAttributeData = null;
         this.projection = new Float32Array(16);
@@ -36,19 +39,20 @@ include('sprite.js');
         if (resources[1].error) errors.push(resources[1].error.message);
         await this.createMap(mapUrl, errors);
         if (errors.length > 0) throw new Error(`Could not load resources: ${errors.join()}`);
-        // create shaders and  program
+        // create shaders and program
         M44.projection(gl.canvas.width, gl.canvas.height, 1, this.projection);
         var shaders = {};
         shaders[gl.VERTEX_SHADER] = resources[0].data;
         shaders[gl.FRAGMENT_SHADER] = resources[1].data;
+        var bufferId = webGL.buffers.length;
         this.program = webGL.createProgram(shaders, {
-            a_position: { buffer:0 },
-            a_vertexId: { buffer:0 },
-            a_translate: { divisor: 1, buffer:1 },
-            a_scale: { divisor: 1, buffer:1 },
-            a_rotateZ: { divisor: 1, buffer:1 },
-            a_color: { divisor: 1, buffer:1 },
-            a_texcoord: { divisor: 1, buffer:1 }
+            a_position: { buffer:bufferId },
+            a_vertexId: { buffer:bufferId++ },
+            a_translate: { divisor: 1, buffer:bufferId },
+            a_scale: { divisor: 1, buffer:bufferId },
+            a_rotateZ: { divisor: 1, buffer:bufferId },
+            a_color: { divisor: 1, buffer:bufferId },
+            a_texcoord: { divisor: 1, buffer:bufferId }
         });
 
         this.vertexBuffer = webGL.createBuffer(gl.ARRAY_BUFFER, new Float32Array([ .5,-.5, .5,.5, -.5,-.5, -.5,.5 ]), gl.STATIC_DRAW);
@@ -56,13 +60,12 @@ include('sprite.js');
         this.spriteAttributeBuffer = webGL.createBuffer(gl.ARRAY_BUFFER, this.spriteAttributeData.length*4, gl.DYNAMIC_DRAW);
     };
 
-    SpriteManager.prototype.onresize = function onresize() {
-        gl.canvas.width = window.innerWidth;
-        gl.canvas.height = window.innerHeight;
+    SpriteManager.prototype.resize = function resize(width, height) {
+        // gl.canvas.width = width || window.innerWidth;
+        // gl.canvas.height = height || window.innerHeight;
         if (this.program) {
             M44.projection(gl.canvas.width, gl.canvas.height, 1, this.projection);
             this.program.uniforms.u_projection.value = this.projection;
-            this.program.updateUniform('u_projection');
         }
     };
 
@@ -109,8 +112,9 @@ include('sprite.js');
         }
     };
 
-    SpriteManager.prototype.addSprite = function addSprite() {
-        var spr = new webGL.Sprite();
+    SpriteManager.prototype.addSprite = function addSprite(type) {
+        type = type || webGL.Sprite;
+        var spr = Reflect.construct(type, [this]);
         spr.ix = this.count;
         this.sprites[this.count] = spr;
         this.count++;
@@ -121,49 +125,40 @@ include('sprite.js');
     SpriteManager.prototype.update = function update() {
         for (var i=0; i<this.count; i++) {
             var spr = this.sprites[i];
-            if (spr.isDirty) {
-                // update matrix
-                var frameOffset = spr.frame*6;
-                this.spriteAttributeData[spr.offset+ 0] = spr.position.x;
-                this.spriteAttributeData[spr.offset+ 1] = spr.position.y;
-                this.spriteAttributeData[spr.offset+ 2] = spr.position.z;
-                this.spriteAttributeData[spr.offset+ 3] = spr.scale.x * this.map.data[frameOffset+4];
-                this.spriteAttributeData[spr.offset+ 4] = spr.scale.y * this.map.data[frameOffset+5];
-                this.spriteAttributeData[spr.offset+ 5] = spr.rotationZ;
-                this.spriteAttributeData[spr.offset+ 6] = spr.color[0];
-                this.spriteAttributeData[spr.offset+ 7] = spr.color[1];
-                this.spriteAttributeData[spr.offset+ 8] = spr.color[2];
-                this.spriteAttributeData[spr.offset+ 9] = spr.color[3];
-                this.spriteAttributeData[spr.offset+10] = this.map.data[frameOffset+0];
-                this.spriteAttributeData[spr.offset+11] = this.map.data[frameOffset+1];
-                this.spriteAttributeData[spr.offset+12] = this.map.data[frameOffset+2];
-                this.spriteAttributeData[spr.offset+13] = this.map.data[frameOffset+3];
-                spr.isDirty = false;
-            }
+            this.updateSprite(spr);
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteAttributeBuffer);
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.spriteAttributeData);
     };
 
-    SpriteManager.prototype.render = function render(frame) {
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        gl.clearColor(0.01, 0.02, 0.04, 1.0);
-        gl.frontFace(gl.CCW);
-        gl.cullFace(gl.BACK);
-        gl.enable(gl.CULL_FACE);
-        gl.enable(gl.DEPTH_TEST);
-        //gl.colorMask(false, false, false, true);
-        gl.clearDepth(1.0);
-        gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
-        gl.enable(gl.BLEND);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-        webGL.useProgram(this.program, { 'u_projection': this.projection });
+    SpriteManager.prototype.updateSprite = function updateSprite(spr) {
+        if (spr.isDirty) {
+            // update matrix
+            var frameOffset = spr.frame*6;
+            this.spriteAttributeData[spr.offset+ 0] = spr.position.x;
+            this.spriteAttributeData[spr.offset+ 1] = spr.position.y;
+            this.spriteAttributeData[spr.offset+ 2] = spr.position.z;
+            this.spriteAttributeData[spr.offset+ 3] = spr.scale.x * this.map.data[frameOffset+4];
+            this.spriteAttributeData[spr.offset+ 4] = spr.scale.y * this.map.data[frameOffset+5];
+            this.spriteAttributeData[spr.offset+ 5] = spr.rotationZ;
+            this.spriteAttributeData[spr.offset+ 6] = spr.color[0];
+            this.spriteAttributeData[spr.offset+ 7] = spr.color[1];
+            this.spriteAttributeData[spr.offset+ 8] = spr.color[2];
+            this.spriteAttributeData[spr.offset+ 9] = spr.color[3];
+            this.spriteAttributeData[spr.offset+10] = this.map.data[frameOffset+0];
+            this.spriteAttributeData[spr.offset+11] = this.map.data[frameOffset+1];
+            this.spriteAttributeData[spr.offset+12] = this.map.data[frameOffset+2];
+            this.spriteAttributeData[spr.offset+13] = this.map.data[frameOffset+3];
+            spr.isDirty = false;
+        }
+    };
 
+    SpriteManager.prototype.render = function render() {
+        webGL.useProgram(this.program, { 'u_projection': this.projection });
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.map.texture);
-
-        //this.angleExtension.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, this.count);
-        //gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, this.count);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
         gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, this.count);
     };
 
@@ -190,6 +185,21 @@ include('sprite.js');
                 action(spr, x,y, dx,dy, args);
             }
         }
+    };
+
+    SpriteManager.prototype.checkCollision = function checkCollision() {
+        // #1 brute force: check n*(n-1)/2
+        // #2 use quad tree
+        for (var i=0; i<this.count; i++) {
+            var s1 = this.sprites[i];
+            var r1 = [s1.position.x, s1.position.y, s1.width, s1.height];
+            for (var j=0; j<i; j++) {
+                var s2 = this.sprites[j];
+                var r2 = [s2.position.x, s2.position.y, s2.width, s2.height];
+                if (Fn.intersectRect(r1, r2)) console.log(i, j);
+            }
+        }
+
     };
 
     SpriteManager.initWebGL = function initWebGL(obj) {

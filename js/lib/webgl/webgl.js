@@ -312,6 +312,9 @@
 
 		}
 	};
+	webGL.onresize = function onresize() {
+		
+	};
 
 	webGL.createBuffer = function createBuffer(target, source, usage) {
 		var buffer = gl.createBuffer();
@@ -345,13 +348,16 @@
 		if (p != null) {
 			gl.useProgram(p.prg);
 			for (var i=0; i<p.attributesByBufferId.length; i++) {
-				gl.bindBuffer(webGL.buffers[i].type, webGL.buffers[i].ref);
-				for (var j=1; j<p.attributesByBufferId[i].length; j++) {
-					var a = p.attributesByBufferId[i][j];
-					gl.enableVertexAttribArray(a.ref);
-					gl.vertexAttribPointer(a.ref, a.type.length, gl.FLOAT, false, p.attributesByBufferId[i][0], a.offset);
-					//if (a.divisor) webGL.extensions.ANGLE_instanced_arrays.vertexAttribDivisorANGLE(a.ref, a.divisor);
-					if (a.divisor) gl.vertexAttribDivisor(a.ref, a.divisor);
+				var ab = p.attributesByBufferId[i];
+				if (ab) {
+					gl.bindBuffer(webGL.buffers[i].type, webGL.buffers[i].ref);
+					for (var j=1; j<p.attributesByBufferId[i].length; j++) {
+						var a = p.attributesByBufferId[i][j];
+						gl.enableVertexAttribArray(a.ref);
+						gl.vertexAttribPointer(a.ref, a.type.length, gl.FLOAT, false, p.attributesByBufferId[i][0], a.offset);
+						//if (a.divisor) webGL.extensions.ANGLE_instanced_arrays.vertexAttribDivisorANGLE(a.ref, a.divisor);
+						if (a.divisor) gl.vertexAttribDivisor(a.ref, a.divisor);
+					}
 				}
 			}
 
