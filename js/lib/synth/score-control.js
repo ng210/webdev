@@ -130,11 +130,11 @@ include('./synth-adapter.js');
             var fi = p.x/2;
             var frame = frames[fi];
             if (!frame) frame = frames[fi] = new Ps.Frame();
-            frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, p.y, 240));
+            frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, p.y, 240));
 
             frame = frames[fi + 1];
             if (!frame) frame = frames[fi + 1] = new Ps.Frame();
-            frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.SETNOTE, p.y, 0));
+            frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, p.y, 0));
         }
         var last = 0;
         var finalFrames = [];
@@ -150,6 +150,7 @@ include('./synth-adapter.js');
     };
 
     Score.prototype.setFromSequence = function setFromSequence(sequence) {
+debugger
         var frames = sequence.toFrames();
         var points = [];
         var delta = 0;
@@ -159,7 +160,7 @@ include('./synth-adapter.js');
             for (var j=0; j<frame.commands.length; j++) {
                 var cmd = frame.commands[j];
                 if (cmd) {
-                    if (cmd.readUint8(0) != psynth.SynthAdapter.SETNOTE) throw new Error('Invalid sequence data!');
+                    if (cmd.readUint8(0) != psynth.SynthAdapter.Commands.SETNOTE) throw new Error('Invalid sequence data!');
                     if (cmd.readUint8(2) != 0) {
                         var note = cmd.readUint8(1);
                         points.push({x:delta, y:note});

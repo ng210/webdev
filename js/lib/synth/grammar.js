@@ -4,7 +4,7 @@ var _toneRe = /(\w#?)(\d)/;
 function writeNoteCommand(sequence, command, velocity) {
     var match = command.edges[0].to.data.value.match(_toneRe);
     if (match.length == 3) {
-        sequence.writeCommand(psynth.SynthAdapter.SETNOTE);
+        sequence.writeCommand(psynth.SynthAdapter.Commands.SETNOTE);
         var tone = _tones.indexOf(match[1]);
         if (tone == -1) {
             Dbg.prln(`Invalid note '${match[1]}'`);

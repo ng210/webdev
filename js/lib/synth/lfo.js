@@ -2,7 +2,6 @@ include('./osc.js');
 (function() {
     function LFO(parent, controls) {
         LFO.base.constructor.call(this, parent, controls);
-
         this.dc = controls.dc;
     }
     extend(psynth.Osc, LFO);

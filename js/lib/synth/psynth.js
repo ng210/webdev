@@ -30,7 +30,7 @@
         }
     };
     // c = pow(2, 1/12); f = pow(c, pitch)*ref_freq (=C0)
-    psynth.p2f = p => p == 0 ? 0.0 : Math.pow(Math.pow(2, 1/12), p) * psynth.C;
+    psynth.p2f = p => p == 0 ? 0.0 : Math.pow(2, p/12) * psynth.C;
 
     publish(psynth, 'psynth');
 })();

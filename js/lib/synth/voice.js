@@ -6,11 +6,12 @@ include('./filter.js')
     function Voice(parent) {
         this.velocity = new psynth.Pot(0, 1, 0);
         this.note = new psynth.Pot(0, 127, 0);
-        // create a basic synth with 2 oscillators and 2 envelopes for AM
+        // create a basic synth with 2 oscillators and 4 envelopes
         this.envelopes = [
             new psynth.Env(parent, parent.controls.env1),
             new psynth.Env(parent, parent.controls.env2),
-            new psynth.Env(parent, parent.controls.env3)
+            new psynth.Env(parent, parent.controls.env3),
+            new psynth.Env(parent, parent.controls.env4)
         ];
         this.lfos = [
             new psynth.LFO(parent, parent.controls.lfo1),
@@ -43,8 +44,9 @@ include('./filter.js')
         var amp = this.envelopes[0].amp.value != 0 ? this.envelopes[0].run(amLfo) : 0;
         var psw = this.envelopes[1].amp.value != 0 ? this.envelopes[1].run(1.0) : 0;
         var cut = this.envelopes[2].amp.value != 0 ? this.envelopes[2].run(1.0) : 0;
-        var smp1 = this.oscillators[0].run(amp, fmLfo, psw);
-        var smp2 = this.oscillators[1].run(amp, fmLfo, psw);
+        var fm = this.envelopes[3].amp.value != 0 ? this.envelopes[3].run(1.0) : 0;
+        var smp1 = this.oscillators[0].run(amp, fm+fmLfo, psw);
+        var smp2 = this.oscillators[1].run(amp, fm+fmLfo, psw);
         this.filter.onchange(cut);
         var out = this.filter.run(smp1 + smp2);
         return out;

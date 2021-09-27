@@ -21,7 +21,7 @@ include('/lib/ge/sound.js');
 				var voiceCount = initData.readUint8();
 				if (voiceCount != 0) {
 					device = new psynth.Synth(sound.smpRate, voiceCount);
-					device.soundBank = this.player.dataBlocks[initData.readUint8()];
+					device.soundBank = this.player.datablocks[initData.readUint8()];
 					device.setProgram(0);
 				}
 				break;
@@ -34,26 +34,29 @@ include('/lib/ge/sound.js');
 		}
 		return device;
 	};
-	SynthAdapter.prototype.processCommand = function processCommand(device, command, sequence, cursor) {
+	SynthAdapter.prototype.processCommand = function processCommand(channel, command) {
+        var device = channel.device;
+        var sequence = channel.sequence;
+        var cursor = channel.cursor;
 		switch (command) {
-			case psynth.SynthAdapter.SETNOTE:
+			case psynth.SynthAdapter.Commands.SETNOTE:
 				device.setNote(sequence.getUint8(cursor++), sequence.getUint8(cursor++)/256);
 				break;
-			case psynth.SynthAdapter.SETUINT8:
+			case psynth.SynthAdapter.Commands.SETUINT8:
 				device.setControl(sequence.getUint8(cursor++), sequence.getUint8(cursor++));
 				break;
-			case psynth.SynthAdapter.SETFLOAT8:
+			case psynth.SynthAdapter.Commands.SETFLOAT8:
 				device.setControl(sequence.getUint8(cursor++), sequence.getUint8(cursor++)/256);
 				break;
-			// case psynth.SynthAdapter.SETCTRL16:
+			// case psynth.SynthAdapter.Commands.SETCTRL16:
 			// 	device.setControl(sequence.getUint8(cursor++), sequence.getUint16(cursor));
 			// 	cursor += 2;
 			// 	break;
-			case psynth.SynthAdapter.SETFLOAT:
+			case psynth.SynthAdapter.Commands.SETFLOAT:
 				device.setControl(sequence.getUint8(cursor++), sequence.getFloat32(cursor));
 				cursor += 4;
 				break;
-			case psynth.SynthAdapter.SETPROGRAM:
+			case psynth.SynthAdapter.Commands.SETPROGRAM:
 				device.setProgram(sequence.getUint8(cursor++));
 				break;
 		}
@@ -65,7 +68,7 @@ include('/lib/ge/sound.js');
         var stream = new Stream(128);
         stream.writeUint8(command);
         switch (command) {
-            case psynth.SynthAdapter.SETNOTE:	// uint8 note, uint8 velocity
+            case psynth.SynthAdapter.Commands.SETNOTE:	// uint8 note, uint8 velocity
                 if (arguments[1] instanceof Ps.Sequence) {
                     stream.writeStream(arguments[1].stream, arguments[2], 2);
                 } else {
@@ -73,8 +76,8 @@ include('/lib/ge/sound.js');
                     stream.writeUint8(arguments[2]);
                 }
                 break;
-			case psynth.SynthAdapter.SETUINT8:	// uint8 controllerId, uint8 value
-			case psynth.SynthAdapter.SETFLOAT8:	// uint8 controllerId, uint8 value
+			case psynth.SynthAdapter.Commands.SETUINT8:	// uint8 controllerId, uint8 value
+			case psynth.SynthAdapter.Commands.SETFLOAT8:	// uint8 controllerId, uint8 value
                 if (arguments[1] instanceof Ps.Sequence) {
                     stream.writeStream(arguments[1].stream, arguments[2], 2);
                 } else {
@@ -82,7 +85,7 @@ include('/lib/ge/sound.js');
                     stream.writeUint8(arguments[2]);
                 }
 				break;
-            // case psynth.SynthAdapter.SETCTRL16:	// uint8 controllerId, uint16 value
+            // case psynth.SynthAdapter.Commands.SETCTRL16:	// uint8 controllerId, uint16 value
             //     if (arguments[1] instanceof Ps.Sequence) {
             //         stream.writeStream(arguments[1].stream, arguments[2], 3);
             //     } else {
@@ -90,7 +93,7 @@ include('/lib/ge/sound.js');
             //         stream.writeUint16(arguments[2]);
             //     }
             //     break;
-			case psynth.SynthAdapter.SETFLOAT:		// uint8 controllerId, float32 value
+			case psynth.SynthAdapter.Commands.SETFLOAT:		// uint8 controllerId, float32 value
                 if (arguments[1] instanceof Ps.Sequence) {
                     stream.writeStream(arguments[1].stream, arguments[2], 5);
                 } else {
@@ -98,7 +101,7 @@ include('/lib/ge/sound.js');
 					stream.writeFloat32(arguments[2]);
                 }
                 break;
-			case psynth.SynthAdapter.SETPROGRAM:
+			case psynth.SynthAdapter.Commands.SETPROGRAM:
 				if (arguments[1] instanceof Ps.Sequence) {
 					stream.writeStream(arguments[1].stream, arguments[2], 1);
 				} else {
@@ -123,7 +126,7 @@ include('/lib/ge/sound.js');
 			case psynth.Synth.controls.flt1mode:
 				var uint8 = Math.floor(value);
 				if (uint8 < 0) uint8 = 0; else if (uint8 > 255) uint8 = 255;
-				command = this.makeCommand(psynth.SynthAdapter.SETUINT8, controlId, uint8);
+				command = this.makeCommand(psynth.SynthAdapter.Commands.SETUINT8, controlId, uint8);
 				break;
 		
 		// out = uint8/256
@@ -151,7 +154,7 @@ include('/lib/ge/sound.js');
 			case psynth.Synth.controls.flt1mod:
 				var uint8 = Math.floor(value*255);
 				if (uint8 < 0) uint8 = 0; else if (uint8 > 255) uint8 = 255;
-				command = this.makeCommand(psynth.SynthAdapter.SETFLOAT8, controlId, uint8);
+				command = this.makeCommand(psynth.SynthAdapter.Commands.SETFLOAT8, controlId, uint8);
 				break;
 		
 		// out = uint16
@@ -176,7 +179,7 @@ include('/lib/ge/sound.js');
 			case psynth.Synth.controls.osc2amp:
 			case psynth.Synth.controls.osc2fre:
 			case psynth.Synth.controls.flt1amp:
-				command = this.makeCommand(psynth.SynthAdapter.SETFLOAT, controlId, value);
+				command = this.makeCommand(psynth.SynthAdapter.Commands.SETFLOAT, controlId, value);
 				break;
 
 			default:
@@ -187,16 +190,19 @@ include('/lib/ge/sound.js');
 	};
 
 	SynthAdapter.getInfo = () => SynthAdapter.info;
+	SynthAdapter.create = player => Reflect.constructor(psynth.SynthAdapter, [player]);
 	SynthAdapter.info = { name: 'SynthAdapter', id: 1 };
 
-	SynthAdapter.SETNOTE = 2;
-	SynthAdapter.SETUINT8 = 3;
-	SynthAdapter.SETFLOAT8 = 4;
-	//SynthAdapter.SETUINT16 = 4;
-	SynthAdapter.SETFLOAT = 5;
-	SynthAdapter.SETVELOCITY = 6;
-	SynthAdapter.SETPROGRAM = 7;
-
+	SynthAdapter.Commands = {
+		SETNOTE: 2,
+		SETUINT8: 3,
+		SETFLOAT8: 4,
+		// SETUINT16 = 4;
+		SETFLOAT: 5,
+		SETVELOCITY: 6,
+		SETPROGRAM: 7
+	};
+	
 	SynthAdapter.Device = {
 		SYNTH: 0,
 		DELAY: 1

@@ -88,13 +88,15 @@ include('voice.js');
         this.isActive = true;
         var count = sb.readUint8(0);
         if (id < count) {
-            offset = 1 + 16*id;
+            var offset = 1 + 16*id;
             // this.selectedProgram = sb.readString(offset);
             offset = sb.readUint16(offset + 14);
             count = sb.readUint8(offset);
             for (var i=0; i<count; i++) {
-                var id = sb.readUint8();
-                this.getControl(id).setFromStream(sb);
+                var iid = sb.readUint8();
+                var ctrl = this.getControl(iid);
+                if (ctrl) ctrl.setFromStream(sb);
+                else debugger
             }
         }
     };
@@ -105,6 +107,7 @@ include('voice.js');
             env1: psynth.Env.createControls(),
             env2: psynth.Env.createControls(),
             env3: psynth.Env.createControls(),
+            env4: psynth.Env.createControls(),
             lfo1: psynth.LFO.createControls(),
             lfo2: psynth.LFO.createControls(),
             osc1: psynth.Osc.createControls(),
@@ -117,6 +120,9 @@ include('voice.js');
         this.controls.lfo2.amp.init(0, 100, 0.1);
         this.controls.lfo2.fre.init(0, 1000, 0.1);
         this.controls.env3.amp.set(1.0);
+        this.controls.env4.amp.set(0.0);
+        this.controls.env4.amp.max = 5000;
+        this.controls.env4.dc.max = 5000;
         this.controls.flt1.mode.init(1, 7, 1);
         this.controls.flt1.cut.set(0.0);
 
