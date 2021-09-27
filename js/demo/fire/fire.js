@@ -1,5 +1,5 @@
-include('math/fn.js');
-include('math/noise.js');
+include('/lib/math/fn.js');
+include('/lib/math/noise.js');
 
 (function() {
 	
@@ -194,10 +194,7 @@ include('math/noise.js');
 		}
 		return heatMap;
 	};
-	Fire.prototype.onmousemove = function onmousemove(e) {
-		this.cursor[0] = e.clientX*this.ratio[0];
-		this.cursor[1] = e.clientY*this.ratio[1];
-	};	
+	Fire.prototype.onmousemove = Demo.onmousemove;
 	Fire.prototype.onchange = function onchange(e, setting) {
 		var id = setting.parent.id;
 		switch (id) {

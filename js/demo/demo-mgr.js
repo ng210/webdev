@@ -1,4 +1,3 @@
-include('glui/glui-lib.js');
 include('demo-base.js');
 
 var DemoMgr = {
@@ -334,8 +333,8 @@ var DemoMgr = {
     onmousemove: function onmousemove(e, ctrl) {
         if (!ctrl || ctrl.id == 'screen') {
             if (this.demo && typeof this.demo.onmousemove === 'function') {
-                var x = e.clientX/glui.canvas.clientWidth;
-                var y = e.clientY/glui.canvas.clientHeight;
+                var x = e.clientX;
+                var y = e.clientY;
                 this.demo.onmousemove(x, y, e);
             }
         }

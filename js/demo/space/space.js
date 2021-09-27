@@ -1,5 +1,5 @@
-include('demo.js');
-include('asu/asu.js');
+include('/lib/demo.js');
+include('/lib/asu/asu.js');
 
 (function() {
     function Space(canvas) {

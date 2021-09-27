@@ -1,6 +1,6 @@
-include('math/v3.js');
-include('math/noise.js');
-include('glui/glui-lib.js');
+include('/lib/math/v3.js');
+include('/lib/math/noise.js');
+include('/lib/glui/glui-lib.js');
 (function() {
 	include('dot.js');
 	include('segment.js');
@@ -262,8 +262,8 @@ include('glui/glui-lib.js');
 		Dots.Dot.pSize = 2/he;
 		GE.ctx.lineWidth = Dots.Dot.pSize;
 
-		topLeft: new V3(-this.aspect + .05, -0.95, 0),
-		bottomRight: new V3(this.aspect - .05, .95, 0),
+		// topLeft: new V3(-this.aspect + .05, -0.95, 0),
+		// bottomRight: new V3(this.aspect - .05, .95, 0),
 
 		// if (typeof window.webGL !== 'undefined')
 		// 	webGL.resize(gl, width, height);

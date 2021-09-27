@@ -1,4 +1,4 @@
-include('glui/glui-lib.js');
+include('/lib/glui/glui-lib.js');
 include('star.js');
 (function() {
 

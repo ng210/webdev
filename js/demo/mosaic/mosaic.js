@@ -1,7 +1,8 @@
-include('glui/glui-lib.js');
-include('glui/misc/roaming-unit.js');
-include('webgl/sprite/sprite.js');
-include('base/dbg.js');
+include('/lib/glui/glui-lib.js');
+include('/lib/glui/misc/roaming-unit.js');
+include('/lib/webgl/sprite/sprite.js');
+include('/lib/webgl/sprite/sprite-manager.js');
+include('/lib/base/dbg.js');
 (function() {
 
     function Particle(obj) {
@@ -73,14 +74,14 @@ include('base/dbg.js');
     MosaicDemo.sprMgr = null;
 
     MosaicDemo.prototype.initialize = async function initialize() {
-        // create 3D buffer
         this.buffer = new glui.Buffer(window.innerWidth, window.innerHeight, true);
         document.body.appendChild(this.buffer.canvas);
         this.buffer.canvas.style.position = 'absolute';
         this.buffer.canvas.style.left = '0px';
         this.buffer.canvas.style.top = '0px';
         this.buffer.canvas.style.zIndex = -1;
-        gl = this.buffer.canvas.getContext('webgl');
+        webGL.init(this.buffer.canvas, true);
+        //gl = this.buffer.canvas.getContext('webgl');
         if (gl == null) throw new Error('webGL not supported!');
         this.originalBackgroundColor = glui.canvas.style.backgroundColor;
         glui.canvas.style.backgroundColor = 'transparent';
@@ -166,7 +167,7 @@ include('base/dbg.js');
             p.obj.setFrame(this.settings.pixel.value);
             var size = this.settings.size.value;
             if (updatePosition) {
-                this.step = 2*(frame[2] - frame[0])*size;
+                this.step = 2*(frame[2] - frame[0])*0.5;    //*size;
                 p.set([this.step*(i - this.width/2), this.step*(j - this.height/2), 1], [0,0,0], [0,0], this.settings.lifeSpan.value);
             }
             p.obj.setScale([size, size, 1]);
@@ -191,23 +192,6 @@ include('base/dbg.js');
         this.buffer.update(true);
         //var x = -width/2, y = -height/2;
         this.updateParticles( (p,pi,i,j) => this.setParticle(p, pi, i,j, true));
-        // (p, pi, i,j) => {
-        //     //var ix = 4*Math.floor(i + (199 - j)*320);
-        //     ix = 4*pi;
-        //     //var col = buffer.imgData.data[ix+0] + buffer.imgData.data[ix+1] + buffer.imgData.data[ix+2] + buffer.imgData.data[ix+3];
-        //     if (buffer.imgData.data[ix+3]) {
-        //         p.obj.setScale([size, size, 1]);
-        //         p.set([(x + i)/scale, (j + y)/scale, 1], [0,0,0], [0,0], this.settings.lifeSpan.value);
-        //         p.obj.setScale([size, size, 1]);
-        //         p.obj.setFrame(this.settings.pixel.value);
-        //         p.obj.color[0] = buffer.imgData.data[ix+0]/255;
-        //         p.obj.color[1] = buffer.imgData.data[ix+1]/255;
-        //         p.obj.color[2] = buffer.imgData.data[ix+2]/255;
-        //         p.obj.color[3] = buffer.imgData.data[ix+3]/255;
-        //         p.roaming.speed = this.settings.speed.value;
-        //         p.roaming.variance = this.settings.variance.value;
-        //     }
-        // });
         glui.Buffer.dispose(this.buffer);
     };
     MosaicDemo.prototype.updateParticles = function(updater) {
@@ -253,14 +237,14 @@ include('base/dbg.js');
             MosaicDemo.sprMgr.selectRadius(this.mouse[0], this.mouse[1], r, (spr, x,y, dx, dy, args) => {
                 // apply force - update acceleration
                 var a = 0.5 + 0.5*Math.random();
-                spr.particle.velocity.add([a*f*dx, a*f*dy]);
+                spr.particle.velocity.add([a*f*dx, a*f*dy, 0]);
             }, r);
         }
     };
     MosaicDemo.prototype.onmousemove = function onmousemove(x, y, e) {
         if (typeof(x) === 'number') {
-            this.mouse[0] = (2*x - 1)*gl.canvas.width;
-            this.mouse[1] = (1 - 2*y)*gl.canvas.height;
+            this.mouse[0] = 2*x - 1*gl.canvas.width;
+            this.mouse[1] = gl.canvas.height - 2*y;
             //console.log(this.particles[0].acc.x.toFixed(2), this.particles[0].acc.y.toFixed(2));
         }
     };

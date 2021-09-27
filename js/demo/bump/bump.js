@@ -1,5 +1,5 @@
-include('math/v2.js');
-include('glui/glui-lib.js');
+include('/lib/math/v2.js');
+include('/lib/glui/glui-lib.js');
 (function() {
     function Bump() {
 		Demo.call(this, 'Bump mapping', {
@@ -108,10 +108,6 @@ include('glui/glui-lib.js');
 				break;
 		}
 	};
-	Bump.prototype.onmousemove = function onmousemove(x, y, e) {
-		this.cursor[0] = this.ratio[0] * e.clientX;
-		this.cursor[1] = this.ratio[1] * e.clientY;
-	};
 	Bump.prototype.setImage = function setImage() {
 		var ix = this.settings.image.value;
 		var img = this.images[ix].value;
@@ -137,6 +133,8 @@ include('glui/glui-lib.js');
 		}
 		this.resize();
 	};
+
+	Bump.prototype.onmousemove = Demo.onmousemove;
 
     publish(new Bump(), 'Bump');
 })();

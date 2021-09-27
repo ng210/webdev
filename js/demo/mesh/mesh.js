@@ -1,7 +1,7 @@
-include('data/graph.js');
-include('math/fn.js');
-include('math/v2.js');
-include('glui/glui-lib.js');
+include('/lib/data/graph.js');
+include('/lib/math/fn.js');
+include('/lib/math/v2.js');
+include('/lib/glui/glui-lib.js');
 (function() {
     function Mesh() {
         Demo.call(this, 'Growing Mesh', {

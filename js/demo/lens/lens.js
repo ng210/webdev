@@ -1,5 +1,5 @@
-include('math/v2.js');
-include('glui/glui-lib.js');
+include('/lib/math/v2.js');
+include('/lib/glui/glui-lib.js');
 (function() {
     function Lens() {
 		Demo.call(this, 'Lens', {
@@ -129,10 +129,8 @@ include('glui/glui-lib.js');
 		}
 		this.update(0, 0);
 	};
-	Lens.prototype.onmousemove = function onmousemove(x, y, e) {
-		this.cursor[0] = e.clientX*this.ratio[0];
-		this.cursor[1] = e.clientY*this.ratio[1];
-	};
+	Lens.prototype.onmousemove = Demo.onmousemove;
+
 	Lens.prototype.setImage = function setImage() {
 		var ix = this.settings.image.value;
 		var img = this.images[ix].value;

@@ -1,7 +1,7 @@
-include('math/noise.js');
-include('math/fn.js');
+include('/lib/math/noise.js');
+include('/lib/math/fn.js');
 
-include('glui/glui-lib.js');
+include('/lib/glui/glui-lib.js');
 (function() {
     function NoiseDemo() {
         Demo.call(this, 'Noise', {
@@ -132,10 +132,7 @@ include('glui/glui-lib.js');
                 this.update(0, 0);
         }            
     };
-    NoiseDemo.prototype.onmousemove = function onmousemove(x, y, e) {
-        this.cursor[0] = this.ratio[0] * e.clientX;
-        this.cursor[1] = this.ratio[1] * e.clientY;
-    };
+    NoiseDemo.prototype.onmousemove = Demo.onmousemove;
     // custom functions
     NoiseDemo.prototype.lookUpColor = function lookUpColor(v) {
         // var s = Math.floor(255*v);

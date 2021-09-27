@@ -1,7 +1,7 @@
-include('/base/dbg.js');
-include('/ge/ge.js');
-include('/demo/demo.js');
-//include('/lib/ui/grid.js');
+include('/lib/base/dbg.js');
+include('/lib/ge/ge.js');
+include('/lib/demo/demo.js');
+//include('/lib/lib/ui/grid.js');
 
 var canvas_ = null;
 var list_ = null;

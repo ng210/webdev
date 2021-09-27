@@ -1,4 +1,4 @@
-include('math/fn.js');
+include('/lib/math/fn.js');
 
 (function() {
 	function Plasma() {

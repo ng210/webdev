@@ -1,6 +1,6 @@
-include('/math/fn.js');
-include('/ge/math/v3.js');
-include('/math/noise.js');
+include('/lib/math/fn.js');
+include('/lib/ge/math/v3.js');
+include('/lib/math/noise.js');
 
 (function() {
     function Wormhole(canvas) {

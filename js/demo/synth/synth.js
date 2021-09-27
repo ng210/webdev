@@ -1,9 +1,9 @@
-include('glui/controls/textbox.js');
-include('glui/glui-lib.js');
-include('/synth/synth.js');
-include('/player/player-lib.js');
-include('/ge/sound.js');
-include('/synth/synth-adapter.js');
+include('/lib/glui/controls/textbox.js');
+include('/lib/glui/glui-lib.js');
+include('/lib/synth/synth.js');
+include('/lib/player/player-lib.js');
+include('/lib/ge/sound.js');
+include('/lib/synth/synth-adapter.js');
 
 (function() {
 
@@ -99,7 +99,7 @@ debugger
             this.player = this.createPlayer(data.data);
             // this.player = Ps.Player.create();
             // await this.player.load('/demo/synth/test-data.bin');
-            this.synthAdapter = this.player.adapters[psynth.SynthAdapter.getInfo().id];
+            this.synthAdapter = this.player.adapters[psynth.SynthAdapter.getInfo().id].adapter;
             this.synth = this.synthAdapter.devices[0];
             this.currentStep = 0;
 
@@ -252,7 +252,7 @@ debugger
             var len = this.frame < remains ? frameInt : remains;
             end = start + len;
             this.frame -= len;
-            var adapter = player.adapters[psynth.SynthAdapter.getInfo().id];
+            var adapter = player.adapters[psynth.SynthAdapter.getInfo().id].adapter;
             for (var i=0; i<adapter.devices.length; i++) {
                 adapter.devices[i].run(left, right, start, end);
             }
@@ -283,7 +283,7 @@ debugger
     };
     Synth.prototype.setNote = function setNote(ix, note) {
         var frames = this.sequences[this.selectedSequence].frames;
-        var cmd = frames[ix].commands.find( x => x.readUint8(0) == psynth.SynthAdapter.SETNOTE);
+        var cmd = frames[ix].commands.find( x => x.readUint8(0) == psynth.SynthAdapter.Commands.SETNOTE);
         if (cmd) {
             var noteValue = ABCnames.indexOf(note.substr(0, 2)) + 12*parseInt(note.charAt(2)) + 1;
             cmd.writePosition = 1;
@@ -312,7 +312,7 @@ debugger
                 // get SynthAdapter.SETNOTE command
                 for (var ci=0; ci < fr.commands.length; ci++) {
                     var cmd = fr.commands[ci];
-                    if (cmd.readUint8(0) == psynth.SynthAdapter.SETNOTE) {
+                    if (cmd.readUint8(0) == psynth.SynthAdapter.Commands.SETNOTE) {
                         var note = cmd.readUint8() - 1;
                         var noteText = `${ABCnames[note%12]}${Math.floor(note/12)}`;
                         var velocity = cmd.readUint8();
@@ -339,17 +339,17 @@ debugger
                 writeTokenToStream(namespace, block.data[j], stream);
             }
             stream.buffer = stream.buffer.slice(0, stream.length);
-            player.dataBlocks.push(stream);
+            player.datablocks.push(stream);
         }
-
         // create, initialize adapters
-        player.adapters[player.getInfo().id] = player;
-        player.prepareContext(player.dataBlocks[0]);
+        //player.adapters[player.getInfo().id] = player;
+        player.prepareContext(player.datablocks[0]);
         for (var i=0; i<data.adapters.length; i+=2) {
             var adapterType = Object.values(Ps.Player.adapterTypes).find(x => x.name == data.adapters[i]);
             if (!adapterType) throw new Error('Unknown adapter: ' + adapterType);
-            var adapter = player.addAdapter(adapterType);
-            adapter.prepareContext(player.dataBlocks[data.adapters[i+1]]);
+            var blockId = data.adapters[i+1];
+            var adapter = player.addAdapter(adapterType, blockId);
+            adapter.prepareContext(player.datablocks[blockId]);
         }
 
         // create sequences
@@ -357,7 +357,7 @@ debugger
             var seqData = data.sequences[si];
             var adapterType = Object.values(Ps.Player.adapterTypes).find(x => x.name == seqData.adapter);
             if (!adapterType) throw new Error('Unknown adapter: ' + adapterType);
-            var adapter = player.adapters[adapterType.getInfo().id];
+            var adapter = player.adapters[adapterType.getInfo().id].adapter;
             var frames = [];
             for (var fi=0; fi<seqData.frames.length; fi++) {
                 var frame = new Ps.Frame();
@@ -365,17 +365,17 @@ debugger
                 var commands = seqData.frames[fi][1];
                 for (var ci=0; ci<commands.length; ci++) {
                     var commandCopy = Array.from(commands[ci]);
-                    var command = getObjectAt(commandCopy[0], Ps.Player);
+                    var command = getObjectAt(commandCopy[0], Ps.Player.Commands);
                     if (!command) {
-                        command = getObjectAt(commandCopy[0], adapterType);
+                        command = getObjectAt(commandCopy[0], adapterType.Commands);
                     }
                     commandCopy[0] = command;
                     if (adapterType == psynth.SynthAdapter) {
-                        if (command == adapterType.SETNOTE) {
+                        if (command == adapterType.Commands.SETNOTE) {
                             // decode note
                             var note = commandCopy[1].toUpperCase();
                             commandCopy[1] = ABCnames.indexOf(note.substr(0, 2)) + 12*parseInt(note.charAt(2)) + 1;
-                        } else if (command >= adapterType.SETUINT8 && command <= adapterType.SETFLOAT) {
+                        } else if (command >= adapterType.Commands.SETUINT8 && command <= adapterType.Commands.SETFLOAT) {
                             // decode synth controller id
                             commandCopy[1] = psynth.Synth.controls[commandCopy[1]];
                         }
@@ -391,7 +391,6 @@ debugger
         player.masterChannel.assign(0, player.sequences[0]);
         return player;
     };
-
 
     var writeMethods = {
         'b:': Stream.prototype.writeUint8,

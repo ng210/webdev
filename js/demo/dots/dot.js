@@ -1,6 +1,6 @@
-include('/demo/dots/segment.js');
-include('/ge/actor.js');
-include('/math/fn.js');
+include('/lib/demo/dots/segment.js');
+include('/lib/ge/actor.js');
+include('/lib/math/fn.js');
 
 (function() {
 

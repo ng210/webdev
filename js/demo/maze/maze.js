@@ -1,6 +1,6 @@
-include('data/graph.js');
-include('math/fn.js');
-include('glui/glui-lib.js');
+include('/lib/data/graph.js');
+include('/lib/math/fn.js');
+include('/lib/glui/glui-lib.js');
 (function() {
 
     var Direction = {
@@ -403,6 +403,8 @@ include('glui/glui-lib.js');
         //this.player.setDestination(this.player.destination.x, this.player.destination.y);
         this.resize();
     };
+
+    MazeDemo.prototype.onmousemove = null;
 
     publish(new MazeDemo(), 'MazeDemo');
 })();

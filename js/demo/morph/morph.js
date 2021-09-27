@@ -1,5 +1,5 @@
-include('glui/glui-lib.js');
-include('webgl/webgl.js');
+include('/lib/glui/glui-lib.js');
+include('/lib/webgl/webgl.js');
 
 (function() {
 
@@ -120,7 +120,7 @@ include('webgl/webgl.js');
         //glui.canvas.style.background = 'transparent';
         glui.renderingContext2d.clearRect(0, 0, glui.width, glui.height)
 
-        gl = this.canvas.getContext('webgl');
+        webGL.init(this.canvas, true);
         if (gl == null) throw new Error('webGL not supported!');
     
         // create program
@@ -130,12 +130,7 @@ include('webgl/webgl.js');
         var shaders = {};
         shaders[gl.VERTEX_SHADER] = res[0].data;
         shaders[gl.FRAGMENT_SHADER] = res[1].data;
-        this.program = webGL.createProgram(shaders,
-            {
-                a_position:{type:gl.FLOAT, size:2},
-                a_texcoord:{type:gl.FLOAT, size:4},
-                a_factor:{type:gl.FLOAT, size:1}
-            }, this.uniforms);
+        this.program = webGL.createProgram(shaders);
 
         // create buffers
         this.createBuffers();
@@ -238,7 +233,8 @@ include('webgl/webgl.js');
         gl.drawElements(gl.TRIANGLES, 3*this.trisCount, gl.UNSIGNED_SHORT, 0);
 
         if (this.settings.grid.value) {
-            this.program.setUniforms({'u_grid':1});
+            this.program.setUniform('u_grid', 1);
+            this.program.updateUniform('u_grid');
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices2);
             gl.drawElements(gl.LINES, this.lineCount, gl.UNSIGNED_SHORT, 0);
         }

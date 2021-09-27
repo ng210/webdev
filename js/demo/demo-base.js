@@ -1,4 +1,4 @@
-include('glui/glui-lib.js');
+include('/lib/glui/glui-lib.js');
 (function() {
 
     // internal variables and functions
@@ -15,6 +15,12 @@ include('glui/glui-lib.js');
     Demo.prototype.update = function update(frame, dt) {
     };
     Demo.prototype.render = function render(frame, dt) {
+    };
+    Demo.onmousemove = function onmousemove(x, y, e) {
+        if (e) {
+            this.cursor[0] = this.ratio[0] * x;
+            this.cursor[1] = this.ratio[1] * y;
+        }
     };
 
     // custom functions

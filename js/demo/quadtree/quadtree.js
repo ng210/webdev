@@ -1,5 +1,5 @@
-include('data/graph.js');
-include('glui/glui-lib.js');
+include('/lib/data/graph.js');
+include('/lib/glui/glui-lib.js');
 (function() {
 
     function QuadTree() {

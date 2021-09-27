@@ -1,6 +1,7 @@
-include('glui/glui-lib.js');
-include('glui/misc/roaming-unit.js');
-include('webgl/sprite/sprite.js');
+include('/lib/glui/glui-lib.js');
+include('/lib/glui/misc/roaming-unit.js');
+include('/lib/webgl/sprite/sprite.js');
+include('/lib/webgl/sprite/sprite-manager.js');
 (function() {
 
     const MAX_EMITTER_COUNT = 10;
@@ -164,13 +165,18 @@ include('webgl/sprite/sprite.js');
     extend(Demo, EmitterDemo);
 
     EmitterDemo.prototype.initialize = async function initialize() {
-        this.buffer = new glui.Buffer(window.innerWidth, window.innerHeight, true);
-        document.body.appendChild(this.buffer.canvas);
-        this.buffer.canvas.style.position = 'absolute';
-        this.buffer.canvas.style.left = '0px';
-        this.buffer.canvas.style.top = '0px';
-        this.buffer.canvas.style.zIndex = -1;
-        gl = this.buffer.canvas.getContext('webgl');
+        // this.buffer = new glui.Buffer(window.innerWidth, window.innerHeight, true);
+        // document.body.appendChild(this.buffer.canvas);
+        // this.buffer.canvas.style.position = 'absolute';
+        // this.buffer.canvas.style.left = '0px';
+        // this.buffer.canvas.style.top = '0px';
+        // this.buffer.canvas.style.zIndex = -1;
+        webGL.init(null, true);
+        gl.canvas.style.position = 'absolute';
+        gl.canvas.style.left = '0px';
+        gl.canvas.style.top = '0px';
+        gl.canvas.style.zIndex = -1;
+        //gl = this.buffer.canvas.getContext('webgl');
         if (gl == null) throw new Error('webGL not supported!');
         this.originalBackgroundColor = glui.canvas.style.backgroundColor;
         glui.canvas.style.backgroundColor = 'transparent';
@@ -216,7 +222,8 @@ include('webgl/sprite/sprite.js');
     EmitterDemo.prototype.update = function update(frame, dt) {
         for (var i=0; i<MAX_EMITTER_COUNT; i++) {
             var em = this.emitters[i];
-            em.update(frame, dt, (particle, ix, emitter, frame, dt) => EmitterDemo.emissionFunctions[this.settings.emission.value].call(this, particle, ix, emitter, frame, dt));
+            var v = Math.floor(this.settings.emission.value);
+            em.update(frame, dt, (particle, ix, emitter, frame, dt) => EmitterDemo.emissionFunctions[v].call(this, particle, ix, emitter, frame, dt));
         }
     };
     EmitterDemo.prototype.render = function render(frame, dt) {
