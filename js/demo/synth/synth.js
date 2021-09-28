@@ -8,7 +8,7 @@ include('/lib/synth/synth-adapter.js');
 (function() {
 
     const SAMPLE_RATE = 48000;
-    const SCOPE_SIZE = 0.1*SAMPLE_RATE;
+    const SCOPE_SIZE = 0.05*SAMPLE_RATE;
     const FRAMES_PER_BEAT = 16;
 
     const ABCnames = [
@@ -171,7 +171,7 @@ debugger
         ctx.fillStyle = '#0e1028';
         ctx.globalAlpha = this.settings.alpha.value;
         ctx.fillRect(0, 0, glui.width, glui.height);
-        var mj = 5;
+        var mj = 3;
         ctx.strokeStyle = '#a0c0ff';
         for (var j=0; j<=mj; j++) {
             ctx.beginPath();
@@ -220,8 +220,8 @@ debugger
     };
     Synth.prototype.onmousemove = function onmousemove(x, y, e) {
         if (typeof x === 'number') {
-            this.synth.setControl(psynth.Synth.controls.flt1cut, x);
-            this.synth.setControl(psynth.Synth.controls.flt1res, 0.98*(1-y));
+            this.synth.setControl(psynth.Synth.controls.flt1cut, 0.5*x/glui.canvas.clientWidth);
+            this.synth.setControl(psynth.Synth.controls.flt1res, 0.98*(1-y/glui.canvas.clientHeight));
         }
     };
     Synth.prototype.ondragging = function ondragging(e, ctrl) {
