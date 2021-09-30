@@ -93,6 +93,7 @@ include('/lib/math/v2.js');
     ge.mainloop = function mainloop() {
         var now = Date.now();
         var dt = now - ge.time;
+        if (dt > 20) dt = 20;
         ge.begin();
         ge.game.handleInputs();
         ge.game.update();

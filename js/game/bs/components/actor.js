@@ -13,7 +13,7 @@ include('/lib/math/v3.js');
         this.isDirty = true;
         this.updaters = [];
         this.constraints = [];
-        this.updateState = null;
+        this.updateState = function() { this.current.position.set(this.next.position); };
     }
 
     Actor.prototype.addSprite = function addSprite() {
@@ -21,18 +21,16 @@ include('/lib/math/v3.js');
         this.sprite = sprMgr.addSprite();
         var sr = ge.getComponent('SpriteRenderer');
         this.renderer = sr;
-        this.updateState = sr;
         return this.sprite;
     };
 
     // Add mechanics to actor:
-    // - adds mechnics properties
+    // - adds mechanics properties
     // - adds updater
-    // TODO: add acceleration, forces
+    // TODO: add mass and forces
     Actor.prototype.addSimpleMechanics = function addSimpleMechanics(args) {
-        this.current.velocity = new V3();
-        this.updaters.push(ge.getComponent('SimpleMechanics'), args);
-        //this.resolveCollision = 
+        var simpleMechanics = ge.getComponent('SimpleMechanics');
+        simpleMechanics.setup(this);
     };
 
     Actor.prototype.addSegmentCollider = function addSegmentCollider(segmentList) {
@@ -46,7 +44,8 @@ include('/lib/math/v3.js');
         for (var i=0; i<this.constraints.length;) {
             this.constraints[i++].check(this, dt, ...this.constraints[i++]);
         }
-        this.updateState.update(this);
+        this.updateState();
+        this.renderer.update(this);
     };
 
     Actor.prototype.setCurrent = function setCurrent(property, value) {

@@ -2,6 +2,7 @@ include('./sprite-manager.js');
 
 include('./actor.js');
 
+include('./mechanics.js');
 include('./simple-mechanics.js');
 
 include('./constraint.js');
