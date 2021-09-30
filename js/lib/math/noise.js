@@ -17,8 +17,8 @@
 		var n = this.seed;
 		while (tmp.length > 0) {
 			this.cache.push(tmp.splice(n & Noise.MASK, 1)[0]);
-			n = Math.random()*tmp.length;
-			//n = n*152751 + 314767;
+			//n = Math.random()*tmp.length;
+			n = (n*152751 + 314767)%tmp.length;
 		}
 	};
 

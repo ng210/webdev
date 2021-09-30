@@ -1,8 +1,8 @@
-include('/lib/data/graph.js');
+include('/lib/data/quadtree.js');
 include('/lib/glui/glui-lib.js');
 (function() {
 
-    function QuadTree() {
+    function QuadTreeDemo() {
         Demo.call(this, 'QuadTree', {
             levels: { label: 'Levels', value: 4, min:1, max:8, step: 1, type: 'int', link: null },
             size: { label: 'Size', value: 0.06, min:0.001, max:0.2, step: 0.001, type: 'float', link: null }
@@ -14,22 +14,22 @@ include('/lib/glui/glui-lib.js');
 		this.cursor = [0, 0];
         this.backgroundColor = [16, 40, 80];
     };
-    extend(Demo, QuadTree);
+    extend(Demo, QuadTreeDemo);
     
-    QuadTree.prototype.initialize = function initialize() {
+    QuadTreeDemo.prototype.initialize = function initialize() {
         this.buffer = new glui.Buffer(glui.width/2, glui.height/2);
-        this.quadTree = this.buildQuadTree(this.settings.levels.value);
+        this.quadTree = this.createQuadtree();
         //glui.canvas.style.cursor = 'none';
     };
-    QuadTree.prototype.resize = function resize(e) {
+    QuadTreeDemo.prototype.resize = function resize(e) {
         var w = glui.frontBuffer.width/2;
         var h = glui.frontBuffer.height/2;
         this.buffer.resize(w, h);
         this.buffer.context.setTransform(w, 0, 0, h, 0, 0);
     };
-    QuadTree.prototype.update = function update(frame, dt) {
+    QuadTreeDemo.prototype.update = function update(frame, dt) {
     };
-    QuadTree.prototype.render = function render(frame, dt) {
+    QuadTreeDemo.prototype.render = function render(frame, dt) {
         var ctx = this.buffer.context;
         ctx.save();
         ctx.fillStyle = `rgb(${this.backgroundColor})`;
@@ -55,64 +55,33 @@ include('/lib/glui/glui-lib.js');
         glui.frontBuffer.blit(this.buffer);
         ctx.restore();
     };
-    QuadTree.prototype.onchange = function onchange(e, setting) {
+    QuadTreeDemo.prototype.onchange = function onchange(e, setting) {
         switch (setting.parent.id) {
             case 'size':
                 break;
             case 'levels':
-                this.quadTree = this.buildQuadTree(this.settings.levels.value);
+                this.quadTree = this.createQuadtree();
                 break;
             default:
                 this.update(0, 0);
                 break;
         }
     };
-    QuadTree.prototype.onmousemove = function onmousemove(x, y, e) {
-        this.cursor[0] = x;
-        this.cursor[1] = y;
-        this.selectedQuad = this.getQuadAt(this.quadTree, this.cursor[0], this.cursor[1], this.cursor[0]+this.settings.size.value, this.cursor[1]+this.settings.size.value);
-    };
-    // custom functions
-    QuadTree.prototype.buildQuadTree = function buildQuadTree(levels) {
-        var quadTree = Graph.createCompleteTree(4, levels, true, (vertex, level, i) => {
-            vertex.items = [];
-            var d = Math.pow(2, level);
-            if (vertex.parent) {
-                var n = i%4;
-                vertex.x = vertex.parent.x + (n%2)/d;
-                vertex.y = vertex.parent.y + Math.floor(n/2)/d;
-            } else {
-                vertex.x = 0;
-                vertex.y = 0;
-            }
-            vertex.width = 1/d;
-            vertex.height = 1/d;
-            var s = 16 + 16*((i+Math.floor(i/2))%2);
-            var r = s;//Math.floor(16+32*Math.random());
-            var g = s;//Math.floor(16+32*Math.random());
-            var b = s;//Math.floor(16+32*Math.random());
-            vertex.color = [r, g, b];
-        });
-        return quadTree;
-    };
-    QuadTree.prototype.getQuadAt = function getQuadAt(quadTree, x1, y1, x2, y2) {
-        var v = quadTree.root;
-        while (true) {
-            if (v.edges.length > 0) {
-                var next = 0;
-                if (x1 < v.x+v.width/2 && x2 < v.x+v.width/2) next = 0;
-                else if (x1 > v.x+v.width/2 && x2 > v.x+v.width/2) next = 1;
-                else break;
-                if (y1 < v.y+v.height/2 && y2 < v.y+v.height/2) next += 0;
-                else if (y1 > v.y+v.height/2 && y2 > v.y+v.height/2) next += 2;
-                else break;
-                v = v.edges[next].to;
-            } else {
-                break;
-            }
-        }
-        return v;
+    QuadTreeDemo.prototype.onmousemove = function onmousemove(x, y, e) {
+        this.cursor[0] = x/glui.canvas.clientWidth;
+        this.cursor[1] = y/glui.canvas.clientHeight;
+        this.selectedQuad = this.quadTree.getQuadAt(this.quadTree, this.cursor[0], this.cursor[1], this.cursor[0]+this.settings.size.value, this.cursor[1]+this.settings.size.value);
     };
 
-    publish(new QuadTree(), 'QuadTree');
+    QuadTreeDemo.prototype.createQuadtree = function createQuadtree() {
+        return new Quadtree(this.settings.levels.value, (vertex, level, i) => {
+            var s = 16 + 16*((i+Math.floor(i/2))%2);
+            var r = s + Math.floor(8*Math.random());
+            var g = s + Math.floor(8*Math.random());
+            var b = s + Math.floor(8*Math.random());
+            vertex.color = [r, g, b];
+        });
+    };
+
+    publish(new QuadTreeDemo(), 'QuadTreeDemo');
 })();

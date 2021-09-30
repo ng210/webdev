@@ -56,7 +56,7 @@
         this[1] /= len;
         return this;
     };
-    // return u = (this.x*v.x, this.y*v.y, this.z*v.z)
+    // return u = (this.x*v.x, this.y*v.y)
     V2.prototype.prod = function prod(v, r, o) {
         r = r || new V2(0);
         o = o || 0;

@@ -28,7 +28,7 @@
                 "snare........", "w:503",
                 "hihat........", "w:610",
                 31,
-                "amp",      60,
+                "amp",       0,
                 "env1amp", "f:1.0", "env1dc",  "f:0.0", "env1atk",       0, "env1dec", 20, "env1sus",  40, "env1rel",  20,
                 "env2amp", "f:0.4", "env2dc",  "f:0.3", "env2atk",       0, "env2dec", 20, "env2sus",  80, "env2rel",  50,
                 "env3amp", "f:1.0", "env3dc",  "f:0.0", "env3atk",       1, "env3dec", 10, "env3sus",  20, "env3rel",  10,
@@ -40,7 +40,7 @@
                 "flt1mode", "psynth.Filter.modes.LOWPASS",
 
                 35,
-                "amp",       40,
+                "amp",        0,
                 "lfo1amp", "f:0.1", "lfo1fre", "f:4.0",
                 "lfo2amp", "f:4.0", "lfo2fre", "f:6.0",
                 "env1amp", "f:1.0", "env1dc",  "f:0.0", "env1atk",       4, "env1dec", 20, "env1sus",  80, "env1rel",  80,
@@ -117,8 +117,7 @@
                         ["ASSIGN", 3, 3, 2, 4],
                         ["ASSIGN", 5, 2, 1, 4],
                         ["ASSIGN", 6, 6, 3, 2],
-                        ["ASSIGN", 7, 7, 4, 2],
-                        ["ASSIGN", 8, 5, 2, 1]
+                        ["ASSIGN", 7, 7, 4, 2]
                     ]
                 ],
                 [256, [["EOS"]]]

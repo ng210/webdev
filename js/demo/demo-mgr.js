@@ -14,7 +14,7 @@ var DemoMgr = {
     fpsCounter: 0,
     fpsTime: 0,
 
-    initialize: async function(url) {
+    initialize: async function(url, demo) {
         console.log('load ' + url);
         var res = await load(appUrl.toString() + '/' + url);
         if (res.error) {
@@ -93,6 +93,7 @@ var DemoMgr = {
         this.fps.setValue(0);
 
         this.resize();
+        if (demo) await DemoMgr.selectDemo(DemoMgr.demos.find(x => x.id.toLowerCase() == demo).path);
 
         this.run();
     },
@@ -366,5 +367,6 @@ async function onpageload(e) {
     var cvs = glui.canvas;
     cvs.style.backgroundColor = '203040';
     window.addEventListener('resize', () => DemoMgr.resize());
-    DemoMgr.initialize('demo-list.json');
+    var url = new Url(location.href);
+    DemoMgr.initialize('demo-list.json', url.fragment);
 }
