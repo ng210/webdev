@@ -1,4 +1,5 @@
 include('/lib/base/dbg.js');
+include('/lib/math/noise.js');
 include('./components/ge-lib.js');
 
 const MAX_BALL_COUNT = 100;
@@ -13,6 +14,7 @@ function Game() {
     this.sprMgr = null;
     this.time = 0;
     this.center = null;
+    this.noise = null;
 
     this.frame = 100;
     this.segments = [];
@@ -33,6 +35,7 @@ Game.prototype.init = async function init() {
     this.keyboardHandler = await ge.loadComponent('KeyboardHandler');
     this.mouseHandler = await ge.loadComponent('MouseHandler');
     Dbg.prln('Components loaded.');
+    this.noise = new Noise(20081028);
 
     // setup screen
     this.setResolution(1920, 1080);
@@ -40,26 +43,34 @@ Game.prototype.init = async function init() {
     ge.prerender();
 };
 
-function createCircleSegments(center, w, h, count, isOutside) {
+Game.prototype.createCircleSegments = function createCircleSegments(center, w, h, count, isOutside) {
     var segments = [];
     var d = 2*Math.PI/count;
     var a = 0;
-    var p1 = new V2(w, 0).add(center);
-    for (var i=0; i<=count; i++) {
-        var p2 = new V2(w*Math.cos(a), h*Math.sin(a)).add(center);
-        if (isOutside) {
-            segments.push(new Segment(p2, p1))
+    var p0 = p1 = null;
+    for (var i=0; i<count; i++) {
+        var n = this.noise.fbm1d(a, 3, 1.0, 1.5, 0.37, 2.91);
+        var p = V2.fromPolar(a, Fn.lerp(1, n, 0.5)).mul([w, h]).add(center);    //new V2(w*Math.cos(a), h*Math.sin(a)).add(center);
+        if (p1 != null) {
+            var p2 = p;
+            if (isOutside) {
+                segments.push(new Segment(p2, p1))
+            } else {
+                segments.push(new Segment(p1, p2))
+            }
             p1 = p2;
         } else {
-            segments.push(new Segment(p1, p2))
-            p1 = p2;
+            p0 = p1 = p;
         }
-        
         a += d;
     }
-    console.log(segments);
+    if (isOutside) {
+        segments.push(new Segment(p0, p1));
+    } else {
+        segments.push(new Segment(p1, p0));
+    }
     return segments;
-}
+};
 
 Game.prototype.setResolution = function setResolution(w, h) {
     ge.setResolution(w, h);
@@ -68,8 +79,12 @@ Game.prototype.setResolution = function setResolution(w, h) {
     var tl = new V2(this.frame, h-this.frame);
     var tr = new V2(w-this.frame, h-this.frame);
     var br = new V2(w-this.frame, this.frame);
-    this.segments.push(...createCircleSegments(this.center, 0.4*w, 0.45*h, 120));
-    this.segments.push(...createCircleSegments(this.center, 0.35*w, 0.4*h, 100, true));
+    // this.segments.push(...this.createCircleSegments(ge.resolution.prod([0.2, 0.3]), 0.05*w, 0.08*h, 3, true));
+    //this.segments.push(...this.createCircleSegments(this.center, 0.2*w, 0.2*h, 24, true));
+    this.segments.push(...this.createCircleSegments(this.center, 0.5*w, 0.5*h, 36));
+    // this.segments.push(...this.createCircleSegments(ge.resolution.prod([0.8, 0.3]), 0.05*w, 0.08*h, 5, true));
+    // this.segments.push(...this.createCircleSegments(ge.resolution.prod([0.2, 0.7]), 0.02*w, 0.08*h, 12, true));
+    // this.segments.push(...this.createCircleSegments(ge.resolution.prod([0.8, 0.7]), 0.10*w, 0.10*h, 6, true));
     // this.segments.push(
     //     new Segment(bl, br),        // bottom
     //     new Segment(br, tr),        // right
@@ -84,11 +99,12 @@ Game.prototype.setResolution = function setResolution(w, h) {
 Game.prototype.handleInputs = function handleInputs() {
     if (this.keyboardHandler.isPressed(32) || this.mouseHandler.isLeftPressed()) {
         if (this.mouseHandler.position.y > this.frame) {
-            var angle = Math.PI/2 - Math.atan2(this.mouseHandler.position.y - this.frame, this.mouseHandler.position.x - 0.5*ge.resolution.x);
+            //var angle = Math.PI/2 - Math.atan2(this.mouseHandler.position.y - this.frame, this.mouseHandler.position.x - 0.5*ge.resolution.x);
+            var v = this.mouseHandler.position.diff(new V2([this.center.x, ge.resolution.y - this.frame])).div(ge.resolution);
             if (ge.actors[this.ballId] == undefined) {
-                this.addBall(angle);
+                this.addBall(v);
             } else {
-                this.setBall(ge.actors[this.ballId], angle);
+                this.setBall(ge.actors[this.ballId], v);
                 this.ballId++;
             }
             if (this.ballId == MAX_BALL_COUNT) this.ballId = 0;
@@ -101,7 +117,7 @@ Game.prototype.update = function update() {
 //#endregion
 
 //#region Ball management
-Game.prototype.setBall = function setBall(ball, angle) {
+Game.prototype.setBall = function setBall(ball, v) {
     var spr = ball.sprite;
     spr.setFrame(0);
     var s = rand(0.3, 0.5);
@@ -109,20 +125,20 @@ Game.prototype.setBall = function setBall(ball, angle) {
     var color = new V3([rand(0.5, 1.0), rand(0.5, 1.0), rand(0.5, 1.0)]);
     spr.setColor(color);
     // calculate velocity
-    var v = V3.fromPolar(angle, 0, rand(0.2, 0.4));
-    var p = new V2([this.center.x, this.frame]);
+    v.scale(rand(0.8, 1.0));
+    var p = new V2([this.center.x, ge.resolution.y - this.frame]);
     ball.setCurrent('velocity', v);
     ball.setCurrent('position', p);
-    //ball.acceleration.y = -.0;
+    ball.setCurrent('acceleration', new V3(0.0, -0.001, 0.0));
 };
 
-Game.prototype.addBall = function addBall(angle) {
+Game.prototype.addBall = function addBall(v) {
     var ball = ge.addActor(`ball${this.ballId}`);
     this.ballId++;
     ball.addSprite();
     ball.addSimpleMechanics();
     ball.addSegmentCollider(this.segments);
-    this.setBall(ball, angle);
+    this.setBall(ball, v);
     return ball;
 };
 
