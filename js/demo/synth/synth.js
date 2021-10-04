@@ -4,11 +4,13 @@ include('/lib/synth/synth.js');
 include('/lib/player/player-lib.js');
 include('/lib/ge/sound.js');
 include('/lib/synth/synth-adapter.js');
+include('/lib/webgl/webgl.js');
+include('/lib/webgl/compute-shader.js');
 
 (function() {
 
     const SAMPLE_RATE = 48000;
-    const SCOPE_SIZE = 0.05*SAMPLE_RATE;
+    const SCOPE_MAX_SIZE = 4096;
     const FRAMES_PER_BEAT = 16;
 
     const ABCnames = [
@@ -68,27 +70,47 @@ debugger
         Demo.call(this, 'Synth', {
             bpm: { label: 'BPM', value: 101, min:60, max:180, step: 0.5, type: 'float', link: null },
             alpha: { label: 'Alpha', value: 0.5, min:0, max:1, step: 0.01, type: 'float', link: null },
-            scopewindow: { label: 'Scope win.', value: 0.02, min:0.01, max:0.1, step: 0.002, type: 'float', link: null }
+            scopewindow: { label: 'Scope win.', value: 0.2, min:0.1, max:1.0, step: 0.05, type: 'float', link: null }
         });
-        // custom variables
+        //#region playback
         this.player = null;
         this.synthAdapter = null;
         this.synth = null;
         this.frame = 0;
         this.samplePerFrame = 0;
         this.isDone = false;
-        this.scope = new Float32Array(SCOPE_SIZE);
+        //#endregion
+
+        //#region scope
         this.scopeLength = 0;
+        this.scopeBuffers = [
+            new Float32Array(SCOPE_MAX_SIZE),
+            new Float32Array(SCOPE_MAX_SIZE)
+        ];
+        this.scopeBufferIndex = 0;
+        this.scopeReadPosition = 0;
         this.scopeWritePosition = 0;
         this.scopeSamplingStep = 0;
-        this.scopeRenderingStep = 0;
         this.isScopeVisible = true;
+        this.postProcessing = null;
+        //#endregion
+
         this.selectedSequence = 0;
         this.sequences = [];
         this.currentStep = 0;
+
+        //#region rendering
+        this.vbo = null;
+        this.prg = null;
+        this.uniforms = {
+            'u_length': 0,
+            'u_shade': 0.0
+        };
+        //#endregion
     };
     extend(Demo, Synth);
 
+    //#region Demo implementation
     Synth.prototype.initialize = async function initialize() {
             this.samplePerFrame = SAMPLE_RATE*60/FRAMES_PER_BEAT/this.settings.bpm.value;
 
@@ -102,7 +124,46 @@ debugger
             this.synthAdapter = this.player.adapters[psynth.SynthAdapter.getInfo().id].adapter;
             this.synth = this.synthAdapter.devices[0];
             this.currentStep = 0;
+            webGL.init(null, true);
+            gl.canvas.style.zIndex = 1000;
+            gl.canvas.style.background = 'transparent';
+            this.vbo = webGL.createBuffer(gl.ARRAY_BUFFER, new Float32Array([ -1.0, -1.0,   1.0, -1.0,  -1.0, 1.0,  1.0, 1.0 ]), gl.STATIC_DRAW);
+            var shaders = {};
+            shaders[gl.VERTEX_SHADER] = 
+               `#version 300 es
+                in float a_position;
+                uniform float u_length;
 
+                void main(void) {
+                    vec2 pos = vec2(2.*float(gl_VertexID)/u_length - 1.0, 2.0*a_position);
+                    gl_Position = vec4(pos, 0., 1.);
+                }`;
+            shaders[gl.FRAGMENT_SHADER] =
+               `#version 300 es
+                precision highp float;
+                uniform float u_shade;
+                uniform sampler2D u_backbuffer;
+                out vec4 color;
+
+                void main(void) {
+                    color = vec4(1.0);
+                }`;
+            this.prg = webGL.createProgram(shaders);
+            // this.postProcessing = new webGL.ComputeShader([gl.canvas.width, gl.canvas.height], gl.RGBA32F);
+            // await this.postProcessing.setShader(
+            //    `#version 300 es
+            //    precision highp float;
+               
+            //    in vec2 v_position;
+            //    uniform sampler2D u_texture;
+               
+            //    out vec4 color;
+               
+            //    void main(void) {
+            //        color = 2.*texture(u_texture, v_position);
+            //    }`
+            // );
+            this.backBuffer = new Float32Array(4*gl.canvas.width*gl.canvas.height);
             this.updateScope();
             this.createSequences();
 
@@ -160,14 +221,22 @@ debugger
     Synth.prototype.render = function render(frame, dt) {
         var ctx = glui.renderingContext2d;
         ctx.save();
-        if (this.isScopeVisible) this.renderScope(ctx);
+        if (this.isScopeVisible) {
+            //this.renderScope(ctx);
+            this.renderScopeWithWebGL();
+        };
         this.renderSequencer();
         ctx.restore();
     };
+    //#endregion
+    
+    //#region rendering
     Synth.prototype.renderSequencer = function renderSequencer() {
         this.sequencer.render();
     };
     Synth.prototype.renderScope = function renderScope(ctx) {
+        // render scope as webgl linestrip
+        // update vbo
         ctx.fillStyle = '#0e1028';
         ctx.globalAlpha = this.settings.alpha.value;
         ctx.fillRect(0, 0, glui.width, glui.height);
@@ -190,6 +259,36 @@ debugger
             ctx.stroke();
         }
     };
+    Synth.prototype.renderScopeWithWebGL = function renderScopeWithWebGL() {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
+        gl.bufferData(gl.ARRAY_BUFFER, this.scopeBuffers[1 - this.scopeBufferIndex], gl.STATIC_DRAW);
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+        gl.clearColor(0, 0, 0, 0.2);
+        webGL.useProgram(this.prg, this.uniforms);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.LINE_STRIP, 0, this.scopeLength);
+        // postprocessing
+        //this.postProcessing.compute();
+        //gl.readPixels(0, 0, gl.canvas.width, gl.canvas.height, gl.RED, gl.FLOAT, this.backBuffer);
+    };
+    Synth.prototype.updateScope = function updateScope() {
+        this.scopeWritePosition = 0;
+        var smpCount = 0.1 * this.settings.scopewindow.value * SAMPLE_RATE;
+        this.scopeBackBuffer = new Float32Array(gl.canvas.width*gl.canvas.height*4);
+        if (smpCount < gl.canvas.width) {
+            this.scopeSamplingStep = 1;
+            this.scopeLength = Math.floor(smpCount);
+        } else {
+            this.scopeSamplingStep = smpCount/gl.canvas.width;
+            this.scopeLength = gl.canvas.width;
+        }
+        this.uniforms.u_length = this.scopeLength;
+    };
+    //#endregion
+
+    //#region event handlers
     Synth.prototype.onclick = function onclick(x, y, e) {
         if (typeof x === 'number') {
             this.isScopeVisible = !this.isScopeVisible;
@@ -229,7 +328,9 @@ debugger
             this.setVelocity(ctrl.parent.index, ctrl.getValue());
         }
     };
-    // custom functions
+    //#endregion
+
+    //#region playback
     Synth.prototype.playerBasedFillBuffer = function playerBasedFillBuffer(left, right, bufferSize, player) {
         var start = 0;
         var end = 0;
@@ -261,12 +362,16 @@ debugger
         }
 
         if (this.isScopeVisible) {
-            for (var i=0; i<bufferSize; i++) {
-                this.scope[this.scopeWritePosition++] = 0.5*(left[i] + right[i]);
-                if (this.scopeWritePosition > this.scopeLength) {
-                    this.scopeWritePosition -= this.scopeLength;
+            while (this.scopeReadPosition < bufferSize) {
+                var pos = Math.floor(this.scopeReadPosition);
+                this.scopeBuffers[this.scopeBufferIndex][this.scopeWritePosition++] = 0.5*(left[pos] + right[pos]);
+                if (this.scopeWritePosition == this.scopeLength) {
+                    this.scopeWritePosition = 0;
+                    this.scopeBufferIndex = 1 - this.scopeBufferIndex;
                 }
+                this.scopeReadPosition += this.scopeSamplingStep;
             }
+            this.scopeReadPosition -= bufferSize;
         }
     };
     Synth.prototype.run = function run(callback) {
@@ -275,11 +380,6 @@ debugger
                 callback(left, right, bufferSize, channel);
             }
         );
-    };
-    Synth.prototype.updateScope = function updateScope() {
-        this.scopeLength = Math.floor(SAMPLE_RATE * this.settings.scopewindow.value);
-        this.scopeSamplingStep = Math.round(this.settings.scopewindow.value / SAMPLE_RATE);
-        this.scopeRenderingStep = glui.width/this.scopeLength;
     };
     Synth.prototype.setNote = function setNote(ix, note) {
         var frames = this.sequences[this.selectedSequence].frames;
@@ -391,6 +491,7 @@ debugger
         player.masterChannel.assign(0, player.sequences[0]);
         return player;
     };
+    //#endregion
 
     var writeMethods = {
         'b:': Stream.prototype.writeUint8,
