@@ -230,10 +230,6 @@
 		}	
 	};
 
-	//#region uniform setter
-
-	//#endregion
-
 	var webGL = {
 		VERTEX_ATTRIB_POSITION:		0x01,
 		VERTEX_ATTRIB_NORMAL:		0x02,
@@ -246,33 +242,33 @@
 	};
 
 	webGL.types = {
-		FLOAT:	{ 'name': 'FLOAT', 				'id': 0, 'size':  4, 'length':  1, 'set': Uniform.setScalar, 'updater': un => gl.uniform1f(un.ref, un.value) },
-		VEC2:	{ 'name': 'FLOAT_VEC2', 		'id': 0, 'size':  8, 'length':  2, 'set': Uniform.setVec2, 	 'updater': un => gl.uniform2f(un.ref, un.value[0], un.value[1] ) },
-		VEC3:	{ 'name': 'FLOAT_VEC3', 		'id': 0, 'size': 12, 'length':  3, 'set': Uniform.setVec3, 	 'updater': un => gl.uniform3f(un.ref, un.value[0], un.value[1], un.value[2]) },
-		VEC4:	{ 'name': 'FLOAT_VEC4', 		'id': 0, 'size': 16, 'length':  4, 'set': Uniform.setVec4, 	 'updater': un => gl.uniform4f(un.ref, un.value[0], un.value[1], un.value[2], un.value[3]) },
-		BOOL:	{ 'name': 'BOOL', 				'id': 0, 'size':  1, 'length':  1, 'set': Uniform.setScalar, 'updater': un => gl.uniform1i(un.ref, un.value) },
-		BVEC2:	{ 'name': 'BOOL_VEC2',			'id': 0, 'size':  2, 'length':  2, 'set': Uniform.setVec2, 	 'updater': un => gl.uniform2i(un.ref, un.value[0], un.value[1] ) },
-		BVEC3:	{ 'name': 'BOOL_VEC3',			'id': 0, 'size':  3, 'length':  3, 'set': Uniform.setVec3, 	 'updater': un => gl.uniform3i(un.ref, un.value[0], un.value[1], un.value[2]) },
-		BVEC4:	{ 'name': 'BOOL_VEC4',			'id': 0, 'size':  4, 'length':  4, 'set': Uniform.setVec4, 	 'updater': un => gl.uniform4i(un.ref, un.value[0], un.value[1], un.value[2], un.value[3]) },
-		INT:	{ 'name': 'INT',				'id': 0, 'size':  4, 'length':  1, 'set': Uniform.setScalar, 'updater': un => gl.uniform1i(un.ref, un.value) },
-		IVEC2:	{ 'name': 'INT_VEC2',			'id': 0, 'size':  8, 'length':  2, 'set': Uniform.setVec2, 	 'updater': un => gl.uniform2i(un.ref, un.value[0], un.value[1] ) },
-		IVEC3:	{ 'name': 'INT_VEC3',			'id': 0, 'size': 12, 'length':  3, 'set': Uniform.setVec3, 	 'updater': un => gl.uniform3i(un.ref, un.value[0], un.value[1], un.value[2]) },
-		IVEC4:	{ 'name': 'INT_VEC4',			'id': 0, 'size': 16, 'length':  4, 'set': Uniform.setVec4, 	 'updater': un => gl.uniform4i(un.ref, un.value[0], un.value[1], un.value[2], un.value[3]) },
-		UINT:	{ 'name': 'UNSIGNED_INT',		'id': 0, 'size':  4, 'length':  1, 'set': Uniform.setScalar, 'updater': un => gl.uniform1i(un.ref, un.value) },
-		UVEC2:	{ 'name': 'UNSIGNED_INT_VEC2',	'id': 0, 'size':  8, 'length':  2, 'set': Uniform.setVec2, 	 'updater': un => gl.uniform2i(un.ref, un.value[0], un.value[1] ) },
-		UVEC3:	{ 'name': 'UNSIGNED_INT_VEC3',	'id': 0, 'size': 12, 'length':  3, 'set': Uniform.setVec3, 	 'updater': un => gl.uniform3i(un.ref, un.value[0], un.value[1], un.value[2]) },
-		UVEC4:	{ 'name': 'UNSIGNED_INT_VEC4',	'id': 0, 'size': 16, 'length':  4, 'set': Uniform.setVec4, 	 'updater': un => gl.uniform4i(un.ref, un.value[0], un.value[1], un.value[2], un.value[3]) },
-		MAT2:	{ 'name': 'FLOAT_MAT2',			'id': 0, 'size': 16, 'length':  4, 'set': Uniform.setMat2, 	 'updater': un => gl.uniformMatrix2fv  (un.ref, false, un.value) },
-		MAT2x3:	{ 'name': 'FLOAT_MAT2x3',		'id': 0, 'size': 24, 'length':  6, 'set': Uniform.setMat2x3, 'updater': un => gl.uniformMatrix2x3fv(un.ref, false, un.value) },
-		MAT2x4:	{ 'name': 'FLOAT_MAT2x4',		'id': 0, 'size': 32, 'length':  8, 'set': Uniform.setMat2x4, 'updater': un => gl.uniformMatrix2x4fv(un.ref, false, un.value) },
-		MAT3:	{ 'name': 'FLOAT_MAT3',			'id': 0, 'size': 36, 'length':  9, 'set': Uniform.setMat3, 	 'updater': un => gl.uniformMatrix3fv  (un.ref, false, un.value) },
-		MAT3x2:	{ 'name': 'FLOAT_MAT3x2',		'id': 0, 'size': 24, 'length':  6, 'set': Uniform.setMat2x3, 'updater': un => gl.uniformMatrix3x2fv(un.ref, false, un.value) },
-		MAT3x4:	{ 'name': 'FLOAT_MAT3x4',		'id': 0, 'size': 48, 'length': 12, 'set': Uniform.setMat3x4, 'updater': un => gl.uniformMatrix3x4fv(un.ref, false, un.value) },
-		MAT4:	{ 'name': 'FLOAT_MAT4',			'id': 0, 'size': 64, 'length': 16, 'set': Uniform.setMat4, 	 'updater': un => gl.uniformMatrix4fv  (un.ref, false, un.value) },
-		MAT4x2:	{ 'name': 'FLOAT_MAT4x2',		'id': 0, 'size': 32, 'length':  8, 'set': Uniform.setMat2x4, 'updater': un => gl.uniformMatrix4x2fv(un.ref, false, un.value) },
-		MAT4x3:	{ 'name': 'FLOAT_MAT4x3',		'id': 0, 'size': 48, 'length': 12, 'set': Uniform.setMat3x4, 'updater': un => gl.uniformMatrix4x3fv(un.ref, false, un.value) },
-	SAMPLER2D:	{ 'name': 'SAMPLER_2D',			'id': 0, 'size':  1, 'length':  1, 'set': Uniform.setScalar, 'updater': un => gl.uniform1i(un.ref, un.value) },
-
+	//#region uniform
+		FLOAT:	{ 'name': 'FLOAT', 				'base':'FLOAT', 'id': 0, 'size':  4, 'length':  1, 'set': Uniform.setScalar, 'updater': un => gl.uniform1f(un.ref, un.value) },
+		VEC2:	{ 'name': 'FLOAT_VEC2', 		'base':'FLOAT', 'id': 0, 'size':  8, 'length':  2, 'set': Uniform.setVec2, 	 'updater': un => gl.uniform2f(un.ref, un.value[0], un.value[1] ) },
+		VEC3:	{ 'name': 'FLOAT_VEC3', 		'base':'FLOAT', 'id': 0, 'size': 12, 'length':  3, 'set': Uniform.setVec3, 	 'updater': un => gl.uniform3f(un.ref, un.value[0], un.value[1], un.value[2]) },
+		VEC4:	{ 'name': 'FLOAT_VEC4', 		'base':'FLOAT', 'id': 0, 'size': 16, 'length':  4, 'set': Uniform.setVec4, 	 'updater': un => gl.uniform4f(un.ref, un.value[0], un.value[1], un.value[2], un.value[3]) },
+		BOOL:	{ 'name': 'BOOL', 				'base':'BOOL',  'id': 0, 'size':  1, 'length':  1, 'set': Uniform.setScalar, 'updater': un => gl.uniform1i(un.ref, un.value) },
+		BVEC2:	{ 'name': 'BOOL_VEC2',			'base':'BOOL',  'id': 0, 'size':  2, 'length':  2, 'set': Uniform.setVec2, 	 'updater': un => gl.uniform2i(un.ref, un.value[0], un.value[1] ) },
+		BVEC3:	{ 'name': 'BOOL_VEC3',			'base':'BOOL',  'id': 0, 'size':  3, 'length':  3, 'set': Uniform.setVec3, 	 'updater': un => gl.uniform3i(un.ref, un.value[0], un.value[1], un.value[2]) },
+		BVEC4:	{ 'name': 'BOOL_VEC4',			'base':'BOOL',  'id': 0, 'size':  4, 'length':  4, 'set': Uniform.setVec4, 	 'updater': un => gl.uniform4i(un.ref, un.value[0], un.value[1], un.value[2], un.value[3]) },
+		INT:	{ 'name': 'INT',				'base':'INT',   'id': 0, 'size':  4, 'length':  1, 'set': Uniform.setScalar, 'updater': un => gl.uniform1i(un.ref, un.value) },
+		IVEC2:	{ 'name': 'INT_VEC2',			'base':'INT',   'id': 0, 'size':  8, 'length':  2, 'set': Uniform.setVec2, 	 'updater': un => gl.uniform2i(un.ref, un.value[0], un.value[1] ) },
+		IVEC3:	{ 'name': 'INT_VEC3',			'base':'INT',   'id': 0, 'size': 12, 'length':  3, 'set': Uniform.setVec3, 	 'updater': un => gl.uniform3i(un.ref, un.value[0], un.value[1], un.value[2]) },
+		IVEC4:	{ 'name': 'INT_VEC4',			'base':'INT',   'id': 0, 'size': 16, 'length':  4, 'set': Uniform.setVec4, 	 'updater': un => gl.uniform4i(un.ref, un.value[0], un.value[1], un.value[2], un.value[3]) },
+		UINT:	{ 'name': 'UNSIGNED_INT',		'base':'UINT',  'id': 0, 'size':  4, 'length':  1, 'set': Uniform.setScalar, 'updater': un => gl.uniform1i(un.ref, un.value) },
+		UVEC2:	{ 'name': 'UNSIGNED_INT_VEC2',	'base':'UINT',  'id': 0, 'size':  8, 'length':  2, 'set': Uniform.setVec2, 	 'updater': un => gl.uniform2i(un.ref, un.value[0], un.value[1] ) },
+		UVEC3:	{ 'name': 'UNSIGNED_INT_VEC3',	'base':'UINT',  'id': 0, 'size': 12, 'length':  3, 'set': Uniform.setVec3, 	 'updater': un => gl.uniform3i(un.ref, un.value[0], un.value[1], un.value[2]) },
+		UVEC4:	{ 'name': 'UNSIGNED_INT_VEC4',	'base':'UINT',  'id': 0, 'size': 16, 'length':  4, 'set': Uniform.setVec4, 	 'updater': un => gl.uniform4i(un.ref, un.value[0], un.value[1], un.value[2], un.value[3]) },
+		MAT2:	{ 'name': 'FLOAT_MAT2',			'base':'FLOAT', 'id': 0, 'size': 16, 'length':  4, 'set': Uniform.setMat2, 	 'updater': un => gl.uniformMatrix2fv  (un.ref, false, un.value) },
+		MAT2x3:	{ 'name': 'FLOAT_MAT2x3',		'base':'FLOAT', 'id': 0, 'size': 24, 'length':  6, 'set': Uniform.setMat2x3, 'updater': un => gl.uniformMatrix2x3fv(un.ref, false, un.value) },
+		MAT2x4:	{ 'name': 'FLOAT_MAT2x4',		'base':'FLOAT', 'id': 0, 'size': 32, 'length':  8, 'set': Uniform.setMat2x4, 'updater': un => gl.uniformMatrix2x4fv(un.ref, false, un.value) },
+		MAT3:	{ 'name': 'FLOAT_MAT3',			'base':'FLOAT', 'id': 0, 'size': 36, 'length':  9, 'set': Uniform.setMat3, 	 'updater': un => gl.uniformMatrix3fv  (un.ref, false, un.value) },
+		MAT3x2:	{ 'name': 'FLOAT_MAT3x2',		'base':'FLOAT', 'id': 0, 'size': 24, 'length':  6, 'set': Uniform.setMat2x3, 'updater': un => gl.uniformMatrix3x2fv(un.ref, false, un.value) },
+		MAT3x4:	{ 'name': 'FLOAT_MAT3x4',		'base':'FLOAT', 'id': 0, 'size': 48, 'length': 12, 'set': Uniform.setMat3x4, 'updater': un => gl.uniformMatrix3x4fv(un.ref, false, un.value) },
+		MAT4:	{ 'name': 'FLOAT_MAT4',			'base':'FLOAT', 'id': 0, 'size': 64, 'length': 16, 'set': Uniform.setMat4, 	 'updater': un => gl.uniformMatrix4fv  (un.ref, false, un.value) },
+		MAT4x2:	{ 'name': 'FLOAT_MAT4x2',		'base':'FLOAT', 'id': 0, 'size': 32, 'length':  8, 'set': Uniform.setMat2x4, 'updater': un => gl.uniformMatrix4x2fv(un.ref, false, un.value) },
+		MAT4x3:	{ 'name': 'FLOAT_MAT4x3',		'base':'FLOAT', 'id': 0, 'size': 48, 'length': 12, 'set': Uniform.setMat3x4, 'updater': un => gl.uniformMatrix4x3fv(un.ref, false, un.value) },
+	SAMPLER2D:	{ 'name': 'SAMPLER_2D',			'base':null, 	'id': 0, 'size':  1, 'length':  1, 'set': Uniform.setScalar, 'updater': un => gl.uniform1i(un.ref, un.value) },
 		// FLOATV:	{ 'name': 'FLOAT', 				'id': 0, 'size':  4,'length':  1, 'updater': (ref, value) => gl.uniform1fv(ref, value) },
 		// VEC2V:	{ 'name': 'FLOAT_VEC2', 		'id': 0, 'size':  8,'length':  2, 'updater': (ref, value) => gl.uniform2fv(ref, value) },
 		// VEC3V:	{ 'name': 'FLOAT_VEC3', 		'id': 0, 'size': 12,'length':  3, 'updater': (ref, value) => gl.uniform3fv(ref, value) },
@@ -289,6 +285,18 @@
 		// UVEC2V:	{ 'name': 'UNSIGNED_INT_VEC2',	'id': 0, 'size':  8,'length':  2, 'updater': (ref, value) => gl.uniform2iv(ref, value) },
 		// UVEC3V:	{ 'name': 'UNSIGNED_INT_VEC3',	'id': 0, 'size': 12,'length':  3, 'updater': (ref, value) => gl.uniform3iv(ref, value) },
 		// UVEC4V:	{ 'name': 'UNSIGNED_INT_VEC4',	'id': 0, 'size': 16,'length':  4, 'updater': (ref, value) => gl.uniform4iv(ref, value) }
+	//#endregion
+	//#region texture
+		R8UI:	{ 'name':'R8UI',		'base':'UINT', 		'id': 0, 'size':  1, 'length':  1, 'type': 'UNSIGNED_BYTE' 	},
+		R32UI:	{ 'name':'R32UI',		'base':'UINT', 		'id': 0, 'size':  4, 'length':  1, 'type': 'UNSIGNED_INT' 	},
+		R32F:	{ 'name':'R32F',		'base':'FLOAT', 	'id': 0, 'size':  4, 'length':  1, 'type': 'FLOAT' 			},
+		RG8UI:	{ 'name':'RG8UI',		'base':'UINT', 		'id': 0, 'size':  2, 'length':  2, 'type': 'UNSIGNED_BYTE' 	},
+		RG32UI:	{ 'name':'RG32UI',		'base':'UINT', 		'id': 0, 'size':  8, 'length':  2, 'type': 'UNSIGNED_INT' 	},
+		RG32F:	{ 'name':'RG32F',		'base':'FLOAT', 	'id': 0, 'size':  8, 'length':  2, 'type': 'FLOAT' 			},
+	   RGBA8UI:	{ 'name':'RGBA8UI', 	'base':'UINT',		'id': 0, 'size':  4, 'length':  4, 'type': 'UNSIGNED_BYTE' 	},
+	  RGBA32UI:	{ 'name':'RGBA32UI',	'base':'UINT', 		'id': 0, 'size': 16, 'length':  4, 'type': 'UNSIGNED_INT' 	},
+	   RGBA32F:	{ 'name':'RGBA32F',		'base':'FLOAT', 	'id': 0, 'size': 16, 'length':  4, 'type': 'FLOAT' 			}
+	//#endregion
 	};
 
 	webGL.init = function init(canvas, useWebGl2) {
@@ -300,14 +308,16 @@
 			document.body.appendChild(canvas);
 		}
 		var ver = useWebGl2 ? 'webgl2': 'webgl';
-		window.gl = canvas.getContext(ver);
+		window.gl = canvas.getContext(ver, { alpha: true });
 		// translate uniform types
 		for (var i in this.types) {
 			var ut = this.types[i];
 			var id = gl[ut.name];
 			if (id != undefined) {
 				window[`gl_${i.toLowerCase()}`] = ut.id = id;
-				this.types[id] = ut;
+				var base = gl[ut.base];
+				if (base != undefined) ut.base = base;
+				//this.types[id] = ut;
 			} else console.warn(`Type '${i}' not valid.`);
 
 		}
@@ -373,19 +383,21 @@
 	webGL.createTexture = function createTexture(image) {
 		var texture = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, texture);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-		gl.generateMipmap(gl.TEXTURE_2D);
+		if (image) {
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+			gl.generateMipmap(gl.TEXTURE_2D);
+		}
 		return texture;
 	};
 	webGL.useExtension = function useExtension(extensionName) {
 		var ext = gl.getExtension(extensionName);
 		if (ext) webGL.extensions[extensionName] = ext;
 		return ext;
-	}
+	};
 
 	publish(webGL, 'webGL');
 
