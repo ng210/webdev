@@ -25,10 +25,10 @@
                 "synth1.......", "w:190",
                 "bass1........", "w:303",
                 "kick.........", "w:396",
-                "snare........", "w:503",
-                "hihat........", "w:610",
+                "snare........", "w:523",
+                "hihat........", "w:650",
                 31,
-                "amp",      60,
+                "amp",        0,
                 "env1amp", "f:1.0", "env1dc",  "f:0.0", "env1atk",       0, "env1dec", 20, "env1sus",  40, "env1rel",  20,
                 "env2amp", "f:0.4", "env2dc",  "f:0.3", "env2atk",       0, "env2dec", 20, "env2sus",  80, "env2rel",  50,
                 "env3amp", "f:1.0", "env3dc",  "f:0.0", "env3atk",       1, "env3dec", 10, "env3sus",  20, "env3rel",  10,
@@ -40,21 +40,21 @@
                 "flt1mode", "psynth.Filter.modes.LOWPASS",
 
                 35,
-                "amp",       30,
+                "amp",        0,
                 "lfo1amp", "f:0.1", "lfo1fre", "f:4.0",
                 "lfo2amp", "f:4.0", "lfo2fre", "f:6.0",
-                "env1amp", "f:1.0", "env1dc",  "f:0.0", "env1atk",       4, "env1dec", 20, "env1sus",  80, "env1rel",  80,
+                "env1amp", "f:1.0", "env1dc",  "f:0.0", "env1atk",      10, "env1dec", 20, "env1sus",  80, "env1rel",  80,
                 "env2amp", "f:0.4", "env2dc",  "f:0.3", "env2atk",       1, "env2dec", 40, "env2sus", 128, "env2rel",  50,
-                "env3amp", "f:1.0", "env3dc",  "f:0.0", "env3atk",       2, "env3dec", 10, "env3sus",  40, "env3rel", 100,
+                "env3amp", "f:1.0", "env3dc",  "f:0.0", "env3atk",      10, "env3dec", 10, "env3sus",  40, "env3rel", 100,
                 "osc1amp", "f:0.5", "osc1fre", "f:0.0", "osc1tune",      0,
                 "osc2amp", "f:0.4", "osc2fre", "f:1.0", "osc2tune",     12,
-                "flt1cut",      10, "flt1res",     140, "flt1mod",     180,
+                "flt1cut",      10, "flt1res",     140, "flt1mod",     120,
                 "osc1wave", "psynth.Osc.waveforms.PULSE",
                 "osc2wave", "psynth.Osc.waveforms.SAW",
                 "flt1mode", "psynth.Filter.modes.HIGHPASS",
 
                 31,
-                "amp",       60,
+                "amp",        0,
                 "env1amp", "f:1.0", "env1dc",  "f:0.0", "env1atk",       2, "env1dec", 10, "env1sus",  80, "env1rel",  20,
                 "env2amp", "f:0.1", "env2dc",  "f:0.4", "env2atk",       0, "env2dec", 20, "env2sus", 100, "env2rel",  60,
                 "env3amp", "f:1.0", "env3dc",  "f:0.0", "env3atk",       0, "env3dec",  4, "env3sus",  20, "env3rel",  40,
@@ -65,43 +65,47 @@
                 "osc2wave", "psynth.Osc.waveforms.PULSE",
                 "flt1mode", "psynth.Filter.modes.LOWPASS",
 
-                35,
-                "amp",       140,
-                "env1amp", "f:   1.0",    "env1dc", "f:   0.0", "env1atk",      0, "env1dec",  2, "env1sus",  80, "env1rel",  20,
+                39,
+                "amp",        180,
+                "lfo1amp", "f:  0.00",  "lfo1fre", "f:   0.0",
+                "lfo2amp", "f:  0.00",  "lfo2fre", "f:  35.0",
+                "env1amp", "f:   1.0",    "env1dc", "f:   0.0", "env1atk",      0, "env1dec",  1, "env1sus", 100, "env1rel",  12,
                 "env2amp", "f:   1.0",    "env2dc", "f:  60.0", "env2atk",      0, "env2dec",  0, "env2sus",  80, "env2rel",  10,
-                "env3amp", "f:   1.0",    "env3dc", "f:   0.0", "env3atk",      0, "env3dec",  1, "env3sus",   0, "env3rel",  10,
-                "env4amp", "f: 450.0",    "env4dc", "f:  10.0", "env4atk",      0, "env4dec",  0, "env4sus",  12, "env4rel",  10,
+                "env3amp", "f:   1.0",    "env3dc", "f:   0.0", "env3atk",      0, "env3dec",  2, "env3sus",  20, "env3rel",  10,
+                "env4amp", "f: 200.0",    "env4dc", "f:  10.0", "env4atk",      1, "env4dec",  1, "env4sus",  10, "env4rel",  10,
                 "osc1amp", "f:   0.8",   "osc1fre", "f:   0.0",
-                "osc2amp", "f:   0.1",   "osc2fre", "f:6120.0",
-                "flt1cut",         10,    "flt1res",       180, "flt1mod",    220,
-                "osc1wave", "psynth.Osc.waveforms.SINUS",
-                "osc2wave", "psynth.Osc.waveforms.NOISE",
-                "flt1mode", "psynth.Filter.modes.LOWPASS",
-
-                35,
-                "amp",      150,
-                "env1amp", "f:    1.0",  "env1dc", "f:   0.0", "env1atk",       0, "env1dec",  2, "env1sus", 60, "env1rel",  15,
-                "env2amp", "f:    1.0",  "env2dc", "f:   0.3", "env2atk",       0, "env2dec",  2, "env2sus",  4, "env2rel",  20,
-                "env3amp", "f:    1.0",  "env3dc", "f:   0.0", "env3atk",       0, "env3dec",  1, "env3sus", 20, "env3rel",  10,
-                "env4amp", "f:  200.0",  "env4dc", "f:   0.0", "env4atk",       0, "env4dec",  2, "env4sus", 20, "env4rel",  10,
-                "osc1amp", "f:    0.5", "osc1fre", "f:  40.0",
-                "osc2amp", "f:    0.4", "osc2fre", "f:9000.0",
-                "flt1cut",        60, "flt1res",          120, "flt1mod",   120,
+                "osc2amp", "f:   0.1",   "osc2fre", "f:9120.0",
+                "flt1cut",          6,   "flt1res",        120, "flt1mod",    220,
                 "osc1wave", "psynth.Osc.waveforms.SINUS",
                 "osc2wave", "psynth.Osc.waveforms.NOISE",
                 "flt1mode", "psynth.Filter.modes.LOWPASS",
 
                 39,
-                "amp",     80,
+                "amp",       120,
+                "lfo1amp", "f:   0.00", "lfo1fre",  "f:  24.0",
+                "lfo2amp", "f:   0.00", "lfo2fre",  "f:  23.0",
+                "env1amp", "f:    1.0", "env1dc",   "f:   0.0", "env1atk",       0, "env1dec",  2, "env1sus", 50, "env1rel",  20,
+                "env2amp", "f:    1.0", "env2dc",   "f:   0.3", "env2atk",       0, "env2dec",  2, "env2sus", 20, "env2rel",  20,
+                "env3amp", "f:    1.0", "env3dc",   "f:   0.0", "env3atk",       0, "env3dec",  1, "env3sus", 20, "env3rel",  10,
+                "env4amp", "f:  120.0", "env4dc",   "f:   0.0", "env4atk",       0, "env4dec",  1, "env4sus", 40, "env4rel",   5,
+                "osc1amp", "f:    0.4", "osc1fre",  "f:   4.0",
+                "osc2amp", "f:    0.5", "osc2fre",  "f:9137.0",
+                "flt1cut",        40,   "flt1res",          20, "flt1mod",   120,
+                "osc1wave", "psynth.Osc.waveforms.SINUS",
+                "osc2wave", "psynth.Osc.waveforms.NOISE",
+                "flt1mode", "psynth.Filter.modes.LOWPASS",
+
+                39,
+                "amp",     100,
                 "lfo1amp", "f:  0.98",  "lfo1fre", "f:1612.1",
-                "lfo2amp", "f:2500.0",  "lfo2fre", "f:3215.0",
-                "env1amp", "f:   1.0",  "env1dc",  "f:   0.0",  "env1atk",  0,  "env1dec",  4,  "env1sus", 60,  "env1rel",  4,
+                "lfo2amp", "f:3500.0",  "lfo2fre", "f:3215.0",
+                "env1amp", "f:   1.0",  "env1dc",  "f:   0.0",  "env1atk",  0,  "env1dec",  2,  "env1sus", 50,  "env1rel",  4,
                 "env2amp", "f:   1.0",  "env2dc",  "f:   0.0",  "env2atk",  0,  "env2dec", 20,  "env2sus",120,  "env2rel", 40,
-                "env3amp", "f:   1.0",  "env3dc",  "f:   0.0",  "env3atk",  0,  "env3dec",  2,  "env3sus", 20,  "env3rel", 20,
-                "env4amp", "f:2000.0",   "env4dc", "f:   0.0",  "env4atk",  0,  "env4dec",  1,  "env4sus", 40,  "env4rel", 20,
-                "osc1amp", "f:   0.3",  "osc1fre", "f:6137.0",
+                "env3amp", "f:   1.0",  "env3dc",  "f:   0.0",  "env3atk",  0,  "env3dec",  1,  "env3sus",120,  "env3rel", 20,
+                "env4amp", "f:1000.0",   "env4dc", "f:   0.0",  "env4atk",  0,  "env4dec",  1,  "env4sus", 40,  "env4rel", 20,
+                "osc1amp", "f:   0.2",  "osc1fre", "f:6137.0",
                 "osc2amp", "f:   0.6",  "osc2fre", "f:9143.0",
-                "flt1cut",        202,  "flt1res",         40,  "flt1mod", 200,
+                "flt1cut",        242,  "flt1res",         20,  "flt1mod", 150,
                 "osc1wave", "psynth.Osc.waveforms.PULSE",
                 "osc2wave", "psynth.Osc.waveforms.NOISE",
                 "flt1mode", "psynth.Filter.modes.HIGHPASS"
@@ -115,9 +119,9 @@
                         ["ASSIGN", 1, 1, 0, 4],
                         ["ASSIGN", 2, 4, 0, 1],
                         ["ASSIGN", 3, 3, 2, 4],
-                        ["ASSIGN", 5, 2, 1, 4],
-                        ["ASSIGN", 6, 6, 3, 2],
-                        ["ASSIGN", 7, 7, 4, 2]
+                        ["ASSIGN", 4, 2, 1, 4],
+                        ["ASSIGN", 5, 6, 3, 2],
+                        ["ASSIGN", 6, 7, 4, 2]
                     ]
                 ],
                 [256, [["EOS"]]]
@@ -168,9 +172,9 @@
             "frames": [
                 [24, [["SETPROGRAM", 1],
                       ["SETNOTE", "E-4", 80], ["SETNOTE", "G-4", 80], ["SETNOTE", "D-4", 60]]],
-                [ 4, [["SETNOTE", "E-4",  0], ["SETNOTE", "G-4",  0], ["SETNOTE", "D-4",  0]]],
+                [ 8, [["SETNOTE", "E-4",  0], ["SETNOTE", "G-4",  0], ["SETNOTE", "D-4",  0]]],
         
-                [36, [["EOS"]]]
+                [32, [["EOS"]]]
             ]
         },
         {   "adapter": "SynthAdapter",
@@ -223,7 +227,9 @@
                 [ 0, [["SETPROGRAM", 3],
                       ["SETNOTE", "E-1",120]]],
                 [ 2, [["SETNOTE", "E-1",  0]]],
-                [14, [["SETPROGRAM", 4],
+                [ 6, [["SETNOTE", "C-1", 80]]],
+                [ 2, [["SETNOTE", "C-1",  0]]],
+                [ 6, [["SETPROGRAM", 4],
                       ["SETNOTE", "C-3",150]]],
                 [ 2, [["SETNOTE", "C-3",  0]]],
                 [10, [["SETPROGRAM", 3],
@@ -246,9 +252,13 @@
                       ["SETNOTE", "E-1",120]]],
                 [ 2, [["SETNOTE", "E-1",  0]]],
                 [ 2, [["SETPROGRAM", 3],
-                      ["SETNOTE", "E-1", 80]]],
+                      ["SETNOTE", "E-1", 60]]],
                 [ 2, [["SETNOTE", "E-1",  0]]],
-                [14, [["SETPROGRAM", 4],
+                [ 6, [["SETNOTE", "C-1", 80]]],
+                [ 2, [["SETNOTE", "C-1",  0]]],
+                [ 2, [["SETNOTE", "C-1", 80]]],
+                [ 2, [["SETNOTE", "C-1",  0]]],
+                [ 2, [["SETPROGRAM", 4],
                       ["SETNOTE", "C-3",150]]],
                 [ 2, [["SETNOTE", "C-3",  0]]],
                 [10, [["SETPROGRAM", 4],
@@ -262,64 +272,64 @@
             "frames": [
                 [ 0, [["SETPROGRAM", 5],
                       ["SETNOTE", "C-4",180]]],
-                [ 2, [["SETNOTE", "C-4",  0]]],
+                [ 3, [["SETNOTE", "C-4",  0]]],
 
-                [ 6, [["SETNOTE", "C-4",120]]],
-                [ 2, [["SETNOTE", "C-4",  0]]],
-
-                [ 6, [["SETNOTE", "C-4",180]]],
-                [ 2, [["SETNOTE", "C-4",  0]]],
-
-                [ 6, [["SETNOTE", "C-4",120]]],
+                [ 5, [["SETNOTE", "C-4",100]]],
                 [ 2, [["SETNOTE", "C-4",  0]]],
 
                 [ 6, [["SETNOTE", "C-4",180]]],
-                [ 2, [["SETNOTE", "C-4",  0]]],
+                [ 3, [["SETNOTE", "C-4",  0]]],
 
-                [ 6, [["SETNOTE", "C-4",120]]],
+                [ 5, [["SETNOTE", "C-4",100]]],
                 [ 2, [["SETNOTE", "C-4",  0]]],
 
                 [ 6, [["SETNOTE", "C-4",180]]],
+                [ 3, [["SETNOTE", "C-4",  0]]],
+
+                [ 5, [["SETNOTE", "C-4",100]]],
                 [ 2, [["SETNOTE", "C-4",  0]]],
 
-                [ 6, [["SETNOTE", "C-4",120]]],
+                [ 6, [["SETNOTE", "C-4",180]]],
+                [ 3, [["SETNOTE", "C-4",  0]]],
+
+                [ 5, [["SETNOTE", "C-4",100]]],
                 [ 2, [["SETNOTE", "C-4",  0]]],
 
-                [ 2, [["SETNOTE", "E-4", 80]]],
-                [ 2, [["SETNOTE", "E-4",  0]]],
+                [ 2, [["SETNOTE", "C-4", 80]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
 
 
                 [ 2, [["SETNOTE", "C-4",180]]],
-                [ 2, [["SETNOTE", "C-4",  0]]],
+                [ 3, [["SETNOTE", "C-4",  0]]],
 
-                [ 6, [["SETNOTE", "C-4",120]]],
-                [ 2, [["SETNOTE", "C-4",  0]]],
-
-                [ 6, [["SETNOTE", "C-4",180]]],
-                [ 2, [["SETNOTE", "C-4",  0]]],
-
-                [ 6, [["SETNOTE", "C-4",120]]],
+                [ 5, [["SETNOTE", "C-4",100]]],
                 [ 2, [["SETNOTE", "C-4",  0]]],
 
                 [ 6, [["SETNOTE", "C-4",180]]],
+                [ 3, [["SETNOTE", "C-4",  0]]],
+
+                [ 5, [["SETNOTE", "C-4",100]]],
                 [ 2, [["SETNOTE", "C-4",  0]]],
 
-                [ 6, [["SETNOTE", "C-4",200]]],
+                [ 6, [["SETNOTE", "C-4",180]]],
+                [ 3, [["SETNOTE", "C-4",  0]]],
+
+                [ 5, [["SETNOTE", "C-4",200]]],
                 [ 6, [["SETNOTE", "C-4",  0]]],
 
-                [ 2, [["SETNOTE", "C-5",180]]],
-                [ 2, [["SETNOTE", "C-5",  0]]],
+                [ 2, [["SETNOTE", "C-4",180]]],
+                [ 3, [["SETNOTE", "C-4",  0]]],
 
-                [ 2, [["SETNOTE", "C-4", 80]]],
-                [ 2, [["SETNOTE", "c-4",  0]]],
+                [ 1, [["SETNOTE", "C-4", 80]]],
+                [ 1, [["SETNOTE", "C-4",  0]]],
 
-                [ 2, [["SETNOTE", "C-5",120]]],
-                [ 2, [["SETNOTE", "C-5",  0]]],
+                [ 3, [["SETNOTE", "C-4",120]]],
+                [ 2, [["SETNOTE", "C-4",  0]]],
                 
                 [ 2, [["SETNOTE", "C-4", 80]]],
-                [ 2, [["SETNOTE", "C-4",  0]]],
+                [ 1, [["SETNOTE", "C-4",  0]]],
 
-                [ 2, [["EOS"]]]
+                [ 3, [["EOS"]]]
             ]
         }
     ]

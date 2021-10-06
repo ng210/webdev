@@ -397,22 +397,23 @@
         initWebGL();
         webGL.useExtension('EXT_color_buffer_float');
         var image = await load('./res/box.png');
+        var fboSize = 4*gl.drawingBufferWidth * gl.drawingBufferHeight;
         var tests = {
-            'length(byte)': { arguments: [4*3, 'byte'], expected:{ length: 4*3, type:gl.R8UI }},
-            'length(long)': { arguments: [3*3, 'long'], expected:{ length: 4*3, type:gl.R32UI }},
-            'float32array': { arguments: [new Float32Array(10)], expected: { length: 4*3, type:gl.R32F} },
-            'length(byte[2])': { arguments: [3*5, 'byte[2]'], expected:{ length: 2*4*4, type:gl.RG8UI }},
-            'length(uint32[4])': { arguments: [5*6, 'uint32[4]'], expected:{ length: 4*4*8, type:gl.RGBA32UI }},
-            'float32array(float[4])': { arguments: [new Float32Array([0,1,2,3,4,5,6,7]), 'float[4]'], expected: { length: 4*8, type:gl.RGBA32F} },
-            // 'image': { arguments: [image.node], expected:{ length: 4*512*512, type:gl.RGBA8UI }},
-            // 'fbo': { arguments: [null], expected:{ length: 4*gl.canvas.width*gl.canvas.height, type:gl.RGBA8UI }}
+            'length(byte)':             { input: [4*3, 'byte'],                     output: null,   expected: { length: 4*3,        type:gl.R8UI }},
+            'length(long)':             { input: [3*3, 'long'],                     output: null,   expected: { length: 4*3,        type:gl.R32UI }},
+            'float32array':             { input: [new Float32Array(10)],            output: null,   expected: { length: 4*3,        type:gl.R32F} },
+            'length(byte[2])':          { input: [3*5, 'byte[2]'],                  output: null,   expected: { length: 2*4*4,      type:gl.RG8UI }},
+            'length(uint32[4])':        { input: [5*6, 'uint32[4]'],                output: null,   expected: { length: 4*4*8,      type:gl.RGBA32UI }},
+            'float32array(float[4])':   { input: [new Float32Array(8), 'float[4]'], output: null,   expected: { length: 4*8,        type:gl.RGBA32F} },
+            // 'image':                    { input: [image.node],                      output: null,   expected: { length: 4*512*512,  type:gl.RGBA8UI }},
+            // 'fbo':                      { input: [null, 'float[4]'],                output: null,   expected: { length: fboSize,    type:gl.RGBA8UI }}
         };
 
         var cs = new webGL.ComputeShader2();
         for (var i in tests) {
-            var data = tests[i].arguments[0];
+            var data = tests[i].input[0];
             // create compute-shader
-            cs.setInput.apply(cs, tests[i].arguments);
+            cs.setInput.apply(cs, tests[i].input);
             test(`Should create a buffer from '${i}'`, ctx => {
                 if (data != null) {
                     ctx.assert(cs.input.data, '!null');
@@ -423,7 +424,8 @@
                 }
                 ctx.assert(cs.input.type.id, '=', tests[i].expected.type);
             });
-            cs.setOutput.apply(cs, tests[i].arguments);
+            var output = tests[i].output || tests[i].input;
+            cs.setOutput.apply(cs, output);
 
             var samplerType = '', outputType = 'float', inputs = 'x', constant = '2';
             switch (cs.input.type.id) {
@@ -462,7 +464,7 @@ void main(void) {
             await cs.setShader(shaderScript);
             var result = cs.compute((n, i, j, k) => n);
             var expected = Reflect.construct(result.constructor, [tests[i].expected.length]);
-            var length = tests[i].arguments[0].buffer instanceof ArrayBuffer ? tests[i].arguments[0].length : tests[i].arguments[0];
+            var length = output[0].buffer instanceof ArrayBuffer ? output[0].length : output[0];
             var size = cs.input.type.length;
             for (var j=0; j<size*length; j++) expected[j] = 2 * (j%size + 1) * Math.floor(j/size);
             test('Should return the correct values', ctx => ctx.assert(result, ':=', expected));

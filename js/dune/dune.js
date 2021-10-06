@@ -32,32 +32,7 @@ function Production(name, rate, unit) {
     };
 }
 
-// Production.createTable = function createTable() {
-//     var tab = document.createElement('TABLE');
-//     var tr = document.createElement('TR');
-//     createCell(tr, 'Land in %');
-//     createCell(tr, 0, true);
-//     cell = createCell(tr, '');
-//     cell.setAttribute('colspan', 4);
-//     tab.appendChild(tr);
-//     // create header
-//     var tr = document.createElement('TR');
-//     tr.innerHTML = '<th>Name</th><th>Anzahl</th><th>%</th><th colspan="3">Produktion</th>';
-//     tab.appendChild(tr);
-
-//     // data rows
-//     for (var i=0; i<buildings.length; i++) {
-//         var b = buildings[i];
-//         if (b.production) {
-//             b.row = b.toRow(tab);
-//         }
-//     }
-
-//     return tab;
-// };
-
 Production.update = function update(product) {
-
 };
 
 Production.prototype.update = function update(efficiency) {
@@ -167,28 +142,29 @@ Building.prototype.toRow = function toRow(tab) {
 var house = 'Atreides';
 
 var currentBuildings = [
-    new Building('Windfalle', 104, null),
-    new Building('Raffinerie', 400, new Production('Melange', 180, 'kg')),
-    new Building('Offen', 20, new Production('Stahl', 36, 't')),
+    new Building('Windfalle', 114, null),
+    new Building('Raffinerie', 640, new Production('Melange', 180, 'kg')),
+    new Building('Ofen', 20, new Production('Stahl', 36, 't')),
     new Building('Silo', 90, new Production('Spice', 19, 'g')),
+    new Building('Zollstation', 16, null),
    
     new Building('Bauhof', 0, null),
     new Building('Leichte Waffenfabrik', 0, null),
-    new Building('Schwere Waffenfabrik', 0, null),
+    new Building('Schwere Waffenfabrik', 240, null),
+    new Building('Forschungszentrum', 240, null),
 
-    new Building('Kaserne', 20, null),
+    new Building('Kaserne', 0, null),
     new Building('Vorposten', 0, null),
-    new Building('Geschützturm', 120, null),
-    new Building('Forschungszentrum', 200, null),
-
-    new Building('Raketenturm', 20, null)
+    new Building('Geschützturm', 176, null),
+    new Building('Raketenturm', 64, null)
 ];
 
 var plannedBuildings = [
     new Building('Windfalle', 104, null),
     new Building('Raffinerie', 520, new Production('Melange', 180, 'kg')),
-    new Building('Offen', 20, new Production('Stahl', 36, 't')),
+    new Building('Ofen', 20, new Production('Stahl', 36, 't')),
     new Building('Silo', 90, new Production('Spice', 19, 'g')),
+    new Building('Zollstation', 16, null),
    
     new Building('Bauhof', 0, null),
     new Building('Leichte Waffenfabrik', 0, null),
@@ -260,10 +236,22 @@ async function onpageload(errors) {
 
         // set house prod.bonus
         if (house == 'Atreides') setBonus('Raffinerie', 'house', .1);
-        if (house == 'Harkonnen') setBonus('Offen', 'house', .1);
+        if (house == 'Harkonnen') setBonus('Ofen', 'house', .1);
 
         // set research #1
         setBonus('Raffinerie', 'rs1', .05);
+        setBonus('Raffinerie', 'rs2', .10);
+        setBonus('Raffinerie', 'rs3', .15);
+        setBonus('Ofen', 'rs1', .05);
+        setBonus('Ofen', 'rs2', .10);
+        setBonus('Ofen', 'rs3', .15);
+        setBonus('Silo', 'rs1', .05);
+        setBonus('Silo', 'rs2', .10);
+        setBonus('Silo', 'rs3', .15);
+
+        setBonus('Raffinerie', 'sg1', .10);
+        setBonus('Ofen', 'sg1', .10);
+        setBonus('Silo', 'sg1', .10);
 
         await Ui.create();
         Ui.update();
