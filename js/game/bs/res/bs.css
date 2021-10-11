@@ -14,7 +14,8 @@ body {
 
 #con {
 	position:absolute;
-	top:90vh;
+	left:0;top:90vh;
+	width:100vw; height:10vh;
 	font-size:10pt;
 	font-family:Consolas;
 	text-align:left;
@@ -24,6 +25,17 @@ body {
 	background-color:#102030;
 	color:#208040;
 	opacity:0.95;
-	height:10vh; width:9100vw;
 	overflow:hidden auto
+}
+
+#fps {
+	position:absolute;
+	top:1em; left: 1em;
+	width:2.5em; height:1.2em;
+	text-align: center;
+	font-size:12pt;
+	font-family:Consolas;
+	background-color:#80a0c0;
+	color:#000000;
+	opacity:0.25;
 }

@@ -1,8 +1,10 @@
 include('/lib/math/v2.js');
 (function() {
     var ge = {
-        // repository
+        path: '',
+        factories: {},
         components: {},
+
         resolution: new V2(),
         ratio: new V2(),
         settings: {},
@@ -11,31 +13,72 @@ include('/lib/math/v2.js');
         inputHandlers: [],
 
         time: 0,
-        game: null
+        game: null,
+
+        frame: 0,
+        fps: 0.0,
+        fpsTime: 0,
+        fpsHandler: () => null
     };
 
-    ge.loadComponent = async function loadComponent(id, args) {
-        if (this.components[id] == undefined) {
-            var fn = ge[id];
-            var c = Reflect.construct(fn, [this]);
-            args = args || [];
-            if (c && typeof c.initialize === 'function') {
-                await c.initialize.call(c, this, ...args);
+    //#region Component management
+    ge.loadComponent = async function loadComponent(fileName) {
+        var factories = null;
+        if (Object.values(this.components).find(x => x.file == fileName) == null) {
+            var url = this.path + '/' + fileName;
+            var res = await include(url);
+            if (res.error) throw res.error;
+            for (var i in res.symbols) {
+                if (inherits(res.symbols[i], ge.IComponentFactory)) {
+                    if (factories == null) factories = {};
+                    factories[i] = this.factories[i] = Reflect.construct(res.symbols[i], []);
+                    var deps = factories[i].getDependencies();
+                    if (deps) {
+                        for (var j=0; j<deps.length; j++) {
+                            await ge.loadComponent(deps[j]);
+                        }
+                    }
+                    var types = factories[i].getTypes();
+                    for (var j=0; j<types.length; j++) {
+                        this.components[types[j].name] = {
+                            'file': fileName,
+                            'factory': factories[i],
+                            'instances': {}
+                        }
+                    }
+                }
             }
-            if (inherits(c, ge.Renderer)) this.renderers.push(c);
-            if (inherits(c, ge.InputHandler)) this.inputHandlers.push(c);
-            c.engine = ge;
-            this.components[id] = c;
         }
-        return this.components[id];
+        return factories;
     };
 
-    ge.getComponent = function getComponent(id) {
+    ge.createInstance = async function createInstance(componentName, instanceId) {
+        var res = null;
+        var c = this.components[componentName];
+        if (c != undefined) {
+            res = await c.factory.instantiate(this, componentName, instanceId);
+            if (res != null) {
+                c.instances[instanceId] = res;
+                if (inherits(res, ge.Renderer)) this.renderers.push(res);
+                if (inherits(res, ge.InputHandler)) this.inputHandlers.push(res);
+                var args = []; for (var i=2; i<arguments.length; i++) args.push(arguments[i]);
+                await res.initialize.apply(res, args);
+            }
+        } else throw new Error(`Component '${componentName}' does not exist!`);
+        return res;
+    };
+
+    ge.getComponent = function getComponent(instanceId) {
         return this.components[id];
+    };
+    //#endregion
+
+    ge.setFpsHandler = function setFpsHandler(handler) {
+        ge.fpsHandler = handler;
     };
 
     ge.addActor = function addActor(id) {
-        var a = new ge.Actor(id);
+        var a = new ge.Actor(this, id);
         this.actors.push(a);
         return a;
     };
@@ -55,6 +98,7 @@ include('/lib/math/v2.js');
         ge.setResolution(gl.canvas.width, gl.canvas.height);
     };
 
+    //#region Main loop
     ge.begin = function begin() {
         ;
     };
@@ -102,19 +146,29 @@ include('/lib/math/v2.js');
         ge.end();
         ge.time = now;
         requestAnimationFrame(ge.mainloop);
-        ge.end();
+        if (ge.frame++ == 100) {
+            ge.fpsHandler(100000/(now - ge.fpsTime));
+            ge.frame = 0;
+            ge.fpsTime = now;
+        }
     };
 
     ge.run = function run(game) {
         this.time = Date.now();
         this.game = game;
+        this.fpsTime = this.time;
+        this.frame = 0;
         this.mainloop();
     };
+    //#endregion
 
     // ge.onresize = function onresize(e) {
     //     Dbg.prln(gl.canvas.width);
     //     Dbg.prln(gl.canvas.height);
     // };
+
+    var url = new Url(document.currentScript.url);
+    ge.path = Url.relative(baseUrl.path, url.getPath());
 
     window.addEventListener('resize', ge.onresize);
 

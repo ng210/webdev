@@ -1,7 +1,9 @@
 include('./ge.js');
 (function() {
-    function Renderer() {
+    function Renderer(engine, id) {
+        Renderer.base.constructor.call(this, engine, id);
     }
+    extend(ge.IComponent, Renderer);
 
     Renderer.prototype.resize = function resize() {
         throw new Error('Not implemented!');

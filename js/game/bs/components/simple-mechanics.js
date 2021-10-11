@@ -1,10 +1,30 @@
-include('./ge.js');
 include('./mechanics.js');
 (function() {
-    function SimpleMechanics() {
-        SimpleMechanics.base.constructor.call(this);
+    //#region SimpleMechanicsFactory
+    function SimpleMechanicsFactory() {
+        SimpleMechanicsFactory.base.constructor.call(this);
+    };
+    extend(ge.IComponentFactory, SimpleMechanicsFactory);
+
+    SimpleMechanicsFactory.prototype.getDependencies = function getDependencies() {
+        return null;
+    };
+    SimpleMechanicsFactory.prototype.getTypes = function getTypes() {
+        return [SimpleMechanics];
+    };
+    SimpleMechanicsFactory.prototype.instantiate = function instantiate(engine, type, id) {
+        return new SimpleMechanics(engine, id);
+    };
+    //#endregion
+
+    //#region SimpleMechanics
+    function SimpleMechanics(engine, id) {
+        SimpleMechanics.base.constructor.call(this, engine, id);
     }
     extend(ge.Mechanics, SimpleMechanics);
+
+    SimpleMechanics.prototype.initialize = async function initialize() {
+    };
 
     SimpleMechanics.prototype.update = function update(obj, dt) {
         var a = obj.current.acceleration;
@@ -16,7 +36,6 @@ include('./mechanics.js');
         // p1 = p + v*dt
         obj.next.position.set(v.prodC(dt).add(obj.current.position));
     };
-
     SimpleMechanics.prototype.resolveCollision = function resolveCollision(dt, i, n) {
         var p = this.current.position;
         var v = this.averageVelocity;
@@ -35,7 +54,6 @@ include('./mechanics.js');
         // update object after collision
         this.update(t2);
     };
-
     SimpleMechanics.prototype.setup = function setup(obj, args) {
         obj.current.velocity = new V3();
         obj.current.acceleration = new V3();
@@ -45,12 +63,13 @@ include('./mechanics.js');
         obj.updaters.push(this, args);
         obj.resolveCollision = this.resolveCollision;
         obj.updateState = this.updateState;
-    }
-
+    };
     SimpleMechanics.prototype.updateState = function updateState() {
         this.current.position.set(this.next.position);
         this.current.velocity.set(this.next.velocity);
     };
+    //#endregion
 
+    publish(SimpleMechanicsFactory, 'SimpleMechanicsFactory', ge);
     publish(SimpleMechanics, 'SimpleMechanics', ge);
 })();

@@ -1,8 +1,8 @@
-include('./ge.js');
+include('./icomponent.js');
 include('/lib/math/v3.js');
 (function() {
-
-    function Actor(id) {
+    function Actor(engine, id) {
+        Actor.base.constructor.call(this, engine, id);
         this.id = id;
         this.current = {
             position: new V3()
@@ -15,12 +15,15 @@ include('/lib/math/v3.js');
         this.constraints = [];
         this.updateState = function() { this.current.position.set(this.next.position); };
     }
+    extend(ge.IComponent, Actor);
 
-    Actor.prototype.addSprite = function addSprite() {
-        var sprMgr = ge.getComponent('SpriteManager');
-        this.sprite = sprMgr.addSprite();
-        var sr = ge.getComponent('SpriteRenderer');
-        this.renderer = sr;
+    Actor.prototype.initialize = async function initialize() {
+
+    };
+
+    Actor.prototype.addSprite = function addSprite(spriteManager) {
+        this.sprite = spriteManager.addSprite();
+        this.renderer = spriteManager.renderer;
         return this.sprite;
     };
 
@@ -28,13 +31,12 @@ include('/lib/math/v3.js');
     // - adds mechanics properties
     // - adds updater
     // TODO: add mass and forces
-    Actor.prototype.addSimpleMechanics = function addSimpleMechanics(args) {
-        var simpleMechanics = ge.getComponent('SimpleMechanics');
-        simpleMechanics.setup(this);
+    Actor.prototype.addMechanics = function addMechanics(mechanics) {
+        mechanics.setup(this);
     };
 
-    Actor.prototype.addSegmentCollider = function addSegmentCollider(segmentList) {
-        this.constraints.push(ge.getComponent('SegmentCollider2d'), [segmentList]);
+    Actor.prototype.addCollider = function addCollider(collider) {
+        this.constraints.push(collider, []);
     };
 
     Actor.prototype.update = function update(dt) {

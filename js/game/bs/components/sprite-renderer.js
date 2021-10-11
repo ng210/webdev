@@ -1,13 +1,13 @@
 include('./renderer.js');
 (function() {
-    function SpriteRenderer() {
-        SpriteRenderer.base.constructor.call(this);
+    function SpriteRenderer(engine, id) {
+        SpriteRenderer.base.constructor.call(this, engine, id);
         this.sprMgr = null;
     }
     extend(ge.Renderer, SpriteRenderer);
 
-    SpriteRenderer.prototype.initialize = async function initialize(engine) {
-        this.sprMgr = engine.getComponent('SpriteManager');
+    SpriteRenderer.prototype.initialize = async function initialize(sprMgr) {
+        this.sprMgr = sprMgr;
     };
 
     SpriteRenderer.prototype.resize = function resize() {
@@ -26,8 +26,7 @@ include('./renderer.js');
     SpriteRenderer.prototype.update = function update(obj, args) {
         obj.sprite.position.set(obj.current.position);
         obj.sprite.isDirty = obj.isDirty;
-        var sm = this.engine.getComponent('SpriteManager');
-        sm.updateSprite(obj.sprite);
+        this.sprMgr.updateSprite(obj.sprite);
     };
 
     publish(SpriteRenderer, 'SpriteRenderer', ge);

@@ -1,7 +1,7 @@
 include('./input-handler.js');
 (function() {
-    function MouseHandler() {
-        MouseHandler.base.constructor.call(this);
+    function MouseHandler(engine, id) {
+        MouseHandler.base.constructor.call(this, engine, id);
         this.position = new V2();
         this.positionRelative = new V2();
         this.buttons = new Array(6);    // 3 buttons * 2 states

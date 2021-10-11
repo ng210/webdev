@@ -1,9 +1,9 @@
 include('./ge.js');
 include('/lib/math/segment.js');
 (function() {
-    function SegmentRenderer() {
-        SegmentRenderer.base.constructor.call(this);
-        this.segments = [];
+    function SegmentRenderer(engine, id) {
+        SegmentRenderer.base.constructor.call(this, engine, id);
+        this.segments = null;
         this.vertexBuffer = null;
         this.program = null;
         this.projection = new Float32Array(16);
@@ -18,7 +18,8 @@ include('/lib/math/segment.js');
         }
     };
 
-    SegmentRenderer.prototype.initialize = async function initialize(engine) {
+    SegmentRenderer.prototype.initialize = async function initialize(segments) {
+        this.segments = segments;
         // load resources
         var resources = await Promise.all([
             load({ url: `./components/flat.vs`, contentType: 'x-shader/x-vertex', shaderType:gl.VERTEX_SHADER }),
@@ -57,26 +58,6 @@ include('/lib/math/segment.js');
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
         gl.drawArrays(gl.LINES, 0, this.segments.length*4);
-    };
-
-    SegmentRenderer.prototype.clearSegments = function clearSegments() {
-        this.segments = [];
-    };
-
-    SegmentRenderer.prototype.addSegment = function addSegment(x1,y1,x2,y2) {
-        if (x1 instanceof Segment) {
-            this.segments.push(x1);
-        } else if (Array.isArray(x1) && Array.isArray(y1)) {
-            this.segments.push(new Segment(x1, y1))
-        } else if (x1 instanceof Float32Array && y1 instanceof Float32Array) {
-            this.segments.push(new Segment(x1, y1));
-        }        
-    };
-
-    SegmentRenderer.prototype.addSegments = function addSegments(segmentList) {
-        for (var i=0; i<segmentList.length; i++) {
-            this.addSegment(segmentList[i]);
-        }        
     };
 
     publish(SegmentRenderer, 'SegmentRenderer', ge);

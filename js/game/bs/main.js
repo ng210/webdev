@@ -1,6 +1,6 @@
 include('/lib/base/dbg.js');
 include('/lib/math/noise.js');
-include('./components/ge-lib.js');
+include('./components/ge.js');
 
 const MAX_BALL_COUNT = 100;
 
@@ -11,14 +11,16 @@ function rand(min, max) {
 }
 
 function Game() {
-    this.sprMgr = null;
+    this.spriteManager = null;
+    this.segmentManager = null;
+    this.simpleMechanics = null;
+
     this.time = 0;
     this.center = null;
     this.noise = null;
 
     this.frame = 100;
     this.segments = [];
-    this.actors = [];
 
     this.ballId = 0;
 }
@@ -26,18 +28,29 @@ function Game() {
 Game.prototype.init = async function init() {
     Dbg.prln('Initialization');
 
-    // load components
-    await ge.loadComponent('SpriteManager', ['./res/balls.spr.json', MAX_BALL_COUNT]);
-    await ge.loadComponent('SpriteRenderer');
-    this.segmentRenderer = await ge.loadComponent('SegmentRenderer');
-    await ge.loadComponent('SimpleMechanics');
-    await ge.loadComponent('SegmentCollider2d');
-    this.keyboardHandler = await ge.loadComponent('KeyboardHandler');
-    this.mouseHandler = await ge.loadComponent('MouseHandler');
+    //#region Components and instances
+    await ge.loadComponent('sprite-manager.js');
+    this.spriteManager = await ge.createInstance('SpriteManager', 'sprmgr1', './res/balls.spr.json', MAX_BALL_COUNT);
+
+    await ge.loadComponent('segment-manager.js');
+    this.segmentManager = await ge.createInstance('SegmentManager', 'segmgr1');
+
+    await ge.loadComponent('simple-mechanics.js');
+    this.simpleMechanics = await ge.createInstance('SimpleMechanics', 'sm1');
+
+    await ge.loadComponent('input-handler.js');
+    this.keyboardHandler = await ge.createInstance('KeyboardHandler', 'kbhandler1');
+    this.mouseHandler = await ge.createInstance('MouseHandler', 'mousehandler1');
+
+    await ge.loadComponent('actor.js');
     Dbg.prln('Components loaded.');
+    //#endregion    
+
     this.noise = new Noise(20081028);
 
     // setup screen
+    var fpsDisplay = document.getElementById('fps');
+    ge.setFpsHandler(fps => fpsDisplay.innerHTML = ('    '+fps.toFixed(2)).slice(-6));
     this.setResolution(1920, 1080);
     ge.settings.backgroundColor = [0.85, 0.90, 1.0, 1.0];
     ge.prerender();
@@ -72,8 +85,8 @@ Game.prototype.createCircleSegments = function createCircleSegments(center, w, h
     return segments;
 };
 
-Game.prototype.setResolution = function setResolution(w, h) {
-    ge.setResolution(w, h);
+Game.prototype.createSegments = function createSegments(w, h) {
+    var segments = [];
     this.center = new V2(w/2, h/2);
     var bl = new V2(this.frame, this.frame);
     var tl = new V2(this.frame, h-this.frame);
@@ -81,18 +94,24 @@ Game.prototype.setResolution = function setResolution(w, h) {
     var br = new V2(w-this.frame, this.frame);
     // this.segments.push(...this.createCircleSegments(ge.resolution.prod([0.2, 0.3]), 0.05*w, 0.08*h, 3, true));
     //this.segments.push(...this.createCircleSegments(this.center, 0.2*w, 0.2*h, 24, true));
-    this.segments.push(...this.createCircleSegments(this.center, 0.5*w, 0.5*h, 36));
+    segments.push(...this.createCircleSegments(this.center, 0.3*w, 0.3*h, 36, true));
     // this.segments.push(...this.createCircleSegments(ge.resolution.prod([0.8, 0.3]), 0.05*w, 0.08*h, 5, true));
     // this.segments.push(...this.createCircleSegments(ge.resolution.prod([0.2, 0.7]), 0.02*w, 0.08*h, 12, true));
     // this.segments.push(...this.createCircleSegments(ge.resolution.prod([0.8, 0.7]), 0.10*w, 0.10*h, 6, true));
-    // this.segments.push(
-    //     new Segment(bl, br),        // bottom
-    //     new Segment(br, tr),        // right
-    //     new Segment(tr, tl),        // top
-    //     new Segment(tl, bl)         // left
-    // );
-    this.segmentRenderer.clearSegments();
-    this.segmentRenderer.addSegments(this.segments);
+    segments.push(
+        new Segment(bl, br),        // bottom
+        new Segment(br, tr),        // right
+        new Segment(tr, tl),        // top
+        new Segment(tl, bl)         // left
+    );
+
+    this.segmentManager.clearSegments();
+    this.segmentManager.addSegments(segments);
+};
+
+Game.prototype.setResolution = function setResolution(w, h) {
+    ge.setResolution(w, h);
+    this.createSegments(w, h);
 };
 
 //#region Callbacks for the GE framework
@@ -135,9 +154,10 @@ Game.prototype.setBall = function setBall(ball, v) {
 Game.prototype.addBall = function addBall(v) {
     var ball = ge.addActor(`ball${this.ballId}`);
     this.ballId++;
-    ball.addSprite();
-    ball.addSimpleMechanics();
-    ball.addSegmentCollider(this.segments);
+    ball.addSprite(this.spriteManager);
+    ball.addMechanics(this.simpleMechanics);
+    ball.addCollider(this.segmentManager.collider);
+    //ball.addCollider(this.spriteManager.collider);
     this.setBall(ball, v);
     return ball;
 };

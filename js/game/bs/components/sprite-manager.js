@@ -1,13 +1,42 @@
-include('./ge.js');
+include('./icomponent-factory.js');
 include('/lib/webgl/sprite/sprite-manager.js');
 (function() {
-    function SpriteManager() {
+
+    //#region SpriteMangerFactory
+    function SpriteManagerFactory() {
+        SpriteManagerFactory.base.constructor.call(this);
+    };
+    extend(ge.IComponentFactory, SpriteManagerFactory);
+
+    SpriteManagerFactory.prototype.getDependencies = function getDependencies() {
+        return ['sprite-renderer.js'/*, 'sprite-collider.js'*/];
+    };
+    SpriteManagerFactory.prototype.getTypes = function getTypes() {
+        return [SpriteManager, ge.SpriteRenderer/*, ge.SpriteCollider*/];
+    };
+    SpriteManagerFactory.prototype.instantiate = function instantiate(engine, type, id) {
+        var inst = null;
+        switch (type) {
+            case 'SpriteManager': inst = new SpriteManager(engine, id, arguments[3], arguments[4]); break;
+            //case 'SpriteCollider': inst = new ge.SpriteCollider(engine, componentName); break;
+            case 'SpriteRenderer': inst = new ge.SpriteRenderer(engine, id); break;
+        }
+        return inst;
+    };
+    //#endregion
+
+    //#region SpriteManager
+    function SpriteManager(engine, id) {
+        SpriteManager.base.constructor.call(this, engine, id);
         this.sprMgr = null;
     };
+    extend(ge.IComponent, SpriteManager);
 
-    SpriteManager.prototype.initialize = async function(engine, mapUrl, spriteCount) {
+    SpriteManager.prototype.initialize = async function initialize(mapUrl, spriteCount) {
         this.sprMgr = new webGL.SpriteManager(null);  // TODO: pass a player instance
         await this.sprMgr.initialize(mapUrl, spriteCount);
+        //this.collider = await ge.createInstance('SpriteCollider', this.id+'Collider1', this.sprMgr);
+        this.renderer = await ge.createInstance('SpriteRenderer', this.id+'Renderer1', this.sprMgr);
     };
 
     SpriteManager.prototype.addSprite = function addSprite() {
@@ -29,6 +58,8 @@ include('/lib/webgl/sprite/sprite-manager.js');
     SpriteManager.prototype.resize = function resize(size) {
         this.sprMgr.resize(size.x, size.y);
     };
+    //#endregion
 
+    publish(SpriteManagerFactory, 'SpriteManagerFactory', ge);
     publish(SpriteManager, 'SpriteManager', ge);
 })();

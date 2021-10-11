@@ -1,8 +1,8 @@
 include('./input-handler.js');
 (function() {
     var Keys = {};
-    function KeyboardHandler() {
-        KeyboardHandler.base.constructor.call(this);
+    function KeyboardHandler(engine, id) {
+        KeyboardHandler.base.constructor.call(this, engine, id);
         this.shiftLeft = false;
         this.altLeft = false;
         this.ctrlLeft = false;
