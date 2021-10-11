@@ -99,7 +99,7 @@ include('fn.js');
         var r = new V4(u);
         test('Should create V4 from array',    context => context.assert(u, ':=', [ 4,  5,  6,  7] ));
         test('Should create V4 from x,y,z,w',  context => context.assert(v, ':=', [ 2,  3,  1, -1] ));
-        test('Should create V4 from constant', context => context.assert(s, ':=', [ 8,  8,  8,  8] ));
+        test('Should create V4 from constant', context => context.assert(s, ':=', [ 8,  8,  8,  1] ));
         test('Should create V4 from V4',       context => context.assert(r, ':=', u ));
 
         test('Should set V4 from vector', context => context.assert(r.set(v), ':=', [ 2,  3,  1, -1]));
@@ -127,7 +127,7 @@ include('fn.js');
         test('Should return length', context =>  context.assert(u.len, '=', Math.sqrt(4*4 + 5*5 + 6*6 + 7*7)));
         test('Should return length squared', context =>  context.assert(u.len2, '=', 4*4 + 5*5 + 6*6 + 7*7));
 
-        test('Should return normalized vector', context =>  context.assert((r = new V4(2)).norm(), ':=', [2/4, 2/4, 2/4, 2/4]));
+        test('Should return normalized vector', context =>  context.assert((r = new V4(2, 2, 2, 2)).norm(), ':=', [2/4, 2/4, 2/4, 2/4]));
     }
 
     function test_m33() {

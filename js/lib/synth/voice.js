@@ -41,10 +41,14 @@ include('./filter.js')
         var amLfo = (this.lfos[0].run() + am)/2 + (1-am);
         var fmLfo = this.lfos[1].run();
         // run main oscillators
-        var amp = this.envelopes[0].amp.value != 0 ? this.envelopes[0].run(amLfo) : 0;
-        var psw = this.envelopes[1].amp.value != 0 ? this.envelopes[1].run(1.0) : 0;
-        var cut = this.envelopes[2].amp.value != 0 ? this.envelopes[2].run(1.0) : 0;
-        var fm = this.envelopes[3].amp.value != 0 ? this.envelopes[3].run(1.0) : 0;
+        // var amp = this.envelopes[0].amp.value != 0 ? this.envelopes[0].run(amLfo) : 0;
+        // var psw = this.envelopes[1].amp.value != 0 ? this.envelopes[1].run(1.0) : 0;
+        // var cut = this.envelopes[2].amp.value != 0 ? this.envelopes[2].run(1.0) : 0;
+        // var fm = this.envelopes[3].amp.value != 0 ? this.envelopes[3].run(1.0) : 0;
+        var amp = this.envelopes[0].run(amLfo);
+        var psw = this.envelopes[1].run(1.0);
+        var cut = this.envelopes[2].run(1.0);
+        var fm = this.envelopes[3].run(1.0);
         var smp1 = this.oscillators[0].run(amp, fm+fmLfo, psw);
         var smp2 = this.oscillators[1].run(amp, fm+fmLfo, psw);
         this.filter.onchange(cut);

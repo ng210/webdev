@@ -8,7 +8,7 @@ body {
 #con {
 	position:absolute;
 	top:77vh;
-	font-size:14pt;
+	font-size:12pt;
 	font-family:Consolas;
 	text-align:left;
 	padding:2 4;
@@ -21,7 +21,7 @@ body {
 	overflow:hidden auto;
 }
 
-#middle {
+#main {
 	margin-left: auto;
 	margin-right: auto;
 	width: 80vw;
@@ -30,17 +30,17 @@ body {
 	color: #b0e0ff;
 	text-shadow: 1px 1px #304060;
 	overflow: auto;
-	font-size: 18pt;
+	font-size: 12pt;
 }
 
 table {
 	border: none;
 	color: 'white';
 	font-family: Consolas;
+	text-align: right;
 }
 
 #current {
-	text-align: right;
 	margin-left: auto;
 }
 
@@ -49,8 +49,17 @@ table {
 	border: 2px outset #78a0f0;
 }
 
+#calculated {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.calculated {
+	background-color: #60a0a0;
+	border: 2px outset #78c0c0;
+}
+
 #planned {
-	text-align: right;
 	margin-right: auto;
 }
 
@@ -60,7 +69,7 @@ table {
 }
 
 td, th {
-	padding: 4px;
+	padding: 1px 2px;
 }
 
 td {
@@ -79,15 +88,17 @@ input {
 	width: 3em;
 	font-family: 'Courier New', Courier, monospace;
 	font-weight: bold;
-	font-size: 16pt;
+	font-size: 10pt;
 }
 
 h1 {
 	font-size: 24pt;
 	margin: .5em;
+	color: white;
 }
 
 h3 {
 	font-size: 16pt;
 	margin: .5em;
+	color: silver;
 }

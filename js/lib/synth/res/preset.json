@@ -6,12 +6,12 @@
         "lfo2.amp":   1.00, "lfo2.fre":  6.00,
 
         "env1.amp": 1.00, "env1.dc":  0.00, "env1.atk":  0.001, "env1.dec": 0.060, "env1.sus": 0.20, "env1.rel": 0.10,
-        "env2.amp": 0.40, "env2.dc":  0.00, "env2.atk":  0.000, "env2.dec": 0.150, "env2.sus": 0.50, "env2.rel": 0.10,
-        "env3.amp": 1.00, "env3.dc":  0.00, "env3.atk":  0.002, "env3.dec": 0.010, "env3.sus": 0.10, "env3.rel": 0.20,
+        "env2.amp": 0.40, "env2.dc":  0.00, "env2.atk":  0.000, "env2.dec": 0.100, "env2.sus": 0.50, "env2.rel": 0.10,
+        "env3.amp": 1.00, "env3.dc":  0.00, "env3.atk":  0.000, "env3.dec": 0.010, "env3.sus": 0.01, "env3.rel": 0.20,
 
-        "osc1.amp": 0.30, "osc1.fre": 0.00, "osc1.tune":-12.00, "osc1.psw": 0.50, "osc1.wave": 8,
-        "osc2.amp": 0.50, "osc2.fre": 0.30, "osc2.tune":  0.00, "osc2.psw": 0.20, "osc2.wave": 4,
+        "osc1.amp": 0.30, "osc1.fre": 0.00, "osc1.tune":  0.00, "osc1.psw": 0.50, "osc1.wave": 8,
+        "osc2.amp": 0.50, "osc2.fre": 0.30, "osc2.tune": 12.00, "osc2.psw": 0.20, "osc2.wave": 4,
 
-        "flt1.cut": 0.01, "flt1.res": 0.60, "flt1.mod": 0.80, "flt1.mode": 1
+        "flt1.cut": 0.20, "flt1.res": 0.10, "flt1.mod": 0.90, "flt1.mode": 1
     }
 }

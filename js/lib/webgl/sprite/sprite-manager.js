@@ -80,7 +80,7 @@ include('sprite.js');
         webGL.deleteBuffer(this.spriteAttributeBuffer);
         delete this.spriteAttributeData;
 
-        gl.deleteTexture(this.map.texture);
+        webGL.deleteTexture(this.map.texture);
         this.program.destroy();
     };
 
@@ -156,7 +156,7 @@ include('sprite.js');
     SpriteManager.prototype.render = function render() {
         webGL.useProgram(this.program, { 'u_projection': this.projection });
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.map.texture);
+        gl.bindTexture(gl.TEXTURE_2D, this.map.texture.texture);
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
         gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, this.count);

@@ -1,4 +1,5 @@
 include('/lib/base/dbg.js');
+include('/lib/math/fn.js');
 
 function createCell(row, data, isInput, isHeader) {
     var tag = isHeader ? 'TH' : 'TD';
@@ -56,7 +57,7 @@ function Building(name, count, production) {
     this.row = null;
 }
 
-Building.createTable = function createTable(id, data) {
+Building.createTable = function createTable(id, data, disabled) {
     var tab = document.createElement('TABLE');
     tab.id = id; tab.className = id;
     tab.datasource = data;
@@ -69,7 +70,7 @@ Building.createTable = function createTable(id, data) {
 
     // data rows
     for (var i=0; i<data.length; i++) {
-        data[i].row = data[i].toRow(tab);
+        data[i].row = data[i].toRow(tab, disabled);
     }
 
     // free
@@ -80,7 +81,9 @@ Building.createTable = function createTable(id, data) {
     // total
     var tr = document.createElement('TR'); tab.appendChild(tr);
     createCell(tr, 'Total');
-    createCell(tr, 0, true).id = 'total';
+    var cell = createCell(tr, 0, true);
+    cell.id = 'total';
+    tab.tbTotal = cell.children[0];
     createCell(tr, '&nbsp;').setAttribute('colspan', 4);
     
     return tab;
@@ -99,6 +102,7 @@ Building.update = function update(tab, total) {
         tab.rows[l-1].cells[1].children[0].value = total;
     }
     tab.rows[l-2].cells[1].innerHTML = total - land;
+    tab.datasource.total = total;
     
     var wb = 3 * windtrap/total;
     var efficiency = wb;
@@ -107,8 +111,19 @@ Building.update = function update(tab, total) {
         b.update(efficiency, total);
     }
 };
+Building.interpolate = function interpolate(from, to, target) {
+    console.log(target.total, from.total, to.total);
+    var f = (target.total - from.total)/(to.total - from.total);
+    for (var i=0; i<from.length; i++) {
+        var bf = from[i];
+        var bt = to[i];
+        var bc = target[i];
+        bc.count = Math.floor(Fn.lerp(bf.count, bt.count, f));
+    }
+};
 
 Building.prototype.update = function update(efficiency, land) {
+    this.row.cells[1].children[0].value = this.count.toFixed(0);
     this.row.cells[2].children[0].value = (100*this.count/land).toFixed(2);
     if (this.production) {
         var ratio = this.count/land;
@@ -121,13 +136,15 @@ Building.prototype.update = function update(efficiency, land) {
     }
 };
 
-Building.prototype.toRow = function toRow(tab) {
+Building.prototype.toRow = function toRow(tab, disabled) {
     var tr = document.createElement('TR'); tab.appendChild(tr);
     createCell(tr, this.name);
-    var cell = createCell(tr, this.count, true);
+    var cell = createCell(tr, 0, true);
     cell.id = `${this.name}_count`; cell.building = this;
+    if (disabled) cell.children[0].setAttribute('disabled', 1);
     cell = createCell(tr, '00.00', true);
     cell.id = `${this.name}_percent`; cell.building = this;
+    if (disabled) cell.children[0].setAttribute('disabled', 1);
     if (this.production) this.production.addCells(tr);
     else {
         var cell = createCell(tr, '–');
@@ -142,40 +159,57 @@ Building.prototype.toRow = function toRow(tab) {
 var house = 'Atreides';
 
 var currentBuildings = [
-    new Building('Windfalle', 114, null),
-    new Building('Raffinerie', 640, new Production('Melange', 180, 'kg')),
+    new Building('Windfalle', 160, null),
+    new Building('Raffinerie', 800, new Production('Melange', 180, 'kg')),
     new Building('Ofen', 20, new Production('Stahl', 36, 't')),
-    new Building('Silo', 90, new Production('Spice', 19, 'g')),
-    new Building('Zollstation', 16, null),
+    new Building('Silo', 115, new Production('Spice', 19, 'g')),
+    new Building('Zollstation', 0, null),
    
     new Building('Bauhof', 0, null),
     new Building('Leichte Waffenfabrik', 0, null),
-    new Building('Schwere Waffenfabrik', 240, null),
-    new Building('Forschungszentrum', 240, null),
+    new Building('Schwere Waffenfabrik', 360, null),
+    new Building('Forschungszentrum', 221, null),
 
     new Building('Kaserne', 0, null),
     new Building('Vorposten', 0, null),
-    new Building('Geschützturm', 176, null),
-    new Building('Raketenturm', 64, null)
+    new Building('Geschützturm', 240, null),
+    new Building('Raketenturm', 84, null)
 ];
 
-var plannedBuildings = [
-    new Building('Windfalle', 104, null),
-    new Building('Raffinerie', 520, new Production('Melange', 180, 'kg')),
-    new Building('Ofen', 20, new Production('Stahl', 36, 't')),
-    new Building('Silo', 90, new Production('Spice', 19, 'g')),
-    new Building('Zollstation', 16, null),
+var calculatedBuildings = [
+    new Building('Windfalle', 0, null),
+    new Building('Raffinerie', 0, new Production('Melange', 180, 'kg')),
+    new Building('Ofen', 0, new Production('Stahl', 36, 't')),
+    new Building('Silo', 0, new Production('Spice', 19, 'g')),
+    new Building('Zollstation', 0, null),
    
     new Building('Bauhof', 0, null),
     new Building('Leichte Waffenfabrik', 0, null),
     new Building('Schwere Waffenfabrik', 0, null),
+    new Building('Forschungszentrum', 0, null),
 
-    new Building('Kaserne', 20, null),
+    new Building('Kaserne', 0, null),
     new Building('Vorposten', 0, null),
-    new Building('Geschützturm', 130, null),
-    new Building('Forschungszentrum', 416, null),
+    new Building('Geschützturm', 0, null),
+    new Building('Raketenturm', 0, null)
+];
 
-    new Building('Raketenturm', 20, null)
+var plannedBuildings = [
+    new Building('Windfalle', 80, null),
+    new Building('Raffinerie', 820, new Production('Melange', 180, 'kg')),
+    new Building('Ofen', 20, new Production('Stahl', 36, 't')),
+    new Building('Silo', 120, new Production('Spice', 19, 'g')),
+    new Building('Zollstation', 0, null),
+   
+    new Building('Bauhof', 0, null),
+    new Building('Leichte Waffenfabrik', 0, null),
+    new Building('Schwere Waffenfabrik', 400, null),
+    new Building('Forschungszentrum', 200, null),
+
+    new Building('Kaserne', 0, null),
+    new Building('Vorposten', 0, null),
+    new Building('Geschützturm', 240, null),
+    new Building('Raketenturm', 120, null)
 ];
 
 var Ui = {
@@ -184,20 +218,22 @@ var Ui = {
 
     create: async function create() {
         var left = document.getElementById('left');
+        var middle = document.getElementById('middle');
         var right = document.getElementById('right');
         this.currentBuildings = Building.createTable('current', currentBuildings)
         left.appendChild(this.currentBuildings);
+        this.calculatedBuildings = Building.createTable('calculated', calculatedBuildings, true)
+        middle.appendChild(this.calculatedBuildings);
         this.plannedBuildings = Building.createTable('planned', plannedBuildings);
         right.appendChild(this.plannedBuildings);
-
-        // this.production = Production.createTable();
-        // middle.appendChild(this.production);
     },
 
-    update: function(total) {
+    update: function() {
         // sum land, get windtrap size
-        Building.update(this.currentBuildings, total);
-        Building.update(this.plannedBuildings, total);
+        Building.update(this.currentBuildings);
+        var total = parseInt(this.calculatedBuildings.rows[this.calculatedBuildings.rows.length-1].cells[1].children[0].value);
+        Building.update(this.calculatedBuildings);
+        Building.update(this.plannedBuildings);
     }
 };
 
@@ -217,8 +253,12 @@ function update(e) {
         b.count += delta;
         b.row.cells[1].children[0].value = b.count;
     }
-    
-    Building.update(cell.parentNode.parentNode, total);
+    if (tab != Ui.calculatedBuildings) {
+        Building.update(cell.parentNode.parentNode, total);
+    } else {
+        Building.interpolate(plannedBuildings, currentBuildings, calculatedBuildings, total);
+        Building.update(Ui.calculatedBuildings, total);
+    }    
 }
 
 function setBonus(building, name, factor) {
@@ -255,5 +295,9 @@ async function onpageload(errors) {
 
         await Ui.create();
         Ui.update();
+        var p = parseInt(Ui.plannedBuildings.tbTotal.value), c = parseInt(Ui.currentBuildings.tbTotal.value);
+        calculatedBuildings.total = Math.floor(p - c)/2 + c;
+        Building.interpolate(plannedBuildings, currentBuildings, calculatedBuildings);
+        Building.update(Ui.calculatedBuildings);
     }
 }

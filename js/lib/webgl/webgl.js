@@ -1,9 +1,192 @@
 (function () {
-	// ********************************************************************************************
-	//
-	// Program
-	//
-	// ********************************************************************************************
+	//#region BUFFER
+    function Buffer() {
+        this.type = webGL.types.FLOAT;
+        this.length = 0;
+        this.originalLength = 0;
+        this.width = 256;
+        this.height = 256;
+        this.internalFormat = 0;
+        this.format = 0;
+        this.type = 0;
+        this.data = null;
+        this.texture = null;
+    }
+
+    Buffer.prototype.setType = function setType(type) {
+        switch (type.toLowerCase()) {
+            case 'uint8':
+            case 'byte': this.type = webGL.types.R8UI; break;
+            case 'uint32':
+            case 'long': this.type = webGL.types.R32UI; break;
+            case 'float': this.type = webGL.types.R32F; break;
+            case 'uint8[2]':
+            case 'byte[2]': this.type = webGL.types.RG8UI; break;
+            case 'uint32[2]':
+            case 'long[2]': this.type = webGL.types.RG32UI; break;
+            case 'float[2]': this.type = webGL.types.RG32F; break;
+            case 'uint8[4]':
+            case 'byte[4]': this.type = webGL.types.RGBA8UI; break;
+            case 'uint32[4]':
+            case 'long[4]': this.type = webGL.types.RGBA32UI; break;
+            case 'float[4]': this.type = webGL.types.RGBA32F; break;
+            default: throw new Error(`Unsupported type '${type}'!`);
+        }
+    };
+
+    Buffer.prototype.setSize = function setSize(length) {
+        this.originalLength = length;
+        var r = Math.ceil(Math.sqrt(length));
+        var p = Math.ceil(Math.log2(r));
+        this.width = Math.pow(2, p);
+        this.height = Math.ceil(length/this.width);
+        this.length = this.width*this.height * this.type.length;
+    };
+
+    Buffer.prototype.createArrayBuffer = function createArrayBuffer(data) {
+        switch (this.type.id) {
+            case gl.R8UI:
+            case gl.RG8UI:
+            case gl.RGBA8UI:
+                this.data = new Uint8Array(this.length);
+                break;
+            case gl.R32UI:
+            case gl.RG32UI:
+            case gl.RGBA32UI:
+                this.data = new Uint32Array(this.length);
+                break;
+            case gl.R32F:
+            case gl.RG32F:
+            case gl.RGBA32F:
+                this.data = new Float32Array(this.length);
+                break;
+            default:
+                throw new Error('Unsupported input data type!');
+        }
+    };
+
+    Buffer.prototype.setData = function setData(data) {
+        if (data instanceof Image) {
+            this.data = data;
+        } else {
+            // create data buffer
+            if (!data || !(data.buffer instanceof ArrayBuffer)) this.createArrayBuffer(data);
+            else this.data = data;
+            if (data && data.length != this.length) {
+                // resize buffer
+                var buffer = Reflect.construct(this.data.constructor, [this.length]);
+                buffer.set(this.data, 0);
+                this.data = buffer;
+            }
+        }
+        this.setTexture();
+    };
+
+    Buffer.prototype.setTexture = function setTexture(data) {
+        data = data || this.data;
+        if (data) {
+            this.internalFormat = 0, this.format = 0;
+            switch (this.type.id) {
+                case gl.R8UI:       this.internalFormat = gl.R8UI;       this.format = gl.RED_INTEGER;   break;
+                case gl.R32UI:      this.internalFormat = gl.R32UI;      this.format = gl.RED_INTEGER;   break;
+                case gl.R32F:       this.internalFormat = gl.R32F;       this.format = gl.RED;           break;
+
+                case gl.RG8UI:      this.internalFormat = gl.RG8UI;      this.format = gl.RG_INTEGER;    break;
+                case gl.RG32UI:     this.internalFormat = gl.RG32UI;     this.format = gl.RG_INTEGER;    break;
+                case gl.RG32F:      this.internalFormat = gl.RG32F;      this.format = gl.RG_INTEGER;    break;
+
+                case gl.RGBA8UI:    this.internalFormat = gl.RGBA8UI;    this.format = gl.RGBA_INTEGER;  break;
+                case gl.RGBA32UI:   this.internalFormat = gl.RGBA32UI;   this.format = gl.RGBA_INTEGER;  break;
+                case gl.RGBA32F:    this.internalFormat = gl.RGBA32F;    this.format = gl.RGBA;          break;
+
+                default: throw new Error('Invalid type!');
+            }
+
+            this.texture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
+            if (data.buffer instanceof ArrayBuffer) {
+                gl.texImage2D(gl.TEXTURE_2D, 0, this.type.id, this.width, this.height, 0, this.format, gl[this.type.type], data, 0);
+            } else {
+                gl.texImage2D(gl.TEXTURE_2D, 0, this.type.id, this.format, gl[this.type.type], data);
+            }
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        }
+    };
+
+    Buffer.fromLength = function fromLength(length, type) {
+        var buffer = new Buffer();
+        buffer.setType(type);
+        buffer.setSize(length);
+        //buffer.setData(null);
+        return buffer;
+    };
+
+    Buffer.fromArrayBuffer = function fromArrayBuffer(arrayBuffer, type) {
+        if (!type) {
+            switch (arrayBuffer.constructor) {
+                case Uint8Array: type = 'uint8'; break;
+                case Uint32Array: type = 'uint32'; break;
+                case Float32Array: type = 'float'; break;
+                default: throw new Error('Unsupported input ArrayBuffer type!');
+            }
+        }
+        var buffer = new Buffer();
+        buffer.setType(type);
+        buffer.setSize(arrayBuffer.length);
+        //buffer.setData(arrayBuffer);
+        return buffer;
+    };
+
+    Buffer.fromImage = function fromImage(img, type) {
+        var buffer = new Buffer();
+		type = type || webGL.types.RGBA32F;
+		if (typeof type === 'string') buffer.setType(type);
+		else buffer.type = type;
+        // set size
+        buffer.width = img.naturalWidth;
+        buffer.height = img.naturalHeight;
+        buffer.length = buffer.width*buffer.height * buffer.type.length;
+        //buffer.setData(img);
+        return buffer;
+    };
+
+    Buffer.fromFramebuffer = function fromFramebuffer() {
+        var buffer = new Buffer();
+        buffer.setType('byte[4]');
+        buffer.width = gl.drawingBufferWidth;
+        buffer.height = gl.drawingBufferHeight;
+        buffer.texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, buffer.texture);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 0, 0, buffer.width, buffer.height, 0);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        buffer.length = buffer.width*buffer.height * buffer.type.length;
+        return buffer;
+    };
+
+    Buffer.create = function create(data, type) {
+        var buffer = null;
+        if (!data) buffer = Buffer.fromFramebuffer();
+        else if (typeof data === 'number') buffer = Buffer.fromLength(data, type);
+        else if (Array.isArray(data)) buffer = Buffer.fromSize(data[0], data[1], type);
+        else if (data.buffer && data.buffer instanceof ArrayBuffer) buffer = Buffer.fromArrayBuffer(data, type);
+        else if (data instanceof Image) buffer = Buffer.fromImage(data, type);
+        return buffer;
+    };
+
+	function Texture() {
+		this.buffer = null;
+		this.texture = null;
+	}
+
+	//#endregion
+	//#region PROGRAM
 	function Program(shaders, attribInfo) {
     	this.prg = gl.createProgram();
 		this.shaders = [];
@@ -103,6 +286,7 @@
 		var u = this.uniforms[name];
 		if (u) u.update(u);
 	};
+	//#endregion
 
 	var Uniform = {
 		setScalar: function setScalar(value) {
@@ -238,6 +422,7 @@
 		VERTEX_ATTRIB_TEXTURE2:		0x10,
 
 		buffers: [],
+		textures: [],
 		extensions: {}
 	};
 
@@ -322,6 +507,16 @@
 
 		}
 	};
+	webGL.shutDown = function shutDown() {
+		while (this.buffers.length != 0) {
+			gl.deleteBuffer(this.buffers.pop().ref);
+		}
+		while (this.textures.length != 0) {
+			gl.deleteTexture(this.textures.pop().texture);
+		}
+		gl.useProgram(null);
+		gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
+	};
 	webGL.onresize = function onresize() {
 		
 	};
@@ -335,8 +530,8 @@
 		this.buffers.push({'type':target, 'ref':buffer});
 		return buffer;
 	};
-	webGL.deleteBuffer = function deleteBuffer(ref) {
-		var ix = this.buffers.findIndex(x => x.ref == ref);
+	webGL.deleteBuffer = function deleteBuffer(buf) {
+		var ix = this.buffers.indexOf(buf);
 		if (ix != -1) {
 			gl.deleteBuffer(ref);
 			this.buffers.splice(ix, 1);
@@ -380,19 +575,21 @@
 		} else gl.useProgram(null);
 		return p;
 	};
-	webGL.createTexture = function createTexture(image) {
-		var texture = gl.createTexture();
-		gl.bindTexture(gl.TEXTURE_2D, texture);
-		if (image) {
-			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-			gl.generateMipmap(gl.TEXTURE_2D);
-		}
+
+	webGL.createTexture = function createTexture(data, type) {
+		var texture = Buffer.create(data, type);
+		texture.setData(data);
+		this.textures.push(texture);
 		return texture;
 	};
+	webGL.deleteTexture = function deleteTexture(tex) {
+		var ix = this.textures.indexOf(tex);
+		if (ix != -1) {
+			gl.deleteTexture(tex.texture);
+			this.textures.splice(ix, 1);
+		}
+	};
+
 	webGL.useExtension = function useExtension(extensionName) {
 		var ext = gl.getExtension(extensionName);
 		if (ext) webGL.extensions[extensionName] = ext;

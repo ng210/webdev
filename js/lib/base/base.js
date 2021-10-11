@@ -13,14 +13,25 @@ self.extend = function extend(b, e) {
 };
 self.inherits = function inherits(d, b) {
     var res = false;
-    var c = d;
-    while (c != Object && c != null) {
-        if (c.constructor == b) {
-            res = true;
-            break;
-        }
-        c = c.__proto__;
-    };
+    if (typeof d === 'function') {
+        var c = d;
+        while (c != null && c.base) {
+            if (c.base.constructor == b) {
+                res = true;
+                break;
+            }
+            c = c.base.constructor;
+        };
+    } else {
+        var c = d;
+        while (c != Object && c != null) {
+            if (c.constructor == b) {
+                res = true;
+                break;
+            }
+            c = c.__proto__;
+        };
+    }
     return res;
 };
 
@@ -558,7 +569,7 @@ Url.prototype.toString = function toString() {
     if (this.fragment) sb.push('#', this.fragment);
     return sb.join('');
 };
-Url.relative = function toString(base, target) {
+Url.relative = function relative(base, target) {
     if (base instanceof Url) base = base.toString();
     if (target instanceof Url) target = target.toString();
     return target.startsWith(base) ? target.substring(base.length) : '';

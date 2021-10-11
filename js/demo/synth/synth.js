@@ -45,7 +45,6 @@ include('/lib/webgl/compute-shader.js');
             case 40:    // ARROW DOWN
                 var ix = this.parent.index + 1;
                 if (ix == grid.rowCount) ix = 0;
-debugger
                 grid.rows[ix].cells[this.column.name].click();
                 break;
             default:

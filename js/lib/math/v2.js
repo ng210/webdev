@@ -82,7 +82,7 @@
     V2.prototype.set = function set(x, y) {
         if (x === undefined || typeof x === 'number') {
             this[0] = x || 0.0;
-            this[1] = y || 0.0;
+            this[1] = y == undefined ? this[0] : y;
         } else if (Array.isArray(x)) {
             this[0] = x[0] || 0.0;
             this[1] = x[1] || 0.0;

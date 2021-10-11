@@ -5,9 +5,10 @@
         "dune",
         "synth",
         "service",
+        "shaudio",
         "test",
+        "wasm",
         "index.html",
-        "test.json",
-        "wasm"
+        "test.json"
     ]
 }

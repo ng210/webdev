@@ -41,12 +41,6 @@
         }
     }
 
-    // function Actor(id, type) {
-    //     this.id = id;
-    //     this.mesh = null;
-    //     this.materials = [];
-    // }
-
     function createCube() {
         var cube = {};
         // create cube
@@ -298,6 +292,7 @@
     }
 
     function teardown() {
+        webGL.shutDown();   
     }
 
     function setMaterial(mat, shaderArgs) {
@@ -305,7 +300,7 @@
         for (var i=0; i<mat.textures.length; i++) {
             shaderArgs['u_texture'+i] = i;
             gl.activeTexture(gl['TEXTURE'+i]);
-            gl.bindTexture(gl.TEXTURE_2D, mat.textures[i]);
+            gl.bindTexture(gl.TEXTURE_2D, mat.textures[i].texture);
         }
 
         // set shader and uniforms
@@ -396,19 +391,18 @@
     async function test_compute_shader_inputs() {
         initWebGL();
         webGL.useExtension('EXT_color_buffer_float');
-        var image = await load('./res/box.png');
-        var fboSize = 4*gl.drawingBufferWidth * gl.drawingBufferHeight;
+        // var image = await load('./res/box.png');
+        // var fboSize = 4*gl.drawingBufferWidth * gl.drawingBufferHeight;
         var tests = {
             'length(byte)':             { input: [4*3, 'byte'],                     output: null,   expected: { length: 4*3,        type:gl.R8UI }},
-            'length(long)':             { input: [3*3, 'long'],                     output: null,   expected: { length: 4*3,        type:gl.R32UI }},
-            'float32array':             { input: [new Float32Array(10)],            output: null,   expected: { length: 4*3,        type:gl.R32F} },
-            'length(byte[2])':          { input: [3*5, 'byte[2]'],                  output: null,   expected: { length: 2*4*4,      type:gl.RG8UI }},
-            'length(uint32[4])':        { input: [5*6, 'uint32[4]'],                output: null,   expected: { length: 4*4*8,      type:gl.RGBA32UI }},
-            'float32array(float[4])':   { input: [new Float32Array(8), 'float[4]'], output: null,   expected: { length: 4*8,        type:gl.RGBA32F} },
+            // 'length(long)':             { input: [3*3, 'long'],                     output: null,   expected: { length: 4*3,        type:gl.R32UI }},
+            // 'float32array':             { input: [new Float32Array(10)],            output: null,   expected: { length: 4*3,        type:gl.R32F} },
+            // 'length(byte[2])':          { input: [3*5, 'byte[2]'],                  output: null,   expected: { length: 2*4*4,      type:gl.RG8UI }},
+            // 'length(uint32[4])':        { input: [5*6, 'uint32[4]'],                output: null,   expected: { length: 4*4*8,      type:gl.RGBA32UI }},
+            // 'float32array(float[4])':   { input: [new Float32Array(8), 'float[4]'], output: null,   expected: { length: 4*8,        type:gl.RGBA32F} },
             // 'image':                    { input: [image.node],                      output: null,   expected: { length: 4*512*512,  type:gl.RGBA8UI }},
             // 'fbo':                      { input: [null, 'float[4]'],                output: null,   expected: { length: fboSize,    type:gl.RGBA8UI }}
         };
-
         var cs = new webGL.ComputeShader2();
         for (var i in tests) {
             var data = tests[i].input[0];
@@ -450,6 +444,7 @@
                 case gl.RGBA32UI:   outputType = 'uvec4';   constant = 'uvec4(2, 4, 6, 8)';     break;
                 case gl.RGBA32F:    outputType = 'vec4';    constant = 'vec4(2., 4., 6., 8.)';  break;
             }
+
             var shaderScript =
 `#version 300 es
 precision highp float;
@@ -469,6 +464,8 @@ void main(void) {
             for (var j=0; j<size*length; j++) expected[j] = 2 * (j%size + 1) * Math.floor(j/size);
             test('Should return the correct values', ctx => ctx.assert(result, ':=', expected));
         }
+        cs.destroy();
+        webGL.shutDown();
     }
 
     async function test_compute_shader() {
@@ -512,30 +509,11 @@ void main(void) {
         // );
     }
 
-    async function test_compute_shader_multiple() {
-        header('Test compute shader multiple calls');
-        initWebGL();
-        webGL.useExtension('EXT_color_buffer_float');
-
-        var cs = new webGL.ComputeShader(16, gl.R32F);
-        await cs.loadShader('res/compute2.fs');
-        var base = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
-        var offset = 0;
-        for (var i=0; i<4; i++) {
-            cs.fillBuffer((k, i, j) => k);
-            cs.compute(null, null, { 'u_offset': offset } );
-            Dbg.prln(cs.results);
-            var expected = base.map(x => offset + 2*x);
-            test(`Should compute '${cs.input.data}' into ${expected}`, context => context.assert(cs.results, ':=', expected));
-            offset += 16;
-        }
-        cs.destroy();
-    }
-
     var tests = () => [
+        test_simple_render,
         test_compute_shader_inputs,
         //test_compute_shader_multiple,
-        //test_simple_render
+        
     ];
 
     publish(tests, 'WebGL tests');
