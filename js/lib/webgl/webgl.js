@@ -504,8 +504,9 @@
 				if (base != undefined) ut.base = base;
 				//this.types[id] = ut;
 			} else console.warn(`Type '${i}' not valid.`);
-
 		}
+		this.buffers.length = 0;
+		this.textures.length = 0;
 	};
 	webGL.shutDown = function shutDown() {
 		while (this.buffers.length != 0) {
@@ -522,18 +523,19 @@
 	};
 
 	webGL.createBuffer = function createBuffer(target, source, usage) {
-		var buffer = gl.createBuffer();
+		var glBuffer = gl.createBuffer();
 		if (source != undefined) {
-			gl.bindBuffer(target, buffer);
+			gl.bindBuffer(target, glBuffer);
 			gl.bufferData(target, source, usage);
 		}
-		this.buffers.push({'type':target, 'ref':buffer});
+		var buffer = {'type':target, 'ref':glBuffer };
+		this.buffers.push(buffer);
 		return buffer;
 	};
 	webGL.deleteBuffer = function deleteBuffer(buf) {
 		var ix = this.buffers.indexOf(buf);
 		if (ix != -1) {
-			gl.deleteBuffer(ref);
+			gl.deleteBuffer(this.buffers[ix].ref);
 			this.buffers.splice(ix, 1);
 		}
 	};

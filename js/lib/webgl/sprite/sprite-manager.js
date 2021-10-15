@@ -127,7 +127,7 @@ include('sprite.js');
             var spr = this.sprites[i];
             this.updateSprite(spr);
         }
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteAttributeBuffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteAttributeBuffer.ref);
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.spriteAttributeData);
     };
 
@@ -163,6 +163,7 @@ include('sprite.js');
     };
 
     SpriteManager.prototype.selectRadius = function selectRadius(x, y, r, action, args) {
+        var count = 0;
         var r2 = r*r;
         for (var i=0; i<this.count; i++) {
             var spr = this.sprites[i];
@@ -170,9 +171,11 @@ include('sprite.js');
             var d = dx*dx + dy*dy;
             if (d < r2) {
                 d = Math.sqrt(d);
-                action(spr, x,y, dx/d, dy/d, args);
+                count++;
+                if (action(spr, x,y, dx/d, dy/d, args)) break;
             }
         }
+        return count;
     };
 
     SpriteManager.prototype.selectRect = function selectRect(x, y, width, height, action, args) {

@@ -7,6 +7,7 @@ include('webgl.js');
         this.result = null;
         this.prg = null;
         this.fbo = gl.createFramebuffer();
+        this.bufferId = webGL.buffers.length;
         this.vbo = webGL.createBuffer(gl.ARRAY_BUFFER, new Float32Array([ -1.0, -1.0,   1.0, -1.0,  -1.0, 1.0,  1.0, 1.0 ]), gl.STATIC_DRAW);
     }
     
@@ -37,7 +38,7 @@ include('webgl.js');
             this.shaders = {};
             this.shaders[gl.VERTEX_SHADER] = res.data;
             this.shaders[gl.FRAGMENT_SHADER] = shader;
-            this.prg = webGL.createProgram(this.shaders);
+            this.prg = webGL.createProgram(this.shaders, { 'a_position': { 'buffer': this.bufferId }});
         }
     };
 
