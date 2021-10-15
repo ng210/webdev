@@ -2,7 +2,7 @@ include('/lib/base/dbg.js');
 include('/lib/math/noise.js');
 include('./components/ge.js');
 
-const MAX_BALL_COUNT = 10;
+const MAX_BALL_COUNT = 2000;
 
 var game = null;
 
