@@ -18,12 +18,12 @@ include('/lib/webgl/webgl.js');
             delta: { label: 'Delta', value: 0.0, min:0, max:2, step: 0.05, type: 'float', link: null },
         });
 
-        this.uniforms = {
-            u_factor:{type:webGL.FLOAT, size:1},
-            u_grid:{type:webGL.FLOAT, size:1},
-            u_texture1:{type:webGL.INT, size:1},
-            u_texture2:{type:webGL.INT, size:1}
-        };
+        // this.uniforms = {
+        //     u_factor:{type:webGL.FLOAT, size:1},
+        //     u_grid:{type:webGL.FLOAT, size:1},
+        //     u_texture1:{type:webGL.INT, size:1},
+        //     u_texture2:{type:webGL.INT, size:1}
+        // };
         this.factor = 0;
         this.selected = 0;
         // custom variables
@@ -136,17 +136,17 @@ include('/lib/webgl/webgl.js');
         this.createBuffers();
 
         // create texture1
-        // res = await load('/demo/morph/tilda.png');
+        //res = await load('/demo/morph/tilda.png');
         res = await load('/demo/morph/mrbean.png');
         if (res.error) throw new Error(res.error);
-        this.texture1 = webGL.createTexture(res.node);
+        this.texture1 = webGL.createTexture(res.node).texture;
         this.imageWidth = res.node.width;
         this.imageHeight = res.node.height;
         // create texture2
-        // res = await load('/demo/morph/gabor.png');
+        //res = await load('/demo/morph/gabor.png');
         res = await load('/demo/morph/gollum.png');
         if (res.error) throw new Error(res.error);
-        this.texture2 = webGL.createTexture(res.node);
+        this.texture2 = webGL.createTexture(res.node).texture;
 
         this.canvas.width = this.imageWidth;
         this.canvas.height = this.imageHeight;
@@ -211,7 +211,7 @@ include('/lib/webgl/webgl.js');
                 k += VERTEX_SIZE;
             }
         }
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertices);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertices.ref);
         gl.bufferData(gl.ARRAY_BUFFER, this.vertexData, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
     };
@@ -229,13 +229,13 @@ include('/lib/webgl/webgl.js');
         gl.bindTexture(gl.TEXTURE_2D, this.texture1);
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, this.texture2);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices1);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices1.ref);
         gl.drawElements(gl.TRIANGLES, 3*this.trisCount, gl.UNSIGNED_SHORT, 0);
 
         if (this.settings.grid.value) {
             this.program.setUniform('u_grid', 1);
             this.program.updateUniform('u_grid');
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices2);
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices2.ref);
             gl.drawElements(gl.LINES, this.lineCount, gl.UNSIGNED_SHORT, 0);
         }
         glui.renderingContext.drawImage(this.canvas, this.left, this.top, this.width, this.height);
@@ -256,7 +256,7 @@ include('/lib/webgl/webgl.js');
                 k += VERTEX_SIZE;
             }
         }
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertices);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertices.ref);
         gl.bufferData(gl.ARRAY_BUFFER, this.vertexData, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
         this.render(0, 0);

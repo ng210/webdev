@@ -1,4 +1,5 @@
 include('./graph.js');
+include('/lib/math/v2.js');
 
 (function() {
     function Quadtree(levels, vertexHandler) {
@@ -17,14 +18,12 @@ include('./graph.js');
             var d = Math.pow(2, level);
             if (vertex.parent) {
                 var n = i%4;
-                vertex.x = vertex.parent.x + (n%2)/d;
-                vertex.y = vertex.parent.y + Math.floor(n/2)/d;
+                vertex.p1 = vertex.parent.p1.sum([(n%2)/d, Math.floor(n/2)/d]);
             } else {
-                vertex.x = 0;
-                vertex.y = 0;
+                vertex.p1 = new V2(0);
             }
-            vertex.width = 1/d;
-            vertex.height = 1/d;
+            vertex.p2 = vertex.p1.sum([0.5/d, 0.5/d]);
+            vertex.size = new V2(1/d, 1/d);
             if (typeof vertexHandler === 'function') {
                 vertexHandler(vertex, level, i);
             }
@@ -37,11 +36,11 @@ include('./graph.js');
         while (true) {
             if (v.edges.length > 0) {
                 var next = 0;
-                if (x1 < v.x+v.width/2 && x2 < v.x+v.width/2) next = 0;
-                else if (x1 > v.x+v.width/2 && x2 > v.x+v.width/2) next = 1;
+                if (x1 < v.p2.x && x2 < v.p2.x) next = 0;
+                else if (x1 > v.p2.x && x2 > v.p2.x) next = 1;
                 else break;
-                if (y1 < v.y+v.height/2 && y2 < v.y+v.height/2) next += 0;
-                else if (y1 > v.y+v.height/2 && y2 > v.y+v.height/2) next += 2;
+                if (y1 < v.p2.y && y2 < v.p2.y) next += 0;
+                else if (y1 > v.p2.y && y2 > v.p2.y) next += 2;
                 else break;
                 v = v.edges[next].to;
             } else {

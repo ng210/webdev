@@ -259,7 +259,7 @@ include('/lib/webgl/compute-shader.js');
         }
     };
     Synth.prototype.renderScopeWithWebGL = function renderScopeWithWebGL() {
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo.ref);
         gl.bufferData(gl.ARRAY_BUFFER, this.scopeBuffers[1 - this.scopeBufferIndex], gl.STATIC_DRAW);
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.enable(gl.BLEND);
@@ -356,6 +356,7 @@ include('/lib/webgl/compute-shader.js');
             for (var i=0; i<adapter.devices.length; i++) {
                 adapter.devices[i].run(left, right, start, end);
             }
+    
             start = end;
             remains -= len;
         }

@@ -1,9 +1,17 @@
+include('/lib/data/map.js');
 include('/lib/math/v2.js');
 (function() {
+    function Component(file, factory) {
+        this.file = file;
+        this.factory = factory;
+        this.instances = new Map();
+    }
+
     var ge = {
         path: '',
         factories: {},
         components: {},
+        instances: {},
 
         resolution: new V2(),
         ratio: new V2(),
@@ -40,16 +48,15 @@ include('/lib/math/v2.js');
                     }
                     var types = factories[i].getTypes();
                     for (var j=0; j<types.length; j++) {
-                        this.components[types[j].name] = {
-                            'file': fileName,
-                            'factory': factories[i],
-                            'instances': {}
-                        }
+                        this.components[types[j].name] = new Component(fileName, factories[i]);
                     }
                 }
             }
         }
         return factories;
+    };
+    ge.getComponent = function getComponent(componentName) {
+        return this.components[componentName];
     };
 
     ge.createInstance = async function createInstance(componentName, instanceId) {
@@ -58,7 +65,8 @@ include('/lib/math/v2.js');
         if (c != undefined) {
             res = await c.factory.instantiate(this, componentName, instanceId);
             if (res != null) {
-                c.instances[instanceId] = res;
+                this.instances[instanceId] = res;
+                c.instances.add(instanceId, res);
                 if (inherits(res, ge.Renderer)) this.renderers.push(res);
                 if (inherits(res, ge.InputHandler)) this.inputHandlers.push(res);
                 var args = []; for (var i=2; i<arguments.length; i++) args.push(arguments[i]);
@@ -68,8 +76,8 @@ include('/lib/math/v2.js');
         return res;
     };
 
-    ge.getComponent = function getComponent(instanceId) {
-        return this.components[id];
+    ge.getInstance = function getInstance(instanceId) {
+        return this.instances[instanceId];
     };
     //#endregion
 

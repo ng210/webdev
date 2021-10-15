@@ -10,10 +10,13 @@ include('/lib/math/v3.js');
         this.next = {
             position: new V3()
         };
+        this.isActive = false;
         this.isDirty = true;
         this.updaters = [];
         this.constraints = [];
-        this.updateState = function() { this.current.position.set(this.next.position); };
+        this.updateState = function() {
+            this.current.position.set(this.next.position);
+        };
     }
     extend(ge.IComponent, Actor);
 
@@ -22,7 +25,15 @@ include('/lib/math/v3.js');
     };
 
     Actor.prototype.addSprite = function addSprite(spriteManager) {
+        if (!spriteManager) {
+            var c = this.engine.getComponent('SpriteManager');
+            if (c) {
+                spriteManager = c.instances.getAt(0);
+                if (!spriteManager) throw new Error('No sprite manager component created!');
+            }
+        }
         this.sprite = spriteManager.addSprite();
+        this.sprite.actor = this;
         this.renderer = spriteManager.renderer;
         return this.sprite;
     };
@@ -40,8 +51,12 @@ include('/lib/math/v3.js');
     };
 
     Actor.prototype.update = function update(dt) {
-        for (var i=0; i<this.updaters.length;) {
-            this.updaters[i++].update(this, dt, this.updaters[i++]);
+        if (this.isActive) {
+            for (var i=0; i<this.updaters.length;) {
+                this.updaters[i++].update(this, dt, this.updaters[i++]);
+            }
+        } else {
+            this.next.position.set(this.current.position);
         }
         for (var i=0; i<this.constraints.length;) {
             this.constraints[i++].check(this, dt, ...this.constraints[i++]);

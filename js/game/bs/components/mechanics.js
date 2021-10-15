@@ -1,8 +1,8 @@
 include('./ge.js');
 
 (function() {
-    function Mechanics() {
-        Mechanics.base.constructor.call(this);
+    function Mechanics(engine, id) {
+        Mechanics.base.constructor.call(this, engine, id);
 
     }
     extend(ge.IComponent, Mechanics);

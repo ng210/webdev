@@ -47,17 +47,20 @@ include('/lib/math/segment.js');
         }
         // create VBO from segments
         this.vertexBuffer = webGL.createBuffer(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer.ref);
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, vertices);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
     };
 
     SegmentRenderer.prototype.render = function render() {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer.ref);
         webGL.useProgram(this.program, { 'u_projection': this.projection });
         //gl.activeTexture(gl.TEXTURE0);
         //gl.bindTexture(gl.TEXTURE_2D, this.map.texture);
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
         gl.drawArrays(gl.LINES, 0, this.segments.length*4);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
     };
 
     publish(SegmentRenderer, 'SegmentRenderer', ge);

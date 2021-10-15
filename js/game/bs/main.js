@@ -2,7 +2,7 @@ include('/lib/base/dbg.js');
 include('/lib/math/noise.js');
 include('./components/ge.js');
 
-const MAX_BALL_COUNT = 100;
+const MAX_BALL_COUNT = 10;
 
 var game = null;
 
@@ -13,14 +13,17 @@ function rand(min, max) {
 function Game() {
     this.spriteManager = null;
     this.segmentManager = null;
-    this.simpleMechanics = null;
 
     this.time = 0;
+    this.borders = [0, 0, 0, 0];
     this.center = null;
     this.noise = null;
 
     this.frame = 100;
     this.segments = [];
+    this.selectedBall = null;
+
+    this.isAddingBall = false;
 
     this.ballId = 0;
 }
@@ -36,7 +39,7 @@ Game.prototype.init = async function init() {
     this.segmentManager = await ge.createInstance('SegmentManager', 'segmgr1');
 
     await ge.loadComponent('simple-mechanics.js');
-    this.simpleMechanics = await ge.createInstance('SimpleMechanics', 'sm1');
+    await ge.createInstance('SimpleMechanics', 'sm1');
 
     await ge.loadComponent('input-handler.js');
     this.keyboardHandler = await ge.createInstance('KeyboardHandler', 'kbhandler1');
@@ -44,7 +47,7 @@ Game.prototype.init = async function init() {
 
     await ge.loadComponent('actor.js');
     Dbg.prln('Components loaded.');
-    //#endregion    
+    //#endregion
 
     this.noise = new Noise(20081028);
 
@@ -92,6 +95,8 @@ Game.prototype.createSegments = function createSegments(w, h) {
     var tl = new V2(this.frame, h-this.frame);
     var tr = new V2(w-this.frame, h-this.frame);
     var br = new V2(w-this.frame, this.frame);
+    this.borders[0] = bl.x; this.borders[1] = bl.y;
+    this.borders[2] = tr.x; this.borders[3] = tr.y;
     // this.segments.push(...this.createCircleSegments(ge.resolution.prod([0.2, 0.3]), 0.05*w, 0.08*h, 3, true));
     //this.segments.push(...this.createCircleSegments(this.center, 0.2*w, 0.2*h, 24, true));
     segments.push(...this.createCircleSegments(this.center, 0.3*w, 0.3*h, 36, true));
@@ -116,17 +121,30 @@ Game.prototype.setResolution = function setResolution(w, h) {
 
 //#region Callbacks for the GE framework
 Game.prototype.handleInputs = function handleInputs() {
-    if (this.keyboardHandler.isPressed(32) || this.mouseHandler.isLeftPressed()) {
-        if (this.mouseHandler.position.y > this.frame) {
-            //var angle = Math.PI/2 - Math.atan2(this.mouseHandler.position.y - this.frame, this.mouseHandler.position.x - 0.5*ge.resolution.x);
-            var v = this.mouseHandler.position.diff(new V2([this.center.x, ge.resolution.y - this.frame])).div(ge.resolution);
-            if (ge.actors[this.ballId] == undefined) {
-                this.addBall(v);
-            } else {
-                this.setBall(ge.actors[this.ballId], v);
-                this.ballId++;
+
+    function toggleBall(spr) {
+        var a = spr.actor;
+        this.selectedBall = a;
+        a.isActive = !a.isActive;
+    }
+
+    var mpos = this.mouseHandler.position;
+    if (mpos.x > this.borders[0] && mpos.x < this.borders[2] && mpos.y > this.borders[1] && mpos.y < this.borders[3]) {
+        // place ball
+        if (!this.isAddingBall && (this.keyboardHandler.isPressed(32) || this.mouseHandler.isLeftDown())) {
+            if (this.spriteManager.sprMgr.selectRadius(mpos.x, mpos.y, 10, toggleBall) == 0) {
+                this.isAddingBall = true;
+                this.selectedBall = this.addBall(mpos, [0, 0]);
+                this.selectedBall.isActive = false;
             }
-            if (this.ballId == MAX_BALL_COUNT) this.ballId = 0;
+        }
+
+        // shoot ball
+        if (this.isAddingBall && (this.keyboardHandler.isReleased(32) || this.mouseHandler.isLeftReleased())) {
+            var v = this.selectedBall.current.position.diff(mpos).scale(0.004);
+            this.selectedBall.setCurrent('velocity', v);
+            this.selectedBall.isActive = true;
+            this.isAddingBall = false;
         }
     }
 };
@@ -136,7 +154,7 @@ Game.prototype.update = function update() {
 //#endregion
 
 //#region Ball management
-Game.prototype.setBall = function setBall(ball, v) {
+Game.prototype.setBall = function setBall(ball, p, v) {
     var spr = ball.sprite;
     spr.setFrame(0);
     var s = rand(0.3, 0.5);
@@ -144,29 +162,34 @@ Game.prototype.setBall = function setBall(ball, v) {
     var color = new V3([rand(0.5, 1.0), rand(0.5, 1.0), rand(0.5, 1.0)]);
     spr.setColor(color);
     // calculate velocity
-    v.scale(rand(0.8, 1.0));
-    var p = new V2([this.center.x, ge.resolution.y - this.frame]);
+    //v.scale(rand(0.8, 1.0));
+    //var p = new V2([this.center.x, ge.resolution.y - this.frame]);
     ball.setCurrent('velocity', v);
     ball.setCurrent('position', p);
     ball.setCurrent('acceleration', new V3(0.0, -0.001, 0.0));
 };
 
-Game.prototype.addBall = function addBall(v) {
-    var ball = ge.addActor(`ball${this.ballId}`);
+Game.prototype.addBall = function addBall(p, v) {
+    var ball = null;
+    if (ge.actors[this.ballId] == undefined) {
+        ball = ge.addActor(`ball${this.ballId}`);
+        ball.addSprite(this.spriteManager);
+        ball.addMechanics(ge.getInstance('sm1'));
+        ball.addCollider(this.segmentManager.collider);
+    } else {
+        ball = ge.actors[this.ballId];
+    }
     this.ballId++;
-    ball.addSprite(this.spriteManager);
-    ball.addMechanics(this.simpleMechanics);
-    ball.addCollider(this.segmentManager.collider);
-    //ball.addCollider(this.spriteManager.collider);
-    this.setBall(ball, v);
+    this.setBall(ball, p, v);
+    if (this.ballId == MAX_BALL_COUNT) this.ballId = 0;
     return ball;
 };
 
-Game.prototype.resetBalls = function resetBalls() {
-    for (var i = 0; i<ge.actors.length; i++) {
-        this.setBall(ge.actors[i]);
-    }
-};
+// Game.prototype.resetBalls = function resetBalls() {
+//     for (var i = 0; i<ge.actors.length; i++) {
+//         this.setBall(ge.actors[i]);
+//     }
+// };
 //#endregion
 
 

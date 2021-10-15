@@ -1,9 +1,10 @@
-include('dictionary.js');
-include('stream.js');
-include('dataseries.js');
-include('datalink.js');
-include('graph.js');
-include('b-tree.js');
+include('./dictionary.js');
+include('./stream.js');
+include('./dataseries.js');
+include('./datalink.js');
+include('./graph.js');
+include('./b-tree.js');
+include('./map.js');
 
 (function() {
 
@@ -850,6 +851,52 @@ include('b-tree.js');
         //#endregion
     }
 
+    function test_Map() {
+        header('Test Map');
+
+        //#region Add
+        var map = new Map();
+        for (var i=0; i<1000; i++) {
+            map.add(`k${i}`, `v${i}`);
+        }
+        test('Should have length of 1000', ctx => ctx.assert(map.length, '=', 1000));
+        var counter = 0;
+        for (var i=0; i<map.length; i++) {
+            if (map[`k${i}`] == `v${i}`) counter++;
+        }
+        test('Should have 1000 correct items', ctx => ctx.assert(counter, '=', 1000));
+        //#endregion
+
+        //#region Get
+        counter = 0;
+        for (var i=0; i<10; i++) {
+            var ix = Math.floor(map.length * Math.random());
+            var item = map.getAt(ix);
+            if (item == `v${ix}`) counter++;
+        }
+        test('Should get 10 random items correctly', ctx => ctx.assert(counter, '=', 10));
+        //#endregion
+
+        //#region Remove
+        var deleted = [];
+        for (var i=0; i<10; i++) {
+            var ix = Math.floor(map.length * Math.random());
+            deleted.push(ix);
+            var item = map.removeAt(ix);
+        }
+        test('Should have 990 items', ctx => ctx.assert(map.length, '=', 990));
+        for (var i=0; i<10; i++) {
+            var ix = Math.floor(map.length * Math.random());
+            var item = map.removeAt(ix);
+        }
+        counter = 0;
+        for (var i=0; i<10; i++) {
+            if (map.getAt(deleted[i]) != `v${i}`) counter++;
+        }
+        test('Should not find the deleted items', ctx => ctx.assert(counter, '=', 10));
+        //#endregion
+    }
+
     var tests = () => [
         test_dictionary,
         test_Stream,
@@ -858,6 +905,7 @@ include('b-tree.js');
         test_DataLink,
         test_Graph,
         test_BTree,
+        test_Map
     ];
 
     publish(tests, 'Data tests');

@@ -58,7 +58,7 @@ include('/lib/base/dbg.js');
             variance: { label: 'Variance', value: 0.4, min:0, max:0.5, step: 0.01, normalized: true, type: 'float' },
             force: { label: 'Force', value: 0.0, min:-5000.0, max:5000, step: 100, type: 'float' },
             damping: { label: 'Damping', value: 0.1, min:0.0, max:0.2, step: 0.001, normalized: true, type: 'float' },
-            radius: { label: 'Radius', value: 4.0, min:0.1, max:10, step: 0.01, normalized: true, type: 'int' },
+            radius: { label: 'Radius', value: 4.0, min:1.0, max:20, step: 0.5, normalized: false, type: 'int' },
             lifeSpan: { label: 'Life', value: 20.0, min:1.0, max:30, step: 1, type: 'float' },
             delta: { label: 'Delta', value: 1.0, min:0.0, max:10, step: 0.1, type: 'float' }
         });
@@ -167,7 +167,7 @@ include('/lib/base/dbg.js');
             p.obj.setFrame(this.settings.pixel.value);
             var size = this.settings.size.value;
             if (updatePosition) {
-                this.step = 2*(frame[2] - frame[0])*0.5;    //*size;
+                this.step = frame[2] - frame[0];    //*size;
                 p.set([this.step*(i - this.width/2), this.step*(j - this.height/2), 1], [0,0,0], [0,0], this.settings.lifeSpan.value);
             }
             p.obj.setScale([size, size, 1]);

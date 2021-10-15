@@ -4,7 +4,7 @@ include('/lib/glui/glui-lib.js');
 
     function QuadTreeDemo() {
         Demo.call(this, 'QuadTree', {
-            levels: { label: 'Levels', value: 4, min:1, max:8, step: 1, type: 'int', link: null },
+            levels: { label: 'Levels', value: 2, min:1, max:8, step: 1, type: 'int', link: null },
             size: { label: 'Size', value: 0.06, min:0.001, max:0.2, step: 0.001, type: 'float', link: null }
         });
 
@@ -40,7 +40,7 @@ include('/lib/glui/glui-lib.js');
             var v = this.quadTree.vertices[i];
             var color = [v.color[0], v.color[1], v.color[2]];
             ctx.fillStyle = `rgb(${color[0]},${color[1]},${color[2]})`;
-            ctx.fillRect(v.x, v.y, v.width, v.height);
+            ctx.fillRect(v.p1.x, v.p1.y, v.size.x, v.size.y);
         }
         ctx.globalAlpha = 0.2;
         var v = this.selectedQuad;
@@ -48,7 +48,7 @@ include('/lib/glui/glui-lib.js');
             //var color = [96+v.color[0], 96+v.color[1], 96+v.color[2]];
             //ctx.fillStyle = `rgb(${color[0]},${color[1]},${color[2]})`;
             ctx.fillStyle = '#304080';
-            ctx.fillRect(v.x, v.y, v.width, v.height);
+            ctx.fillRect(v.p1.x, v.p1.y, v.size.x, v.size.y);
         }
         //ctx.fillStyle = '#304080';
         ctx.fillRect(this.cursor[0], this.cursor[1], this.settings.size.value, this.settings.size.value);

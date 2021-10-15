@@ -13,12 +13,12 @@ include('/lib/math/segment.js');
     SegmentManagerFactory.prototype.getTypes = function getTypes() {
         return [SegmentManager, ge.SegmentCollider2d, ge.SegmentRenderer];
     };
-    SegmentManagerFactory.prototype.instantiate = async function instantiate(engine, componentName) {
+    SegmentManagerFactory.prototype.instantiate = async function instantiate(engine, componentName, id) {
         var inst = null;
         switch (componentName) {
-            case 'SegmentManager': inst = new SegmentManager(engine, componentName); break;
-            case 'SegmentCollider2d': inst = new ge.SegmentCollider2d(engine, componentName); break;
-            case 'SegmentRenderer': inst = new ge.SegmentRenderer(engine, componentName); break;
+            case 'SegmentManager': inst = new SegmentManager(engine, id); break;
+            case 'SegmentCollider2d': inst = new ge.SegmentCollider2d(engine, id); break;
+            case 'SegmentRenderer': inst = new ge.SegmentRenderer(engine, id); break;
         }
         return inst;
     };

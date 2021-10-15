@@ -14,9 +14,9 @@ include('/lib/webgl/sprite/sprite-manager.js');
     SpriteManagerFactory.prototype.getTypes = function getTypes() {
         return [SpriteManager, ge.SpriteRenderer/*, ge.SpriteCollider*/];
     };
-    SpriteManagerFactory.prototype.instantiate = function instantiate(engine, type, id) {
+    SpriteManagerFactory.prototype.instantiate = function instantiate(engine, componentName, id) {
         var inst = null;
-        switch (type) {
+        switch (componentName) {
             case 'SpriteManager': inst = new SpriteManager(engine, id, arguments[3], arguments[4]); break;
             //case 'SpriteCollider': inst = new ge.SpriteCollider(engine, componentName); break;
             case 'SpriteRenderer': inst = new ge.SpriteRenderer(engine, id); break;
