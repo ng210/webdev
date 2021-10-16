@@ -1,8 +1,10 @@
 include('/lib/base/dbg.js');
 include('/lib/math/noise.js');
 include('./components/ge.js');
+include('/lib/math/segment.js');
 
 const MAX_BALL_COUNT = 2000;
+const MAX_AIM_STRETCH = 200;
 
 var game = null;
 
@@ -22,8 +24,10 @@ function Game() {
     this.frame = 100;
     this.segments = [];
     this.selectedBall = null;
+    this.selectedBallSize = 0;
 
-    this.isAddingBall = false;
+    this.aimingSegment = new Segment(new V2(0), new V2());
+    this.shootStatus = 0;
 
     this.ballId = 0;
 }
@@ -111,6 +115,7 @@ Game.prototype.createSegments = function createSegments(w, h) {
     );
 
     this.segmentManager.clearSegments();
+    this.segmentManager.addSegment(this.aimingSegment);
     this.segmentManager.addSegments(segments);
 };
 
@@ -131,25 +136,60 @@ Game.prototype.handleInputs = function handleInputs() {
     var mpos = this.mouseHandler.position;
     if (mpos.x > this.borders[0] && mpos.x < this.borders[2] && mpos.y > this.borders[1] && mpos.y < this.borders[3]) {
         // place ball
-        if (!this.isAddingBall && (this.keyboardHandler.isPressed(32) || this.mouseHandler.isLeftDown())) {
-            if (this.spriteManager.sprMgr.selectRadius(mpos.x, mpos.y, 10, toggleBall) == 0) {
-                this.isAddingBall = true;
-                this.selectedBall = this.addBall(mpos, [0, 0]);
-                this.selectedBall.isActive = false;
-            }
+        if (this.keyboardHandler.isPressed(32) || this.mouseHandler.isLeftDown()) {
+            //if (this.spriteManager.sprMgr.selectRadius(mpos.x, mpos.y, 10, toggleBall) == 0) {
+                switch (this.shootStatus) {
+                    case 0: // idle state
+                        this.shootStatus = 1;
+                        this.selectedBall = this.addBall(mpos, [0, 0]);
+                        this.selectedBall.isActive = false;
+                        this.aimingSegment.b.set(mpos);
+                        this.aimingSegment.a.set(mpos);
+                        break;
+                    case 1: // aiming
+                        this.aimingSegment.a.set(mpos);
+                        this.aimingSegment.update();
+                        if (this.aimingSegment.d.len > MAX_AIM_STRETCH) {
+                            this.aimingSegment.d.norm().scale(MAX_AIM_STRETCH);
+                            this.aimingSegment.a = this.aimingSegment.b.diff(this.aimingSegment.d);
+                            this.aimingSegment.update();
+                        }
+                        
+                        this.segmentManager.renderer.updateSegments([this.aimingSegment], 0);
+                        break;
+                }
+            //}
         }
 
-        // shoot ball
-        if (this.isAddingBall && (this.keyboardHandler.isReleased(32) || this.mouseHandler.isLeftReleased())) {
-            var v = this.selectedBall.current.position.diff(mpos).scale(0.004);
-            this.selectedBall.setCurrent('velocity', v);
-            this.selectedBall.isActive = true;
-            this.isAddingBall = false;
+        if (this.shootStatus == 1 && (this.keyboardHandler.isReleased(32) || this.mouseHandler.isLeftReleased())) {
+            this.shootStatus = 2;
         }
     }
 };
 
-Game.prototype.update = function update() {
+Game.prototype.update = function update(dt) {
+    switch (this.shootStatus) {
+        case 2:
+            this.shootStatus = 3;
+            //this.aimingSegment.update();
+            this.selectedBall.setCurrent('velocity', this.aimingSegment.d.prodC(0.004));
+            var spr = this.selectedBall.sprite;
+            this.selectedBallSize = 0.5*Math.sqrt(spr.width*spr.width + spr.height*spr.height);
+            break;
+        case 3:
+            var l = this.aimingSegment.d.len;
+            if (l > this.selectedBallSize*0.8) {
+                this.aimingSegment.d.scale(0.5);
+                this.aimingSegment.a = this.aimingSegment.b.diff(this.aimingSegment.d);
+            } else {
+                this.selectedBall.isActive = true;
+                this.shootStatus = 0;
+                this.aimingSegment.b.set([0,0]);
+                this.aimingSegment.a.set([0,0]);
+            }
+            this.segmentManager.renderer.updateSegments([this.aimingSegment], 0);
+            break;
+    }
 };
 //#endregion
 

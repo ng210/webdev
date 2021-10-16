@@ -37,19 +37,26 @@ include('/lib/math/segment.js');
     };
 
     SegmentRenderer.prototype.prerender = function prerender() {
-        var vertices = new Float32Array(this.segments.length*4);
+        // create VBO from segments
+        var segmentData = new Float32Array(this.segments.length*4);
+        this.vertexBuffer = webGL.createBuffer(gl.ARRAY_BUFFER, segmentData, gl.STATIC_DRAW);
+        this.updateSegments(this.segments, 0);
+    };
+
+    SegmentRenderer.prototype.updateSegments = function updateSegments(segments, start) {
+        var vertices = new Float32Array(segments.length*4);
+        start = start || 0;
         var j = 0;
-        for (var i=0; i<this.segments.length; i++) {
+        for (var i=0; i<segments.length; i++) {
             vertices[j++] = this.segments[i].a.x;
             vertices[j++] = this.segments[i].a.y;
             vertices[j++] = this.segments[i].b.x;
             vertices[j++] = this.segments[i].b.y;
         }
-        // create VBO from segments
-        this.vertexBuffer = webGL.createBuffer(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer.ref);
-        gl.bufferSubData(gl.ARRAY_BUFFER, 0, vertices);
+        gl.bufferSubData(gl.ARRAY_BUFFER, start, vertices);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
     };
 
     SegmentRenderer.prototype.render = function render() {

@@ -61,6 +61,37 @@ include('/lib/base/html.js');
 	};
 	Dbg.breakOn = function breakOn(obj, property, onread, onwrite) {
 		// call handler if obj[property] is read or written
+		var oldGetter = null, oldSetter = null;
+		var o = obj;
+		var desc = null;
+		while (o) {
+			desc = Object.getOwnPropertyDescriptor(o, property);
+			if (desc) break;
+			o = o.__proto__;
+		}
+		if (!desc) {
+			console.warn(`Invalid property '${property}'!`);
+			return;
+		}
+		if (desc.value != undefined) {
+			o.__value = desc.value;
+			delete desc.value;
+			desc.get = function() { debugger; return this.__value; };
+			if (desc.writable) {
+				desc.set = function(v) { debugger; return this.__value = v; };
+			}
+			delete desc.writable;
+		} else {
+			if (onread) {
+				obj.__oldGetter = desc.get || function() { return; };
+				desc.get = function() { debugger; return this.__oldGetter.call(this); };
+			}
+			if (onwrite) {
+				obj.__oldSetter = desc.set || function(v) { return; };
+				desc.set = function(v) { debugger; this.__oldSetter.call(this, v); };
+			}
+		}
+		Object.defineProperty(obj, property, desc);
 	};
 
 	publish(Dbg, 'Dbg');

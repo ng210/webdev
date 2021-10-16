@@ -55,13 +55,11 @@ include('/lib/math/v3.js');
             for (var i=0; i<this.updaters.length;) {
                 this.updaters[i++].update(this, dt, this.updaters[i++]);
             }
-        } else {
-            this.next.position.set(this.current.position);
+            for (var i=0; i<this.constraints.length;) {
+                this.constraints[i++].check(this, dt, ...this.constraints[i++]);
+            }
+            this.updateState();
         }
-        for (var i=0; i<this.constraints.length;) {
-            this.constraints[i++].check(this, dt, ...this.constraints[i++]);
-        }
-        this.updateState();
         this.renderer.update(this);
     };
 

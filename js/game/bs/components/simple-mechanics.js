@@ -32,7 +32,10 @@ include('./mechanics.js');
         // v1 = v0 + a*dt
         var v1 = obj.next.velocity.set(v0.sum(a.prodC(dt)));
         // v = (v0 + v1)/2
-        var v = obj.averageVelocity = v0.sum(v1).scale(0.5);
+        var v = v0.sum(v1).scale(0.5);
+        // TODO: add a proper minimum value
+        if (v.len < 0.0001) v.set([0, 0, 0]);
+        obj.averageVelocity = v;
         // p1 = p + v*dt
         obj.next.position.set(v.prodC(dt).add(obj.current.position));
     };
