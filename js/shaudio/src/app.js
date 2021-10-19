@@ -1,8 +1,6 @@
 include('/lib/base/dbg.js');
 include('sequencer.js');
 include('gpu.js');
-include('script.js');
-//include('gui.js');
 include('/lib/ge/sound.js');
 
 //include('/lib/utils/syntax.js');

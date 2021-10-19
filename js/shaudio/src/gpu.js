@@ -44,7 +44,7 @@ include('/lib/webgl/compute-shader.js');
         gl.viewport(0, 0, this.uniforms.u_size[0], this.uniforms.u_size[1]);
         gl.clearColor(0, 0, 0, 1);
         webGL.useProgram(this.prg, this.uniforms);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo.ref);
         gl.bindTexture(gl.TEXTURE_2D, App.gpu.computeShader.output.texture);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
