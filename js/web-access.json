@@ -3,6 +3,7 @@
     "allow": [
         "demo",
         "dune",
+        "groove",
         "synth",
         "service",
         "shaudio",
