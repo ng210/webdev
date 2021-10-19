@@ -11,6 +11,7 @@ function createCell(row, data, isInput, isHeader) {
         input.setAttribute('type', 'numeric');
         input.setAttribute('value', data);
         input.addEventListener('change', update);
+        input.className = className;
         cell.appendChild(input);
     } else {
         if (data != undefined) cell.innerHTML = data;
@@ -27,17 +28,14 @@ function Production(name, rate, unit) {
     this.unit = unit;
     this.output = 0;
     this.efficiency = 0;
-    this.bonus = {
-        'house': 0,
-        'research1': 0
-    };
+    this.bonus = {};
 }
 
 Production.update = function update(product) {
 };
 
 Production.prototype.update = function update(efficiency) {
-    var bonus = Object.values(this.bonus).reduce((p, c) => p+c);
+    var bonus = Object.values(this.bonus).reduce((p, c) => p+c, 0);
     this.efficiency = 1 + efficiency + bonus;
     this.output = this.efficiency * this.rate;
 };
@@ -55,6 +53,7 @@ function Building(name, count, production) {
     this.count = count;
     this.production = production;
     this.row = null;
+    this.delta = 0;
 }
 
 Building.createTable = function createTable(id, data, disabled) {
@@ -88,7 +87,7 @@ Building.createTable = function createTable(id, data, disabled) {
     
     return tab;
 };
-Building.update = function update(tab, total) {
+Building.update = function update(tab, total, isCalculated) {
     var land = 0;
     var windtrap = 0;
     for (var i=0; i<tab.datasource.length; i++) {
@@ -108,22 +107,24 @@ Building.update = function update(tab, total) {
     var efficiency = wb;
     for (var i=0; i<tab.datasource.length; i++) {
         var b = tab.datasource[i];
-        b.update(efficiency, total);
+        b.update(efficiency, total, isCalculated);
     }
 };
 Building.interpolate = function interpolate(from, to, target) {
-    console.log(target.total, from.total, to.total);
     var f = (target.total - from.total)/(to.total - from.total);
     for (var i=0; i<from.length; i++) {
         var bf = from[i];
         var bt = to[i];
         var bc = target[i];
         bc.count = Math.floor(Fn.lerp(bf.count, bt.count, f));
+        bc.delta = bc.count - bf.count;
     }
 };
 
-Building.prototype.update = function update(efficiency, land) {
-    this.row.cells[1].children[0].value = this.count.toFixed(0);
+Building.prototype.update = function update(efficiency, land, isCalculated) {
+    var count = this.count.toFixed(0);
+    if (isCalculated && this.delta) count += `(${this.delta})`;
+    this.row.cells[1].children[0].value = count;    //this.count.toFixed(0);
     this.row.cells[2].children[0].value = (100*this.count/land).toFixed(2);
     if (this.production) {
         var ratio = this.count/land;
@@ -159,21 +160,22 @@ Building.prototype.toRow = function toRow(tab, disabled) {
 var house = 'Atreides';
 
 var currentBuildings = [
-    new Building('Windfalle', 160, null),
-    new Building('Raffinerie', 800, new Production('Melange', 180, 'kg')),
-    new Building('Ofen', 20, new Production('Stahl', 36, 't')),
-    new Building('Silo', 115, new Production('Spice', 19, 'g')),
+    new Building('Windfalle', 184, null),
+    new Building('Raffinerie', 968, new Production('Melange', 180, 'kg')),
+    new Building('Ofen', 22, new Production('Stahl', 36, 't')),
+    new Building('Silo', 168, new Production('Spice', 19, 'g')),
     new Building('Zollstation', 0, null),
    
     new Building('Bauhof', 0, null),
     new Building('Leichte Waffenfabrik', 0, null),
-    new Building('Schwere Waffenfabrik', 360, null),
-    new Building('Forschungszentrum', 221, null),
+    new Building('Schwere Waffenfabrik', 230, null),
+    new Building('Forschungszentrum', 142, null),
 
+    new Building('Werkstatt', 210, null),
     new Building('Kaserne', 0, null),
     new Building('Vorposten', 0, null),
-    new Building('Geschützturm', 240, null),
-    new Building('Raketenturm', 84, null)
+    new Building('Geschützturm', 276, null),
+    new Building('Raketenturm', 100, null)
 ];
 
 var calculatedBuildings = [
@@ -188,6 +190,7 @@ var calculatedBuildings = [
     new Building('Schwere Waffenfabrik', 0, null),
     new Building('Forschungszentrum', 0, null),
 
+    new Building('Werkstatt', 0, null),
     new Building('Kaserne', 0, null),
     new Building('Vorposten', 0, null),
     new Building('Geschützturm', 0, null),
@@ -195,20 +198,21 @@ var calculatedBuildings = [
 ];
 
 var plannedBuildings = [
-    new Building('Windfalle', 80, null),
-    new Building('Raffinerie', 820, new Production('Melange', 180, 'kg')),
-    new Building('Ofen', 20, new Production('Stahl', 36, 't')),
-    new Building('Silo', 120, new Production('Spice', 19, 'g')),
+    new Building('Windfalle', 240, null),
+    new Building('Raffinerie', 1260, new Production('Melange', 180, 'kg')),
+    new Building('Ofen', 30, new Production('Stahl', 36, 't')),
+    new Building('Silo', 240, new Production('Spice', 19, 'g')),
     new Building('Zollstation', 0, null),
    
     new Building('Bauhof', 0, null),
     new Building('Leichte Waffenfabrik', 0, null),
-    new Building('Schwere Waffenfabrik', 400, null),
-    new Building('Forschungszentrum', 200, null),
+    new Building('Schwere Waffenfabrik', 230, null),
+    new Building('Forschungszentrum', 120, null),
 
+    new Building('Werkstatt', 400, null),
     new Building('Kaserne', 0, null),
     new Building('Vorposten', 0, null),
-    new Building('Geschützturm', 240, null),
+    new Building('Geschützturm', 360, null),
     new Building('Raketenturm', 120, null)
 ];
 
@@ -232,7 +236,7 @@ var Ui = {
         // sum land, get windtrap size
         Building.update(this.currentBuildings);
         var total = parseInt(this.calculatedBuildings.rows[this.calculatedBuildings.rows.length-1].cells[1].children[0].value);
-        Building.update(this.calculatedBuildings);
+        Building.update(this.calculatedBuildings, 0, true);
         Building.update(this.plannedBuildings);
     }
 };
@@ -256,8 +260,9 @@ function update(e) {
     if (tab != Ui.calculatedBuildings) {
         Building.update(cell.parentNode.parentNode, total);
     } else {
-        Building.interpolate(plannedBuildings, currentBuildings, calculatedBuildings, total);
-        Building.update(Ui.calculatedBuildings, total);
+        calculatedBuildings.total = total;
+        Building.interpolate(currentBuildings, plannedBuildings, calculatedBuildings);
+        Building.update(Ui.calculatedBuildings, total, true);
     }    
 }
 
@@ -275,19 +280,24 @@ async function onpageload(errors) {
         Dbg.con.style.visibility = 'visible';
 
         // set house prod.bonus
-        if (house == 'Atreides') setBonus('Raffinerie', 'house', .1);
-        if (house == 'Harkonnen') setBonus('Ofen', 'house', .1);
+        if (house == 'Atreides') setBonus('Raffinerie', 'house', .10);
+        if (house == 'Harkonnen') setBonus('Ofen', 'house', .10);
 
         // set research #1
         setBonus('Raffinerie', 'rs1', .05);
         setBonus('Raffinerie', 'rs2', .10);
         setBonus('Raffinerie', 'rs3', .15);
+        setBonus('Raffinerie', 'rs4', .25);
+
         setBonus('Ofen', 'rs1', .05);
         setBonus('Ofen', 'rs2', .10);
         setBonus('Ofen', 'rs3', .15);
+        setBonus('Ofen', 'rs4', .25);
+
         setBonus('Silo', 'rs1', .05);
         setBonus('Silo', 'rs2', .10);
         setBonus('Silo', 'rs3', .15);
+        setBonus('Silo', 'rs4', .25);
 
         setBonus('Raffinerie', 'sg1', .10);
         setBonus('Ofen', 'sg1', .10);
@@ -297,7 +307,7 @@ async function onpageload(errors) {
         Ui.update();
         var p = parseInt(Ui.plannedBuildings.tbTotal.value), c = parseInt(Ui.currentBuildings.tbTotal.value);
         calculatedBuildings.total = Math.floor(p - c)/2 + c;
-        Building.interpolate(plannedBuildings, currentBuildings, calculatedBuildings);
-        Building.update(Ui.calculatedBuildings);
+        Building.interpolate(currentBuildings, plannedBuildings, calculatedBuildings);
+        Building.update(Ui.calculatedBuildings, 0, true);
     }
 }

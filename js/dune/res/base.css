@@ -44,7 +44,7 @@ table {
 	margin-left: auto;
 }
 
-.current {
+td.current {
 	background-color: #6080c0;
 	border: 2px outset #78a0f0;
 }
@@ -54,16 +54,20 @@ table {
 	margin-right: auto;
 }
 
-.calculated {
+td.calculated {
 	background-color: #60a0a0;
 	border: 2px outset #78c0c0;
+}
+
+input.calculated {
+	width: 8em;
 }
 
 #planned {
 	margin-right: auto;
 }
 
-.planned {
+td.planned {
 	background-color: #60c080;
 	border: 2px outset #78f0a0;
 }
