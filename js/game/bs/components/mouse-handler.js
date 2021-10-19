@@ -2,8 +2,8 @@ include('./input-handler.js');
 (function() {
     function MouseHandler(engine, id) {
         MouseHandler.base.constructor.call(this, engine, id);
-        this.position = new V2();
-        this.positionRelative = new V2();
+        this.position = new V3();
+        this.positionRelative = new V3();
         this.buttons = new Array(6);    // 3 buttons * 2 states
         this.activeButtons = [];
         for (var i=0; i<this.buttons.length; i++) this.buttons[i] = false;;
@@ -15,9 +15,9 @@ include('./input-handler.js');
 
     MouseHandler.prototype.oninput = function oninput(e, isDown) {
         if (e.type == 'mousemove') {
-            this.position.set(e.clientX, e.clientY).mul(this.engine.ratio);
+            this.position.set(e.clientX, e.clientY, 0).mul(this.engine.ratio);
             this.position.y = ge.resolution.y - this.position.y;
-            this.positionRelative.set(e.clientX, e.clientY).div(ge.resolution);
+            this.positionRelative.set(e.clientX, e.clientY, 0).div(ge.resolution);
         } else {
             if (e.button < 3) {
                 var b = 2*e.button;

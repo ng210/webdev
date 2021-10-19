@@ -48,6 +48,13 @@
         this[2] /= v[2];
         return this;
     };
+    // return this/c
+    V3.prototype.divC = function div(c) {
+        this[0] /= c;
+        this[1] /= c;
+        this[2] /= c;
+        return this;
+    };
     // return this · v
     V3.prototype.dot = function dot(v) {
         return this.x * v.x + this.y * v.y + this.z * v.z;

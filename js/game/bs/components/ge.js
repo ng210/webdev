@@ -1,5 +1,6 @@
 include('/lib/data/map.js');
 include('/lib/math/v2.js');
+include('/lib/math/v3.js');
 (function() {
     function Component(file, factory) {
         this.file = file;
@@ -14,7 +15,7 @@ include('/lib/math/v2.js');
         instances: {},
 
         resolution: new V2(),
-        ratio: new V2(),
+        ratio: new V3(),
         settings: {},
         renderers: [],
         actors: [],
@@ -26,7 +27,11 @@ include('/lib/math/v2.js');
         frame: 0,
         fps: 0.0,
         fpsTime: 0,
-        fpsHandler: () => null
+        fpsHandler: () => null,
+
+        config: {
+            maxRecursion: 3
+        }
     };
 
     //#region Component management
@@ -95,7 +100,7 @@ include('/lib/math/v2.js');
         this.resolution.set(width, height);
         gl.canvas.width = this.resolution.x;
         gl.canvas.height = this.resolution.y;
-        this.ratio.set(width/gl.canvas.clientWidth, height/gl.canvas.clientHeight);
+        this.ratio.set(width/gl.canvas.clientWidth, height/gl.canvas.clientHeight, 1);
         for (var i=0; i<this.renderers.length; i++) {
             this.renderers[i].resize();
         }
@@ -114,7 +119,9 @@ include('/lib/math/v2.js');
     ge.update = function update(dt) {
         // update actors
         for (var i=0; i<this.actors.length; i++) {
-            this.actors[i].update(dt);
+            var a = this.actors[i];
+            a.ttl = 3;
+            a.update(dt);
         }
     };
 

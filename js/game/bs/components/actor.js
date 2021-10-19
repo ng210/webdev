@@ -12,6 +12,7 @@ include('/lib/math/v3.js');
         };
         this.isActive = false;
         this.isDirty = true;
+        this.mechanics = null;
         this.updaters = [];
         this.constraints = [];
         this.updateState = function() {
@@ -43,6 +44,7 @@ include('/lib/math/v3.js');
     // - adds updater
     // TODO: add mass and forces
     Actor.prototype.addMechanics = function addMechanics(mechanics) {
+        this.mechanics = mechanics;
         mechanics.setup(this);
     };
 
@@ -51,12 +53,14 @@ include('/lib/math/v3.js');
     };
 
     Actor.prototype.update = function update(dt) {
-        if (this.isActive) {
+        if (this.isActive && this.ttl > 0) {
+            this.ttl--;
             for (var i=0; i<this.updaters.length;) {
                 this.updaters[i++].update(this, dt, this.updaters[i++]);
             }
+            
             for (var i=0; i<this.constraints.length;) {
-                this.constraints[i++].check(this, dt, ...this.constraints[i++]);
+                this.constraints[i++].check(this, dt, 0, ...this.constraints[i++]);
             }
             this.updateState();
         }
@@ -64,7 +68,11 @@ include('/lib/math/v3.js');
     };
 
     Actor.prototype.setCurrent = function setCurrent(property, value) {
-        this.current[property].set(value);
+        if (typeof this.current[property].set === 'function') {
+            this.current[property].set(value);
+        } else {
+            this.current[property] = value;
+        }
     };
 
     publish(Actor, 'Actor', ge);

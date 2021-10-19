@@ -27,7 +27,7 @@ include('/lib/data/quadtree.js');
                 var i = new V2(v.d);
                 var c = n.dot(i);
                 if (c < 0) {
-                    obj.resolveCollision(dt, p.diff(v.a), n.norm());
+                    obj.mechanics.resolveCollision.call(obj.mechanics, obj, dt, p.sub(v.a), n.norm());
                     break;
                 }
             }
