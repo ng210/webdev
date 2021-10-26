@@ -58,11 +58,13 @@ _Angular properties_
 ### Calculate the moment of inertia
 A good approximation of the moment of inertia for a given geometry greatly improves the simulation of rotating objects. There can be 2 steps of approximation
 - point-based: a mass is assigned to every point of the geometry, the total moment of inertia is the sum over all points multiplied by a factor (1/3)
+
         mi: mass of point i
         pi: position vector of point i
         c = SUM(i=0..n, mi * pi)/SUM(j=0..n, mj)
         I = SUM(i=0..n, mi*(c - pi)²)/3
-- triangle-based: the geometry is decomposed into triangles that have their own moment of inertia calcualted using formulas, and are summed up to get the total moment of inertia. 
+- triangle-based: the geometry is decomposed into triangles that have their own moment of inertia calcualted using formulas, and are summed up to get the total moment of inertia.
+
         Ai: area if triangle i
         di: density of triangle i
         pi: position vector of center of triangle i
