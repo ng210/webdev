@@ -9,8 +9,8 @@ body {
 }
 
 #settings {
-    background-color: #204080;
-    border: groove 3px #3060c0;
+    background-image: linear-gradient(#60a0ff, #001040, #204080);
+    border: outset 2px #3060c0;
     padding: 0.5em;
     position:absolute;
     z-index: 2000;
@@ -29,10 +29,10 @@ h1.settings {
 }
 
 #start {
-    background-color: #80a0c0;
+    background-color: #80a0e0;
     color: #0020a0;
     border-width: 3px;
-    border-color: #a0c8f0;
+    border-color: #a0c8e0;
     font-family: Arial;
     font-weight: bold;
     font-size: 16pt;

@@ -34,5 +34,21 @@ include('/lib/data/quadtree.js');
         }
     };
 
+    // SegmentCollider2d.prototype.check = function check() {
+    //     var candidates = this.broadPhase();
+    //     var colliders = this.narrowPhase(candidates);
+    //     for (var i=0; i<colliders.length; i++) {
+    //         colliders[i].mechanics.resolveCollision();
+    //     }
+    // };
+
+
+    SegmentCollider2d.prototype.broadPhase = function broadPhase() {
+        // look for colliding objects by checking coordinates
+    };
+
+    SegmentCollider2d.prototype.narrowPhase = function narrowPhase(list) {
+    };
+
     publish(SegmentCollider2d, 'SegmentCollider2d', ge);
 })();

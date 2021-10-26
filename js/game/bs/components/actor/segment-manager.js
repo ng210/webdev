@@ -1,4 +1,4 @@
-include('./icomponent.js');
+include('../icomponent.js');
 include('/lib/math/segment.js');
 (function() {
     //#region SegmentManagerFactory
@@ -8,7 +8,7 @@ include('/lib/math/segment.js');
     extend(ge.IComponentFactory, SegmentManagerFactory);
 
     SegmentManagerFactory.prototype.getDependencies = function getDependencies() {
-        return ['segment-collider-2d.js', 'segment-renderer.js'];
+        return ['constraint/segment-collider-2d.js', 'renderer/segment-renderer.js'];
     };
     SegmentManagerFactory.prototype.getTypes = function getTypes() {
         return [SegmentManager, ge.SegmentCollider2d, ge.SegmentRenderer];

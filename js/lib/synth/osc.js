@@ -68,7 +68,7 @@ include('./input.js');
             amp: new psynth.PotF32(0, 1, .0),
             fre: new psynth.PotF32(0, 12000, .0),
             note: new psynth.Pot(0, 127, 0),
-            tune: new psynth.Pot(-24, 24, .0),
+            tune: new psynth.Pot(-36, 36, .0),
             psw: new psynth.PotF8(0, 1, .0),
             wave: new psynth.Pot(1, 127, 1),
         };

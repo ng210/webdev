@@ -1,4 +1,4 @@
-include('./icomponent-factory.js');
+include('../icomponent-factory.js');
 include('/lib/webgl/sprite/sprite-manager.js');
 (function() {
 
@@ -9,7 +9,7 @@ include('/lib/webgl/sprite/sprite-manager.js');
     extend(ge.IComponentFactory, SpriteManagerFactory);
 
     SpriteManagerFactory.prototype.getDependencies = function getDependencies() {
-        return ['sprite-renderer.js'/*, 'sprite-collider.js'*/];
+        return ['renderer/sprite-renderer.js'/*, 'sprite-collider.js'*/];
     };
     SpriteManagerFactory.prototype.getTypes = function getTypes() {
         return [SpriteManager, ge.SpriteRenderer/*, ge.SpriteCollider*/];
@@ -59,6 +59,21 @@ include('/lib/webgl/sprite/sprite-manager.js');
         this.sprMgr.resize(size.x, size.y);
     };
     //#endregion
+
+    ge.addSprite = function(id, spriteManager) {
+        var a = ge.addActor(id);
+        if (!spriteManager) {
+            var c = this.getComponent('SpriteManager');
+            if (c) {
+                spriteManager = c.instances.getAt(0);
+                if (!spriteManager) throw new Error('No sprite manager component created!');
+            }
+        }
+        a.sprite = spriteManager.addSprite();
+        a.sprite.actor = a;
+        a.renderer = spriteManager.renderer;
+        return a;
+    }
 
     publish(SpriteManagerFactory, 'SpriteManagerFactory', ge);
     publish(SpriteManager, 'SpriteManager', ge);

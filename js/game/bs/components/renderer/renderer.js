@@ -1,4 +1,4 @@
-include('./ge.js');
+include('../ge.js');
 (function() {
     function Renderer(engine, id) {
         Renderer.base.constructor.call(this, engine, id);

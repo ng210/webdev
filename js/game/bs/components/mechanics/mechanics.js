@@ -1,4 +1,4 @@
-include('./ge.js');
+include('../ge.js');
 
 (function() {
     function Mechanics(engine, id) {

@@ -34,9 +34,8 @@ function Production(name, rate, unit) {
 Production.update = function update(product) {
 };
 
-Production.prototype.update = function update(efficiency) {
-    var bonus = Object.values(this.bonus).reduce((p, c) => p+c, 0);
-    this.efficiency = 1 + efficiency + bonus;
+Production.prototype.update = function update(factor, bonus) {
+    this.efficiency = factor*(bonus + Object.values(this.bonus).reduce((p, c) => p+c, 0));
     this.output = this.efficiency * this.rate;
 };
 
@@ -104,7 +103,7 @@ Building.update = function update(tab, total, isCalculated) {
     tab.datasource.total = total;
     
     var wb = 3 * windtrap/total;
-    var efficiency = wb;
+    var efficiency = 1 + wb;
     for (var i=0; i<tab.datasource.length; i++) {
         var b = tab.datasource[i];
         b.update(efficiency, total, isCalculated);
@@ -130,7 +129,9 @@ Building.prototype.update = function update(efficiency, land, isCalculated) {
         var ratio = this.count/land;
         var boost = 3.75 * ratio * ratio;
         if (boost > .6) boost = .6;
-        this.production.update(efficiency + boost);
+        var mb = 1;
+        if (land >= 3000) mb += 0.02*(1 + (land-3000)/250);
+        this.production.update(mb, efficiency + boost);
         var output = this.production.output * this.count;
         this.row.cells[4].innerHTML = `${('            ' + output.toFixed(2)).slice(-12)} ${(this.production.unit + '  ').substr(0, 2)}`;
         this.row.cells[5].innerHTML = (100*this.production.efficiency).toFixed(2) + '%';
@@ -160,22 +161,23 @@ Building.prototype.toRow = function toRow(tab, disabled) {
 var house = 'Atreides';
 
 var currentBuildings = [
-    new Building('Windfalle', 184, null),
-    new Building('Raffinerie', 968, new Production('Melange', 180, 'kg')),
-    new Building('Ofen', 22, new Production('Stahl', 36, 't')),
-    new Building('Silo', 168, new Production('Spice', 19, 'g')),
+    new Building('Windfalle', 240, null),
+    new Building('Raffinerie', 1200, new Production('Melange', 180, 'kg')),
+    new Building('Ofen', 30, new Production('Stahl', 36, 't')),
+    new Building('Silo', 240, new Production('Spice', 19, 'g')),
     new Building('Zollstation', 0, null),
    
     new Building('Bauhof', 0, null),
     new Building('Leichte Waffenfabrik', 0, null),
-    new Building('Schwere Waffenfabrik', 230, null),
-    new Building('Forschungszentrum', 142, null),
+    new Building('Schwere Waffenfabrik', 0, null),
+    new Building('Forschungszentrum', 0, null),
 
-    new Building('Werkstatt', 210, null),
+    new Building('Werkstatt', 640, null),
+    new Building('Wor', 50, null),
     new Building('Kaserne', 0, null),
-    new Building('Vorposten', 0, null),
-    new Building('Geschützturm', 276, null),
-    new Building('Raketenturm', 100, null)
+    new Building('Vorposten', 120, null),
+    new Building('Geschützturm', 360, null),
+    new Building('Raketenturm', 120, null)
 ];
 
 var calculatedBuildings = [
@@ -191,6 +193,7 @@ var calculatedBuildings = [
     new Building('Forschungszentrum', 0, null),
 
     new Building('Werkstatt', 0, null),
+    new Building('Wor', 0, null),
     new Building('Kaserne', 0, null),
     new Building('Vorposten', 0, null),
     new Building('Geschützturm', 0, null),
@@ -199,19 +202,20 @@ var calculatedBuildings = [
 
 var plannedBuildings = [
     new Building('Windfalle', 240, null),
-    new Building('Raffinerie', 1260, new Production('Melange', 180, 'kg')),
+    new Building('Raffinerie', 1200, new Production('Melange', 180, 'kg')),
     new Building('Ofen', 30, new Production('Stahl', 36, 't')),
     new Building('Silo', 240, new Production('Spice', 19, 'g')),
     new Building('Zollstation', 0, null),
    
     new Building('Bauhof', 0, null),
     new Building('Leichte Waffenfabrik', 0, null),
-    new Building('Schwere Waffenfabrik', 230, null),
-    new Building('Forschungszentrum', 120, null),
+    new Building('Schwere Waffenfabrik', 120, null),
+    new Building('Forschungszentrum', 0, null),
 
-    new Building('Werkstatt', 400, null),
+    new Building('Werkstatt', 610, null),
+    new Building('Wor', 30, null),
     new Building('Kaserne', 0, null),
-    new Building('Vorposten', 0, null),
+    new Building('Vorposten', 80, null),
     new Building('Geschützturm', 360, null),
     new Building('Raketenturm', 120, null)
 ];
@@ -268,6 +272,7 @@ function update(e) {
 
 function setBonus(building, name, factor) {
     currentBuildings.find(x => x.name == building).production.bonus[name] = factor;
+    calculatedBuildings.find(x => x.name == building).production.bonus[name] = factor;
     plannedBuildings.find(x => x.name == building).production.bonus[name] = factor;
 }
 

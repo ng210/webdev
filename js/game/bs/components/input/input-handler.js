@@ -1,4 +1,4 @@
-include('./ge.js');
+include('../ge.js');
 (function() {
     //#region InputHandlerFactory
     function InputHandlerFactory() {
@@ -7,7 +7,7 @@ include('./ge.js');
     extend(ge.IComponentFactory, InputHandlerFactory);
 
     InputHandlerFactory.prototype.getDependencies = function getDependencies() {
-        return ['keyboard-handler.js', 'mouse-handler.js'];
+        return ['input/keyboard-handler.js', 'input/mouse-handler.js'];
     };
     InputHandlerFactory.prototype.getTypes = function getTypes() {
         return [ge.KeyboardHandler, ge.MouseHandler];

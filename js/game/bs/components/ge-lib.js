@@ -1,5 +1,5 @@
 include('./icomponent-factory.js');
-include('./actor.js');
+include('./actor/actor.js');
 
 // include('./sprite-manager.js');
 

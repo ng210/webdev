@@ -68,7 +68,7 @@ function writeTokenToStream(namespace, token, stream) {
 function SynthApp() {
     this.settings = {
         'bpm':          101,
-        'scopewindow':  0.2
+        'scopewindow':  0.3
     };
 
     //#region playback

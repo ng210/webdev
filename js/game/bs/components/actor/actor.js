@@ -1,4 +1,4 @@
-include('./icomponent.js');
+include('../icomponent.js');
 include('/lib/math/v3.js');
 (function() {
     function Actor(engine, id) {
@@ -25,20 +25,6 @@ include('/lib/math/v3.js');
 
     };
 
-    Actor.prototype.addSprite = function addSprite(spriteManager) {
-        if (!spriteManager) {
-            var c = this.engine.getComponent('SpriteManager');
-            if (c) {
-                spriteManager = c.instances.getAt(0);
-                if (!spriteManager) throw new Error('No sprite manager component created!');
-            }
-        }
-        this.sprite = spriteManager.addSprite();
-        this.sprite.actor = this;
-        this.renderer = spriteManager.renderer;
-        return this.sprite;
-    };
-
     // Add mechanics to actor:
     // - adds mechanics properties
     // - adds updater
@@ -58,7 +44,6 @@ include('/lib/math/v3.js');
             for (var i=0; i<this.updaters.length;) {
                 this.updaters[i++].update(this, dt, this.updaters[i++]);
             }
-            
             for (var i=0; i<this.constraints.length;) {
                 this.constraints[i++].check(this, dt, 0, ...this.constraints[i++]);
             }

@@ -1,4 +1,4 @@
-include('./ge.js');
+include('../ge.js');
 include('/lib/math/segment.js');
 (function() {
     function SegmentRenderer(engine, id) {

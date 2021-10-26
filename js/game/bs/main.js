@@ -1,6 +1,6 @@
 include('/lib/base/dbg.js');
 include('/lib/math/noise.js');
-include('./components/ge.js');
+include('./components/ge-lib.js');
 include('/lib/math/segment.js');
 
 const MAX_BALL_COUNT = 2000;
@@ -39,27 +39,18 @@ Game.prototype.init = async function init() {
     Dbg.prln('Initialization');
 
     //#region Components and instances
-    await ge.loadComponent('sprite-manager.js');
     this.spriteManager = await ge.createInstance('SpriteManager', 'sprmgr1', './res/balls.spr.json', MAX_BALL_COUNT);
-
-    await ge.loadComponent('segment-manager.js');
     this.segmentManager = await ge.createInstance('SegmentManager', 'segmgr1');
-
-    await ge.loadComponent('simple-mechanics.js');
     await ge.createInstance('SimpleMechanics', 'sm1', {
         'forces': [
             { 'type':'field', 'direction': new V3(0, -0.0004, 0) },
             // { 'type':'point', 'center': new V3(this.frame, -this.frame), 'amount': new V3(0, -200.0, 0) }
             //{ 'type':'point', 'center': new V3(100, -5000), 'amount': new V3(0, 50000.0, 0) }
         ],
-        'damping': 0.8
+        'damping': 0.6
     });
-
-    await ge.loadComponent('input-handler.js');
     this.keyboardHandler = await ge.createInstance('KeyboardHandler', 'kbhandler1');
     this.mouseHandler = await ge.createInstance('MouseHandler', 'mousehandler1');
-
-    await ge.loadComponent('actor.js');
     Dbg.prln('Components loaded.');
     //#endregion
 
@@ -82,9 +73,10 @@ Game.prototype.createCircleSegments = function createCircleSegments(center, w, h
     var a1 = 0;
     var p0 = p1 = null;
     for (var i=0; i<count; i++) {
-        var n = this.noise.fbm1d(a1, 6, 1.0, 2.0, 0.6, 2.0);
-        var l = i < count/2 ? Fn.smoothstep(i/count) : Fn.smoothstep((count - i)/count);
-        l = 0.5 + l * n;
+        var n = this.noise.fbm1d(a1, 6, 0.6, 2, 0.6, 1.8);
+        //var n = Math.random();
+        // var l = i < count/2 ? Fn.smoothstep(i/count) : Fn.smoothstep((count - i)/count);
+        var l = Fn.lerp(1, n, 0.6);
         //var l = Fn.lerp(1, n, 0.5);
         var p = V2.fromPolar(a1, l).mul([w, h]).add(center);
         if (p1 != null) {
@@ -129,7 +121,7 @@ Game.prototype.createSegments = function createSegments(w, h) {
         // new Segment(p2, p1),        // bottom
         // new Segment(p1, br),        // bottom
         new Segment(br, tr),        // right
-        new Segment(tr, tl),        // top
+        //new Segment(tr, tl),        // top
         new Segment(tl, bl)         // left
     );
 
@@ -256,10 +248,10 @@ Game.prototype.setBallSize = function setBallSize(ball, s) {
 Game.prototype.addBall = function addBall(p, v) {
     var ball = null;
     if (ge.actors[this.ballId] == undefined) {
-        ball = ge.addActor(`ball${this.ballId}`);
-        ball.addSprite(this.spriteManager);
+        ball = ge.addSprite(`ball${this.ballId}`);
         ball.addMechanics(ge.getInstance('sm1'));
         ball.addCollider(this.segmentManager.collider);
+        //ball.addCollider(this.spriteManager.collider);
     } else {
         ball = ge.actors[this.ballId];
     }

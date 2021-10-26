@@ -31,6 +31,24 @@ include('/lib/math/v3.js');
 
         config: {
             maxRecursion: 3
+        },
+
+        defaultComponents: {
+            'SpriteManager': {
+                'source': 'actor/sprite-manager.js'
+            },
+            'SegmentManager': {
+                'source': 'actor/segment-manager.js'
+            },
+            'SimpleMechanics': {
+                'source': 'mechanics/simple-mechanics.js'
+            },
+            'KeyboardHandler': {
+                'source': 'input/input-handler.js'
+            },
+            'MouseHandler': {
+                'source': 'input/input-handler.js'
+            }
         }
     };
 
@@ -67,6 +85,10 @@ include('/lib/math/v3.js');
     ge.createInstance = async function createInstance(componentName, instanceId) {
         var res = null;
         var c = this.components[componentName];
+        if (!c) {
+            await this.loadComponent(this.defaultComponents[componentName].source);
+            c = this.components[componentName]
+        }
         if (c != undefined) {
             res = await c.factory.instantiate(this, componentName, instanceId);
             if (res != null) {
