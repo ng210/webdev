@@ -227,9 +227,9 @@
                     ],
                     'args': {
                         'color': new V3(0.8, 0.7, 0.4),
-                        'diffuse': 1.0,
-                        'specular1': 5.8,
-                        'specular2': 40
+                        'diffuse': 0.8,
+                        'specular1': 4.8,
+                        'specular2': 100
                     }
                 },
                 { // earth1
@@ -348,10 +348,10 @@
             }
 
             // setup controls
-            document.addEventListener('mouseup', onevent);
-            document.addEventListener('mousedown', onevent);
-            document.addEventListener('mousemove', onevent);
-            document.addEventListener('dragging', onevent);
+            // document.addEventListener('mouseup', onevent);
+            // document.addEventListener('mousedown', onevent);
+            // document.addEventListener('mousemove', onevent);
+            // document.addEventListener('dragging', onevent);
 
             await animate(
                 time => {
@@ -369,7 +369,7 @@
                     // #endregion
 
                     // set material
-                    setMaterial(scene.materials[4], shaderArgs);
+                    setMaterial(scene.materials[3], shaderArgs);
                     // #region render
                     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
                     //gl.blendFunc(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA);
@@ -388,26 +388,50 @@
         teardown();
     }
 
+    function test_buffer() {
+        header('Test buffer');
+        initWebGL();
+        var buffer = new webGL.Buffer();
+        var data = new Uint8Array(4096);
+        var step = 256/data.length;
+        for (var i=0; i<data.length;) {
+            var c = Math.floor(i*step);
+            data[i++] = 0;
+            data[i++] = 128;
+            data[i++] = 255-c;
+            data[i++] = 255;
+        }
+        buffer.setType('byte[4]');
+        buffer.setData(data);
+        gl.clearColor(0.10, 0.12, 0.20, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        buffer.render(null);
+    }
+
     async function test_compute_shader_inputs() {
         initWebGL();
         webGL.useExtension('EXT_color_buffer_float');
         // var image = await load('./res/box.png');
         // var fboSize = 4*gl.drawingBufferWidth * gl.drawingBufferHeight;
         var tests = {
-            'length(byte)':             { input: [4*3, 'byte'],                     output: null,   expected: { length: 4*3,        type:gl.R8UI }},
-            // 'length(long)':             { input: [3*3, 'long'],                     output: null,   expected: { length: 4*3,        type:gl.R32UI }},
-            // 'float32array':             { input: [new Float32Array(10)],            output: null,   expected: { length: 4*3,        type:gl.R32F} },
-            // 'length(byte[2])':          { input: [3*5, 'byte[2]'],                  output: null,   expected: { length: 2*4*4,      type:gl.RG8UI }},
-            // 'length(uint32[4])':        { input: [5*6, 'uint32[4]'],                output: null,   expected: { length: 4*4*8,      type:gl.RGBA32UI }},
-            // 'float32array(float[4])':   { input: [new Float32Array(8), 'float[4]'], output: null,   expected: { length: 4*8,        type:gl.RGBA32F} },
-            // 'image':                    { input: [image.node],                      output: null,   expected: { length: 4*512*512,  type:gl.RGBA8UI }},
-            // 'fbo':                      { input: [null, 'float[4]'],                output: null,   expected: { length: fboSize,    type:gl.RGBA8UI }}
+            // 'length(byte)':             { input: [4*3, 'byte'],                     output: [null, undefined],   expected: { length: 4*3,        type:gl.R8UI }},
+            // 'length(long)':             { input: [3*3, 'long'],                     output: [null, undefined],   expected: { length: 4*3,        type:gl.R32UI }},
+            // 'float32array':             { input: [new Float32Array(10)],            output: [null, undefined],   expected: { length: 4*3,        type:gl.R32F} },
+            // 'length(byte[2])':          { input: [30, 'byte[2]'],                       output: [null, undefined],   expected: { length: 2*4*4,      type:gl.RG8UI }},
+            // 'length(uint32[4])':        { input: [132, 'uint32[4]'],                    output: [null, undefined],   expected: { length: 4*8*5,      type:gl.RGBA32UI }},
+            // 'float32array(float[4])':   { input: [new Float32Array(160), 'float[4]'],   output: [null, undefined],   expected: { length: 160,        type:gl.RGBA32F} },
+            // 'image':                    { input: [image.node],                      output: [null, undefined],   expected: { length: 4*512*512,  type:gl.RGBA8UI }},
+            'fbo':                      { input: [null, 'float[4]'],                output: [null, undefined], expected: { length: 0,    type:gl.RGBA8UI }}
         };
         var cs = new webGL.ComputeShader2();
         for (var i in tests) {
             var data = tests[i].input[0];
             // create compute-shader
-            cs.setInput.apply(cs, tests[i].input);
+            if (i == 'fbo') {
+                for (var j=0; j<size*length; j++) expected[j] = 2 * (j%size + 1) * Math.floor(j/size);
+            }
+debugger
+            cs.setInput(...tests[i].input);
             test(`Should create a buffer from '${i}'`, ctx => {
                 if (data != null) {
                     ctx.assert(cs.input.data, '!null');
@@ -418,8 +442,8 @@
                 }
                 ctx.assert(cs.input.type.id, '=', tests[i].expected.type);
             });
-            var output = tests[i].output || tests[i].input;
-            cs.setOutput.apply(cs, output);
+            var output = tests[i].output;
+            cs.setOutput(...output);
 
             var samplerType = '', outputType = 'float', inputs = 'x', constant = '2';
             switch (cs.input.type.id) {
@@ -458,8 +482,8 @@ void main(void) {
 }`;
             await cs.setShader(shaderScript);
             var result = cs.compute((n, i, j, k) => n);
-            var expected = Reflect.construct(result.constructor, [tests[i].expected.length]);
-            var length = output[0].buffer instanceof ArrayBuffer ? output[0].length : output[0];
+            var expected = Reflect.construct(result.constructor, [tests[i].expected.length || cs.input.originalLength]);
+            var length = cs.input.originalLength;
             var size = cs.input.type.length;
             for (var j=0; j<size*length; j++) expected[j] = 2 * (j%size + 1) * Math.floor(j/size);
             test('Should return the correct values', ctx => ctx.assert(result, ':=', expected));
@@ -510,9 +534,10 @@ void main(void) {
     }
 
     var tests = () => [
-        test_simple_render,
+        // test_buffer,
         test_compute_shader_inputs,
-        //test_compute_shader_multiple,
+        // test_simple_render,
+        // test_compute_shader_multiple,
         
     ];
 

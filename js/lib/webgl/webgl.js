@@ -1,5 +1,5 @@
 (function () {
-	//#region BUFFER
+	//#region BUFFER (TEXTURE)
     function Buffer() {
         this.type = webGL.types.FLOAT;
         this.length = 0;
@@ -14,33 +14,47 @@
     }
 
     Buffer.prototype.setType = function setType(type) {
-        switch (type.toLowerCase()) {
-            case 'uint8':
-            case 'byte': this.type = webGL.types.R8UI; break;
-            case 'uint32':
-            case 'long': this.type = webGL.types.R32UI; break;
-            case 'float': this.type = webGL.types.R32F; break;
-            case 'uint8[2]':
-            case 'byte[2]': this.type = webGL.types.RG8UI; break;
-            case 'uint32[2]':
-            case 'long[2]': this.type = webGL.types.RG32UI; break;
-            case 'float[2]': this.type = webGL.types.RG32F; break;
-            case 'uint8[4]':
-            case 'byte[4]': this.type = webGL.types.RGBA8UI; break;
-            case 'uint32[4]':
-            case 'long[4]': this.type = webGL.types.RGBA32UI; break;
-            case 'float[4]': this.type = webGL.types.RGBA32F; break;
-            default: throw new Error(`Unsupported type '${type}'!`);
-        }
+		if (typeof type === 'string') {
+			switch (type.toLowerCase()) {
+				case 'uint8':
+				case 'byte': this.type = webGL.types.R8UI; break;
+				case 'uint32':
+				case 'long': this.type = webGL.types.R32UI; break;
+				case 'float': this.type = webGL.types.R32F; break;
+				case 'uint8[2]':
+				case 'byte[2]': this.type = webGL.types.RG8UI; break;
+				case 'uint32[2]':
+				case 'long[2]': this.type = webGL.types.RG32UI; break;
+				case 'float[2]': this.type = webGL.types.RG32F; break;
+				case 'uint8[4]':
+				case 'byte[4]': this.type = webGL.types.RGBA8UI; break;
+				case 'uint32[4]':
+				case 'long[4]': this.type = webGL.types.RGBA32UI; break;
+				case 'float[4]': this.type = webGL.types.RGBA32F; break;
+				default: throw new Error(`Unsupported type '${type}'!`);
+			}
+		} else if (Object.values(webGL.types).indexOf(type) != -1) {
+			this.type = type;
+		} else throw new Error(`Unkown type '${type}'!`);
     };
 
-    Buffer.prototype.setSize = function setSize(length) {
-        this.originalLength = length;
-        var r = Math.ceil(Math.sqrt(length));
-        var p = Math.ceil(Math.log2(r));
-        this.width = Math.pow(2, p);
-        this.height = Math.ceil(length/this.width);
-        this.length = this.width*this.height * this.type.length;
+    Buffer.prototype.setSize = function setSize() {
+		if (arguments.length == 1) {
+			// length
+			this.originalLength = arguments[0];
+			var length = arguments[0]/this.type.length;
+			var r = Math.ceil(Math.sqrt(length));
+			var p = Math.ceil(Math.log2(r));
+			this.width = Math.pow(2, p);
+			this.height = Math.ceil(length/this.width);
+		} else if (arguments.length > 1) {
+			// width, height
+			this.width = arguments[0];
+			this.height = arguments[1];
+			this.originalLength = this.width * this.height;
+		}
+
+		this.length = this.originalLength * this.type.length;
     };
 
     Buffer.prototype.createArrayBuffer = function createArrayBuffer(data) {
@@ -65,21 +79,37 @@
         }
     };
 
-    Buffer.prototype.setData = function setData(data) {
-        if (data instanceof Image) {
-            this.data = data;
-        } else {
-            // create data buffer
-            if (!data || !(data.buffer instanceof ArrayBuffer)) this.createArrayBuffer(data);
-            else this.data = data;
-            if (data && data.length != this.length) {
-                // resize buffer
-                var buffer = Reflect.construct(this.data.constructor, [this.length]);
-                buffer.set(this.data, 0);
-                this.data = buffer;
-            }
-        }
-        this.setTexture();
+    Buffer.prototype.setData = function setData(source) {
+		var data = null;
+		// default fbo
+		if (source == null) {
+			// use current fbo
+			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+			this.texture = gl.createTexture();
+			gl.bindTexture(gl.TEXTURE_2D, this.texture);
+			gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 0, 0, this.width, this.height, 0);
+		}
+		// fbo
+		else if (source instanceof WebGLFramebuffer) throw new Error('Only the default FrameBuffer object is supported!');
+		// Buffer
+		else if (source instanceof webGL.Buffer) data = source.data;
+		// length or [width, height]
+		else if (typeof source === 'number' || Array.isArray(source)) data = this.createArrayBuffer();
+        // ArrayBuffer
+		else if (source.buffer && source.buffer instanceof ArrayBuffer) ;
+		// image
+        else if (source instanceof Image) data = source;
+
+		// if (data && data.length != this.length) {
+		// 	// resize buffer
+		// 	var buffer = Reflect.construct(this.data.constructor, [this.length]);
+		// 	buffer.set(this.data, 0);
+		// 	this.data = buffer;
+		// }
+
+		if (source) {
+			this.setTexture();
+		}
     };
 
     Buffer.prototype.setTexture = function setTexture(data) {
@@ -102,27 +132,44 @@
                 default: throw new Error('Invalid type!');
             }
 
-            this.texture = gl.createTexture();
-            gl.bindTexture(gl.TEXTURE_2D, this.texture);
-            if (data.buffer instanceof ArrayBuffer) {
-                gl.texImage2D(gl.TEXTURE_2D, 0, this.type.id, this.width, this.height, 0, this.format, gl[this.type.type], data, 0);
-            } else {
-                gl.texImage2D(gl.TEXTURE_2D, 0, this.type.id, this.format, gl[this.type.type], data);
-            }
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+			if (!this.texture) {
+				this.texture = gl.createTexture();
+				gl.bindTexture(gl.TEXTURE_2D, this.texture);
+				if (data.buffer instanceof ArrayBuffer) {
+					gl.texImage2D(gl.TEXTURE_2D, 0, this.type.id, this.width, this.height, 0, this.format, gl[this.type.type], data, 0);
+				} else {
+					gl.texImage2D(gl.TEXTURE_2D, 0, this.type.id, this.format, gl[this.type.type], data);
+				}
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+			}
         }
     };
+
+	Buffer.prototype.render = function render() {
+		webGL.useProgram(webGL.flatRenderingPrg);
+		gl.bindBuffer(gl.ARRAY_BUFFER, webGL.screenVBO.ref);
+		gl.bindTexture(gl.TEXTURE_2D, this.texture);
+		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
+	};
 
     Buffer.fromLength = function fromLength(length, type) {
         var buffer = new Buffer();
         buffer.setType(type);
         buffer.setSize(length);
-        //buffer.setData(null);
+		buffer.setData(this.length);
         return buffer;
     };
+	Buffer.fromSize = function fromSize(width, height, type) {
+		var buffer = new Buffer();
+		buffer.setType(type);
+		buffer.setSize(width, height);
+		buffer.setData(buffer.length);
+		return buffer;
+	};
 
     Buffer.fromArrayBuffer = function fromArrayBuffer(arrayBuffer, type) {
         if (!type) {
@@ -136,54 +183,61 @@
         var buffer = new Buffer();
         buffer.setType(type);
         buffer.setSize(arrayBuffer.length);
-        //buffer.setData(arrayBuffer);
+		buffer.setData(this.length);
         return buffer;
     };
+
+	Buffer.fromBuffer = function fromBuffer(inputBuffer, type) {
+		var buffer = new Buffer();
+		buffer.setType(type || inputBuffer.type);
+		buffer.setSize(inputBuffer.width, inputBuffer.height);
+		buffer.setData(this.length);
+		return buffer;
+	};
 
     Buffer.fromImage = function fromImage(img, type) {
         var buffer = new Buffer();
-		type = type || webGL.types.RGBA32F;
 		if (typeof type === 'string') buffer.setType(type);
-		else buffer.type = type;
-        // set size
-        buffer.width = img.naturalWidth;
-        buffer.height = img.naturalHeight;
-        buffer.length = buffer.width*buffer.height * buffer.type.length;
-        //buffer.setData(img);
+		else buffer.type = type || webGL.types.RGBA32F;
+		buffer.setSize(img.naturalWidth, img.naturalHeight);
+		buffer.setData(this.length);
         return buffer;
     };
 
-    Buffer.fromFramebuffer = function fromFramebuffer() {
+    Buffer.fromFramebuffer = function fromFramebuffer(fbo) {
         var buffer = new Buffer();
-        buffer.setType('byte[4]');
-        buffer.width = gl.drawingBufferWidth;
-        buffer.height = gl.drawingBufferHeight;
-        buffer.texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, buffer.texture);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 0, 0, buffer.width, buffer.height, 0);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        buffer.length = buffer.width*buffer.height * buffer.type.length;
+		gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+		if (!fbo) {
+			// fix type to UINT8[4]
+			buffer.setType('byte[4]');
+			buffer.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
+		} else {
+			throw new Error('Framebuffers except default are not supported!');
+			// buffer.texture = gl.createTexture();
+			// gl.bindTexture(gl.TEXTURE_2D, buffer.texture);
+			// gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 0, 0, buffer.width, buffer.height, 0);
+			// gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			// gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+			// gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+			// gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		}
+
+		buffer.setData(fbo);
+		
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         return buffer;
     };
 
     Buffer.create = function create(data, type) {
         var buffer = null;
-        if (!data) buffer = Buffer.fromFramebuffer();
+        if (!data || data instanceof WebGLFramebuffer) buffer = Buffer.fromFramebuffer(data);
+		else if (data instanceof webGL.Buffer) buffer = Buffer.fromBuffer(data, type);
         else if (typeof data === 'number') buffer = Buffer.fromLength(data, type);
         else if (Array.isArray(data)) buffer = Buffer.fromSize(data[0], data[1], type);
         else if (data.buffer && data.buffer instanceof ArrayBuffer) buffer = Buffer.fromArrayBuffer(data, type);
         else if (data instanceof Image) buffer = Buffer.fromImage(data, type);
         return buffer;
     };
-
-	function Texture() {
-		this.buffer = null;
-		this.texture = null;
-	}
 
 	//#endregion
 	//#region PROGRAM
@@ -423,7 +477,9 @@
 
 		buffers: [],
 		textures: [],
-		extensions: {}
+		extensions: {},
+
+		screenVBO: null
 	};
 
 	webGL.types = {
@@ -484,6 +540,8 @@
 	//#endregion
 	};
 
+	webGL.Buffer = Buffer;
+
 	webGL.init = function init(canvas, useWebGl2) {
 		if (!canvas) {
 			var canvas = document.createElement('canvas');
@@ -507,6 +565,29 @@
 		}
 		this.buffers.length = 0;
 		this.textures.length = 0;
+		this.screenVBO = this.createBuffer(gl.ARRAY_BUFFER, new Float32Array([ -1.0, -1.0,   1.0, -1.0,  -1.0, 1.0,  1.0, 1.0 ]), gl.STATIC_DRAW);
+		var shaders = {};
+		shaders[gl.VERTEX_SHADER] = 
+		   `#version 300 es
+			in vec2 a_position;
+			out vec2 v_position;
+	
+			void main(void) {
+				gl_Position = vec4(a_position, 0., 1.);
+				v_position = 0.5*(a_position + 1.0);
+			}`;
+		shaders[gl.FRAGMENT_SHADER] =
+		   `#version 300 es
+			precision highp float;
+
+			uniform mediump usampler2D u_texture0;
+			in vec2 v_position;
+			out vec4 color;
+	
+			void main(void) {
+				color = vec4(texture(u_texture0, v_position))/255.0;
+			}`;
+			this.flatRenderingPrg = webGL.createProgram(shaders);
 	};
 	webGL.shutDown = function shutDown() {
 		while (this.buffers.length != 0) {
@@ -580,7 +661,6 @@
 
 	webGL.createTexture = function createTexture(data, type) {
 		var texture = Buffer.create(data, type);
-		texture.setData(data);
 		this.textures.push(texture);
 		return texture;
 	};

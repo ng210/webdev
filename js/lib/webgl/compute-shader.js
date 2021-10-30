@@ -13,19 +13,14 @@ include('webgl.js');
     
     ComputeShader2.prototype.setInput = function setInput(data, type) {
         this.input = webGL.createTexture(data, type);
-        if (data) {
-            this.input.setData(data);
-        }
     };
 
     ComputeShader2.prototype.setOutput = function setOutput(data, type) {
-        if (data == null) {
-            // TODO: get FBO size
-            data = gl.drawingBufferWidth * gl.drawingBufferHeight;
-        }
+        if (!data) data = [this.input.width, this.input.height];
+        if (!type) type = this.input.type;
         this.output = webGL.createTexture(data, type);
-        this.output.createArrayBuffer();
-        this.output.setTexture();
+        // this.output.createArrayBuffer();
+        // this.output.setTexture();
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.output.texture, 0);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);

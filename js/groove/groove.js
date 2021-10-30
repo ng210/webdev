@@ -95,8 +95,8 @@ function SynthApp() {
     //#endregion
 
     //#region rendering
-    this.vbo = null;
     this.prg = null;
+    this.fbo = null;
     this.uniforms = {
         'u_length': 0,
         'u_shade': 0.0
@@ -198,7 +198,7 @@ SynthApp.prototype.initialize = async function initialize() {
     webGL.init(null, true);
     gl.canvas.style.zIndex = 1000;
     gl.canvas.style.background = 'transparent';
-    this.vbo = webGL.createBuffer(gl.ARRAY_BUFFER, new Float32Array([ -1.0, -1.0,   1.0, -1.0,  -1.0, 1.0,  1.0, 1.0 ]), gl.STATIC_DRAW);
+    //this.vbo = webGL.createBuffer(gl.ARRAY_BUFFER, new Float32Array([ -1.0, -1.0,   1.0, -1.0,  -1.0, 1.0,  1.0, 1.0 ]), gl.STATIC_DRAW);
     var shaders = {};
     shaders[gl.VERTEX_SHADER] = 
        `#version 300 es
@@ -220,22 +220,26 @@ SynthApp.prototype.initialize = async function initialize() {
             color = vec4(1.0);
         }`;
     this.prg = webGL.createProgram(shaders);
+    this.fbo = gl.createFramebuffer();
+
     //#region post-processing
-    // this.postProcessing = new webGL.ComputeShader([gl.canvas.width, gl.canvas.height], gl.RGBA32F);
-    // await this.postProcessing.setShader(
-    //    `#version 300 es
-    //    precision highp float;
+    var cs = this.postProcessing = new webGL.ComputeShader2();
+debugger
+    cs.setInput([gl.drawingBufferWidth, gl.drawingBufferHeight], 'byte[4]');
+    await this.postProcessing.setShader(
+       `#version 300 es
+       precision highp float;
        
-    //    in vec2 v_position;
-    //    uniform sampler2D u_texture;
+       in vec2 v_position;
+       uniform sampler2D u_texture;
        
-    //    out vec4 color;
+       out vec4 color;
        
-    //    void main(void) {
-    //        color = 2.*texture(u_texture, v_position);
-    //    }`
-    // );
-    this.backBuffer = new Float32Array(4*gl.canvas.width*gl.canvas.height);
+       void main(void) {
+           color = 2.*texture(u_texture, v_position);
+       }`
+    );
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, cs.input.texture, 0);
     //#endregion
     this.updateScope();
 };
@@ -297,18 +301,20 @@ SynthApp.prototype.run = function run(callback) {
 // };
 
 SynthApp.prototype.renderScope = function renderScope() {
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo.ref);
-    gl.bufferData(gl.ARRAY_BUFFER, this.scopeBuffers[1 - this.scopeBufferIndex], gl.STATIC_DRAW);
+    // gl.enable(gl.BLEND);
+    // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    gl.bindBuffer(gl.ARRAY_BUFFER, webGL.screenVBO.ref);
+    gl.bufferData(gl.ARRAY_BUFFER, this.scopeBuffers[1 - this.scopeBufferIndex], gl.STATIC_DRAW);
     gl.clearColor(0, 0, 0, 0.2);
-    webGL.useProgram(this.prg, this.uniforms);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    // render scope into target framebuffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+    webGL.useProgram(this.prg, this.uniforms);
     gl.drawArrays(gl.LINE_STRIP, 0, this.scopeLength);
-    // postprocessing
-    //this.postProcessing.compute();
-    //gl.readPixels(0, 0, gl.canvas.width, gl.canvas.height, gl.RED, gl.FLOAT, this.backBuffer);
+    // post-processing
+    // this.postProcessing.compute();
+    // this.postProcessing.output.render(null);
 };
 
 function startStop() {
