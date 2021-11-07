@@ -18,7 +18,10 @@ include('./data/file-access.js');
 
     StoreApi.prototype.initialize = async function initialize() {
         try {
+            console.log('Loading repository...');
             this.repository = await Repository.create('./api/store-repo.json');
+
+            console.log('Add default items...');
             // add default rights
             var adminRight = this.create('Right', 'admin');
             this.create('Right', 'create');
@@ -59,15 +62,13 @@ include('./data/file-access.js');
             // add default domain
             this.create('Domain', 'public');
 
+            console.log('Reading data files...');
             // read data files
             var users = this.dataAccess.read('users.dt');
-debugger
             var groups = this.dataAccess.read('groups.dt');
             var rights = this.dataAccess.read('rights.dt');
             var domains = this.dataAccess.read('domains.dt');
             var items = this.dataAccess.read('items.dt');
-
-        
         } catch (err) {
             var text = err.message;
             if (err.details) text += err.details;

@@ -1,4 +1,4 @@
-include('/lib/data/map.js');
+include('/lib/data/dictionary.js');
 include('/lib/data/stream.js');
 
 (function() {
@@ -95,8 +95,8 @@ include('/lib/data/stream.js');
     function Group(id, name, parent) {
         Group.base.constructor.call(this, id || Group.id++, name);
         this.rights = [];
-        this.users = new Map();
-        this.subgroups = new Map();
+        this.users = new Dictionary();
+        this.subgroups = new Dictionary();
         this.parent = parent;
     }
     extend(Entity, Group);

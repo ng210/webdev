@@ -1,4 +1,4 @@
-require('service/nodejs.js');
+require('nodejs.js');
 include('./api/store-api.js');
 
 async function main(args, errors) {
