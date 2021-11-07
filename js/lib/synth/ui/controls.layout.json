@@ -4,7 +4,7 @@
         "width": "160px", "height": "26px",
         "z-index": 0,
         "background-color": "#808080",
-        "background-image": "synth/ui/bg.png",
+        "background-image": "./ui/bg.png",
         "background-repeat": "repeat-x repeat-y",
         "font": "consolas 12 normal",
         "border": "#ff0000 0px none"
@@ -18,7 +18,7 @@
             "top": "4px",
             "color": "#e0c080",
             "background-color": "#204010",
-            "background-image": "synth/ui/control-bg.png",
+            "background-image": "control-bg.png",
             "border": "#000000 0px solid",
             "font": "consolas 12 normal",
             "height": "18px",

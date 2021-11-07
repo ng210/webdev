@@ -2,15 +2,13 @@ include('/lib/base/dbg.js');
 include('/lib/glui/glui-lib.js');
 include('/lib/synth/synth-adapter.js');
 include('/lib/synth/score-control.js');
+include('/lib/service/api.js');
 
 const SAMPLE_RATE = 48000;
 const LOCAL_STORAGE_KEY = 'synth-app';
+const STORE_API_URL = '/synth/store-api.json';
 
 var App = {
-    settings: {
-        languageCode: 'en'
-    },
-
     //#region UI
     ui: null,
     commands: null,
@@ -295,45 +293,6 @@ var App = {
         psynth.SynthAdapter.samplePerFrame = SAMPLE_RATE*3.75/bpm;
     },
 
-    init: async function init() {
-        psynth.SynthAdapter.prototype.fillSoundBuffer = App.playerBasedFillBuffer;
-
-        Ps.Player.registerAdapter(Ps.Player);
-        Ps.Player.registerAdapter(psynth.SynthAdapter);
-        this.player = Ps.Player.create();
-
-        glui.scale.x = 0.8;
-        glui.scale.y = 0.8;
-        await glui.initialize(this, true);
-        glui.animate();
-        //sound.init(SAMPLE_RATE, this.fillSoundBuffer);
-
-        this.ui = await this.createUi();
-        if (this.ui) {
-            Dbg.prln('Ui created');
-            this.loadFromLocalStore();
-            if (!this.localStore.current) {
-                Dbg.prln('Create blank ASU');
-                this.createBlank();
-            }
-            App.selectedSequence.ctrl.max = this.player.sequences.length - 1;
-            App.selectedSequence.ctrl.setValue(1);
-            // update UI
-            await this.updateUi();
-            this.ui.size();
-        }
-
-        var res = await load(`./errors.${this.settings.languageCode}.json`);
-        if (res.error) Dbg.prln('Could not load error text file!');
-        else {
-            for (var i in res.data) {
-                this.textResources[i] = res.data[i];
-            }
-        }
-
-        this.setBpm(App.bpm);
-    },
-
     createBlank: function createBlank() {
         //#region create data blocks
         // DataBlock #0
@@ -398,8 +357,8 @@ var App = {
                 .writeUint8(psynth.Synth.controls.env3sus).writeUint8(24)
                 .writeUint8(psynth.Synth.controls.env3rel).writeUint8(32)
 
-
-        this.player.dataBlocks.push(playerInit, synthInit, synthDataBank);
+debugger
+        this.player.datablocks.push(playerInit, synthInit, synthDataBank);
         //#endregion
 
         // create adapters
@@ -420,8 +379,8 @@ var App = {
         var d = 0;
         frames = [];
         for (var i=0; i<16; i++) {
-            frames.push(new Ps.Frame().setDelta(d).addCommand(this.synthAdapter.makeCommand(psynth.SynthAdapter.SETNOTE, 24, 240)));
-            frames.push(new Ps.Frame().setDelta(2).addCommand(this.synthAdapter.makeCommand(psynth.SynthAdapter.SETNOTE, 24, 0)));
+            frames.push(new Ps.Frame().setDelta(d).addCommand(this.synthAdapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 24, 240)));
+            frames.push(new Ps.Frame().setDelta(2).addCommand(this.synthAdapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 24, 0)));
             d = 2;
         }
         frames.push(new Ps.Frame().setDelta(2).addCommand(this.player.makeCommand(Ps.Player.EOS)));
@@ -430,8 +389,8 @@ var App = {
         //#endregion
 
         // initialize player
-        this.player.prepareContext(this.player.dataBlocks[0]);
-        this.synthAdapter.prepareContext(this.player.dataBlocks[1]);
+        this.player.prepareContext(this.player.datablocks[0]);
+        this.synthAdapter.prepareContext(this.player.datablocks[1]);
         // assign master sequence to master channel
         this.player.masterChannel.assign(0, this.player.sequences[0]);
     },
@@ -654,8 +613,58 @@ console.log('del: ', ctrl.parent.dataSource.obj);
             case this.commands.SETTINGS:
                 break;   
         }
-    }
+    },
     //#endregion
+
+    settings: {
+        languageCode: 'en'
+    },
+    storeApi: null,
+    init: async function init() {
+        // general
+        // this.storeApi = await Api.Client(STORE_API_URL);
+        // var res = await load('default-settings.json');
+        // this.settings = this.storeApi.resources.create(res);
+
+        var res = await load(`./errors.${this.settings.languageCode}.json`);
+        if (res.error) Dbg.prln('Could not load error text file!');
+        else {
+            for (var i in res.data) {
+                this.textResources[i] = res.data[i];
+            }
+        }
+
+        // player
+        Ps.Player.registerAdapter(Ps.Player);
+        Ps.Player.registerAdapter(psynth.SynthAdapter);
+        this.player = Ps.Player.create();
+        this.setBpm(App.bpm);
+
+        // synth + sound
+        psynth.SynthAdapter.prototype.fillSoundBuffer = App.playerBasedFillBuffer;
+        //sound.init(SAMPLE_RATE, this.fillSoundBuffer);
+        
+        // UI
+        glui.scale.x = 0.8;
+        glui.scale.y = 0.8;
+        await glui.initialize(this, true);
+        glui.animate();
+
+        this.ui = await this.createUi();
+        if (this.ui) {
+            Dbg.prln('Ui created');
+            this.loadFromLocalStore();
+            if (!this.localStore.current) {
+                Dbg.prln('Create blank ASU');
+                this.createBlank();
+            }
+            App.selectedSequence.ctrl.max = this.player.sequences.length - 1;
+            App.selectedSequence.ctrl.setValue(1);
+            // update UI
+            await this.updateUi();
+            this.ui.size();
+        }
+    }
 };
 
 async function onpageload(e) {
