@@ -110,7 +110,7 @@ function addButton(text, handler) {
     return button;
 }
 
-async function button(text, handler) {
+async function button(text, handler, isPermanent) {
     var isDone = false;
     handler = handler || (e => isDone = true);
     var btn = addButton(text, handler);
@@ -120,6 +120,10 @@ async function button(text, handler) {
     }
     await poll( () => isDone, 10);
     clearTimeout(timer);
+    if (!isPermanent) {
+        btn.parentNode.removeChild(btn);
+        btn = null;
+    }
     if (btn) btn.innerHTML = 'Done';
     return btn;
 }
@@ -334,6 +338,7 @@ async function run_test(testUrl) {
                         error('Test raised an error!');
                         error(`<pre>${err}</pre>`);
                         errors++;
+                        console.error(err);
                     }
                     TestConfig.indent = indent;
                 }

@@ -1,7 +1,8 @@
+include('/lib/math/noise.js');
 include('/lib/ge/sound.js');
+include('/lib/player/player-lib.js');
 include('/lib/synth/synth.js');
 include('/lib/synth/synth-adapter.js');
-include('/lib/player/player-lib.js');
 include('/lib/webgl/webgl.js');
 include('/lib/webgl/compute-shader.js');
 
@@ -91,16 +92,17 @@ function SynthApp() {
     this.scopeWritePosition = 0;
     this.scopeSamplingStep = 0;
     this.isScopeVisible = true;
-    this.postProcessing = null;
     //#endregion
 
     //#region rendering
     this.prg = null;
-    this.fbo = null;
+    this.vbo = null;
+    this.buffer = null;
     this.uniforms = {
         'u_length': 0,
         'u_shade': 0.0
     };
+    this.noise = new Noise();
     //#endregion
 }
 
@@ -196,9 +198,11 @@ SynthApp.prototype.initialize = async function initialize() {
 
     // init gfx
     webGL.init(null, true);
+    webGL.useExtension('EXT_color_buffer_float');
     gl.canvas.style.zIndex = 1000;
     gl.canvas.style.background = 'transparent';
-    //this.vbo = webGL.createBuffer(gl.ARRAY_BUFFER, new Float32Array([ -1.0, -1.0,   1.0, -1.0,  -1.0, 1.0,  1.0, 1.0 ]), gl.STATIC_DRAW);
+    this.vbo = webGL.createBuffer(gl.ARRAY_BUFFER, new Array(SCOPE_MAX_SIZE), gl.DYNAMIC_DRAW);
+
     var shaders = {};
     shaders[gl.VERTEX_SHADER] = 
        `#version 300 es
@@ -212,35 +216,77 @@ SynthApp.prototype.initialize = async function initialize() {
     shaders[gl.FRAGMENT_SHADER] =
        `#version 300 es
         precision highp float;
-        uniform float u_shade;
-        uniform sampler2D u_backbuffer;
         out vec4 color;
 
         void main(void) {
             color = vec4(1.0);
         }`;
-    this.prg = webGL.createProgram(shaders);
-    this.fbo = gl.createFramebuffer();
+    this.prg = webGL.createProgram(shaders, { 'a_position': { 'buffer': 1 }});
+    
+    this.buffer = webGL.Buffer.create(null, 'byte[4]');
+    this.buffer.createArrayBuffer();
+    var f = '1.1';
+    this.buffer.setShader(
+   `#version 300 es
+    precision highp float;
 
-    //#region post-processing
-    var cs = this.postProcessing = new webGL.ComputeShader2();
-debugger
-    cs.setInput([gl.drawingBufferWidth, gl.drawingBufferHeight], 'byte[4]');
-    await this.postProcessing.setShader(
-       `#version 300 es
-       precision highp float;
-       
-       in vec2 v_position;
-       uniform sampler2D u_texture;
-       
-       out vec4 color;
-       
-       void main(void) {
-           color = 2.*texture(u_texture, v_position);
-       }`
+    in vec2 v_texcoord;
+    uniform mediump usampler2D u_texture0;
+    uniform sampler2D u_texture1;
+    out vec4 color;
+
+    // sharpen
+    vec3 mf1[10] = vec3[](
+        vec3( 0.0), vec3( 1.0), vec3( 1.7),
+        vec3(-1.0), vec3(${f}), vec3( 1.0),
+        vec3(-1.7), vec3(-1.0), vec3( 0.0),
+        vec3( 1.0/${f})
     );
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, cs.input.texture, 0);
-    //#endregion
+
+    // smoothen
+    vec3 mf2[10] = vec3[](
+        vec3(${f}), vec3( 0.5), vec3(${f}),
+        vec3( 0.5), vec3( 0.0), vec3( 0.5),
+        vec3(${f}), vec3( 0.5), vec3(${f}),
+        vec3(1.0/(4.*${f}+2.))
+    );
+
+    void main(void) {
+        ivec2 texSize = textureSize(u_texture0, 0);
+        vec2 d = 1./vec2(texSize);
+        vec2 dij = vec2(-d);
+        vec3 c;
+        int k = 0;
+        for (int j=-1; j<2; j++)
+        {
+            dij.x = -d.x;
+            for (int i=-1; i<2; i++)
+            {
+                c += vec3(texture(u_texture0, v_texcoord + dij).xyz) * mf2[k++];
+                dij.x += d.x;
+            }
+            dij.y += d.y;
+        }
+        color = vec4(mix(c*mf2[9]/255., texture(u_texture1, v_texcoord).xyz, 0.2), 1.) ;
+        //color = vec4(texture(u_texture1, v_texcoord)) ;
+    }`);
+    var k = 0;
+    this.background = webGL.createTexture([this.buffer.width, this.buffer.height], 'float[4]');
+    for (var j=0; j<this.buffer.height; j++) {
+        for (var i=0; i<this.buffer.width; i++) {
+            var v = this.noise.fbm2d(16*i/this.background.width, 9*j/this.background.height, 5, 0.80, 1.00, 0.38, 2.52);
+            var fx = i/this.background.width;
+            var fy = j/this.background.height;
+            var f = Math.floor(10*(fx + fy))/10;
+            v *= f;
+            this.background.data[k++] = v * Math.pow(fx, 1.4);
+            this.background.data[k++] = v * (1 - fy);
+            this.background.data[k++] = v * Math.pow(1 - fx, 1.6);
+            this.background.data[k++] = 1;
+        }
+    }
+    this.background.setTexture();
+
     this.updateScope();
 };
 
@@ -303,18 +349,25 @@ SynthApp.prototype.run = function run(callback) {
 SynthApp.prototype.renderScope = function renderScope() {
     // gl.enable(gl.BLEND);
     // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    gl.bindBuffer(gl.ARRAY_BUFFER, webGL.screenVBO.ref);
-    gl.bufferData(gl.ARRAY_BUFFER, this.scopeBuffers[1 - this.scopeBufferIndex], gl.STATIC_DRAW);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
     gl.clearColor(0, 0, 0, 0.2);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    // render scope into target framebuffer
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    this.buffer.updateTexture();
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.background.texture);
+    this.buffer.render({ 'u_texture0': 0, 'u_texture1': 1 });
+
+    // draw new state
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo.ref);
+    gl.bufferData(gl.ARRAY_BUFFER, this.scopeBuffers[1 - this.scopeBufferIndex], gl.DYNAMIC_DRAW);
     webGL.useProgram(this.prg, this.uniforms);
     gl.drawArrays(gl.LINE_STRIP, 0, this.scopeLength);
-    // post-processing
-    // this.postProcessing.compute();
-    // this.postProcessing.output.render(null);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    gl.readPixels(0, 0, this.buffer.width, this.buffer.height, gl.RGBA, gl.UNSIGNED_BYTE, this.buffer.data);
+    //gl.readPixels(0, 0, this.buffer.width, this.buffer.height, this.buffer.format, gl[this.buffer.type.type], this.buffer.data);
 };
 
 function startStop() {

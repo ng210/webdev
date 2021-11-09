@@ -18,13 +18,15 @@ include('/lib/webgl/compute-shader.js');
             webGL.init(null, true);
         }
         webGL.useExtension('EXT_color_buffer_float');
-        this.computeShader = new webGL.ComputeShader(bufferSize, gl.RG32F);
+        this.computeShader = new webGL.ComputeShader();
+        this.computeShader.setInput(bufferSize, 'float[2]');
+        this.computeShader.setOutput();
         this.uniforms.u_size[0] = gl.canvas.width;
         this.uniforms.u_size[1] = gl.canvas.height;
-        this.vbo = webGL.createBuffer(gl.ARRAY_BUFFER, new Float32Array([ -1.0, -1.0,   1.0, -1.0,  -1.0, 1.0,  1.0, 1.0 ]), gl.STATIC_DRAW);
+        this.vbo = webGL.screenVBO; //webGL.createBuffer(gl.ARRAY_BUFFER, new Float32Array([ -1.0, -1.0,   1.0, -1.0,  -1.0, 1.0,  1.0, 1.0 ]), gl.STATIC_DRAW);
     };
 
-    gpu.setCode = async function setShaders(sound, visuals) {
+    gpu.setCode = async function setCode(sound, visuals) {
         await this.computeShader.setShader(sound);
         var shaders = {};
         shaders[gl.VERTEX_SHADER] = this.computeShader.shaders[gl.VERTEX_SHADER];
@@ -33,11 +35,11 @@ include('/lib/webgl/compute-shader.js');
     }
 
     gpu.compute = function gpu_compute(size) {
-        this.computeShader.compute(size, null, this.uniforms);
+        var results = this.computeShader.compute(null, this.uniforms);
         this.computeShader.feedback();
         this.uniforms.u_offset += size;
         this.render(size);
-        return this.computeShader.results;
+        return results; //this.computeShader.output.data;
     };
 
     gpu.render = function render(size) {

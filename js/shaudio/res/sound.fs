@@ -440,7 +440,7 @@ vec2 mainSound(int samp, float time) {
 }
 
 
-in vec2 v_position;
+in vec2 v_texcoord;
 uniform sampler2D u_texture;
 uniform int u_offset;
 uniform vec2 u_size;
@@ -450,7 +450,7 @@ out vec2 smp;
 // main function
 void main(void) {
     vec2 size = vec2(textureSize(u_texture, 0));
-    ivec2 ij = ivec2(floor(size * v_position));
+    ivec2 ij = ivec2(floor(size * v_texcoord));
     int samp = u_offset + ij.x + ij.y*int(size.x);
     float time = float(samp)/48000.;
 

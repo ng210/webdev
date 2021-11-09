@@ -36,9 +36,9 @@
     }
 
     function initWebGL() {
-        if (!window.gl) {
+        //if (!window.gl) {
             webGL.init(null, true);
-        }
+        //}
     }
 
     function createCube() {
@@ -170,6 +170,7 @@
                 }
                 vertexCount += model.vertexCount;
             }
+
             scene.vbo = webGL.createBuffer(gl.ARRAY_BUFFER, new Float32Array(vb), gl.STATIC_DRAW);
             scene.ibo = webGL.createBuffer(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(ib), gl.STATIC_DRAW);
             //#endregion
@@ -323,6 +324,8 @@
         if (errors.length == 0) {
 
             // #region prepare rendering
+            webGL.useExtension('EXT_color_buffer_float');
+            //gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
             gl.clearColor(0.01, 0.02, 0.04, 1.0);
             gl.frontFace(gl.CCW);
@@ -388,64 +391,108 @@
         teardown();
     }
 
-    function test_buffer() {
+    async function test_buffer() {
         header('Test buffer');
         initWebGL();
-        var buffer = new webGL.Buffer();
-        var data = new Uint8Array(4096);
-        var step = 256/data.length;
-        for (var i=0; i<data.length;) {
-            var c = Math.floor(i*step);
-            data[i++] = 0;
-            data[i++] = 128;
-            data[i++] = 255-c;
-            data[i++] = 255;
+        var buffer = webGL.Buffer.create([32, 16], 'byte[4]');
+        var k = 0;
+        for (var j=0; j<buffer.height; j++) {
+            var cy = Math.floor(j*255/buffer.height);
+            for (var i=0; i<buffer.width; i++) {
+                var cx = Math.floor(i*255/buffer.width);
+                buffer.data[k++] = cx;
+                buffer.data[k++] = cx < 128 ? 2*cx : 255 - 2*cx;
+                buffer.data[k++] = cy;
+                buffer.data[k++] = 255;
+            }
         }
-        buffer.setType('byte[4]');
-        buffer.setData(data);
-        gl.clearColor(0.10, 0.12, 0.20, 1.0);
+        buffer.updateTexture();
+        gl.clearColor(0.0, 0.02, 0.10, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        buffer.setShader(
+`#version 300 es
+precision highp float;
+
+uniform mediump usampler2D u_texture0;
+in vec2 v_texcoord;
+out vec4 color;
+
+void main(void) {
+    color = vec4(texture(u_texture0, v_texcoord))/255.;
+}`
+        );
         buffer.render(null);
+        await button('Next', null, true);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    }
+
+    async function createImage(data, width, height) {
+        var canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        var ctx = canvas.getContext('2d');
+        var imgData = ctx.createImageData(width, height);
+        for (var i=0; i<imgData.data.length; i++) {
+            imgData.data[i] = data[i];
+        }
+        ctx.putImageData(imgData, 0, 0);
+        var img = new Image(width, height);
+        var isLoaded = false;
+        img.onload = () => isLoaded = true;
+        img.src = canvas.toDataURL();
+        await poll(() => isLoaded);
+        delete canvas;
+        return img;
     }
 
     async function test_compute_shader_inputs() {
         initWebGL();
         webGL.useExtension('EXT_color_buffer_float');
-        // var image = await load('./res/box.png');
-        // var fboSize = 4*gl.drawingBufferWidth * gl.drawingBufferHeight;
-        var tests = {
-            // 'length(byte)':             { input: [4*3, 'byte'],                     output: [null, undefined],   expected: { length: 4*3,        type:gl.R8UI }},
-            // 'length(long)':             { input: [3*3, 'long'],                     output: [null, undefined],   expected: { length: 4*3,        type:gl.R32UI }},
-            // 'float32array':             { input: [new Float32Array(10)],            output: [null, undefined],   expected: { length: 4*3,        type:gl.R32F} },
-            // 'length(byte[2])':          { input: [30, 'byte[2]'],                       output: [null, undefined],   expected: { length: 2*4*4,      type:gl.RG8UI }},
-            // 'length(uint32[4])':        { input: [132, 'uint32[4]'],                    output: [null, undefined],   expected: { length: 4*8*5,      type:gl.RGBA32UI }},
-            // 'float32array(float[4])':   { input: [new Float32Array(160), 'float[4]'],   output: [null, undefined],   expected: { length: 160,        type:gl.RGBA32F} },
-            // 'image':                    { input: [image.node],                      output: [null, undefined],   expected: { length: 4*512*512,  type:gl.RGBA8UI }},
-            'fbo':                      { input: [null, 'float[4]'],                output: [null, undefined], expected: { length: 0,    type:gl.RGBA8UI }}
-        };
-        var cs = new webGL.ComputeShader2();
-        for (var i in tests) {
-            var data = tests[i].input[0];
-            // create compute-shader
-            if (i == 'fbo') {
-                for (var j=0; j<size*length; j++) expected[j] = 2 * (j%size + 1) * Math.floor(j/size);
+        var imgSize = [32, 32];
+        var imgBuffer = new Uint8Array(4 * imgSize[0] * imgSize[1]);
+        var k = 0;
+        for (var j=0; j<imgSize[1]; j++) {
+            for (var i=0; i<imgSize[0]; i++) {
+                var c = 0.25*(j*255/(imgSize[1]-1) + i*255/(imgSize[0]-1));
+                imgBuffer[k++] = c;
+                imgBuffer[k++] = c;
+                imgBuffer[k++] = c;
+                imgBuffer[k++] = 255;
             }
-debugger
-            cs.setInput(...tests[i].input);
-            test(`Should create a buffer from '${i}'`, ctx => {
+        }
+        var img = await createImage(imgBuffer, imgSize[0], imgSize[1]);
+        document.body.appendChild(img);
+        var tests = {
+            'length(byte)':             { input: [8*4, 'byte'],                         output: [null, undefined],  expected: { length: 8*4,        type:gl.R8UI }},
+            'length(long)':             { input: [3*3, 'long'],                         output: [null, undefined],  expected: { length: 12,         type:gl.R32UI }},
+            'float32array':             { input: [new Float32Array(10)],                output: [null, undefined],  expected: { length: 12,         type:gl.R32F} },
+            'length(byte[2])':          { input: [30, 'byte[2]'],                       output: [null, undefined],  expected: { length: 2*4*4,      type:gl.RG8UI }},
+            'length(byte[4])':          { input: [64, 'byte[4]'],                       output: [null, undefined],  expected: { length: 4*4*4,      type:gl.RGBA8UI }},
+            'length(uint32[4])':        { input: [132, 'uint32[4]'],                    output: [null, undefined],  expected: { length: 4*8*5,      type:gl.RGBA32UI }},
+            'length(float[2])':         { input: [14, 'float[2]'],                      output: [null, undefined],  expected: { length: 2*4*2,      type:gl.RG32F }},
+            'float32array(float[4])':   { input: [new Float32Array(160), 'float[4]'],   output: [null, undefined],  expected: { length: 160,        type:gl.RGBA32F} },
+            'image':                    { input: [img, 'byte[4]'],                      output: [null, undefined],  expected: { length: 4 * imgSize[0] * imgSize[1],  type:gl.RGBA8UI }},
+            // 'fbo':                      { input: [null, 'float[4]'],                    output: [null, undefined],  expected: { length: 0,          type:gl.RGBA32F }}
+        };
+        var cs = new webGL.ComputeShader();
+        for (var ti in tests) {
+            var data = tests[ti].input[0];
+            // create compute-shader
+            cs.setInput(...tests[ti].input);
+            test(`Should create a buffer from '${ti}'`, ctx => {
                 if (data != null) {
-                    ctx.assert(cs.input.data, '!null');
-                    ctx.assert(cs.input.length, '=', tests[i].expected.length);
-                    if (cs.input.data.buffer instanceof ArrayBuffer) {
-                        ctx.assert(cs.input.data.length, '=', tests[i].expected.length);
+                    ctx.assert(cs.input.texture, '!null');
+                    ctx.assert(cs.input.length, '=', tests[ti].expected.length);
+                    if (cs.input.data && cs.input.data.buffer instanceof ArrayBuffer) {
+                        ctx.assert(cs.input.data.length, '=', tests[ti].expected.length);
                     }
                 }
-                ctx.assert(cs.input.type.id, '=', tests[i].expected.type);
+                ctx.assert(cs.input.type.id, '=', tests[ti].expected.type);
             });
-            var output = tests[i].output;
+            var output = tests[ti].output;
             cs.setOutput(...output);
 
-            var samplerType = '', outputType = 'float', inputs = 'x', constant = '2';
+            var samplerType = '', outputType = 'float', inputs = 'x', constant = '2', renderInputs = '.x';
             switch (cs.input.type.id) {
                 case gl.R8UI:       samplerType = 'mediump u'; inputs = '.x';   break;
                 case gl.R32UI:      samplerType = 'highp u';   inputs = '.x';   break;
@@ -458,87 +505,141 @@ debugger
                 case gl.RGBA32F:    samplerType = '';          inputs = '';     break;
             }
             switch (cs.output.type.id) {
-                case gl.R8UI:       outputType = 'uint';    constant = '2u';                    break;
-                case gl.R32UI:      outputType = 'uint';    constant = '2u';                    break;
-                case gl.R32F:       outputType = 'float';   constant = '2.';                    break;
-                case gl.RG8UI:      outputType = 'uvec2';   constant = 'uvec2(2, 4)';           break;
-                case gl.RG32UI:     outputType = 'uvec2';   constant = 'uvec2(2, 4)';           break;
-                case gl.RG32F:      outputType = 'vec2';    constant = 'vec2(2., 4.)';          break;
-                case gl.RGBA8UI:    outputType = 'uvec4';   constant = 'uvec4(2, 4, 6, 8)';     break;
-                case gl.RGBA32UI:   outputType = 'uvec4';   constant = 'uvec4(2, 4, 6, 8)';     break;
-                case gl.RGBA32F:    outputType = 'vec4';    constant = 'vec4(2., 4., 6., 8.)';  break;
+                case gl.R8UI:       outputType = 'uint';    constant = '2u'; renderInputs = '.xxx, 255';     break;
+                case gl.R32UI:      outputType = 'uint';    constant = '2u'; renderInputs = '.xxx, 255';     break;
+                case gl.R32F:       outputType = 'float';   constant = '2.'; renderInputs = '.xxx, 1.';      break;
+                case gl.RG8UI:      outputType = 'uvec2';   constant = '2u'; renderInputs = '.xy, 0, 255';   break;
+                case gl.RG32UI:     outputType = 'uvec2';   constant = '2u'; renderInputs = '.xy, 0, 255';   break;
+                case gl.RG32F:      outputType = 'vec2';    constant = '2.'; renderInputs = '.xy, .0, 1.';   break;
+                case gl.RGBA8UI:    outputType = 'uvec4';   constant = '2u'; renderInputs = '';              break;
+                case gl.RGBA32UI:   outputType = 'uvec4';   constant = '2u'; renderInputs = '';              break;
+                case gl.RGBA32F:    outputType = 'vec4';    constant = '2.'; renderInputs = '';              break;
             }
-
-            var shaderScript =
+            await cs.setShader(
 `#version 300 es
 precision highp float;
 
-in vec2 v_position;
+in vec2 v_texcoord;
 uniform ${samplerType}sampler2D u_texture;
 out ${outputType} color;
 
 void main(void) {
-    color = ${outputType}(${constant}*texture(u_texture, v_position)${inputs});
-}`;
-            await cs.setShader(shaderScript);
-            var result = cs.compute((n, i, j, k) => n);
-            var expected = Reflect.construct(result.constructor, [tests[i].expected.length || cs.input.originalLength]);
-            var length = cs.input.originalLength;
-            var size = cs.input.type.length;
-            for (var j=0; j<size*length; j++) expected[j] = 2 * (j%size + 1) * Math.floor(j/size);
+    color = ${outputType}(${constant}*texture(u_texture, v_texcoord)${inputs});
+}`
+            );
+            var result = cs.compute(ti != 'fbo' && ti != 'image' ? (n, i, j, k) => 0.25*(j*255/(cs.input.height-1) + i*255/(cs.input.width-1)) : null);
+            var expected = Reflect.construct(result.constructor, [cs.output.length]);
+            var getValues = function(n) {
+                var m = Math.floor(n/cs.input.type.length);
+                var j = Math.floor(m/cs.input.width);
+                var i = m%cs.input.width;
+                var v = 0.25*(j*255/(cs.input.height-1) + i*255/(cs.input.width-1));
+                if (cs.input.type.base == 'UINT') v = Math.floor(v);
+                v *= 2;
+                if (ti == 'image' && n % 4 == 3) v = 255;
+                return v;
+            };
+            for (var j=0; j<cs.input.originalLength; j++) {
+                expected[j] = getValues(j);
+            }
             test('Should return the correct values', ctx => ctx.assert(result, ':=', expected));
-        }
+            cs.output.setShader(
+`#version 300 es
+precision highp float;
+
+in vec2 v_texcoord;
+uniform ${samplerType}sampler2D u_texture;
+out vec4 color;
+
+void main(void) {
+    color = vec4(texture(u_texture, v_texcoord)${renderInputs})/255.;
+}`
+            );
+            gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+            cs.output.render();
+            await sleep(500);
+        }        
         cs.destroy();
         webGL.shutDown();
+        document.body.removeChild(img);
     }
 
-    async function test_compute_shader() {
-        header('Test compute shader single call');
+    async function test_image_processing() {
+        header('Test image processing via compute shader');
         initWebGL();
         webGL.useExtension('EXT_color_buffer_float');
-        var tests = {
-            'RGBA':     `uniform highp sampler2D u_texture; out vec4 color; void main(void) { color = texture(u_texture, v_position); }`,
-            //'R8UI':     `uniform highp usampler2D u_texture; out uint color; void main(void) { color = 2u*texture(u_texture, v_position).x; }`,
-            'R8':       `uniform highp sampler2D u_texture; out int color; void main(void) { color = int(texture(u_texture, v_position).x); }`,
-            'R32UI':    `uniform isampler2D u_texture; out uint32 color; void main(void) { color = 2.*texture(u_texture, v_position).x; }`,
-            'R32F':     `uniform sampler2D u_texture; out float color; void main(void) { color = 2.*texture(u_texture, v_position).x; }`,
-            'RG32F':    `uniform sampler2D u_texture; out vec2 color; void main(void) { color = 2.*texture(u_texture, v_position).x; }`,
-            'RGBA32UI': `uniform usampler2D u_texture; out uivec4 color; void main(void) { color = 2.*texture(u_texture, v_position).x; }`,
-        };
 
-        var shaderBase =
-        `#version 300 es
-         precision highp float;
-         in vec2 v_position;`;
-        var expected = [0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30];
-        for (var type in tests) {
-            var cs = new webGL.ComputeShader(expected);
-            // await cs.setShader(shaderBase + tests[type]);
-            // cs.fillBuffer((k, i, j) => k);
-            // cs.compute();
-            // message(type + ': ' + cs.results);
-            // test(`Should return '${expected}'`, context => context.assert(cs.results, ':=', expected));
-            cs.destroy();
-            break;
+        var img = (await load('./res/worldmap3.png')).node;
+        var cs = new webGL.ComputeShader();
+        cs.setInput(img);
+        var f = 0.5;
+        var shaderScript =
+`#version 300 es
+precision highp float;
+
+in vec2 v_texcoord;
+uniform mediump sampler2D u_texture;
+out vec4 color;
+
+// sharpen
+vec3 mf1[10] = vec3[](
+    vec3( 0.0), vec3( 1.0), vec3( 1.7),
+    vec3(-1.0), vec3(${f}), vec3( 1.0),
+    vec3(-1.7), vec3(-1.0), vec3( 0.0),
+    vec3(1.0/${f})
+);
+
+// smoothen
+vec3 mf2[10] = vec3[](
+    vec3( 0.7), vec3( 1.0), vec3( 0.7),
+    vec3( 1.0), vec3(${f}), vec3( 1.0),
+    vec3( 0.7), vec3( 1.0), vec3( 0.7),
+    vec3(1.0/(${f}+6.8))
+);
+
+void main(void) {
+    ivec2 texSize = textureSize(u_texture, 0);
+    vec2 tc = vec2(v_texcoord.x, 1.-v_texcoord.y);
+    vec2 d = 1./vec2(texSize);
+    vec2 dij = vec2(-d);
+    vec3 c;
+    int k = 0;
+    for (int j=-1; j<2; j++)
+    {
+        dij.x = -d.x;
+        for (int i=-1; i<2; i++)
+        {
+           c += texture(u_texture, tc + dij).xyz * mf1[k++];
+           dij.x += d.x;
         }
-        // var cs = new webGL.ComputeShader(16, gl.R8UI);
-        // await cs.loadShader('res/compute1.fs');
-        // cs.setShader(
-        //    `#version 300 es
-        //     precision highp float;
-        //     in vec2 v_position;
-        //     uniform sampler2D u_texture;
-        //     out uint8 color; void main(void) { color = 2.*texture(u_texture, v_position).x; }
-        //     `
-        // );
+        dij.y += d.y;
+    }
+    color = vec4(c*mf1[9], 1.);
+    // // invert
+    // vec2 tc = vec2(v_texcoord.x, 1.-v_texcoord.y);
+    // vec4 c = texture(u_texture, tc);
+    // color = vec4(vec3(1.) - c.xyz, 1.);
+}`;
+        cs.setOutput(null);
+        await cs.setShader(shaderScript);
+        var result = cs.compute(null);
+
+        gl.clearColor(0.10, 0.12, 0.20, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+        await animate(
+            time => {
+                time % 1000 < 500 ? cs.input.render() : cs.output.render();
+            }
+        );
+        cs.destroy();
     }
 
     var tests = () => [
-        // test_buffer,
         test_compute_shader_inputs,
-        // test_simple_render,
-        // test_compute_shader_multiple,
-        
+        test_buffer,
+        test_image_processing,
+        test_simple_render        
     ];
 
     publish(tests, 'WebGL tests');
