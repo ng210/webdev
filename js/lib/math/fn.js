@@ -47,6 +47,12 @@
 		var bottom = Math.min(r1[1]+r1[3], r2[1]+r2[3]);
 		return (left < right && bottom > top) ? [left, top, right-left, bottom-top] : null;
 	};
+	Fn.random = function random(min, max) {
+        var range = !isNaN(max) ? max : Number.POSITIVE_INFINITY;
+        if (!isNaN(min)) range -= min;
+        else min = 0;
+        return range * Math.random() + min;
+	};
 
 	publish(Fn, 'Fn');
 })();

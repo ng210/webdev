@@ -311,6 +311,22 @@ test_context.prototype.assert = function assert(value, operator, expected) {
     }
 };
 
+test_context.prototype.throws = function throws(action, errorType) {
+    var err = null;
+    try {
+        action();
+    } catch (e) {
+        err = e;
+    }
+
+    if (errorType && !(err instanceof errorType)) {
+        var e = new Error();
+        var tokens = e.stack.split('\n');
+        error(`Action should throw ${errorType.name}! ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);;
+        this.errors++;
+    }
+};
+
 async function run_test(testUrl) {
     message(`Load '${testUrl}'`);
     var path = Url.relative(baseUrl, testUrl);
