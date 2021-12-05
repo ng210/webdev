@@ -1,0 +1,10 @@
+include('./type.js');
+include('./bool-type.js');
+include('./enum-type.js');
+include('./list-type.js');
+include('./map-type.js');
+include('./number-type.js');
+include('./object-type.js');
+include('./string-type.js');
+include('./type-type.js');
+include('./ref-type.js');

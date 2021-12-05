@@ -17,7 +17,7 @@
 		}
 	});
 
-	Map.prototype.add = function add(key, value) {
+	Map.prototype.add = Map.prototype.set = function add(key, value) {
 		var res = false;
 		if (this._keys.indexOf(key) == -1) {
 			this._keys.push(key);
@@ -47,6 +47,9 @@
 	Map.prototype.indexOf = function indexOf(key) {
 		return this._keys.indexOf(key);
 	};
+	Map.prototype.get = function get(key) {
+		return this[key];
+	};
 	Map.prototype.getAt = function getAt(ix) {
 		var res = null;
 		if (ix < this._keys.length) {
@@ -54,7 +57,7 @@
 		}
 		return res;
 	};
-	Map.prototype.containsKey = function containsKey(key) {
+	Map.prototype.has = Map.prototype.containsKey = function containsKey(key) {
 		return this.indexOf(key) != -1;
 	};
 	Map.prototype.sort = function(compare) {

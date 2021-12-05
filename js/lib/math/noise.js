@@ -6,6 +6,10 @@
 		this.cache = [];
 		
 		this.fillCache();
+
+		this.transform1d = (x, v, buffer, ix) => { buffer[ix] = v; return ix+1; };
+		this.transform2d = (x, y, v, buffer, ix) => { buffer[ix] = v; return ix+1; };
+		this.transform3d = (x, y, z, v, buffer, ix) => { buffer[ix] = v; return ix+1; };
 	}
 	Noise.SIZE = 256;  // must be power of 2
 	Noise.MASK = Noise.SIZE-1;
@@ -100,6 +104,77 @@
 			ai *= an; fi *= fn;
 		}
 		return v;
+	};
+
+	Noise.prototype.createFbm1d = function createFbm1d(length, sx, n, a0, f0, an, fn, data) {
+		var ix = 0; var i = 0;
+		while (ix < data.length) {
+			var x = i/length;
+			ix = this.transform1d(x, this.fbm1d(sx*x, n, a0, f0, an, fn), data, ix);
+			i++;
+		}
+	};
+	Noise.prototype.createFbm1dFrom2d = function createFbm1dFrom2d(length, sx, y, n, a0, f0, an, fn, data) {
+		var ix = 0; var i = 0;
+		while (ix < data.length) {
+			var x = i/width;
+			ix = this.transform2d(x, y, this.fbm2d(sx*x, y, n, a0, f0, an, fn), data, ix);
+			i++;
+		}
+	};
+	Noise.prototype.createFbm2d = function createFbm2d(width, height, sx, sy, n, a0, f0, an, fn, data) {
+		var ix = 0, i = 0;
+		while (ix < data.length) {
+			var y = Math.floor(i/width)/height;
+			var x = i/width; x -= Math.trunc(x);
+			ix = this.transform2d(x, y, this.fbm2d(sx*x, sy*y, n, a0, f0, an, fn), data, ix);
+			i++;
+		}
+	};
+
+	Noise.prototype.createFbm2dFrom3d = function createFbm2dFrom3d(width, height, z, sx, sy, n, a0, f0, an, fn, data) {
+		var ix = 0, i = 0;
+		while (ix < data.length) {
+			var y = Math.floor(i/width)/height;
+			var x = i/width; x -= Math.trunc(x);
+			ix = this.transform3d(x, y, z, this.fbm3d(sx*x, sy*y, z, n, a0, f0, an, fn), data, ix);
+			i++;
+		}
+		
+
+		// var ix = 0;
+		// for (var j=0; j<height; j++) {
+		// 	var y = j/height;
+		// 	for (var i=0; i<width; i++) {
+		// 		var x = i/width;
+		// 		ix = this.transform3d(x, y, z, this.fbm3d(x, y, z, n, a0, f0, an, fn), data, ix);
+		// 	}
+		// }
+	};
+
+
+	Noise.prototype.createFbm3d = function createFbm3d(width, height, depth, sx, sy, sz, n, a0, f0, an, fn, data) {
+		var surface = width*height;
+		var ix = 0, i = 0;
+		while (ix < data.length) {
+			var z = Math.floor(i/surface)/depth;
+			var y = Math.floor(i/width)/height;
+			var x = i/width; x -= Math.trunc(x);
+			ix = this.transform3d(x, y, z, this.fbm3d(sx*x, sy*y, sz*z, n, a0, f0, an, fn), data, ix);
+			i++;
+		}
+
+		// var ix = 0;
+		// for (var k=0; k<depth; k++) {
+		// 	var z = k/depth;
+		// 	for (var j=0; j<height; j++) {
+		// 		var y = j/height;
+		// 		for (var i=0; i<width; i++) {
+		// 			var x = i/width;
+		// 			data[ix++] = this.transform3d(x, y, z, this.fbm3d(x, y, z, n, a0, f0, an, fn));
+		// 		}
+		// 	}
+		// }
 	};
 
 	publish(Noise, 'Noise');

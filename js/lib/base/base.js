@@ -905,6 +905,20 @@ self.setObjectAt = function setObjectAt(path, obj, value) {
     }
     return oldValue;
 };
+self.stringify = function stringify(o, space) {
+    return JSON.stringify(o, (key, value) => {
+        if (value instanceof Map) {
+            var obj = {};
+            for (var [k, v] of value) {
+                obj[k] = v;
+            }
+            value = obj;
+        }
+        return value;
+    },
+    space);
+};
+
 //#endregion
 
 if (!ISWORKER || ISNODEAPP) {

@@ -1,21 +1,37 @@
 (function() {
 
 	function Dictionary() {
-		this._map = {};
-		this._keys = [];
-		this.length = 0;
+		Object.defineProperties(this, {
+			'_keys': {
+				configurable: false,
+				writable: false,
+				enumerable: false,
+				value: []
+			},
+			'_map': {
+				configurable: false,
+				writable: false,
+				enumerable: false,
+				value: {}
+			}
+		});
 	}
 
-	Dictionary.prototype.add = function add(key, value) {
+	Object.defineProperties(Dictionary.prototype, {
+		'size': {
+			configurable: false,
+			enumerable: false,
+			get() { return this._keys.length }
+		}
+	});
+	Dictionary.prototype.add = Dictionary.prototype.set = function add(key, value) {
 		if (this._map[key] == undefined) {
-			this.length++;
 			this._keys.push(key);
 		}
 		this._map[key] = value;
 	};
 	Dictionary.prototype.remove = function remove(key) {
 		if (this._map[key] != undefined) {
-			this.length--;
 			this._keys.slice(this._keys.indexOf(key), 1);
 			delete this._map[key];
 		}		
@@ -24,9 +40,17 @@
 		return this._map[key];
 	};
 	Dictionary.prototype.getAt = function getAt(ix) {
-		return ix < this.length ? this._map[this._keys[ix]] : null;
+		return ix < this.size ? this._map[this._keys[ix]] : null;
 	};
-	Dictionary.prototype.containsKey = function containsKey(key) {
+	Dictionary.prototype.iterate = function iterate(action) {
+		var result = false;
+		for (var i=0; i<this._keys.length; i++) {
+			var key = this._keys[i];
+			if (result = action(key, this._map[key])) break;
+		}
+		return result;
+	};
+	Dictionary.prototype.containsKey = Dictionary.prototype.has = function containsKey(key) {
 		return this._map[key] != undefined;
 	};
 	Dictionary.prototype.indexOf = function indexOf(key) {

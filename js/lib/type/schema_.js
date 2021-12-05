@@ -1,66 +1,5 @@
+include('./type-lib.js');
 (function() {
-    //#region TYPE
-    function Type(name, type) {
-        this.name = name;
-        this.baseType = type;
-        this.constraints = [];
-        if (type) {
-            for (var i=0; i<type.constraints.length; i++) {
-                this.addConstraint(type.constraints[i]);
-            }
-        } else {
-            this.addConstraint(Schema.checkType);
-        }
-
-        this.isNumeric = false;
-        this.isReference = false;
-        this.schema = null;
-    }
-    Object.defineProperties(Type.prototype, {
-        "basicType": {
-            get: function() {
-                var basicType = this;
-                while (basicType.baseType != null) basicType = basicType.baseType;
-                return basicType;
-            }
-        }
-    });
-    Type.prototype.addConstraint = function addConstraint(fn) {
-        if (!this.constraints.includes(fn)) {
-            this.constraints.push(fn);
-        }
-    };
-    Type.prototype.validate = function validate(value, results) {
-        var results = results || [];
-        if (this.isReference) {
-            var refs = this.schema.references[this.baseType.name];
-            var key = `${this.baseType.name} ${value}`;
-            if (!this.schema.missingReferences.includes(key) && (!refs || !refs.find(x => x.name == value))) {
-                this.schema.missingReferences.push(key);
-            }
-        } else {
-            for (var i=0; i<this.constraints.length; i++) {
-                try {
-                    var cst = this.constraints[i];
-                    cst.call(this, value, results);
-                } catch (err) {
-                    results.push(new Schema.ValidationResult(i, err));
-                }
-            }
-        }
-        return results;
-    };
-    Type.prototype.createValue = function createValue() {
-        throw new Error('Not implemented!');
-    };
-    Type.prototype.create = function create() {
-        throw new Error('Not implemented!');
-    };
-    Type.prototype.parse = function parse(term) {
-        throw new Error('Not implemented!');
-    };
-    //#endregion
-
     //#region SIMPLE TYPE
     function SimpleType(name, baseType, args) {
         SimpleType.base.constructor.call(this, name, baseType);
@@ -75,36 +14,6 @@
         }
         for (var i in args) {
             switch (i) {
-                case 'length':
-                    if (args.length) {
-                        this.length = args.length;
-                        this.addConstraint(Schema.checkLength);
-                    }
-                    break;
-                case 'elemType':
-                    this.elemType = args.elemType;
-                    this.addConstraint(Schema.checkElemType);
-                    break;
-                case 'values':
-                    this.values = args.values;
-                    this.addConstraint(Schema.checkEnum);
-                    break;
-                case 'min':
-                    this.min = args.min;
-                    this.addConstraint(Schema.checkRange);
-                    break;
-                case 'max':
-                    this.max = args.max;
-                    this.addConstraint(Schema.checkRange);
-                    break;
-                case 'keyValue':
-                    this.keyType = args.keyValue[0] || Schema.Types.STRING;
-                    this.valueType = args.keyValue[1] || Schema.Types.STRING;
-                    this.addConstraint(Schema.checkKeyValue);
-                    break;
-                case 'schema':
-                    this.schema = args.schema;
-                    break;
                 case 'ref':
                     this.isReference = args.ref || false;
                     break;
@@ -113,48 +22,13 @@
     }
     extend(Type, SimpleType);
 
-    function random(min, max) {
-        var range = !isNaN(max) ? max : 4294967296;
-        if (!isNaN(min)) range -= min;
-        else min = 0;
-        return range * Math.random() + min;
-    }
-
     SimpleType.prototype.createValue = function createValue() {
         var res = null;
         switch (this.basicType.name) {
-            case Schema.Types.STRING:
-                var length = this.length || 20;
-                var v = [];
-                var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVXYZWabcdefghijklmnopqrstuvxyzw_";
-                for (var i=0; i<length; i++) {
-                    v.push(chars[Math.floor(chars.length*Math.random())]);
-                }
-                res = v.join('');
-                break;
             case Schema.Types.LIST:
                 res = [];
                 for (var i=0; i<5; i++) {
                     res.push(this.elemType.createValue());
-                }
-                break;
-            case Schema.Types.ENUM:
-                res = this.values[Math.floor(Math.random()*this.values.length)];
-                break;
-            case Schema.Types.INT:
-                res = Math.round(random(this.min, this.max));
-                break;
-            case Schema.Types.FLOAT:
-                res = random(this.min, this.max);
-                break;
-            case Schema.Types.MAP:
-                res = {};
-                for (var i=0; i<5; i++) {
-                    var key = null;
-                    do {
-                        key = this.keyType.createValue();
-                    } while (res[key] != undefined);
-                    res[key] = this.valueType.createValue();
                 }
                 break;
             case Schema.Types.BOOL:
@@ -170,26 +44,8 @@
     SimpleType.prototype.create = function create() {
         var res = null;
         switch (this.basicType.name) {
-            case Schema.Types.STRING:
-                res = '';
-                break;
             case Schema.Types.LIST:
                 res = [];
-                break;
-            case Schema.Types.ENUM:
-                res = this.values[0];
-                break;
-            case Schema.Types.INT:
-                res = 0;
-                break;
-            case Schema.Types.FLOAT:
-                res = 0.0;
-                break;
-            case Schema.Types.MAP:
-                res = {};
-                break;
-            case Schema.Types.BOOL:
-                res = false;
                 break;
             case Schema.Types.TYPE:
                 res = this.schema.types.string;
@@ -200,20 +56,6 @@
     SimpleType.prototype.parse = function parse(term) {
         var res = null;
         switch (this.basicType.name) {
-            case Schema.Types.STRING:
-                res = term;
-                break;
-            case Schema.Types.BOOL:
-                var t = term.toLowerCase();
-                if (t == 'true') res = true;
-                else if (t == 'false') res = false;
-                break;
-            case Schema.Types.INT:
-                res = Math.floor(Number(term));
-                break;
-            case Schema.Types.FLOAT:
-                res = Number(term);
-                break;
             case Schema.Types.LIST:
                 var sep = arguments[1] || ',';
                 var values = term.split(sep);
@@ -221,24 +63,6 @@
                 for (var i=0; i<values.length; i++) {
                     res.push(this.elemType.parse(values[i]));
                 }
-                break;
-            case Schema.Types.ENUM:
-                res = this.values.includes(term) ? term : null;
-                break;
-            case Schema.Types.MAP:  // key[sep1]value[sep2]
-                var sep1 = arguments[1] || '=';
-                var sep2 = arguments[2] || ',';
-                var keyValues = term.split(sep1);
-                res = {};
-                for (var i=0; i<keyValues.length; i++) {
-                    var tokens = keyValues[i].split(sep2);
-                    var key = this.keyType.parse(tokens[0]);
-                    var value = this.valueType.parse(tokens[1]);
-                    if (key != null && value != null) {
-                        res[key] = value;
-                    }
-                }
-
                 break;
         }
         return res;

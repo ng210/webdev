@@ -1,4 +1,5 @@
 [
+    { "name":"String16", "type":"string", "length":16 },
     { "name":"String256", "type":"string", "length":256 },
     { "name":"Byte", "type":"int", "min":0,"max":255 },
     { "name":"Word", "type":"int", "min":0,"max":65536 },
