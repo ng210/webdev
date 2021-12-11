@@ -1,4 +1,4 @@
-include('./type.js');
+include('/lib/type/type.js');
 (function() {    
     function EnumType(name, type, args) {
         EnumType.base.constructor.call(this, name, type, args);
@@ -18,7 +18,6 @@ include('./type.js');
         var ix = this.values.findIndex(x => {
             var s1 = JSON.stringify(x);
             var s2 = JSON.stringify(value)
-            console.log(s1, s2, s1 == s2);
             return s1 == s2;
         });
         if (ix == -1) {
@@ -31,10 +30,13 @@ include('./type.js');
         return isValid;
     };
     EnumType.prototype.createValue = function createValue(value) {
-        var v0 = value == undefined ? this.values[Math.floor(Math.random()*this.values.length)] : value;
+        var v0 = this.createPrimitiveValue(value);
         var result = typeof v0 !== 'object' ? Reflect.construct(v0.constructor, [v0]) : v0;
         this.setType(result);
         return result;
+    };
+    EnumType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
+        return value == undefined ? this.values[Math.floor(Math.random()*this.values.length)] : value;
     };
     EnumType.prototype.createDefaultValue = function createDefaultValue() {
         return this.createValue(this.values[0]);

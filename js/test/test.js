@@ -192,6 +192,8 @@ function test_context(lbl) {
 }
 
 function deepCompare(a, b, path) {
+    a = a && a.valueOf();
+    b = b && b.valueOf();
     path = path || '';
     var result = null;
     if (a == null && b == null) result = null;
@@ -204,6 +206,19 @@ function deepCompare(a, b, path) {
         for (var i=0; i<va.byteLength; i++) {
             if (va.getInt8(i) != vb.getInt8(i)) {
                 result = `${path} a[${i}] ! b[${i}]`;
+                break;
+            }
+        }
+    } else if (a.constructor == Map) {
+        for (var [key, value] of a) {
+            if (typeof key === 'object') key = key.valueOf();
+            if (typeof value === 'object') value = value.valueOf();
+            if (!b.has(key)) {
+                result = `${path} [key (${key}) in a missing in b]`;
+                break;
+            }
+            result = deepCompare(value, b.get(key), `${path}.${key}`);
+            if (result) {
                 break;
             }
         }
@@ -311,20 +326,32 @@ test_context.prototype.assert = function assert(value, operator, expected) {
     }
 };
 
-test_context.prototype.throws = function throws(action, errorType) {
+async function checkError(action, shouldThrowError, errorType) {
+    errorType = errorType || Error;
     var err = null;
     try {
-        action();
+        await action();
     } catch (e) {
         err = e;
+        console.log(err);
     }
 
-    if (errorType && !(err instanceof errorType)) {
-        var e = new Error();
-        var tokens = e.stack.split('\n');
-        error(`Action should throw ${errorType.name}! ${tokens[2].replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);;
+    var isType = err instanceof errorType;
+    if ((!shouldThrowError || !isType) && (shouldThrowError || isType)) {
+        var m = new Error().stack.match(/\(([^\)]+)\)/i);
+        var line = m && m[1] ? m[1] : '';
+        var not = !shouldThrowError ? 'not ' : '';
+        error(`Action should ${not}throw '${err.constructor.name}' at ${line}`); //'.replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v]))}`);;
         this.errors++;
     }
+}
+
+test_context.prototype.throws = async function throws(action, errorType) {
+    await checkError.call(this, action, true, errorType);
+};
+
+test_context.prototype.notThrows = async function notThrows(action, errorType) {
+    await checkError.call(this, action, false, errorType);
 };
 
 async function run_test(testUrl) {

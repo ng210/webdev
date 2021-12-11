@@ -319,8 +319,6 @@ function test_complex_type() {
     test('Should construct types successfully', ctx => {
         ctx.assert(types.group.attributes.get('members').type.valueType, ':=', types.person);
         ctx.assert(types.person.hasAttribute('id'), 'true');
-        ctx.assert(types.person.attributes.get('id'), 'null');
-        ctx.assert(types.person.getAttribute('id'), ':=', ['id', types.entity.attributes.get('id')]);
         ctx.assert(types.person.attributes.get('description').isRequired, 'false');
         ctx.assert(types.person.attributes.get('skills').type.elemType, ':=', types.skill);
     });
@@ -357,11 +355,12 @@ function test_create_schema() {
     var schema = new Schema();
     test('Should automatically add a \'type\' type', ctx => ctx.assert(schema.types.has('type'), '!null'));
     schema.addDefaultTypes();
-    test('Should add a all default types', ctx => {
+    test('Should add all default types', ctx => {
         var countOfMissingTypes = 0;
         for (var i=0; i<Schema.defaultTypes.length; i++) {
-            if (schema.types.iterate( (k, v) => v == Schema.defaultTypes[i])) {
-                message(k);
+            if (!schema.types.has(Schema.defaultTypes[i].name)) {
+            //if (schema.types.iterate( (k, v) => v == Schema.defaultTypes[i])) {
+                message(Schema.defaultTypes[i].name);
                 countOfMissingTypes++;
             }
         }
@@ -373,8 +372,8 @@ function test_create_schema() {
         schema.addTypes(types);
         var countOfMissingTypes = 0;
         for (var i=0; i<types.length; i++) {
-            if (schema.types.iterate( (k, v) => v == types[i])) {
-                message(k);
+            if (!schema.types.has(types[i].name)) {
+                message(types[i].name);
                 countOfMissingTypes++;
             }
         }
@@ -391,10 +390,10 @@ function test_build_schema() {
         { "name":"Base", "attributes": {
             "name": { "type":"string", "length":8 } }
         },
-        { "name":"Child", "type":"Base", "attributes": {
+        { "name":"Child", "type":"Base", "ref":"name", "attributes": {
             "parent": { "type":"Parent" } }
         },
-        { "name":"Parent", "type":"Base", "attributes": {
+        { "name":"Parent", "type":"Base", "ref":"name", "attributes": {
             "firstChild": { "type":"Child" },
             "children": { "type": { "name":"ChildList", "type":"list", "elemType":"Child" } } }
         }
@@ -409,8 +408,8 @@ function test_build_schema() {
         ctx.assert(schema.types.get('string20'), '!null');
             ctx.assert(schema.types.get('string20').length, '=', 20);
         var base = schema.types.get('Base');
-        var child = schema.types.get('Child')
-        var parent = schema.types.get('Parent')
+        var child = schema.types.get('Child');
+        var parent = schema.types.get('Parent');
         ctx.assert(base, '!null');
             ctx.assert(base.attributes.size, '=', 1);
         ctx.assert(child, '!null');
@@ -452,27 +451,36 @@ function test_build_schema() {
 
     test('Should add instances successfully', ctx => {
         var int8Type = schema.types.get('int8');
-        schema.addInstance(int8Type.createValue());
-        schema.addInstance(12, int8Type);
+        var int8 = int8Type.createValue();
+        schema.addInstance(int8, 'int8');
+        schema.addInstance(12, '12', int8Type);
         var string20Type = schema.types.get('string20');
-        schema.addInstance('string20', string20Type);
+        schema.addInstance('string20', 'string20', string20Type);
         var stringType = schema.types.get('string');
         var str = new String('string'); str.__type__ = stringType;
-        schema.addInstance(str);
+        schema.addInstance(str, 'string');
         var parentType = schema.types.get('Parent');
         var parent1 = parentType.createValue();
         schema.addInstance(parent1);
+        var childType = schema.types.get('Child');
         var child1 = { 'name':'Child1', 'parent':parent1 };
-        schema.addInstance(child1, schema.types.get('Child'));
+        schema.addInstance(child1, null, childType);
 
         ctx.assert(schema.instances.has(int8Type.name), 'true');
-        ctx.assert(schema.instances.get(int8Type.name).length, '=', 2);
+        ctx.assert(schema.getInstance('int8', int8Type), '=', int8);
+        ctx.assert(schema.getInstance('12').valueOf(), '=', 12);
+
         ctx.assert(schema.instances.has(string20Type.name), 'true');
-        ctx.assert(schema.instances.get(string20Type.name).length, '=', 1);
+        ctx.assert(schema.getInstance('string20'), '=', 'string20');
+
         ctx.assert(schema.instances.has(stringType.name), 'true');
-        ctx.assert(schema.instances.get(stringType.name).length, '=', 1);
+        ctx.assert(schema.getInstance('string'), '=', 'string');
+
         ctx.assert(schema.instances.has(parentType.name), 'true');
-        ctx.assert(schema.instances.get(parentType.name).length, '=', 1);        
+        ctx.assert(schema.getInstance(parent1.name), '=', parent1);
+
+        ctx.assert(schema.instances.has(childType.name), 'true');
+        ctx.assert(schema.getInstance('Child1'), '=', child1);
     });
 }
 
@@ -542,11 +550,11 @@ async function test_complex_schema() {
 }
 
 var tests = () => [
-    // test_types,
-    // test_complex_type,
-    // test_type_enum,
-    // test_create_schema,
-    // test_build_schema,
+    test_types,
+    test_complex_type,
+    test_type_enum,
+    test_create_schema,
+    test_build_schema,
     test_complex_schema
 ];
 

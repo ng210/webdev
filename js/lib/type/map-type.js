@@ -1,4 +1,4 @@
-include('./type.js');
+include('/lib/type/type.js');
 (function() {
     function MapType(name, type, args) {
         MapType.base.constructor.call(this, name, type, args);
@@ -24,13 +24,13 @@ include('./type.js');
             isValid = false;
         } else {
             try {
-                for (var [key, value] of map) {
-                    //if (this.keyType.isNumeric) key = Number(key);
+                iterate(map, (key, value) => {
                     isValid = isValid && this.keyType.validate(key, results, [...path, key]);
                     isValid = isValid && this.valueType.validate(value, results, [...path, key]);
-                }
+                });
             } catch (err) {
                 results.push(new ValidationResult(path, [err.message]));
+                idValid = false;
             }
         }
         return isValid;
@@ -61,6 +61,31 @@ include('./type.js');
         this.setType(value);
         return value;
     };
+    MapType.prototype.createPrimitiveValue = function createPrimitiveValue(map, tracking) {
+        var value = {};
+        tracking = tracking || {};
+        if (this.addTracking(tracking, this.keyType) && 
+            this.addTracking(tracking, this.valueType)) {
+            if (map == undefined) {
+                for (var i=0; i<5; i++) {
+                    var key = null;
+                    do {
+                        key = this.keyType.createPrimitiveValue(undefined, tracking);
+                    } while (value.has(key));
+                    value.set(key, this.valueType.createPrimitiveValue(undefined, tracking));
+                }
+            } else {
+                for (var key in map) {
+                    var v = map.constructor == Map ? map.get(key) : map[key];
+                    value[this.keyType.createPrimitiveValue(key, tracking)] = this.valueType.createPrimitiveValue(v, tracking);
+                }
+            }
+            this.removeTracking(tracking, this.keyType);
+            this.removeTracking(tracking, this.valueType);
+        }
+        return value;
+    };
+
     MapType.prototype.createDefaultValue = function createDefaultValue(tracking) {
         var map = {};
         tracking = tracking || {};
@@ -75,19 +100,19 @@ include('./type.js');
         this.setType(map);
         return map;
     };
-    MapType.prototype.build = function build(definition, schema) {
-        var type = MapType.base.build.call(this, definition, schema);
+    MapType.prototype.build = function build(definition, schema, path) {
+        var type = MapType.base.build.call(this, definition, schema, path);
         var keyType = schema.getOrBuildType(type.keyType);
         if (keyType) {
             type.keyType = keyType;
         } else {
-            schema.addMissingType(type.keyType, t => type.keyType = t);
+            schema.addMissingType(type.keyType, t => type.keyType = t, [...path, 'keyType']);
         }
         var valueType = schema.getOrBuildType(type.valueType);
         if (valueType) {
             type.valueType = valueType;
         } else {
-            schema.addMissingType(type.valueType, t => type.valueType = t);
+            schema.addMissingType(type.valueType, t => type.valueType = t, [...path, 'valueType']);
         }
         return type;
     };

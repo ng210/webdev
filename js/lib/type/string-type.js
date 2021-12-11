@@ -1,4 +1,4 @@
-include('./type.js');
+include('/lib/type/type.js');
 (function() {
     function StringType(name, type, args) {
         StringType.base.constructor.call(this, name, type, args);
@@ -28,6 +28,11 @@ include('./type.js');
         return isValid;
     };
     StringType.prototype.createValue = function createValue(value) {
+        var v = this.createPrimitiveValue(value);
+        this.setType(v);
+        return v;
+    };
+    StringType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
         var v = '';
         if (value === undefined) {
             var length = this.length || 20;
@@ -41,7 +46,6 @@ include('./type.js');
         } else {
             v = new String(value);
         }        
-        this.setType(v);
         return v;
     };
     StringType.prototype.createDefaultValue = function createDefaultValue() {

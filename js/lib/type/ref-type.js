@@ -1,4 +1,4 @@
-include('./type.js');
+include('/lib/type/type.js');
 (function() {
     function RefType(name, type, args) {
         RefType.base.constructor.call(this, name, type, args);
@@ -32,16 +32,18 @@ include('./type.js');
         }
         return ref;
     };
+    RefType.prototype.createPrimitiveValue = function createPrimitiveValue(value, tracking) {
+        var ref = value;
+        if (value === undefined) {
+            var v = this.baseType.createPrimitiveValue(value, tracking);
+            ref = v[this.baseType.ref];
+        }
+        return ref;
+    };
     RefType.prototype.createDefaultValue = function createDefaultValue(tracking) {
         var v = this.baseType.createDefaultValue(tracking);
         return v[this.baseType.ref];
     };
-
-    // RefType.prototype.build = function build(definition) {
-    //     var name = definition.name;
-    //     var type = new RefType(name, this, definition);
-    //     return type;
-    // };
 
     publish(RefType, 'RefType');
 })();

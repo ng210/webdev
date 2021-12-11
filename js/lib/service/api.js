@@ -1,4 +1,4 @@
-include('/lib/utils/schema.js');
+include('/lib/type/schema.js');
 
 if (ISNODEAPP) {
     self.http = require('http');
@@ -20,9 +20,9 @@ if (ISNODEAPP) {
         this.resourceType = def.resource;
         this.method = Api.actionVerbMap[def.method] || def.method;
         this.access = def.access || (this.resourceType ? `${def.method.toLowerCase()}_${this.resourceType.name.toLowerCase()}` : null);
-        this.request = mergeObjects(def.request);
+        this.request = def.request;
         configTransfer(this.request.mimeType, this.request);
-        this.response = mergeObjects(def.response);
+        this.response = def.response;
         configTransfer(this.response.mimeType, this.response);
         this.call = handler;
         this.context = this;
@@ -33,74 +33,64 @@ if (ISNODEAPP) {
     };
 
     function Api(schemaInfo) {
-        this.methods = [];
         if (schemaInfo) {
             this.schema = schemaInfo.schema;
             this.definition = schemaInfo.definition;
-            var methods = {};
             this.id = this.definition.id;
             this.url = new Url(this.definition.url);
             this.authorization = this.definition.authorization;
             if (!this.url.path.endsWith('/')) this.url.path += '/';
             // create endpoints
             this.endpoints = {};
-            for (var i=0; i<this.definition.Endpoints.length; i++) {
+            for (var i in this.definition.Endpoints) {
                 var ep = this.definition.Endpoints[i];
-                this.endpoints[ep.id] = {};
-                for (var j=0; j<ep.calls.length; j++) {
+                this.endpoints[i] = {};
+                for (var j in ep.calls) {
                     var call = mergeObjects(ep.calls[j]);
-                    methods[call.method] = true;
-                    call.method = call.method.toLowerCase();
-                    var p = this.createEndpoint(ep.id, call);
+                    //ep.methods.push(j);
+                    call.method = j.toLowerCase();
+                    var p = this.createEndpoint(i, call);
                     if (p) {
-                        this.endpoints[ep.id][call.method] = p;
+                        this.endpoints[i][call.method] = p;
                     }
                 }
             }
-            // create resources
-            var def = {
-                "method": "",
-                "resource": "",
-                "request": {
-                    "mimeType": "application/json",
-                    "arguments": null
-                },
-                "response": {
-                    "mimeType": "application/json",
-                    "type": null
-                }
-            };
+            // create resource endpoints
             for (var i=0; i<this.definition.Resources.length; i++) {
                 var res = this.definition.Resources[i];
-                var resourceType = this.schema.types[res.type];
-                def.resource = resourceType;
-                var resId = res.id || resourceType.name.toLowerCase();
-                def.response.type = resourceType.name;
+                var resourceType = this.schema.types.get(res.type);
+                // def.resource = resourceType;
+                // var resId = res.id || resourceType.name.toLowerCase();
+                // def.response.type = resourceType.name;
                 for (var j=0; j<res.methods.length; j++) {
                     var method = res.methods[j].toLowerCase();
-                    var verb = Api.actionVerbMap[method] || method;
-                    methods[verb.toUpperCase()] = true;
-                    def.method = method;
+                    var callDef = {
+                        "access": "",
+                        "method": method,
+                        "resource": resourceType,
+                        "request": this.schema.types.get('HttpRequest').createDefaultValue(),
+                        "response": this.schema.types.get('HttpResponse').createDefaultValue()
+                    };
                     switch (method) {
                         case 'create':
                         case 'update':
-                            def.request.arguments = [ { "name":"res", "type":resourceType.name } ];
+                            callDef.request.arguments = [ { "name":"res", "type":resourceType.name } ];
                             break;
                         case 'read':
                         case 'delete':
-                            def.request.arguments = [ { "name":res.key, "type":resourceType.attributes[res.key].type.name } ];
+                            callDef.request.arguments = [ { "name":"id", "type":`ref ${resourceType.name}` } ];
                             break;
                     }
-                    var p = this.createEndpoint(resId, def);
+                    var resId = resourceType.name.toLowerCase();
+                    var p = this.createEndpoint(resId, callDef);
                     if (p) {
                         p.context = this;
                         if (this.endpoints[resId] == undefined) this.endpoints[resId] = {};
-                        this.endpoints[resId][verb] = p;
+                        this.endpoints[resId][method] = p;
                     }
                 }
             }
-            this.methods = Object.keys(methods);
-
+            //this.methods = Object.keys(methods);
             if (this.authorization) {
                 // create login endpoint
                 this.endpoints.login = {
@@ -127,7 +117,7 @@ if (ISNODEAPP) {
     };
     Api.prototype.resourceAction = function resourceAction(id, type, method) {
         // get type
-        if (typeof type === 'string') type = this.schema.types[type];
+        if (typeof type === 'string') type = this.schema.types.get(type);
         // call endpoint
         var verb = Api.actionVerbMap[method.toLowerCase()] || method;
         var res = type.name.toLowerCase();
@@ -200,7 +190,8 @@ if (ISNODEAPP) {
         for (var i=0; i<arguments.length; i++) {
             var arg = arguments[i];
             var type = this.request.arguments[i].type;
-            this.api.schema.types[type].validate(arg, results);
+debugger
+            this.api.schema.types.get(type).validate(arg, results);
             argKeys.push(this.request.arguments[i].name);
             argValues.push(arg);
         }
@@ -234,7 +225,7 @@ if (ISNODEAPP) {
             if (resp.statusCode == 200) {
                 // validate response
                 var respType = this.response.type;
-                var type = typeof respType === 'string' ? this.api.schema.types[respType] : this.api.schema.types[respType.name];
+                var type = typeof respType === 'string' ? this.api.schema.types.get(respType) : this.api.schema.types.get(respType.name);
                 var results = type.validate(resp.data);
                 if (results.length > 0) {
                     resp.error = new Error('Invalid response received!');
@@ -380,7 +371,7 @@ if (ISNODEAPP) {
                                     if (!arg) {
                                         results.push(new Schema.ValidationResult(i, 'Invalid request argument!'));
                                     } else {
-                                        args.push( this.schema.types[arg.type].isNumeric ? parseFloat(reqUrl.query[i]) : reqUrl.query[i]);
+                                        args.push( this.schema.types.get(arg.type).isNumeric ? parseFloat(reqUrl.query[i]) : reqUrl.query[i]);
                                     }
                                 }
                             } else {
@@ -399,7 +390,7 @@ if (ISNODEAPP) {
                                 for (var i=0; i<endpoint.request.arguments.length; i++) {
                                     var typeName = endpoint.request.arguments[i].type;
                                     if (typeof typeName === 'object') typeName = type.name;
-                                    var type = this.schema.types[typeName];
+                                    var type = this.schema.types.get(typeName);
                                     if (!type) {
                                         results.push(new Schema.ValidationResult(i, 'Request argument has unknown type!'));
                                     } else {
@@ -532,18 +523,19 @@ if (ISNODEAPP) {
     };
 
     ApiServer.prototype.get_ = function get_() {
-        var definition = {};
-        var dataTypes = {};
-        for (var i in this.api.schema.imports) {
-            for (var j=0; j<this.api.schema.imports[i].length; j++) {
-                var type = this.api.schema.imports[i][j];
-                dataTypes[type.name] = type;
-            }
-        }            
-        for (var i in this.api.definition) {
-            definition[i] = i != 'DataTypes' ? this.api.definition[i] : Object.values(dataTypes);
-        }
-        return definition;
+        // var definition = {};
+        // var dataTypes = {};
+        // for (var i in this.api.schema.imports) {
+        //     for (var j=0; j<this.api.schema.imports[i].length; j++) {
+        //         var type = this.api.schema.imports[i][j];
+        //         dataTypes[type.name] = type;
+        //     }
+        // }            
+        // for (var i in this.api.definition) {
+        //     definition[i] = i != 'DataTypes' ? this.api.definition[i] : Object.values(dataTypes);
+        // }
+        // return definition;
+        return this.api.definition;
     };
     //#endregion
 
@@ -562,8 +554,8 @@ if (ISNODEAPP) {
         }
     })();
     Api.schemaInfo = {
-        schemaDefinition: '/lib/service/service-schema.json',
-        schema: null,
+        definition: null,
+        schema: '/lib/service/service-schema.json',
         validate: 'Service'
     };
 
@@ -585,34 +577,52 @@ if (ISNODEAPP) {
         var api = null;
         await Api.initialize();
         var schemaInfo = mergeObjects(Api.schemaInfo);
-        schemaInfo.definition = await Schema.load(schemaInfo, apiDefinition, errors);
-        if (errors.length > 0) {
-            throw new Error(errors.join('\n'));
+        schemaInfo.schema = await Schema.load(Api.schemaInfo.schema);
+        var res = await load(apiDefinition);
+        if (!res.errors) {
+            // // create ApiServer instance
+            // for (var i=0; i<schemaInfo.definition.DataTypes.length; i++) {
+            //     schemaInfo.schema.buildType(schemaInfo.definition.DataTypes[i]);
+            // }
+            schemaInfo.definition = res.data;
+            if (schemaInfo.definition.imports) {
+                await schemaInfo.schema.importTypes(schemaInfo.definition.imports);
+            }
+            var results = schemaInfo.schema.validate(res.data, schemaInfo.validate);
+            if (results.length == 0) {
+                api = Reflect.construct(ApiType, [schemaInfo]);
+                if (typeof api.initialize === 'function') {
+                    await api.initialize();
+                }
+            } else {
+                console.log(results.join('\n'));
+            }
         } else {
-            // create ApiServer instance
-            for (var i=0; i<schemaInfo.definition.DataTypes.length; i++) {
-                schemaInfo.schema.buildType(schemaInfo.definition.DataTypes[i]);
-            }
-            api = Reflect.construct(ApiType, [schemaInfo]);
-            if (typeof api.initialize === 'function') {
-                await api.initialize();
-            }
+            throw new Error(errors.join('\n'));
         }
         return api;
     };
     
     Api.Client = async function Client(apiDefinition) {
-        var errors = [];
         var api = null;
         // initialize API
         await Api.initialize();
         var schemaInfo = mergeObjects(Api.schemaInfo);
-        schemaInfo.definition = await Schema.load(schemaInfo, apiDefinition, errors);
-        if (errors.length > 0) {
-            console.log(errors.join('\n'));
+        schemaInfo.schema = await Schema.load(Api.schemaInfo.schema);
+        var res = await load({ 'url':apiDefinition, 'responseType':'json'});
+        if (!res.error) {
+            schemaInfo.definition = res.data;
+            if (schemaInfo.definition.imports) {
+                await schemaInfo.schema.importTypes(schemaInfo.definition.imports);
+            }
+            var results = schemaInfo.schema.validate(res.data, schemaInfo.validate);
+            if (results.length == 0) {
+                api = new ApiClient(schemaInfo);
+            } else {
+                console.log(results.join('\n'));
+            }
         } else {
-            // create ApiServer instance
-            api = new ApiClient(schemaInfo);
+            console.log(res.error);
         }
         return api;
     };

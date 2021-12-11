@@ -1,4 +1,4 @@
-include('./type.js');
+include('/lib/type/type.js');
 include('/lib/data/dictionary.js');
 (function() {
     function ObjectType(name, type, args) {
@@ -6,6 +6,14 @@ include('/lib/data/dictionary.js');
         this.isPrimitive = false;
         this.attributes = new Dictionary();
         this.ref = null;
+        if (type) {
+            // inherit base attributes
+            var parentType = type;
+            while (parentType) {
+                parentType.attributes.iterate( (k, v) => this.attributes.set(k, v));
+                parentType = parentType.baseType;
+            }
+        }
         if (args) {
             if (args.attributes) {
                 for (var i in args.attributes) {
@@ -30,15 +38,7 @@ include('/lib/data/dictionary.js');
                 return ret;
             }
         );
-        // //for (var [name, value] of this.attributes) {
-        // for (var name in this.attributes.values()) {
-        //     var value = this.attributes.get[name];
-        //     if (action(name, value)) {
-        //         result = true;
-        //         if (results) results.push([name, value]);
-        //         else break;
-        //     }
-        // }
+
         if (this.baseType instanceof ObjectType) {
             result = this.baseType.checkAttributes(action, results);
         }
@@ -84,7 +84,7 @@ include('/lib/data/dictionary.js');
             results.push(new ValidationResult(path, errors));
         } else {
             if (this.schema) {
-                this.schema.addInstance(value, this);
+                this.schema.addInstance(value, null, this);
             }
         }
         return isValid;
@@ -111,22 +111,47 @@ include('/lib/data/dictionary.js');
         this.setType(v);
         return v;
     };
+    ObjectType.prototype.createPrimitiveValue = function createPrimitiveValue(obj, tracking) {
+        var v = {};
+        var results = [];
+        tracking = tracking || {};
+        if (this.addTracking(tracking)) {
+            if (obj) {
+                this.checkAttributes(
+                    (key, at) => {
+                        if (obj[key] != undefined) {
+                            v[key] = at.type.createPrimitiveValue(obj[key]);
+                        }
+                    },
+                    results
+                );
+            } else {
+                this.checkAttributes( (key, at) => {
+                    v[key] = at.type.createPrimitiveValue(undefined, tracking);
+                }, results);
+            }
+            this.removeTracking(tracking);
+        }
+        return v;
+    };
     ObjectType.prototype.createDefaultValue = function createDefaultValue(tracking) {
         var v = {};
-        for (var [key, at] of this.attributes) {
-            v[key] = at.type.createDefaultValue();
-        }
+        this.attributes.iterate( (key, value) => {
+            v[key] = value.type.createDefaultValue(tracking);
+        });
         this.setType(v);
         return v;
     };
-    ObjectType.prototype.build = function build(definition, schema) {
-        var type = ObjectType.base.build.call(this, definition, schema);
+    ObjectType.prototype.build = function build(definition, schema, path) {
+        var type = ObjectType.base.build.call(this, definition, schema, path);
         type.attributes.iterate( (name, value) => {
-            var attributeType = schema.getOrBuildType(value.type);
-            if (attributeType) {
-                value.type = attributeType;
-            } else {
-                schema.addMissingType(value.type, t => value.type = t);
+            if (!(value.type instanceof Type)) {
+                var attributeType = schema.getOrBuildType(value.type);
+                if (attributeType) {
+                    value.type = attributeType;
+                } else {
+                    schema.addMissingType(value.type, t => value.type = t, [...path, name]);
+                }
             }
         });
         return type;

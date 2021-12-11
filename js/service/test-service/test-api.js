@@ -9,8 +9,8 @@ include('/lib/service/api.js');
     function createResponse(ep) {
         var typeName = ep.response.type;
         if (typeof typeName === 'object') typeName = typeName.name;
-        var type = ep.api.schema.types[typeName];
-        return type.createValue();
+        var type = ep.api.schema.types.get(typeName);
+        return type.createPrimitiveValue();
     }
 
     TestApi.prototype.post_bind = function post_bind(res1, res2, req, resp) {

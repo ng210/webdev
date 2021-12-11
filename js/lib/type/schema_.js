@@ -440,7 +440,7 @@ include('./type-lib.js');
     };
     Schema.load = async function schema_load(schemaInfo, definition, errors) {
         if (schemaInfo.schema == null) {
-            var res = await load(schemaInfo.schemaDefinition);
+            var res = await load(schemaInfo.definition);
             if (res.error) errors.push(res.error);
             else {
                 schemaInfo.schema = new Schema(res.data);

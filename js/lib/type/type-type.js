@@ -1,4 +1,4 @@
-include('./type.js');
+include('/lib/type/type.js');
 (function() {
     function TypeType(name, type, args) {
         TypeType.base.constructor.call(this, name, type, args);
@@ -21,8 +21,8 @@ include('./type.js');
         }
         return type;
     };
-    TypeType.prototype.createDefaultValue = function createDefaultValue() {
-        return this.values.getAt(0).createDefaultValue();
+    TypeType.prototype.createDefaultValue = function createDefaultValue(tracking) {
+        return this.values.getAt(0);
     };
     TypeType.prototype.parse = function parse(term) {
         return term != '' ? TypeType.base.parse.call(this, term) : false;
@@ -31,7 +31,7 @@ include('./type.js');
     TypeType.prototype.validate = function validate(value, results, path) {
         if (this.schema) {
             try {
-                var type = this.schema.getOrBuildType(value);
+                var type = this.schema.getOrBuildType(value, path);
             } catch (err) {
                 console.log(err);
             }

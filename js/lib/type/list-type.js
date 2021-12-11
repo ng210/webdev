@@ -1,4 +1,4 @@
-include('./type.js');
+include('/lib/type/type.js');
 (function() {
     function ListType(name, type, args) {
         ListType.base.constructor.call(this, name, type, args);
@@ -60,16 +60,33 @@ include('./type.js');
         this.setType(v);
         return v;
     };
+    ListType.prototype.createPrimitiveValue = function createPrimitiveValue(list, tracking) {
+        var v = [];
+        tracking = tracking || {};
+        if (this.addTracking(tracking)) {
+            if (list != undefined) {
+                for (var i=0; i<list.length; i++) {
+                    v.push(this.elemType.createPrimitiveValue(list[i], tracking));
+                }
+            } else {
+                for (var i=0; i<5; i++) {
+                    v.push(this.elemType.createPrimitiveValue(null, tracking));
+                }
+            }
+            this.removeTracking(tracking);
+        }
+        return v;
+    };
     ListType.prototype.createDefaultValue = function createDefaultValue() {
         return this.createValue([]);
     };
-    ListType.prototype.build = function build(definition, schema) {
-        var type = ListType.base.build.call(this, definition, schema);
+    ListType.prototype.build = function build(definition, schema, path) {
+        var type = ListType.base.build.call(this, definition, schema, path);
         var elemType = schema.getOrBuildType(type.elemType);
         if (elemType) {
             type.elemType = elemType;
         } else {
-            schema.addMissingType(type.elemType, t => type.elemType = t);
+            schema.addMissingType(type.elemType, t => type.elemType = t, [...path, 'elemType']);
         }
         return type;
     };

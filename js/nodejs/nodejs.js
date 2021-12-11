@@ -116,7 +116,7 @@ ajax.send = function send(options) {
                         resolve(options);
                     });
                 } catch (err) {
-                    options.error = err;
+                    options.error = `${err} (${target})`;
                     resolve(options);
                 }
             });

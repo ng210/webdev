@@ -1,4 +1,4 @@
-include('./validation-result.js');
+include('/lib/type/validation-result.js');
 (function() {
     function Type(name, type, args) {
         this.name = name;
@@ -35,6 +35,9 @@ include('./validation-result.js');
     Type.prototype.createValue = function createValue(value) {
         throw new Error('Not implemented!');
     };
+    Type.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
+        throw new Error('Not implemented!');
+    };
     Type.prototype.createDefaultValue = function createDefaultValue() {
         throw new Error('Not implemented!');
     };
@@ -52,7 +55,7 @@ include('./validation-result.js');
         this.setType(value);
         return value;
     };
-    Type.prototype.build = function build(definition, schema) {
+    Type.prototype.build = function build(definition, schema, path) {
         var type = Reflect.construct(this.constructor, [definition.name, this, definition]);
         type.schema = schema;
         return type;

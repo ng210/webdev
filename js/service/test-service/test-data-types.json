@@ -1,9 +1,24 @@
 [
     {
         "name":"Res",
-        "attributes": [
-            { "name":"id", "type": "int", "required":true },
-            { "name":"value", "type": "string", "required":true }
-        ]
+        "ref":"id",
+        "attributes": {
+            "id": { "type": "int", "required":true },
+            "name": { "type": "string", "required":true }
+        }
+    },
+    {
+        "name":"Res1",
+        "type":"Res",
+        "attributes": {
+            "type": { "type": "string", "required":true }
+        }
+    },
+    {
+        "name":"Res2",
+        "type":"Res",
+        "attributes": {
+            "count": { "type": "int", "required":true }
+        }
     }
 ]

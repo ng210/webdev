@@ -731,6 +731,25 @@ Array.prototype.select = function select(filter) {
 Array.prototype.tail = function tail() {
     return this[this.length - 1];
 };
+self.iterate = function iterate(obj, action) {
+    switch (obj.constructor) {
+        case Object:
+            for (var i in obj) {
+                action(i, obj[i]);
+            }
+            break;
+        case Array:
+            for (var i=0; i<obj.length; i++) {
+                action(i, obj[i]);
+            }
+            break;
+        case Map:
+            for (var [k, v] of obj) {
+                action(k, v);
+            }
+            break;
+    }
+};
 
 
 //#region UTILITIES: POLL,LOCK,MERGEOBJECTS,OBJECT-PATH
@@ -910,11 +929,11 @@ self.stringify = function stringify(o, space) {
         if (value instanceof Map) {
             var obj = {};
             for (var [k, v] of value) {
-                obj[k] = v;
+                obj[k] = v.valueOf ? v.valueOf() : v;
             }
             value = obj;
         }
-        return value;
+        return value.valueOf ? value.valueOf() : value;
     },
     space);
 };

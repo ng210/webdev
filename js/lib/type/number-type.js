@@ -1,11 +1,11 @@
-include('./type.js');
+include('/lib/type/type.js');
 (function() {
     //#region NumberType
     function NumberType(name, type, args) {
         NumberType.base.constructor.call(this, name, type, args);
         this.isNumeric = true;
-        this.min = Number.NEGATIVE_INFINITY;
-        this.max = Number.POSITIVE_INFINITY;
+        this.min = -Number.MAX_SAFE_INTEGER;
+        this.max = Number.MAX_SAFE_INTEGER;
         if (args) {
             if (!isNaN(args.min)) this.min = args.min;
             if (!isNaN(args.max)) this.max = args.max;
@@ -65,9 +65,12 @@ include('./type.js');
         return isValid;
     };
     IntType.prototype.createValue = function createValue(value) {
-        var v = new Number(value == undefined ? Math.round(this.random(this.min, this.max)) : value);
+        var v = new Number(this.createPrimitiveValue(value));
         this.setType(v);
         return v;
+    };
+    IntType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
+        return value == undefined ? Math.round(this.random(this.min, this.max)) : value;
     };
     IntType.prototype.createDefaultValue = function createDefaultValue() {
         var v = new Number(0);
@@ -83,10 +86,14 @@ include('./type.js');
     extend(NumberType, FloatType);
 
     FloatType.prototype.createValue = function createValue(value) {
-        var v = new Number(value == undefined ? this.random(this.min, this.max) : value);
+        var v = new Number(this.createPrimitiveValue(value));
         this.setType(v);
         return v;
     };
+    FloatType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
+        return value == undefined ? this.random(this.min, this.max) : value
+    };
+
     FloatType.prototype.createDefaultValue = function createDefaultValue() {
         var v = new Number(0.0);
         this.setType(v);

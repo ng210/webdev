@@ -1,66 +1,63 @@
-[
-    { "name":"String10", "type":"string", "length":10 },
-    { "name":"Methods", "type":"enum", "values": ["CREATE", "READ", "UPDATE", "DELETE"] },
-    { "name":"MethodsList", "type":"list", "elemType":"Methods" },
-    { "name":"Verbs", "type":"enum", "values": ["POST", "GET", "PUT", "DELETE"] },
-    { "name":"VerbList", "type":"list", "elemType":"Verbs" },
-    { "name":"MimeTypes", "type":"enum", "values": ["application/json"] },
-    { "name":"Authorization", "type":"enum", "values": ["Basic"] },
-    
+{
+    "use-default-types": true,
+    "definition": [
+        { "name":"String10", "type":"string", "length":10 },
+        { "name":"Methods", "type":"enum", "values": ["CREATE", "READ", "UPDATE", "DELETE"] },
+        { "name":"MethodsList", "type":"list", "elemType":"Methods" },
+        { "name":"Verbs", "type":"enum", "values": ["POST", "GET", "PUT", "DELETE"] },
+        { "name":"VerbList", "type":"list", "elemType":"Verbs" },
+        { "name":"MimeTypes", "type":"enum", "values": ["application/json"] },
+        { "name":"Authorization", "type":"enum", "values": ["Basic"] },
+        
+        {   "name":"HttpRequest",
+            "attributes": {
+                "mimeType": { "type":"MimeTypes" },
+                "arguments": { "type":"attributeList" }
+            }
+        },
 
-    { "name":"HttpRequest",
-        "attributes": [
-            { "name":"mimeType", "type":"MimeTypes" },
-            { "name":"arguments", "type":"AttributeList" }
-        ]
-    },
+        {   "name":"HttpResponse",
+            "attributes": {
+                "mimeType": { "type":"MimeTypes" },
+                "type": { "type":"type" }
+            }
+        },
 
-    { "name":"HttpResponse",
-        "attributes": [
-            { "name":"mimeType", "type":"MimeTypes" },
-            { "name":"type", "type":"type" }
-        ]
-    },
+        {   "name":"Call",
+            "attributes": {
+                "access": { "type":"string", "isRequired":false },
+                "request": { "type":"HttpRequest" },
+                "response": { "type":"HttpResponse" }
+            }
+        },
+        {   "name":"CallList", "type":"list", "elemType":"Call" },
 
-    { "name":"Call",
-        "attributes": [
-            { "name":"method", "type":"Verbs" },
-            { "name":"access", "type":"string" },
-            { "name":"request", "type":"HttpRequest" },
-            { "name":"response", "type":"HttpResponse" }
-        ]
-    },
-    { "name":"CallList", "type":"list", "elemType":"Call" },
+        {   "name": "Endpoint",
+            "attributes": {
+                "id": { "type":"string", "isRequired":true },
+                "calls": { "type":{ "type":"map", "keyType":"Verbs", "valueType":"Call" } }
+            }
+        },
 
-    { "name": "Endpoint",
-        "attributes": [
-            { "name":"id", "type":"string", "required":true },
-            { "name":"calls", "type":"CallList", "required":true }
-        ]
-    },
+        {   "name": "Resource",
+            "attributes": {
+                "type": { "type":"type", "isRequired":true },
+                "methods": { "type":"MethodsList" }
+            }
+        },
 
-    { "name": "Resource",
-        "attributes": [
-            { "name":"id", "type":"String10", "required":false },
-            { "name":"type", "type":"type", "required":true },
-            { "name":"key", "type":"String10", "required":false },
-            { "name":"methods", "type":"MethodsList" }
-        ]
-    },
+        {   "name":"ResourceList", "type":"list", "elemType":"Resource" },
+        {   "name":"EndpointList", "type":"list", "elemType":"Endpoint" },
 
-    { "name":"DataTypeList", "type":"TypeList" },
-    { "name":"ResourceList", "type":"list", "elemType":"Resource" },
-    { "name":"EndpointList", "type":"list", "elemType":"Endpoint" },
-
-    {
-        "name": "Service",
-        "attributes": [
-            { "name":"id", "type":"String10", "required":true },
-            { "name":"url", "type":"string", "required":true },
-            { "name":"authorization", "type":"Authorization" },
-            { "name":"DataTypes", "type":"DataTypeList" },
-            { "name":"Resources", "type":"ResourceList" },
-            { "name":"Endpoints", "type":"EndpointList" }
-        ]
-    }
-]
+        {   "name": "Service",
+            "attributes": {
+                "imports": { "type":"stringList", "isRequired":false },
+                "id": { "type":"String10", "isRequired":true },
+                "url": { "type":"string", "isRequired":true },
+                "authorization": { "type":"Authorization" },
+                "Resources": { "type":"ResourceList" },
+                "Endpoints": { "type":{ "name":"EndpointMap", "type":"map", "keyType":"string", "valueType":"Endpoint" } }
+            }
+        }
+    ]
+}
