@@ -5,32 +5,46 @@ if (ISNODEAPP) {
 }
 (function() {
     //#region API BASE
-    function configTransfer(mimeType, obj) {
-        obj.mimeType = mimeType;
-        var item = Api.mimeTypeMap[mimeType];
-        if (item) {
-            obj.responseType = item.responseType;
-            obj.charSet = item.charSet;
+    function Endpoint(api, def) {
+        this.id = def.id;
+        this.api = api;
+        this.origin = def.origin || '';
+        this.methods = [];
+        this.calls = {};
+        for (var i in def.calls) {
+            this.methods.push(i.toUpperCase());
+            var method = i.toLowerCase();
+            this.calls[method] = api.createApiCall(this, def.calls[i], method);
         }
     }
-
-    function Endpoint(id, api, def, handler) {
-        this.id = id;
-        this.api = api;
-        this.resourceType = def.resource;
-        this.method = Api.actionVerbMap[def.method] || def.method;
-        this.access = def.access || (this.resourceType ? `${def.method.toLowerCase()}_${this.resourceType.name.toLowerCase()}` : null);
-        this.request = def.request;
-        configTransfer(this.request.mimeType, this.request);
-        this.response = def.response;
-        configTransfer(this.response.mimeType, this.response);
-        this.call = handler;
-        this.context = this;
-    }
-
-    Endpoint.prototype.call = async function call(args) {
-        throw new Error('Not implemented!');
+    Endpoint.prototype.addCall = function addCall(method, call) {
+        var m = method.toLowerCase();
+        this[m] = this.calls[m] = call;
+        this.methods.push(method.toUpperCase());
     };
+
+    function ApiCall(endpoint, def, method, handler) {
+        method = method.toLowerCase();
+        this.parent = endpoint;
+        this.resourceType = def.resource;
+        this.method = Api.actionVerbMap[method] || method;
+        this.access = def.access || (this.resourceType ? `${method.toLowerCase()}_${this.resourceType.name.toLowerCase()}` : null);
+        this.request = this.parent.api.createRequest();
+        if (def.request && def.request.arguments) {
+            for (var i=0; i<def.request.arguments.length; i++) {
+                this.request.arguments[i] = clone(def.request.arguments[i]);
+                var argType = this.parent.api.schema.getOrBuildType(def.request.arguments[i].type);
+                this.request.arguments[i].type = argType;
+            }
+        }
+        this.response = this.parent.api.createResponse(def.response);
+        if (def.response) {
+            this.response.type = this.parent.api.schema.getOrBuildType(def.response.type);
+        }
+        this.parent[method] = this;
+        this.do = handler;
+        //this.context = this;
+    }
 
     function Api(schemaInfo) {
         if (schemaInfo) {
@@ -42,31 +56,20 @@ if (ISNODEAPP) {
             if (!this.url.path.endsWith('/')) this.url.path += '/';
             // create endpoints
             this.endpoints = {};
-            for (var i in this.definition.Endpoints) {
-                var ep = this.definition.Endpoints[i];
-                this.endpoints[i] = {};
-                for (var j in ep.calls) {
-                    var call = mergeObjects(ep.calls[j]);
-                    //ep.methods.push(j);
-                    call.method = j.toLowerCase();
-                    var p = this.createEndpoint(i, call);
-                    if (p) {
-                        this.endpoints[i][call.method] = p;
-                    }
-                }
+            for (var i in this.definition.endpoints) {
+                this.endpoints[i] = new Endpoint(this, this.definition.endpoints[i]);
             }
             // create resource endpoints
-            for (var i=0; i<this.definition.Resources.length; i++) {
-                var res = this.definition.Resources[i];
+            for (var i=0; i<this.definition.resources.length; i++) {
+                var res = this.definition.resources[i];
                 var resourceType = this.schema.types.get(res.type);
-                // def.resource = resourceType;
-                // var resId = res.id || resourceType.name.toLowerCase();
-                // def.response.type = resourceType.name;
+                var resId = resourceType.name.toLowerCase();
+                if (!this.endpoints[resId]) this.endpoints[resId] = new Endpoint(this, { 'id':resId });
+                var ep = this.endpoints[resId];
                 for (var j=0; j<res.methods.length; j++) {
                     var method = res.methods[j].toLowerCase();
                     var callDef = {
                         "access": "",
-                        "method": method,
                         "resource": resourceType,
                         "request": this.schema.types.get('HttpRequest').createDefaultValue(),
                         "response": this.schema.types.get('HttpResponse').createDefaultValue()
@@ -75,53 +78,70 @@ if (ISNODEAPP) {
                         case 'create':
                         case 'update':
                             callDef.request.arguments = [ { "name":"res", "type":resourceType.name } ];
+                            callDef.response.type = `ref ${resourceType.name}`;
                             break;
                         case 'read':
                         case 'delete':
                             callDef.request.arguments = [ { "name":"id", "type":`ref ${resourceType.name}` } ];
+                            callDef.request.type = resourceType;
                             break;
                     }
-                    var resId = resourceType.name.toLowerCase();
-                    var p = this.createEndpoint(resId, callDef);
-                    if (p) {
-                        p.context = this;
-                        if (this.endpoints[resId] == undefined) this.endpoints[resId] = {};
-                        this.endpoints[resId][method] = p;
-                    }
+                    var call = this.createApiCall(ep, callDef, method);
+                    ep.addCall(call.method.toUpperCase(), call);
                 }
             }
             //this.methods = Object.keys(methods);
             if (this.authorization) {
                 // create login endpoint
-                this.endpoints.login = {
-                    post:  this.createEndpoint('login', {
-                            "method": "post",
-                            "request": {
-                                "mimeType": "application/json",
-                                "arguments": [
-                                    { "name":"id", "type":"string" },
-                                    { "name":"password", "type":"string" }
-                                ]
-                            },
-                            "response": {
-                                "mimeType": "application/json",
-                                "type": "string"
-                            }
-                        })
-                };
+                this.endpoints.login = new Endpoint(this, { 'id':'login' });
+                this.endpoints.login.calls.post = this.createApiCall(
+                    this.endpoints.login, {
+                        "request": {
+                            "mimeType": "application/json",
+                            "arguments": [
+                                { "name":"id", "type":"string" },
+                                { "name":"password", "type":"string" }
+                            ]
+                        },
+                        "response": {
+                            "mimeType": "application/json",
+                            "type": "string"
+                        }
+                    }, 'post');
             }
         }
     }
-    Api.prototype.createEndpoint = function createEndpoint(id, def) {
+    Api.prototype.createApiCall = function createApiCall(endpoint, def, method) {
         throw new Error('Not implemented!');
     };
+    Api.prototype.createRequest = function createRequest() {
+        var req = this.schema.types.get('HttpRequest').createDefaultValue();
+        req.mimeType = req.mimeType.valueOf();
+        var item = Api.mimeTypeMap[req.mimeType];
+        if (item) {
+            req.responseType = item.responseType;
+            req.charSet = item.charSet;
+        }
+        return req;
+    };
+    Api.prototype.createResponse = function createResponse() {
+        var resp = this.schema.types.get('HttpResponse').createDefaultValue();
+        resp.mimeType = resp.mimeType.valueOf();
+        var item = Api.mimeTypeMap[resp.mimeType];
+        if (item) {
+            resp.responseType = item.responseType;
+            resp.charSet = item.charSet;
+        }
+        return resp;
+    };
+
     Api.prototype.resourceAction = function resourceAction(id, type, method) {
         // get type
         if (typeof type === 'string') type = this.schema.types.get(type);
         // call endpoint
         var verb = Api.actionVerbMap[method.toLowerCase()] || method;
         var res = type.name.toLowerCase();
-        var resp = id != null ? this.endpoints[res][verb].call(id) : this.endpoints[res][verb].call();
+        var resp = id != null ? this.endpoints[res][verb].do(id) : this.endpoints[res][verb].do();
         return resp;
     };
 
@@ -146,14 +166,15 @@ if (ISNODEAPP) {
     }
     extend(Api, ApiClient);
 
-    ApiClient.prototype.createEndpoint = function ApiClientCreateEndpoint(id, def) {
-        var ep = new Endpoint(id, this, def, ApiClient.endpointCall);
+    ApiClient.prototype.createApiCall = function ApiClientCreateApiCall(endpoint, def, method) {
+        var call = new ApiCall(endpoint, def, method, ApiClient.apiCall);
+        var id = endpoint.id;
         if (!this.rest[id]) this.rest[id] = {};
-        this.rest[id][def.method] = async function() { return await ApiClient.endpointCall.apply(ep, arguments) };
-        return ep;
+        this.rest[id][method] = async function() { return await ApiClient.apiCall.apply(call, arguments) };
+        return call;
     };
     ApiClient.prototype.addAuthorization = function addAuthorization(options) {
-        if (this.authorization) {
+        if (this.authorization != 'None') {
             // get token from local store
             var token = localStorage.getItem(this.id + '-token');
             if (token) options.headers.authorization = 'Bearer ' + token;
@@ -162,7 +183,7 @@ if (ISNODEAPP) {
     ApiClient.prototype.login = async function login(id, password) {
         var result = null;
         if (this.endpoints.login) {
-            result = await this.endpoints.login.post.call(id, password)
+            result = await this.endpoints.login.post.do(id, password)
             if (result.statusCode == 200) {
                 localStorage.setItem(this.id + '-token', result.data);
                 result = result.data;
@@ -175,27 +196,26 @@ if (ISNODEAPP) {
         }
         return result;
     };
-    ApiClient.endpointCall = async function ApiClientEndpointCall() {
+    ApiClient.apiCall = async function ApiClientApiCall() {
         var resp = { error:null, data:null, statusCode:200 };
         // validate args
         var argKeys = [];
         var argValues = [];
         var results = [];
         var options = {
-            url: this.api.url + this.id,
+            url: this.parent.api.url + this.parent.id,
             data: null,
             method: this.method,
             headers: {}
         };
+        // validation
         for (var i=0; i<arguments.length; i++) {
             var arg = arguments[i];
-            var type = this.request.arguments[i].type;
-debugger
-            this.api.schema.types.get(type).validate(arg, results);
+            this.request.arguments[i].type.validate(arg, results);
             argKeys.push(this.request.arguments[i].name);
             argValues.push(arg);
         }
-        
+
         if (results.length == 0) {
             if (this.request.mimeType && this.request.mimeType != '*') options.contentType = this.request.mimeType;
             if (this.request.responseType) options.responseType = this.request.responseType;
@@ -213,8 +233,7 @@ debugger
             } else {
                 options.data = JSON.stringify(argValues);
             }
-
-            this.api.addAuthorization(options);
+            this.parent.api.addAuthorization(options);
             // start ajax call
             await ajax.send(options);
             resp.statusCode = options.statusCode;
@@ -224,9 +243,8 @@ debugger
             resp.error = options.error;
             if (resp.statusCode == 200) {
                 // validate response
-                var respType = this.response.type;
-                var type = typeof respType === 'string' ? this.api.schema.types.get(respType) : this.api.schema.types.get(respType.name);
-                var results = type.validate(resp.data);
+                var results = [];
+                this.response.type.validate(resp.data, results, ['response']);
                 if (results.length > 0) {
                     resp.error = new Error('Invalid response received!');
                     resp.error.details = results;
@@ -254,16 +272,17 @@ debugger
         if (this.definition) {
             this.fileUrl = new Url(this.url.path);
             // create Info endpoint
-            var p = this.createEndpoint('', {
-                "method": "get",
-                "response": {
-                    "mimeType": "application/json",
-                    "type": "Service"
-                }
-            });
-            if (p) {
-                this.endpoints[''] = { get: p };
-            }
+            var ep = new Endpoint(this, {
+                "id":"",
+                "calls": {
+                    "GET": {
+                        "response": {
+                            "mimeType": "application/json",
+                            "type": "Service"
+                        }
+                    }
+                }});
+            this.endpoints[''] = ep;
         }
         this.tokens = [];
     }
@@ -286,29 +305,29 @@ debugger
         return token;
     };
 
-    ApiServer.prototype.createEndpoint = function ApiServerCreateEndpoint(id, def) {
-        var handler = this[`${def.method}_${id}`];
-        var ep = null;
+    ApiServer.prototype.createApiCall = function ApiServerCreateApiCall(endpoint, def, method) {
+        var handler = this[`${method}_${endpoint.id}`];
+        var call = null;
         if (typeof handler === 'function') {
-            ep = new Endpoint(id, this, def, handler);
+            call = new ApiCall(endpoint, def, method, handler);
         }
-        return ep;
+        return call;
     };
 
     ApiServer.prototype.info = function info() {
         var sb = ['\n'];
         sb.push(`API: '${this.id}'`);
-        //        0123456789 012345 01234567890123456789 
+        //        0123456789 012345 01234567890123456789
         sb.push('┌────────────┬────────┬──────────────────────┐');
         sb.push('│ ID         │ VERB   │ HANDLER              │');
         sb.push('╞════════════╪════════╪══════════════════════╡');
         for (var i in this.endpoints) {
-            var group = this.endpoints[i];
-            for (var j in group) {
-                var ep = group[j];
-                if (ep.call != null) {
-                    var id = i != '' ? i : '[info]'; 
-                    sb.push(`│ ${(id+'          ').slice(0, 10)} │ ${(j.toUpperCase()+'    ').slice(0, 6)} │ ${(ep.call.name+'                    ').slice(0, 20)} │`);
+            var ep = this.endpoints[i];
+            for (var j in ep.calls) {
+                var call = ep[j];
+                if (call.do != null) {
+                    var id = i != '' ? i : '[info]';
+                    sb.push(`│ ${(id+'          ').slice(0, 10)} │ ${(j.toUpperCase()+'    ').slice(0, 6)} │ ${(call.do.name+'                    ').slice(0, 20)} │`);
                     sb.push('╞════════════╪════════╪══════════════════════╡');
                 }
             }
@@ -338,7 +357,7 @@ debugger
             resp.send(err);
         }
     };
-    
+
     ApiServer.prototype.processRequest = function processRequest(req, resp, reqBody) {
         var headers = {};
         reqBody = Buffer.concat(reqBody).toString();
@@ -357,17 +376,17 @@ debugger
             var path = reqUrl.path.substr(this.fileUrl.path.length+1);
             var ep = this.endpoints[path];
             if (ep) {
+                var call = ep[method];
                 if (this.checkCORS(ep, req, resp)) {
-                    var endpoint = ep[method];
                     if (method != 'options') {
-                        if (endpoint && endpoint.call) {
+                        if (call && call.do) {
                             var args = [];
                             var results = [];
 
                             //#region get call parameters from request
                             if (method == 'get') {
                                 for (var i in reqUrl.query) {
-                                    var arg = endpoint.request.arguments.find(x => x.name == i);
+                                    var arg = call.request.arguments.find(x => x.name == i);
                                     if (!arg) {
                                         results.push(new Schema.ValidationResult(i, 'Invalid request argument!'));
                                     } else {
@@ -376,7 +395,7 @@ debugger
                                 }
                             } else {
                                 if (reqBody) {
-                                    switch (endpoint.request.mimeType) {
+                                    switch (call.request.mimeType) {
                                         case 'application/json':
                                             args = JSON.parse(reqBody);
                                             break;
@@ -384,13 +403,11 @@ debugger
                                 }
                             }
                             //#endregion
-                            
+
                             //#region validate input
-                            if (endpoint.request.arguments) {
-                                for (var i=0; i<endpoint.request.arguments.length; i++) {
-                                    var typeName = endpoint.request.arguments[i].type;
-                                    if (typeof typeName === 'object') typeName = type.name;
-                                    var type = this.schema.types.get(typeName);
+                            if (call.request.arguments) {
+                                for (var i=0; i<call.request.arguments.length; i++) {
+                                    var type = call.request.arguments[i].type;
                                     if (!type) {
                                         results.push(new Schema.ValidationResult(i, 'Request argument has unknown type!'));
                                     } else {
@@ -405,12 +422,12 @@ debugger
                                 resp.statusCode = 400;
                                 body = JSON.stringify(results);
                             } else {
-                                if (!this.authorization || this.authorize(endpoint, req, resp)) {
+                                if (this.authorization == 'None' || this.authorize(call, req, resp)) {
                                     args.push(req, resp);
-                                    body = endpoint.call.apply(endpoint, args);
-                                    console.info(`Request handled by ${endpoint.call.name}`);
+                                    body = call.do.apply(call, args);
+                                    console.info(`Request handled by ${call.do.name}`);
                                     // validate output
-                                    switch (endpoint.response.mimeType) {
+                                    switch (call.response.mimeType) {
                                         case 'application/json':
                                             try {
                                                 if (body) {
@@ -426,7 +443,7 @@ debugger
                             //#endregion
 
                             // set endpoint-related headers here
-                            resp.setHeader('Content-Type', endpoint.response.mimeType || 'plain/text');
+                            resp.setHeader('Content-Type', call.response.mimeType || 'plain/text');
                         } else {
                             resp.statusCode = 405;
                             body = 'Method not supported!'
@@ -452,6 +469,7 @@ debugger
             }
             body = `{"error":"${error}"}`;
         }
+
         if (body != undefined) resp.write(body);
         resp.end();
         debug_(`Response with status ${resp.statusCode} sent.`, 1);
@@ -499,7 +517,10 @@ debugger
         } else res = false;
 
         // methods
-        resp.setHeader('Access-Control-Allow-Methods', this.methods);
+        var method = req.headers['access-control-request-method'];
+        if (method && endpoint.methods.includes(method.toUpperCase())) {
+            resp.setHeader('Access-Control-Allow-Methods', method);
+        }
         return res;
     };
 
@@ -509,33 +530,20 @@ debugger
 
     ApiServer.prototype.post_login = function post_login(id, passw, req, resp) {
         var result = null;
-        if (typeof this.api.login === 'function') {
-            result = this.api.login(id, passw);
+        if (typeof this.parent.api.login === 'function') {
+            result = this.parent.api.login(id, passw, req.socket.remoteAddress);
         }
         if (!result) {
             resp.statusCode = 401;
             //result = 'Authentication failed!';
         } else {
-            result.remote = req.socket.remoteAddress;
             result = btoa(JSON.stringify(result));
         }
         return result;
     };
 
     ApiServer.prototype.get_ = function get_() {
-        // var definition = {};
-        // var dataTypes = {};
-        // for (var i in this.api.schema.imports) {
-        //     for (var j=0; j<this.api.schema.imports[i].length; j++) {
-        //         var type = this.api.schema.imports[i][j];
-        //         dataTypes[type.name] = type;
-        //     }
-        // }            
-        // for (var i in this.api.definition) {
-        //     definition[i] = i != 'DataTypes' ? this.api.definition[i] : Object.values(dataTypes);
-        // }
-        // return definition;
-        return this.api.definition;
+        return this.parent.api.definition;
     };
     //#endregion
 
@@ -602,7 +610,7 @@ debugger
         }
         return api;
     };
-    
+
     Api.Client = async function Client(apiDefinition) {
         var api = null;
         // initialize API
@@ -632,7 +640,6 @@ debugger
     //#endregion
 
     publish(Api, 'Api');
-    //publish(Endpoint, 'Endpoint', Api);
     publish(ApiServer, 'ApiServer');
     publish(ApiClient, 'ApiClient');
 })();

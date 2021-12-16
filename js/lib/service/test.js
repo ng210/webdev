@@ -51,7 +51,6 @@ include('./api.js');
     async function test_api() {
         header('Test api client');
         var api = await Api.Client('/service/test-service/test-service-definition.json');
-debugger
         test('Should create an API (explicit definition)', ctx => ctx.assert(api, '!null'));
         const URL = 'http://localhost:4000/js/service/test-service/';
         api = await Api.Client(URL);
@@ -59,18 +58,32 @@ debugger
 
         await test('Should call each endpoint and method', async function(ctx) {
             var success = true;
+            // ignore instance validation
+            api.schema.getInstance = () => true;
             for (var j in api.endpoints) {
                 var ep = api.endpoints[j];
-                for (var i in ep) {
-                    var call = ep[i];
+                for (var i in ep.calls) {
+                    var call = ep.calls[i];
                     message(`Test call to '${j}.${i}'`);
                     // create dummy arguments
                     var data = [];
                     for (var i=0; i<call.request.arguments.length; i++) {
                         var arg = call.request.arguments[i];
-                        data.push(api.schema.types.get(arg.type).createValue().valueOf());
+                        var value = null;
+                        if (!(arg.type instanceof RefType)) {
+                            value = arg.type.createValue();
+                        } else {
+                            var instance = arg.type.baseType.createValue();
+                            api.schema.addInstance(instance);
+                            value = instance[arg.type.baseType.ref];
+                        }
+                        data.push(value.valueOf());
                     }
-                    await call.call(...data);
+                    var response = await call.do(...data);
+                    if (response.error) {
+                        error(response.error);
+                        success = false;
+                    }
                     break;
                 }
             }

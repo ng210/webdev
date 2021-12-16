@@ -7,7 +7,7 @@
         { "name":"Verbs", "type":"enum", "values": ["POST", "GET", "PUT", "DELETE"] },
         { "name":"VerbList", "type":"list", "elemType":"Verbs" },
         { "name":"MimeTypes", "type":"enum", "values": ["application/json"] },
-        { "name":"Authorization", "type":"enum", "values": ["Basic"] },
+        { "name":"Authorization", "type":"enum", "values": ["None", "Basic"] },
         
         {   "name":"HttpRequest",
             "attributes": {
@@ -55,8 +55,8 @@
                 "id": { "type":"String10", "isRequired":true },
                 "url": { "type":"string", "isRequired":true },
                 "authorization": { "type":"Authorization" },
-                "Resources": { "type":"ResourceList" },
-                "Endpoints": { "type":{ "name":"EndpointMap", "type":"map", "keyType":"string", "valueType":"Endpoint" } }
+                "resources": { "type":"ResourceList" },
+                "endpoints": { "type":{ "name":"EndpointMap", "type":"map", "keyType":"string", "valueType":"Endpoint" } }
             }
         }
     ]
