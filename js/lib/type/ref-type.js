@@ -9,8 +9,7 @@ include('/lib/type/type.js');
         var isValid = false;
         var messages = [];
         if (this.schema) {
-            var instances = this.schema.instances.get(this.baseType.name);
-            if (instances && instances[value]) {
+            if (this.schema.getInstance(value, this.baseType)) {
                 isValid = true;
             } else {
                 messages.push(`Instance with reference '${value}' of type '${this.baseType.name}' not found!`);

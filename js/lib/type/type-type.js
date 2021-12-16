@@ -11,7 +11,7 @@ include('/lib/type/type.js');
     }
     extend(Type, TypeType);
 
-    TypeType.prototype.createValue = function createValue(value) {
+    TypeType.prototype.createValue = function createValue(value, tracking) {
         var type = null;
         if (value) {
             type = typeof value === 'string' ? this.values.get(value) : value;
@@ -20,6 +20,9 @@ include('/lib/type/type.js');
             type = this.values.getAt(ix);
         }
         return type;
+    };
+    TypeType.prototype.createPrimitiveValue = function createPrimitiveValue(obj, tracking) {
+        return obj ? this.createValue(obj, tracking) : this.createDefaultValue(tracking);
     };
     TypeType.prototype.createDefaultValue = function createDefaultValue(tracking) {
         return this.values.getAt(0);

@@ -141,6 +141,69 @@ include('/lib/base/html.js');
         test('Should Html decode text', ctx => ctx.assert(text, '=', decoded));
     }
 
+    function test_clone() {
+        message('Test clone');
+        function MyObject(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+        MyObject.prototype.toString = function toString() {
+            return `${this.x}, ${this.y}`;
+        };
+        var obj1 = {
+            myobj: new MyObject(2,3),
+            id:'a1'
+        };
+
+        var obj2 = {
+            myobj1: obj1,
+            id:'a2'
+        };
+
+        var data = [
+            'alma',
+            12.43,
+            [1,2,3,4],
+            true,
+            undefined,
+            null,
+            new String('alma'),
+            new Number(12.43),
+            new Boolean(true),
+            new Date('2021.12.12'),
+            {
+                'a':'a',
+                'n':12
+            },
+            obj1.myobj,
+            obj1,
+            obj2
+        ];
+        var arr = new Array();
+        arr.push(1,2,3,4);
+        data.push(arr);
+        var result = true;
+        for (var i=0; i<data.length; i++) {
+            var cl = clone(data[i]);
+            if (deepCompare(data[i], cl) != null) {
+                message(`Could not clone object ${stringify(data[i])}`);
+                result = false;
+            } else {
+                message(`Original.${stringify(data[i])}`);
+                message(`Cloned.. ${stringify(cl)}`);
+            }
+        }
+        test('Should clone all kind of objects', ctx => ctx.assert(result, 'true'));
+        test('Should clone object correctly (constructor, prototype, no methods)', ctx => {
+            var cl = clone(obj1.myobj);
+            ctx.assert(obj1.myobj, ':=', cl);
+            ctx.assert(cl.constructor, '=', MyObject);
+            ctx.assert(cl.__proto__, '=', MyObject.prototype);
+            console.log(cl.__proto__);
+            ctx.assert(cl.hasOwnProperty('toString'), 'false');
+        });
+    }
+
     function test_mergeObjects() {
         message('Test mergeObjects', 1);
         var person = {
@@ -242,12 +305,13 @@ include('/lib/base/html.js');
     }
 
     var tests = () => [
-        test_getObjectAt,
-        test_mergeObjects,
-        test_getSetObjectAt,
-        test_load,
-        test_binSearch,
-        test_html
+        // test_getObjectAt,
+        test_clone,
+        // test_mergeObjects,
+        // test_getSetObjectAt,
+        // test_load,
+        // test_binSearch,
+        // test_html
     ];
 
     publish(tests, 'BaseTests');

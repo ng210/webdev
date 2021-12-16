@@ -801,11 +801,32 @@ self.lock = function lock(token, action) {
         });
     });
 };
+self.clone = function clone(obj) {
+    var c = obj;
+    if (obj != null && typeof obj === 'object') {
+        switch (obj.constructor) {
+            case Boolean: c = new Boolean(obj); break;
+            case Number: c = new Number(obj); break;
+            case String:c = new String(obj); break;
+            case Array: c = Array.from(obj); break;
+            case Date: c = new Date(obj); break;
+            default:
+                c = Reflect.construct(obj.constructor, []);
+                for (var i in obj) {
+                    if (obj.hasOwnProperty(i) && typeof i !== 'function') {
+                        c[i] = clone(obj[i]);
+                    }
+                }
+                break;
+        }
+    }
+    return c;
+}
 self.mergeObjects = function mergeObjects(src, dst, sourceOnly) {
-    var res = {};
     if (src == undefined || src == null) {
         src = {};
     }
+    var res = {};
     var isArraySource = Array.isArray(src);
     var isArrayDestination = Array.isArray(dst);
     if (isArraySource && isArrayDestination) {
@@ -929,11 +950,11 @@ self.stringify = function stringify(o, space) {
         if (value instanceof Map) {
             var obj = {};
             for (var [k, v] of value) {
-                obj[k] = v.valueOf ? v.valueOf() : v;
+                obj[k] = v != null && v.valueOf ? v.valueOf() : v;
             }
             value = obj;
         }
-        return value.valueOf ? value.valueOf() : value;
+        return value != null && value.valueOf ? value.valueOf() : value;
     },
     space);
 };

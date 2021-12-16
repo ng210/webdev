@@ -63,21 +63,29 @@ include('/lib/data/dictionary.js');
             type = this.types.get(typeDef);
             var m = typeDef.match(new RegExp('^ref\\s+([\\w\\d]+)', 'i'));
             if (m != null) {
+                // reference type
                 var baseType = this.types.get(m[1]);
-                type = new RefType('ref' + m[1], baseType);
+                var refTypeName = 'ref' + m[1];
+                type = this.types.get(refTypeName);
+                if (!type) {
+                    type = new RefType('ref' + m[1], baseType);
+                    this.types.set(refTypeName, type);
+                }
                 if (!baseType) {
                     this.addMissingType(m[1], x => type.baseType = x, path);
                 }
                 type.schema = this;
             }
         }
-        // inline definition
-        else if (typeof typeDef === 'object') type = this.buildType(typeDef, path);
-        else throw new Error(`Invalid type definition '${typeDef}'!`);
+        else if (typeDef instanceof Type) {
+            type = typeDef;
+        } else if (typeof typeDef === 'object') {
+            // inline definition
+            type = this.buildType(typeDef, path);
+        } else throw new Error(`Invalid type definition '${typeDef}'!`);
         return type;
     };    
     Schema.prototype.importTypes = async function importTypes(arr) {
-        var typeDefs = [];
         var res = await load(arr);
         var errors = [];
         for (var i=0; i<res.length; i++) {
@@ -85,13 +93,11 @@ include('/lib/data/dictionary.js');
                 errors.push(res[i].error.message);
             } else {
                 for (var j=0; j<res[i].data.length; j++) {
-                    //typeDefs.push(res[i].data[j]);
                     this.getOrBuildType(res[i].data[j], ['imports', j]);
                 }
             }
         }
         if (errors.length > 0) throw new Error(errors.join('\n'));
-        //this.addTypes(typeDefs);
     };
     Schema.prototype.checkMissingTypes = function checkMissingTypes(results) {
         for (var tn in this.missingTypes) {
@@ -127,7 +133,7 @@ include('/lib/data/dictionary.js');
             }
             if (input.imports) {
                 var imports = await this.importTypes(input.imports);
-                definition.push(...imports);
+                //definition.push(...imports);
             }
         }
         if (Array.isArray(definition)) {

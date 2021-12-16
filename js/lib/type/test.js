@@ -198,56 +198,9 @@ function test_types() {
         results.forEach( v => message(v));
     });
 
-    // var schema = new Schema();
-    // var colors = ['red', 'green', 'blue'];
-    // var type = schema.buildType({ 'name':'uint8', 'type':'int', 'min':0, 'max':255 });
-    // message(`${type.name}:${type.baseType.name} added`);
-    // type = schema.buildType({ 'name':'uint16', 'type':'int', 'min':0, 'max':65536 });
-    // message(`${type.name}:${type.baseType.name} added`);
-    // type = schema.buildType({ 'name':'uint32', 'type':'int', 'min':0, 'max':4294967296 });
-    // message(`${type.name}:${type.baseType.name} added`);
-//         type = schema.types.type;
-//         var value = schema.types.Types; //type.createValue();
-//         Dbg.prln('\n *** ' + value.name)
-// debugger
-//         var errors = type.validate(value);
-//         message_errors(errors);
-    // var totalResults = [];
-    // var totalErrors = 0;
-    // test('Should parse and validate all 500 random values of all types successfully', ctx => {
-    //     for (var ci=0; ci<500; ci++) {
-    //         for (var key in schema.types) {
-    //             var type = schema.types[key];
-    //             if (!type.isAbstract) {
-    //                 var value = type.createValue();
-    //                 var totalResult = { type:type.name, value:null, errors:null };
-    //                 if (value == null) {
-    //                     totalResult.errors = [new Error('Value was null!')];
-    //                     totalErrors++;
-    //                 } else {
-    //                     if (type == schema.types.type || type == schema.types.Types || type == schema.types.TypeList) {
-    //                         totalResult.value = `{${value.name}}`;
-    //                     } else {
-    //                         totalResult.value = JSON.stringify(value);
-    //                     }
-    //                     var errors = type.validate(value);
-    //                     if (errors.length > 0) {
-    //                         totalResult.errors = errors;
-    //                         totalErrors++;
-    //                     }
-    //                 }
-    //                 totalResults.push(totalResult);
-    //             }
-    //         }
-    //     }
-    //     ctx.assert(totalErrors, '=', 0);
-    //     for (var ei=0; ei<totalResults.length; ei++) {
-    //         if (totalResults[ei].errors) {
-    //             message(`${totalResults[ei].type} = ${totalResults[ei].value}`);
-    //             message_errors(totalResults[ei].errors);
-    //         }
-    //     }
-    // });
+    test('Should create valid values', ctx => {
+        ctx.assert(types.bool.createDefaultValue(), '=', false);
+    });
 }
 
 function test_complex_type() {
@@ -404,6 +357,7 @@ function test_build_schema() {
 
     test('Should build types successfully', ctx => {
         ctx.assert(schema.types.get('int8'), '!null');
+debugger
             ctx.assert(schema.types.get('int8').min, '=', -128);
         ctx.assert(schema.types.get('string20'), '!null');
             ctx.assert(schema.types.get('string20').length, '=', 20);

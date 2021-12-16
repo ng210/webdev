@@ -11,6 +11,7 @@ include('/lib/data/dictionary.js');
             var parentType = type;
             while (parentType) {
                 parentType.attributes.iterate( (k, v) => this.attributes.set(k, v));
+                this.ref = this.ref || parentType.ref;
                 parentType = parentType.baseType;
             }
         }

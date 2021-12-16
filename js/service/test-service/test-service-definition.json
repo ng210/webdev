@@ -5,12 +5,12 @@
 
     "id":"testsrv",
     "url":"http://localhost:4000/js/service/test-service/",
-    "authorization": "Basic",
-    "Resources": [
+    "authorization": "None",
+    "resources": [
         { "type":"Res1", "methods": ["CREATE", "READ", "UPDATE"] },
         { "type":"Res2", "methods": ["CREATE", "READ", "UPDATE", "DELETE"] }
     ],
-    "Endpoints": {
+    "endpoints": {
         "bind": {
             "id":"bind",
             "calls": {
