@@ -296,7 +296,8 @@ div.pattern {
 }
 
 canvas {
-    background-color: #000810
+    background-color: #000810;
+    width: 1280px; height:1024px;
 }
 
 #pattern1_chart {

@@ -5,8 +5,7 @@
         "width": "885px", "height": "73px",
         "z-index": 0,
         "background-color": "#3080e0",
-        "background-image": "./res/synth.template.png",
-        "font": "consolas 10 normal",
+        "background-image": "./res/synth-template.png",
         "border": "#204080 0px outset"
     },
     "item-template": {

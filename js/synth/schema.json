@@ -1,0 +1,28 @@
+{
+    "use-default-types": true,
+    "definition": [
+        {   "name": "ui-settings",
+            "attributes": {
+
+            }
+        },
+        {   "name": "sound-settings",
+            "attributes": {
+                "sampling-rate": { "type":"int" }
+            }
+        },
+        {   "name": "play-settings",
+            "attributes": {
+
+            }
+        },
+
+        {   "name":"settings",
+            "attributes": {
+                "ui": { "type":"ui-settings" },
+                "sound": { "type": "sound-settings" },
+                "play": { "type": "play-settings" }
+            }
+        }
+    ]
+}

@@ -1,13 +1,106 @@
 include('/lib/base/dbg.js');
-include('/lib/glui/glui-lib.js');
-include('/lib/synth/synth-adapter.js');
-include('/lib/synth/score-control.js');
-include('/lib/service/api.js');
+include('./data.js');
+include('./sound.js');
+include('./ui/ui.js')
+include('./play.js')
 
-const SAMPLE_RATE = 48000;
-const LOCAL_STORAGE_KEY = 'synth-app';
-const STORE_API_URL = '/synth/store-api.json';
+function SynthApp() {
+    this.ui = null;
+    this.sound = null;
+    this.play = null;
+    this.settings = null;
+    this.schema = null;
 
+    this.bpm = 100;
+    this.selectedSequence = 0;
+}
+
+SynthApp.prototype.printMessages = function printMessages(messages) {
+    for (var i=0; i<messages.length; i++) {
+        Dbg.prln(messages[i]);
+    }
+};
+
+SynthApp.prototype.loadSchema = async function loadSchema() {
+    try {
+        this.schema = await Schema.load('./schema.json');
+    } catch (err) {
+        Dbg.prln(err.message);
+        console.error(err);
+    }
+};
+
+SynthApp.prototype.loadSettings = async function loadSettings() {
+    var res = await load('./settings.json');
+
+    if (res.error) {
+        Dbg.prln(res.error.message);
+        console.error(res.error);
+    } else {
+        var results = this.schema.validate(res.data, 'settings');
+        if (results.length > 0) {
+            this.printErrors(results);
+        } else {
+            this.settings = res.data;
+        }
+    }
+};
+
+SynthApp.prototype.loadSong = async function loadSong(url) {
+    var errors = [];
+    await this.play.load(url, errors);
+    if (errors.length > 0) {
+        this.printMessages(errors);
+        // display error dialog
+    } else {
+        // create synth panels
+        this.ui.removeSynthPanels();
+        var synths = this.play.getDevices();
+        for (var i=0; i<synths.length; i++) {
+            this.ui.addSynthPanel(synths[i]);
+        }
+
+        // update sequences info
+        this.ui.sequences.max = this.play.getSequenceCount() - 1;
+        this.ui.sequences.setValue(0);
+
+        this.ui.resize();
+    }
+};
+
+SynthApp.prototype.initialize = async function initialize() {
+    await this.loadSchema();
+    await this.loadSettings();
+    if (this.settings) {
+        Dbg.prln('Settings loaded.');
+        this.settings.bpm = 100;
+        var errors = [];
+
+        this.ui = new Ui(); await this.ui.initialize(this, this.settings.ui, errors);
+        if (errors.length == 0) Dbg.prln('UI initialized.');
+
+        // this.sound = new Sound(); await this.sound.initialize(this.settings.sound, errors);
+        // if (errors.length == 0) Dbg.prln('Sound initialized.');
+
+        this.play = new Play(); await this.play.initialize(this.settings.play, errors);
+        if (errors.length == 0) Dbg.prln('Player initialized.');
+
+        this.printMessages(errors);
+        // load default song
+        await this.loadSong('./default.bin');
+    }
+};
+
+SynthApp.prototype.selectSequence = function selectSequence(seqId) {
+    ;
+};
+
+// SynthApp.prototype.run = function run() {
+//     ;
+// };
+
+
+//#region old code
 var App = {
     //#region UI
     ui: null,
@@ -666,11 +759,20 @@ console.log('del: ', ctrl.parent.dataSource.obj);
         }
     }
 };
+//#endregion
 
 async function onpageload(e) {
     if (e.length) {
         alert(e.join('\n'));
+    } else {
+        Dbg.init('con');
+        var app = new SynthApp();
+        await app.initialize();
+        document.body.style.display = 'block';
+        //app.run();
     }
-    Dbg.init('con');
-    App.init();
+}
+
+function onresize(e) {
+    ;
 }
