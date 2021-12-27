@@ -9,7 +9,7 @@ include('/lib/data/stream.js');
         this.player = player;
         this.devices = [];
     }
-    IAdapter.prototype.getInfo = function() { return this.constructor.getInfo(); };
+    IAdapter.prototype.getInfo = function() { throw new Error('Not implemented!'); };
     IAdapter.prototype.prepareContext = function(data) {
         if (data) {
             var deviceCount = data.readUint8();
@@ -35,8 +35,8 @@ include('/lib/data/stream.js');
     IAdapter.prototype.createDeviceImpl = function(deviceType, initData) { throw new Error('Not implemented!'); };
     IAdapter.prototype.processCommand = function(channel, command) { throw new Error('Not implemented!'); };
 
-    IAdapter.getInfo = function() { throw new Error('Not implemented!'); };
-    IAdapter.create = function(player) { throw new Error('Not Implemented!'); };
+    // IAdapter.getInfo = function() { throw new Error('Not implemented!'); };
+    // IAdapter.create = function(player) { throw new Error('Not Implemented!'); };
 
     publish(Ps, 'Ps');
     publish(IAdapter, 'IAdapter', Ps);

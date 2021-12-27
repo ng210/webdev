@@ -1,4 +1,5 @@
 include('./player-lib.js');
+include('./player-ext.js');
 
 (function(){
 
@@ -6,14 +7,15 @@ include('./player-lib.js');
         TestAdapter.base.constructor.call(this, player);
     };
     extend(Ps.IAdapter, TestAdapter);
+    implements(TestAdapter, Ps.IAdapterExt);
 
-    TestAdapter.info = {name: '_TestAdapter', id: 1};
-    TestAdapter.getInfo = () => TestAdapter.info;
+    TestAdapter.info = {name: 'TestAdapter', id: 1};
+    TestAdapter.prototype.getInfo = () => TestAdapter.info;
     //TestAdapter.prototype.prepareContext = function(data, datablocks) { Dbg.prln('Prepare context'); };
     TestAdapter.prototype.createDeviceImpl = function createDeviceImpl(deviceType, initData) {
         var device = null;
         switch (deviceType) {
-            case TestAdapter.DIV:
+            case TestAdapter.Div:
                 device = document.getElementById('testTarget') || document.createElement('div');
                 device.id = 'testTarget';
                 device.style.position = 'absolute';
@@ -40,12 +42,12 @@ include('./player-lib.js');
         var sequence = channel.sequence;
         var cursor = channel.cursor;
         switch (command) {
-            case TestAdapter.SETTEXT:
+            case TestAdapter.SetText:
                 var text = '', c = null;
                 while ((c = String.fromCharCode(sequence.getUint8(cursor++))) != '\0') text += c;
                 device.innerHTML = text;
                 break;
-            case TestAdapter.SETINK:
+            case TestAdapter.SetInk:
                 var c = sequence.getUint8(cursor++);
                 device.style.color = colors[c % colors.length];
                 break;
@@ -61,14 +63,14 @@ include('./player-lib.js');
         if (arguments[1] instanceof Ps.Sequence) inputStream = arguments[1].stream;
         else if (arguments[1] instanceof Stream) inputStream = arguments[1];
         switch (command) {
-            case TestAdapter.SETTEXT:
+            case TestAdapter.SetText:
                 if (inputStream) {
                     stream.writeString(inputStream.readString(arguments[2]));
                 } else {
                     stream.writeString(arguments[1]);
                 }
                 break;
-            case TestAdapter.SETINK:
+            case TestAdapter.SetInk:
                 if (inputStream) {
                     stream.writeUint8(inputStream.readUint8(arguments[2]));
                 } else {
@@ -78,10 +80,18 @@ include('./player-lib.js');
         }
         return new Stream(stream);
     };
-    TestAdapter.SETTEXT = 2;
-    TestAdapter.SETINK = 3;
+    TestAdapter.SetText = 2;
+    TestAdapter.SetInk = 3;
+    TestAdapter.Div = 0;
 
-    TestAdapter.DIV = 0;
+    TestAdapter.prototype.getSymbol = function getSymbol(name) {
+        var types = this.player.schema.types;
+        return {
+            'Div': { 'type':types.get('uint8'), 'value': TestAdapter.Div },
+            'SetText': { 'type':types.get('uint8'), 'value': TestAdapter.SetText },
+            'SetInk': { 'type':types.get('uint8'), 'value': TestAdapter.SetInk }
+        }[name];
+    };
 
     function createPlayer() {
         var player = Ps.Player.create();
@@ -109,7 +119,7 @@ include('./player-lib.js');
         sequence.writeHeader();
         // Frame #1
         sequence.writeDelta(0);
-        sequence.writeCommand(Ps.Player.Commands.ASSIGN); sequence.writeUint8(1); sequence.writeUint8(1); sequence.writeUint8(0); sequence.writeUint8(0);
+        sequence.writeCommand(Ps.Player.Commands.Assign); sequence.writeUint8(1); sequence.writeUint8(1); sequence.writeUint8(0); sequence.writeUint8(0);
         sequence.writeEOF();
         // Frame #2
         sequence.writeDelta(96);
@@ -124,32 +134,32 @@ include('./player-lib.js');
         sequence.writeHeader();
         // Frame #1
         sequence.writeDelta(0);
-        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq1.1');
-        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(0);
+        sequence.writeCommand(TestAdapter.SetText); sequence.writeString('Seq1.1');
+        sequence.writeCommand(TestAdapter.SetInk); sequence.writeUint8(0);
         sequence.writeEOF();
         // Frame #2
         sequence.writeDelta(16);
-        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq1.2');
-        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(1);
+        sequence.writeCommand(TestAdapter.SetText); sequence.writeString('Seq1.2');
+        sequence.writeCommand(TestAdapter.SetInk); sequence.writeUint8(1);
         sequence.writeEOF();
         // Frame #3
         sequence.writeDelta(16);
-        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq1.3');
-        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(2);
+        sequence.writeCommand(TestAdapter.SetText); sequence.writeString('Seq1.3');
+        sequence.writeCommand(TestAdapter.SetInk); sequence.writeUint8(2);
         sequence.writeEOF();
         // Frame #4
         sequence.writeDelta(16);
-        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq1.4');
-        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(3);
+        sequence.writeCommand(TestAdapter.SetText); sequence.writeString('Seq1.4');
+        sequence.writeCommand(TestAdapter.SetInk); sequence.writeUint8(3);
         sequence.writeEOF();
         // Frame #5
         sequence.writeDelta(16);
-        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('End');
-        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(4);
+        sequence.writeCommand(TestAdapter.SetText); sequence.writeString('End');
+        sequence.writeCommand(TestAdapter.SetInk); sequence.writeUint8(4);
         sequence.writeEOF();
         // Frame #6
         sequence.writeDelta(16);
-        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(0);
+        sequence.writeCommand(TestAdapter.SetInk); sequence.writeUint8(0);
         sequence.writeEOS();
         sequences.push(sequence);
         //#endregion
@@ -159,13 +169,13 @@ include('./player-lib.js');
         sequence.writeHeader();
         // Frame #1
         sequence.writeDelta(16);
-        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq2.1');
-        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(4);
+        sequence.writeCommand(TestAdapter.SetText); sequence.writeString('Seq2.1');
+        sequence.writeCommand(TestAdapter.SetInk); sequence.writeUint8(4);
         sequence.writeEOF();
         // Frame #2
         sequence.writeDelta(16);
-        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq2.2 - End');
-        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(2);
+        sequence.writeCommand(TestAdapter.SetText); sequence.writeString('Seq2.2 - End');
+        sequence.writeCommand(TestAdapter.SetInk); sequence.writeUint8(2);
         sequence.writeEOS();
         sequences.push(sequence);
         //#endregion
@@ -175,13 +185,13 @@ include('./player-lib.js');
         sequence.writeHeader();
         // Frame #1
         sequence.writeDelta(16);
-        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq3.1');
-        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(1);
+        sequence.writeCommand(TestAdapter.SetText); sequence.writeString('Seq3.1');
+        sequence.writeCommand(TestAdapter.SetInk); sequence.writeUint8(1);
         sequence.writeEOF();
         // Frame #2
         sequence.writeDelta(16);
-        sequence.writeCommand(TestAdapter.SETTEXT); sequence.writeString('Seq3.2 - End');
-        sequence.writeCommand(TestAdapter.SETINK); sequence.writeUint8(3);
+        sequence.writeCommand(TestAdapter.SetText); sequence.writeString('Seq3.2 - End');
+        sequence.writeCommand(TestAdapter.SetInk); sequence.writeUint8(3);
         sequence.writeEOS();
         sequences.push(sequence);
         //#endregion
@@ -191,7 +201,7 @@ include('./player-lib.js');
     function createDataBlocks() {
         return [
             new Stream([1, Ps.Player.Device.CHANNEL]),
-            new Stream(16).writeUint8(1).writeUint8(TestAdapter.DIV).writeUint16(120).writeUint16(200),
+            new Stream(16).writeUint8(1).writeUint8(TestAdapter.Div).writeUint16(120).writeUint16(200),
             new Stream(16).writeString('Hello world!')
         ];
     }
@@ -238,7 +248,7 @@ include('./player-lib.js');
             message('Check frame #'+fi, 1);
             test('Delta should be 16', ctx => ctx.assert(frame.delta, '=', 16));
             test('Frame should have 2 commands', ctx => ctx.assert(frame.commands.length, '=', 2));
-            test('First command should be SetText', ctx => ctx.assert(frame.commands[0].readUint8(0), '=', TestAdapter.SETTEXT));
+            test('First command should be SetText', ctx => ctx.assert(frame.commands[0].readUint8(0), '=', TestAdapter.SetText));
             TestConfig.indent--;
         }
 
@@ -246,7 +256,7 @@ include('./player-lib.js');
         var frame = frames[5];
         test('Delta should be 16', ctx => ctx.assert(frame.delta, '=', 16));
         test('Should have 1 command', ctx => ctx.assert(frame.commands.length, '=', 1));
-        test('Command should be SetInk', ctx => ctx.assert(frame.commands[0].readUint8(0), '=',TestAdapter.SETINK));
+        test('Command should be SetInk', ctx => ctx.assert(frame.commands[0].readUint8(0), '=',TestAdapter.SetInk));
     }
 
     function test_sequence_fromFrames() {
@@ -387,16 +397,55 @@ include('./player-lib.js');
         });
     }
 
+    async function test_export_script() {
+        // register adapter types
+        Ps.Player.registerAdapter(Ps.Player);
+        Ps.Player.registerAdapter(TestAdapter);
+        // create player
+        var player = Ps.Player.create();
+        // load binary data, prepare adapters
+        await player.load('./test-data.bin');
+
+        var script = player.exportScript();
+        test('Should export as script', ctx => {
+
+        });
+        //save(script, 'test-script.txt');
+    }
+
+
+    async function test_import_script() {
+        header('Test import script');
+        Ps.Player.registerAdapter(Ps.Player);
+        Ps.Player.registerAdapter(TestAdapter);
+        var res = await load('test-script.txt')
+        if (res.error) throw res.error;
+        var player = await Ps.PlayerExt.create();
+        var results = player.importScript(res.data);
+        test('Should load script successfully', ctx => {
+            ctx.assert(results, 'empty');
+            for (var i=0; i<results.length; i++) {
+                message(results[i]);
+            }
+            ctx.assert(player.adapters.length, '=', 2);
+            ctx.assert(player.sequences.length, '=', 3);
+
+        });
+    }
+
+
     var tests = () => [
-        test_create_player,
-        test_sequence_toFrames,
-        test_sequence_fromFrames,
-        test_create_binary,
-        test_load_binary,
-        test_create_channel,
-        test_run_channel,
-        test_run_player,
-        test_complete_player
+        // test_create_player,
+        // test_sequence_toFrames,
+        // test_sequence_fromFrames,
+        // test_create_binary,
+        // test_load_binary,
+        // test_create_channel,
+        // test_run_channel,
+        // test_run_player,
+        // test_complete_player,
+        //test_export_script,
+        test_import_script
     ];
 
     publish(tests, 'Player tests');

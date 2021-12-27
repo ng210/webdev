@@ -7,18 +7,31 @@ include('./iadapter-ext.js');
         this.datablocks = [];
         this.channels = [];
         this.masterChannel = null;
-        this.refreshRate = 25.0;
+        this.refreshRate = 0;
     };
-    extend(Ps.IAdapterExt, Player);
+    extend(Ps.IAdapter, Player);
 
     Player.Commands = {
         'EOF': 0,
         'EOS': 1,
-        'ASSIGN': 2,
-        'TEMPO': 3
+        'Assign': 2,
+        'Tempo': 3
+    };
+
+    Player.prototype.initialize = function initialize() {
+        // set adapter #0
+        this.adapters.push({ adapter:this, datablock:0 });
+        // set device #0
+        this.devices.push(this);
+        // crate master channel
+        this.masterChannel = this.createDevice(Ps.Player.Device.CHANNEL);
+        this.masterChannel.id = 'master';
+        this.masterChannel.loopCount = 0;
+        this.masterChannel.isActive = true;
     };
 
     // IAdapter implementation
+    Player.prototype.getInfo = function() { return Ps.Player.info; };
     Player.prototype.createDeviceImpl = function createDeviceImpl(deviceType, initData) {
         var device = null;
         switch (deviceType) {
@@ -37,7 +50,7 @@ include('./iadapter-ext.js');
         var sequence = channel.sequence;
         var cursor = channel.cursor;
         switch (command) {
-            case Player.Commands.ASSIGN:
+            case Player.Commands.Assign: // chnId, seqId, devId, loop-count
                 var channelId = sequence.getUint8(cursor++);
                 var sequenceId = sequence.getUint8(cursor++);
                 var deviceId = sequence.getUint8(cursor++);
@@ -45,63 +58,27 @@ include('./iadapter-ext.js');
                 var sequence = this.sequences[sequenceId];
                 this.channels[channelId].assign(deviceId, sequence);
                 break;
-            case Player.Commands.TEMPO:
-                for (var i=0; i<Player.adapters.length; i++) {
-                    var adapter = Player.adapters[i];
+            case Player.Commands.Tempo: // fps
+                var fps = sequence.stream.readFloat32(cursor++);
+                for (var i=0; i<this.adapters.length; i++) {
+                    var adapter = this.adapters[i].adapter;
                     if (typeof adapter.updateRefreshRate === 'function') {
-                        adapter.updateRefreshRate(sequence.readFloat32(cursor++));
+                        adapter.updateRefreshRate(fps);
                     }
                 }
                 break;
         }
         return cursor;
     };
-
-    // IAdapterExt implementation
-    Player.prototype.makeCommand = function(command)  {
-        var stream = new Stream(128);
-        if (typeof command == 'string') {
-            command = Player.Commands[command.toUpperCase()];
-        }
-        stream.writeUint8(command);
-        var inputStream = null;
-        if (arguments[1] instanceof Ps.Sequence) inputStream = arguments[1].stream;
-        else if (arguments[1] instanceof Stream) inputStream = arguments[1];
-        switch (command) {
-            case Player.Commands.ASSIGN:
-                if (inputStream) {
-                    stream.writeStream(inputStream, arguments[2], 4);
-                } else {
-                    stream.writeUint8(arguments[1]);    // channel id
-                    stream.writeUint8(arguments[2]);    // sequence id
-                    stream.writeUint8(arguments[3]);    // device id
-                    stream.writeUint8(arguments[4]);    // loop count
-                }
-                break;
-            case Player.Commands.TEMPO:
-                if (inputStream) {
-                    stream.writeStream(inputStream, arguments[2], 4);
-                } else {
-                    stream.writeFloat32(arguments[1]);
-                }
-                break;
-            case Player.Commands.EOF:
-                stream.writeUint8(Player.Commands.EOF);
-                break;
-            case Player.Commands.EOS:
-                stream.writeUint8(Player.Commands.EOS);
-                break;
-        }
-
-        stream.buffer = stream.buffer.slice(0, stream.length);
-        return stream;
+    Player.prototype.updateRefreshRate = function(fps) {
+        this.refreshRate = fps;
     };
 
     // Player methods
     Player.prototype.addAdapter = function addAdapter(adapterType, datablockId) {
-        var id = adapterType.getInfo().id;
+debugger
         var adapter = Reflect.construct(adapterType, [this]);
-        if (!this.adapters.find(x => x.adapter.getInfo().id == id)) {
+        if (!this.adapters.find(x => x.adapter.getInfo().id == adapter.getInfo().id)) {
             this.adapters.push({ adapter:adapter, datablock:datablockId });
         }
         return adapter;
@@ -176,7 +153,10 @@ include('./iadapter-ext.js');
 
     // static members
     Player.adapterTypes = {};
-    Player.registerAdapter = adapterType => Ps.Player.adapterTypes[adapterType.getInfo().id] = adapterType;
+    Player.registerAdapter = function(adapterType) {
+        var adapter = Reflect.construct(adapterType, [null]);
+        Ps.Player.adapterTypes[adapter.getInfo().id] = adapterType;
+    };
     Player.createBinaryData = function createBinaryData(player, createAdapterList, createSequences, createDataBlocks) {
         var data = new Stream(256);
         if (typeof createAdapterList != 'function') createAdapterList = () => player.adapters;
@@ -238,19 +218,11 @@ include('./iadapter-ext.js');
     };
     Player.create = function create() {
         var player = Reflect.construct(Ps.Player, []);
-        // set adapter #0
-        player.adapters.push({ adapter:player, datablock:0 });
-        // set device #0
-        player.devices.push(player);
-        // crate master channel
-        player.masterChannel = player.createDevice(Ps.Player.Device.CHANNEL);
-        player.masterChannel.id = 'master';
-        player.masterChannel.loopCount = 0;
-        player.masterChannel.isActive = true;
+        player.initialize();
         return player;
     };
 
-    Player.getInfo = () => Player.info;
+    //Player.getInfo = () => Player.info;
     Player.info = { name: 'PlayerAdapter', id: 0 };
     
     Player.Device = {

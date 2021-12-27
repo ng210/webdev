@@ -1,0 +1,4 @@
+set ZERO w:0
+adapter "Player",0
+adapter "TestAdapter","db1"
+datablock "db1",{ 1,ZERO,TestAdapter.Div,w:120,f:1.2 }
