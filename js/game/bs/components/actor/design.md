@@ -87,7 +87,7 @@ Rendering can visualize the _points_ directly, the line segments as _lines_ or t
 The simulation depends heavily on calculations of motion equations and collision resolution.
 The motion equations of a rigid-item can be calculated independently of each other, offering the possibility of parallelism. These calculations are suitable for GPU computation via shaders.
 Collision resolution is iterative and relies vastly on condition checking, thus it is not really suitable for GPU processing. Methods for the first phase of collision detection (called the broad phase) may require sorting or tree construction.
-The second phase, the narrow phase includes vector calculations that can be 
+The second phase, the narrow phase includes vector calculations.
 
 ### CPU-based
 

@@ -1,10 +1,11 @@
 include('/lib/player/player-lib.js');
+include('/lib/player/player-ext.js');
 include('/lib/ge/sound.js');
 include('/lib/glui/glui-lib.js');
 include('./synth.js');
-include('./synth-adapter.js');
+//include('./synth-adapter.js');
 include('./score-control.js');
-// include('/synth/synth-adapter-ext.js');
+include('/lib/synth/synth-adapter-ext.js');
 // include('/utils/syntax.js');
 // include('/synth/grammar.js');
 
@@ -232,6 +233,7 @@ include('./score-control.js');
     }
 
     var _isDone = false;
+    var _isStopped = false;
     async function run(callback) {
         _isDone = false;
         sound.init(SAMPLE_RATE,
@@ -239,13 +241,11 @@ include('./score-control.js');
                 _isDone = !callback(left, right, bufferSize, channel);
             }
         );
-
-        var btn = await button('Start');
-        btn.style.display = 'none';
+        await button('Start');
         sound.start();
-        btn = await button('Stop');
+        addButton('Stop', e => _isStopped = true);
+        await poll( () => _isDone || _isStopped);
         sound.stop();
-        btn.style.display = 'none';
     }
 
     async function test_generate_sound_simple() {
@@ -254,6 +254,7 @@ include('./score-control.js');
         await loadPreset('./res/preset.json', synth);
         synth.isActive = true;
         synth.setNote(36, 1.0);
+
         await run((left, right, bufferSize) => {
             for (var i=0; i<bufferSize; i++) left[i] = right[i] = 0.0;
             synth.run(left, right, 0, bufferSize)
@@ -327,10 +328,10 @@ include('./score-control.js');
         // Frame #1
         sequence.writeDelta(0);
         sequence.stream.writeStream(player.makeCommand(Ps.Player.Commands.ASSIGN, 1, 1, 0, 4));
-        sequence.stream.writeStream(player.makeCommand(Ps.Player.Commands.TEMPO, 4*101/60));
+        sequence.stream.writeStream(player.makeCommand(Ps.Player.Commands.TEMPO, 4*120/60));
         sequence.writeEOF();
         // Frame #2
-        sequence.writeDelta(4*64);
+        sequence.writeDelta(2*32);
         sequence.writeEOS();
         sequences.push(sequence);
 
@@ -440,8 +441,8 @@ include('./score-control.js');
         var player = Ps.Player.create();
         var adapter = player.addAdapter(psynth.SynthAdapter);
         var frames = createFrames(adapter);
-        test('Sequence #0 should contain 33 frames', ctx => ctx.assert(frames[0].length, '=', 33));
-        for (var i=1; i<32; i++) {
+        test('Sequence #0 should contain 19 frames', ctx => ctx.assert(frames[0].length, '=', 19));
+        for (var i=1; i<18; i++) {
             test(`Frame #${i} should contain a SETNOTE command`, ctx => {
                 ctx.assert(frames[0][i].commands.length, '=', 1);
                 ctx.assert(frames[0][i].commands[0].readUint8(), '=', psynth.SynthAdapter.Commands.SETNOTE);
@@ -470,12 +471,7 @@ include('./score-control.js');
             var frameInt = Math.floor(_frame);
             if (frameInt == 0) {
                 Dbg.pr('.');
-                if (!channel.run(1)) {
-                    // reset
-                    channel.loopCount = 2;
-                    channel.reset();
-                    channel.run(1)
-                }
+                if (!channel.run(1)) break;
                 _frame += _samplePerFrame;
             }
             var len = _frame < remains ? frameInt : remains;
@@ -503,9 +499,7 @@ include('./score-control.js');
             var frameInt = Math.floor(_frame);
             if (frameInt == 0) {
                 Dbg.pr('.');
-                if (!player.run(1)) {
-                    //player.reset();
-                }
+                if (!player.run(1)) break;
                 _frame += _samplePerFrame;
             }
             var len = _frame < remains ? frameInt : remains;
@@ -536,7 +530,7 @@ include('./score-control.js');
         // create test channel
         var channel = player.createDevice(Ps.Player.Device.CHANNEL, null);
         channel.assign(0, player.sequences[1]);
-        channel.loopCount = 16;
+        channel.loopCount = 4;
 
         // var stream = Ps.Player.createBinaryData(player);
         // stream.toFile('test-data.bin', 'application/octet-stream');

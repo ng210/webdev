@@ -1,15 +1,14 @@
 include('../icomponent.js');
 include('/lib/math/v3.js');
 (function() {
+    function ActorState() {
+        this.position = new V3();
+    }
     function Actor(engine, id) {
         Actor.base.constructor.call(this, engine, id);
         this.id = id;
-        this.current = {
-            position: new V3()
-        };
-        this.next = {
-            position: new V3()
-        };
+        this.current = new ActorState();
+        this.next = new ActorState();
         this.isActive = false;
         this.isDirty = true;
         this.mechanics = null;

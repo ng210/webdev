@@ -29,6 +29,7 @@ include('container.js');
             var elem = this.template.layout[i];
             if (elem.type) {
                 var template = mergeObjects(this.template['item-template'], elem);
+                template.style = mergeObjects(this.style, template.style);
                 var item = await glui.create(i, template, this);
                 if (source && source[item.id]) {
                     item.dataBind(source[item.id], 'value');

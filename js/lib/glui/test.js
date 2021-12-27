@@ -388,13 +388,13 @@ include('/lib/data/dataseries.js');
                 'background-color': '#308060'
             },
             'cell-template': {
-                'font': 'Arial 2',
+                'font': 'Arial 4',
                 'width':'8em', 'height':'1.2em',
                 'align':'center middle',
                 'border':'#308060 1px inset',
                 'color': '#184030'
             },
-            'cols': 2, 'rows': 2,
+            'cols': 3, 'rows': 5,
             'data-source': 'data',
             'data-field': 'list'
         };
@@ -434,7 +434,6 @@ include('/lib/data/dataseries.js');
         await createControls();
         glui.repaint();
         glui.animate();
-console.log(glui.screen.items.map(x => x.id+': '+x.width+'x'+x.height))
         // var select = await glui.OpenSaveDialog({'title': 'Open image...', 'filters': ['*.png', '*.jpg'], 'init': function() { this.move(100, 100);} }, App);
         // Dbg.prln('Selected image: ' + select);
 
@@ -461,17 +460,17 @@ console.log(glui.screen.items.map(x => x.id+': '+x.width+'x'+x.height))
                         'border': '#6080e0 2px outset',
                         'background-color': '#6890f0',
                         'color': '#202638',
-                        'padding': '1em 1em',
-                        'width': '12em', 'height': '2em',
+                        'padding': '0.1em 0.1em',
+                        'width': '12em', 'height': '3em',
                     },
                     'value': a
                 }, null, App);
                 ctrl.setValue(a);
                 ctrl.move(x, y);
-                x += ctrl.width + 20;
+                x += ctrl.width + 10;
                 ctrl.render();
             }
-            y += ctrl.height + 20;
+            y += ctrl.height + 10;
         }
 
         glui.render();
@@ -822,14 +821,14 @@ console.log(glui.screen.items.map(x => x.id+': '+x.width+'x'+x.height))
 
     var tests = () => [
         test_clipping,
-        // test_construct,
-        // test_align,
-        // test_container,
-        // test_table,
-        // test_menu,
-        // test_dialog,
-        // test_render
-        //test_grid
+        test_construct,
+        test_align,
+        test_container,
+        test_table,
+        test_menu,
+        test_dialog,
+        test_render,
+        test_grid
     ];
     publish(tests, 'glUi tests');
 })();

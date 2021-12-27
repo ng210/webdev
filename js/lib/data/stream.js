@@ -233,16 +233,7 @@
     Stream.prototype.toFile = function toFile(fileName, type, offset, length) {
         var view = new Uint8Array(this.buffer, offset || 0, length || this.length);
         var data = new Blob([view], {'type': type});
-        var url = window.URL.createObjectURL(data);
-        var link = document.createElement('a');
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.setAttribute('download', fileName);
-        link.href = url;
-        link.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(link);
-        link = undefined;
+        save(data, fileName);
     };
     
     Stream.fromFile = async function fromFile(path, options) {

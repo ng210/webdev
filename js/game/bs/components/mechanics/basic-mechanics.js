@@ -1,23 +1,23 @@
 include('./mechanics.js');
 (function() {
-    //#region SimpleMechanicsFactory
-    function SimpleMechanicsFactory() {
-        SimpleMechanicsFactory.base.constructor.call(this);
+    //#region BasicMechanicsFactory
+    function BasicMechanicsFactory() {
+        BasicMechanicsFactory.base.constructor.call(this);
     };
-    extend(ge.IComponentFactory, SimpleMechanicsFactory);
+    extend(ge.IComponentFactory, BasicMechanicsFactory);
 
-    SimpleMechanicsFactory.prototype.getDependencies = function getDependencies() {
+    BasicMechanicsFactory.prototype.getDependencies = function getDependencies() {
         return null;
     };
-    SimpleMechanicsFactory.prototype.getTypes = function getTypes() {
-        return [SimpleMechanics];
+    BasicMechanicsFactory.prototype.getTypes = function getTypes() {
+        return [BasicMechanics];
     };
-    SimpleMechanicsFactory.prototype.instantiate = function instantiate(engine, type, id) {
-        return new SimpleMechanics(engine, id);
+    BasicMechanicsFactory.prototype.instantiate = function instantiate(engine, type, id) {
+        return new BasicMechanics(engine, id);
     };
     //#endregion
 
-    //#region SimpleMechanics
+    //#region BasicMechanics
     function Force() {
     }
     Force.prototype.apply = function apply(obj) {
@@ -47,17 +47,17 @@ include('./mechanics.js');
         obj.current.acceleration.add(d.norm().mul(this.amount).scale(l));
     };
 
-    function SimpleMechanics(engine, id) {
-        SimpleMechanics.base.constructor.call(this, engine, id);
+    function BasicMechanics(engine, id) {
+        BasicMechanics.base.constructor.call(this, engine, id);
         this.config = {
             damping: 1.0,
             timeToLive: 4
         };
         this.forces = [];
     }
-    extend(ge.Mechanics, SimpleMechanics);
+    extend(ge.Mechanics, BasicMechanics);
 
-    SimpleMechanics.prototype.initialize = async function initialize(config) {
+    BasicMechanics.prototype.initialize = async function initialize(config) {
         for (var i in config) {
             if (i.toLowerCase() == 'forces' && Array.isArray(config[i])) {
                 this.addForces(config[i]);
@@ -68,10 +68,10 @@ include('./mechanics.js');
             }
         }
     };
-    SimpleMechanics.prototype.clearForces = function clearForces() {
+    BasicMechanics.prototype.clearForces = function clearForces() {
         this.forces.length = 0;
     };
-    SimpleMechanics.prototype.addForces = function addForces(forces) {
+    BasicMechanics.prototype.addForces = function addForces(forces) {
         for (var j=0; j<forces.length; j++) {
             var fj = forces[j];
             var force = null;
@@ -89,7 +89,7 @@ include('./mechanics.js');
         }
     };
 
-    SimpleMechanics.prototype.update = function update(obj, dt) {
+    BasicMechanics.prototype.update = function update(obj, dt) {
         var a = obj.current.acceleration.set([0, 0, 0]);
         for (var i=0; i<this.forces.length; i++) {
             this.forces[i].apply(obj);
@@ -106,7 +106,7 @@ include('./mechanics.js');
         if (dp.len < 0.1) dp.set([0, 0, 0]);
         obj.next.position.set(dp.add(obj.current.position));
     };
-    SimpleMechanics.prototype.resolveCollision = function resolveCollision(obj, dt, i, n) {
+    BasicMechanics.prototype.resolveCollision = function resolveCollision(obj, dt, i, n) {
         var p = obj.current.position;
         var v = obj.averageVelocity;
         var dp = i.len;
@@ -125,7 +125,7 @@ include('./mechanics.js');
         // update object after collision
         obj.update(t2);
     };
-    SimpleMechanics.prototype.setup = function setup(obj, args) {
+    BasicMechanics.prototype.setup = function setup(obj, args) {
         obj.current.velocity = new V3();
         obj.current.acceleration = new V3();
         obj.next.velocity = new V3();
@@ -135,12 +135,12 @@ include('./mechanics.js');
         obj.updaters.push(this, args);
         obj.updateState = this.updateState;
     };
-    SimpleMechanics.prototype.updateState = function updateState() {
+    BasicMechanics.prototype.updateState = function updateState() {
         this.current.position.set(this.next.position);
         this.current.velocity.set(this.next.velocity);
     };
     //#endregion
 
-    publish(SimpleMechanicsFactory, 'SimpleMechanicsFactory', ge);
-    publish(SimpleMechanics, 'SimpleMechanics', ge);
+    publish(BasicMechanicsFactory, 'BasicMechanicsFactory', ge);
+    publish(BasicMechanics, 'BasicMechanics', ge);
 })();

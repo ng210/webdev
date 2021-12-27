@@ -1,6 +1,6 @@
 include('idata-store.js');
 include('ientity-mgr.js');
-include('/lib/utils/schema.js');
+include('/lib/type/schema.js');
 include('/lib/utils/syntax.js');
 
 (function() {

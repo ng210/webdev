@@ -41,9 +41,9 @@ Game.prototype.init = async function init() {
     //#region Components and instances
     this.spriteManager = await ge.createInstance('SpriteManager', 'sprmgr1', './res/balls.spr.json', MAX_BALL_COUNT);
     this.segmentManager = await ge.createInstance('SegmentManager', 'segmgr1');
-    await ge.createInstance('SimpleMechanics', 'sm1', {
+    await ge.createInstance('BasicMechanics', 'sm1', {
         'forces': [
-            { 'type':'field', 'direction': new V3(0, -0.0004, 0) },
+            { 'type':'field', 'direction': new V3(0, -0.0008, 0) },
             // { 'type':'point', 'center': new V3(this.frame, -this.frame), 'amount': new V3(0, -200.0, 0) }
             //{ 'type':'point', 'center': new V3(100, -5000), 'amount': new V3(0, 50000.0, 0) }
         ],

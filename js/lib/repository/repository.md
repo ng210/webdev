@@ -1,5 +1,10 @@
 # Repository
 
+## 1. Concept
+The repository should fulfil the following requirements:
+- flexible, extendible schema
+
+
 ## 1. Layers
 - Container
 - Data manager
@@ -56,43 +61,49 @@
 System stores items and users, users can have multiple items.
 
 ### 5.1. Data sets
+```json
 DataTypes = [
   { "name":"dbid", "type":"int", "min":0, "max":999999 },
   { "name":"dblist", "type":"list", "elemType":"dbid" },
   { "name":"dbItem",
-    "attributes": [
-      { "name":"id", "type":"dbid" },
-      { "name":"name", "type":"string" },
-      { "name":"owner", "type":"dbid" }
-    ]
+    "attributes": {
+      "id": { "type":"dbid" },
+      "name": { "type":"string" },
+      "owner": { "type":"dbid" }
+    }
   },
   { "name":"User",
-    "attributes": [
-      { "name":"id", "type":"dbid" },
-      { "name":"name", "type":"string" },
-      { "name":"items", "type":"dblist" }
-    ]
+    "attributes": {
+      "id": { "type":"dbid" },
+      "name": { "type":"string" },
+      "items": { "type":"dblist" }
+    }
   }
 ];
+```
 
 Queries
+```sql
 - db.GetUserItems(dbid owner) = "SELECT id FROM dbItem WHERE owner=$owner";
+```
 
 ### 5.2. Entities
+```json
 EntityTypes = [
   { "name":"ItemList", "type":"list", "elemType":"ref Item" },
-  { "name":"Item", "data":"dbItem"
-    "attributes": [
-      { "name":"id", "type":"dbid" },
-      { "name":"name", "type":"string" },
-      { "name":"owner", "type":"ref User" }
-    ]
+  { "name":"Item", "data":"dbItem",
+    "attributes": {
+      "id": { "type":"dbid" },
+      "name": { "type":"string" },
+      "owner": { "type":"ref User" }
+    }
   },
   { "name":"User", "source":"dbUser",
-    "attributes": [
-      { "name":"id", "type":"dbid" },
-      { "name":"name", "type":"string" },
-      { "name":"items", "type":"ItemList", "source":"db.GetUserItems($id)" }
-    ]
+    "attributes": {
+      "id": { "type":"dbid" },
+      "name": { "type":"string" },
+      "items": { "type":"ItemList", "source":"db.GetUserItems($id)" }
+    }
   }
 ];
+```

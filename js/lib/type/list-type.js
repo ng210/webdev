@@ -25,7 +25,7 @@ include('/lib/type/type.js');
             var item = null;
             var count = 0;
             while (!(item = it.next()).done) {
-                isValid = isValid && this.elemType.validate(item.value, results, [...path, count]);
+                isValid = this.elemType.validate(item.value, results, [...path, count]) && isValid;
                 count++;
                 if (this.length && count > this.length) {
                     errors.push(`Item count is greater than list length! (${values.length} > ${this.length})`);

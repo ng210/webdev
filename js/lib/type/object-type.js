@@ -68,7 +68,7 @@ include('/lib/data/dictionary.js');
         this.checkAttributes(
             (key, at) => {
                 if (value[key] != undefined) {
-                    isValid = isValid && at.type.validate(value[key], results, [...path, key]);
+                    isValid = at.type.validate(value[key], results, [...path, key]) && isValid;
                     var ix = keys.findIndex(x => x == key);
                     keys.splice(ix, 1);
                 } else if (at.isRequired) {
@@ -144,6 +144,7 @@ include('/lib/data/dictionary.js');
         return v;
     };
     ObjectType.prototype.build = function build(definition, schema, path) {
+        path = path || [];
         var type = ObjectType.base.build.call(this, definition, schema, path);
         type.attributes.iterate( (name, value) => {
             if (!(value.type instanceof Type)) {

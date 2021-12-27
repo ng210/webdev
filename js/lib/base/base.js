@@ -34,6 +34,16 @@ self.inherits = function inherits(d, b) {
     }
     return res;
 };
+self.implements = function implements_(obj, iface) {
+    for (var i in iface) {
+        if (iface.hasOwnProperty(i)) {
+            obj[i] = iface[i];
+        }
+    }
+    for (var i in iface.prototype) {
+        obj.prototype[i] = iface.prototype[i];
+    }
+};
 
  //#region AJAX
  self.ajax = {
@@ -692,6 +702,23 @@ self.addToSearchPath = function addToSearchPath(url) {
     }
     Resource.searchPath.push(url);
 };
+self.save = function save(data, fileName) {
+    if (typeof data === 'string') {
+        var buffer = new Uint16Array(data.length);
+        for (var i=0; i<data.length; i++) buffer[i] = data.charCodeAt(i);
+        data = new Blob([buffer], {'type': 'text/plain'});
+    }
+    var url = window.URL.createObjectURL(data);
+    var link = document.createElement('a');
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.setAttribute('download', fileName);
+    link.href = url;
+    link.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+    link = undefined;
+};
 //#endregion
 
 Array.prototype.binSearch = function binSearch(item, cmp, min, max) {
@@ -974,6 +1001,9 @@ self.onload = e => poll(async function() {
         }
     }
     debug_('onload - resource loading complete');
+    if (typeof onresize === 'function') {
+        window.addEventListener('resize', onresize);
+    }
     if (!ISNODEAPP) onpageload(errors);
     return true;
 });

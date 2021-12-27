@@ -25,8 +25,14 @@ include('/lib/type/type.js');
         } else {
             try {
                 iterate(map, (key, value) => {
-                    isValid = isValid && this.keyType.validate(key, results, [...path, key]);
-                    isValid = isValid && this.valueType.validate(value, results, [...path, key]);
+                    if (this.keyType.isNumeric) {
+                        if (!isNaN(key)) key = Number(key);
+                        else {
+                            results.push(new ValidationResult(path, ['Key type should be numeric!']));
+                        }
+                    }
+                    isValid = this.keyType.validate(key, results, [...path, key]) && isValid;
+                    isValid = this.valueType.validate(value, results, [...path, key]) && isValid;
                 });
             } catch (err) {
                 results.push(new ValidationResult(path, [err.message]));

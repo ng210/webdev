@@ -59,9 +59,18 @@
         // input term associated with the node
         this.term = term;
     };
-    Node.prototype.addChild = function(node) {
-        this.children.push(node);
-        node.parent = this;
+    Node.prototype.getValue = function getValue() {
+        var value = null;
+        if (this.vertex.edges.length > 0) {
+            value = [];
+            if (this.term != undefined) value.push(this.term);
+            for (var i=0; i<this.vertex.edges.length; i++) {
+                if (this.vertex.edges[i].to.data.term != undefined) value.push(this.vertex.edges[i].to.data.term);
+            }
+        } else {
+            value = this.term;
+        }
+        return value;
     };
 
     function Expression(syntax) {
@@ -73,7 +82,7 @@
     Expression.prototype.resolve = function(context) {
         this.lastNode = null;
         var nodes = Array.from(this.tree.vertices);
-        if (this.syntax.debug > 0) console.log(`input: ${nodes.map(x => `${this.syntax.symbols[x.data.code]}['${x.data.term}']`)}`);
+        if (this.syntax.debug > 1) console.log(`input: ${nodes.map(x => `${this.syntax.symbols[x.data.code]}['${x.data.term.replace(/[\n\r]/g, '\\n')}']`)}`);
         // try to apply rules as long as there are nodes
         while (nodes.length > 0) {
             for (var r=0; r<this.syntax.ruleMap.length;) {
@@ -128,7 +137,7 @@
                             this.lastNode = output;
                         }
                         hasMatch = true;
-                        if (this.syntax.debug > 0) console.log(`result: ${nodes.map(x => `${this.syntax.symbols[x.data.code]}['${x.data.term}']`)}`);
+                        if (this.syntax.debug > 1) console.log(`result: ${nodes.map(x => `${this.syntax.symbols[x.data.code]}['${x.data.term.replace(/[\n\r]/g, '\\n')}']`)}`);
                         break;
                     } else n++;
                 }
@@ -144,48 +153,64 @@
             if (typeof n.data.type.action === 'function') {
                 var args = n.edges.map(x => x.to);
                 // action returns a (calculated) value of the node
-                args.push(n);
+                args.unshift(n);
                 n.data.value = n.data.type.action.apply(context, args);
             }
         });
         return this.lastNode.data.value;
     };
     Expression.prototype.mergeNodes = function(nodes) {
-        if (this.syntax.debug > 1) console.log('merge in: ' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
+        if (this.syntax.debug > 2) console.log('merge in: ' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
         // merge b into a if
+        // - a is the start node
         // - a has an action attribute or has an edge
         // - b is a literal
         // - b has an action attribute or has an edge
         var aix = 0;
+        var bix = 0;
         if (nodes.length == 2) {
-            // b is a literal
-            var bix = nodes.findIndex(x => x.data.code == this.syntax.literalCode);
+            bix = nodes.findIndex(x => x.data.type.ignore == true);
             if (bix == -1) {
-                var an = nodes[0].data.type.action != null || nodes[0].edges.length > 0;
-                var bn = nodes[1].data.type.action != null || nodes[1].edges.length > 0;
-            //  an  bn => 0  1
-            //  an !bn => 0  1
-            // !an  bn => 1  0
-            // !an !bn => 0  0
-                aix = !an && bn ? 1 : 0;
-                bix = an ? 1 : 0;
+                aix = nodes.findIndex(x => x.data.type.start === true);
+                if (aix == -1) {
+                    // b is a literal
+                    var bix = nodes.findIndex(x => x.data.code == this.syntax.literalCode);
+                    if (bix == -1) {
+                        var an = nodes[0].data.type.action != null || nodes[0].edges.length > 0;
+                        var bn = nodes[1].data.type.action != null || nodes[1].edges.length > 0;
+                    //  an  bn => 0  1
+                    //  an !bn => 0  1
+                    // !an  bn => 1  0
+                    // !an !bn => 0  0
+                        aix = !an && bn ? 1 : 0;
+                        bix = an ? 1 : 0;
+                    } else {
+                        aix = 1 - bix;
+                    }
+                } else {
+                    bix = 1 - aix;
+                }
+                if (this.syntax.debug > 2) console.log(`aix=${aix}, bix=${bix}`);
+                if (aix != bix) {
+                    this.tree.addEdge(nodes[aix], nodes[bix]);
+                } else bix = 1 - aix;
             } else {
                 aix = 1 - bix;
+                if (nodes[aix].data.type.ignore == true) {
+                    aix = 0;
+                }
             }
-            if (this.syntax.debug > 1) console.log(`aix=${aix}, bix=${bix}`);
-            if (aix != bix) {
-                this.tree.addEdge(nodes[aix], nodes[bix]);
-            } else bix = 1 - aix;
         } else {
             if (nodes.length > 2) {
                 throw new Error('More than 2 nodes passed.');
             }
         }
-        if (this.syntax.debug > 1) console.log('merge out: ' + this.nodeToString(nodes[aix]));
+        if (this.syntax.debug > 2) console.log('merge out: ' + this.nodeToString(nodes[aix]));
         return nodes[aix];
     };
     Expression.prototype.nodeToString = function(node, simple) {
-        var text = `#${node.id}:'${node.data.term}'(${this.syntax.symbols[node.data.code]}:${node.data.type.symbol})`;
+        var term = node.data.term.replace(/[\n\r]/g, '\\n');
+        var text = `#${node.id}:'${term}'(${this.syntax.symbols[node.data.code]}:${node.data.type.symbol})`;
         if (!simple) {
             text += `${node.edges.map( x => ` [${this.nodeToString(x.to, true)}]`)}`;
         }
@@ -193,7 +218,7 @@
     };
     Expression.prototype.createNode = function(code, type, term) {
         var node = new Node(code, this.syntax.grammar.prototypes[type], term);
-        return this.tree.createVertex(node);
+        return node.vertex = this.tree.createVertex(node);
     };
 
     function Syntax(grammar, debug) {
@@ -209,13 +234,17 @@
         this.wildcardType = { 'symbol': '*'}
         this.grammar.prototypes[this.wildcard] = this.wildcardType;
 
+        this.startTerm = null;
+
         // build list of symbols
         this.symbols = [];
         for (var term in this.grammar.prototypes) {
-            var symbol = this.grammar.prototypes[term].symbol;
+            var type = this.grammar.prototypes[term]
+            var symbol = type.symbol;
             if (this.symbols.indexOf(symbol) == -1) {
                 this.symbols.push(symbol);
             }
+            if (type.start) this.startTerm = term;
         }
         this.literalCode = this.symbols.length - 2;
         this.wildcardCode = this.symbols.length - 1;
@@ -264,6 +293,11 @@
             } else {
                 throw new Error(`Invalid expression!(${expr})`);
             }
+        }
+
+        if (this.startTerm != null) {
+            var type = this.grammar.prototypes[this.startTerm];
+            expression.createNode(this.symbols.indexOf(type.symbol), this.startTerm, '<start>');
         }
         var start = 0, i = 0;
         while (i<expr.length) {

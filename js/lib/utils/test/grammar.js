@@ -3,11 +3,11 @@ var grammar = {
         // separator
         ' ': { 'symbol': '' },
         // operator
-        '+':    { 'symbol': 'A', 'action': function(x, y) { return x.data.value + y.data.value; } },
-        '*':    { 'symbol': 'M', 'action': (x, y) => x.data.value * y.data.value },
-        'pow':  { 'symbol': 'F', 'action': (a, p) => Math.pow(a.data.value, p.data.value) },
-        'sqrt': { 'symbol': 'F', 'action': (x) => Math.sqrt(x.data.value) },
-        'get':  { 'symbol': 'F', 'action': function(name) { return this[name.data.value]; } },
+        '+':    { 'symbol': 'A', 'action': function(o, x, y) { return x.data.value + y.data.value; } },
+        '*':    { 'symbol': 'M', 'action': (o, x, y) => x.data.value * y.data.value },
+        'pow':  { 'symbol': 'F', 'action': (o, a, p) => Math.pow(a.data.value, p.data.value) },
+        'sqrt': { 'symbol': 'F', 'action': (o, x) => Math.sqrt(x.data.value) },
+        'get':  { 'symbol': 'F', 'action': function(f, name) { return this[name.data.value]; } },
         // syntax elements
         '(':    { 'symbol': 'B1' },
         ')':    { 'symbol': 'B2' },

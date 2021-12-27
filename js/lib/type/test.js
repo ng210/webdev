@@ -165,7 +165,7 @@ function test_types() {
         results = [];
         var map2 = new Map().set('2', 'two');
         var map3 = new Map().set(2, 123);
-        types.map.validate({ "0":1 }, results);
+        types.map.validate({ 'a0':1 }, results);
         types.map.validate(map2, results);
         types.map.validate(map3, results);
         ctx.assert(results[0].messages.length, '=', 1);
@@ -303,6 +303,322 @@ function test_type_enum() {
     });    
 }
 
+function message_errors(errors) {
+    for (var i=0; i<errors.length; i++) {
+        message(errors[i].toString());
+    }
+}
+
+function validate_type(type, value) {
+    var results = [];
+    type.validate(value, results);
+    message_errors(results);
+    return results;
+}
+
+function test_schema() {
+    header('Test schema');
+    var schema = new Schema();
+    var type = null;
+    schema.addDefaultTypes();
+
+    //#region String10
+    schema.buildType({ name:'String10', type:"string", length:10 });
+    test('Should have String10 type', ctx => {
+        type = schema.types.get('String10');
+        ctx.assert(type, '!null');
+        ctx.assert(type.name, '=', 'String10');
+        ctx.assert(type.baseType.name, '=', 'string');
+        ctx.assert(type.length, '=', 10);
+        ctx.assert(type.elemType, 'null');
+    });
+    var text = "0123456789";
+
+    test(`Should accept "${text}"`, ctx => ctx.assert(validate_type(type, text), 'empty'));
+    text = "0123456789A";
+    test(`Should reject "${text} (length)"`, ctx => ctx.assert(validate_type(type, text).length, '=', 1));
+    text = 12;
+    test(`Should reject "${text} (mismatch)"`, ctx => ctx.assert(validate_type(type, text).length, '=', 1));
+    //#endregion
+
+    //#region Int100
+    schema.buildType({ name:'Int100', type:'int', min:0, max:100 });
+    test('Should have Int100 type', ctx => {
+        type = schema.types.get('Int100');
+        ctx.assert(type, '!null');
+        ctx.assert(type.name, '=', 'Int100');
+        ctx.assert(type.baseType.name, '=', 'int');
+        ctx.assert(type.min, '=', 0);
+        ctx.assert(type.max, '=', 100);
+        ctx.assert(type.elemType, 'null');
+    });
+    var num = 12;
+    test(`Should accept ${num}`, ctx => ctx.assert(validate_type(type, num), 'empty'));
+    num = -12;
+    test(`Should reject ${num} (min)`, ctx => ctx.assert(validate_type(type, num).length, '=', 1));
+    num = 101;
+    test(`Should reject ${num} (max)`, ctx => ctx.assert(validate_type(type, num).length, '=', 1));
+    //#endregion
+
+    //#region Int100Arr5
+    schema.buildType({ name:'Int100Arr5', type:'list', length:5, elemType:'Int100' });
+    test('Should have Int100Arr5 type', ctx => {
+        type = schema.types.get('Int100Arr5');
+        ctx.assert(type, '!null');
+        ctx.assert(type.name, '=', 'Int100Arr5');
+        ctx.assert(type.baseType.name, '=', 'list');
+        ctx.assert(type.elemType, '=', schema.types.get('Int100'));
+    });
+    var arr = [1,2,3,4,5];
+    test(`Should accept ${arr}`, ctx => ctx.assert(validate_type(type, arr), 'empty'));
+    arr = [1,2,3,4,5,6];
+    test(`Should reject ${arr} (length)`, ctx => ctx.assert(validate_type(type, arr).length, '=', 1));
+    arr = [1,2,3,4,500];
+    test(`Should reject ${arr} (max)`, ctx => ctx.assert(validate_type(type, arr).length, '=', 1));
+    arr = [1,2,3,4,'a5'];
+    test(`Should reject ${arr} (type)`, ctx => ctx.assert(validate_type(type, arr).length, '=', 1));
+    //#endregion
+
+    //#region EnumColors
+    schema.buildType({ name:'EnumColors', type:'enum', values:['blue', 'red', 'green'] });
+    test('Should have EnumColors type', ctx => {
+        type = schema.types.get('EnumColors');
+        ctx.assert(type, '!null');
+        ctx.assert(type.baseType.name, '=', 'enum');
+        ctx.assert(type.values.length, '=', '3');
+    });
+    var color = 'blue';
+    test(`Should accept '${color}'`, ctx => ctx.assert(validate_type(type, color), 'empty'));
+    color = 'blu';
+    test(`Should reject '${color}'`, ctx => ctx.assert(validate_type(type, color).length, '=', 1));
+    //#endregion
+
+    //#region Person
+    schema.buildType({ name:'Person', attributes: {
+        "id": { type:{ name:'Int1000', type:'int', min:1, max:1000 } },
+        "name": { type:'string' },
+        "parent": { type:'Person', 'isRequired': false },
+        "color": { type: 'EnumColors' }
+    }});
+    test('Should have Person type', ctx => {
+        type = schema.types.get('Person');
+        ctx.assert(type, '!null');
+        ctx.assert(type.baseType.name, '=', 'object');
+        ctx.assert(type.attributes.size, '=', '4');
+        ctx.assert(Object.keys(schema.missingTypes), ':=', ['Person']);
+        schema.checkMissingTypes();
+    });
+
+    var grandpa = { id:3, name:'Grandpa', color:'green' };
+    var parent = { id:1, name:'Dad', parent:grandpa, color:'blue' };
+    var child = { id:2, name:'Child', parent:parent, color:'red' };
+    test(`Should accept ${JSON.stringify(child)}`, ctx => ctx.assert(validate_type(type, child), 'empty'));
+    child.id = 'id';
+    parent.name = 12;
+    parent.color = 'black';
+    delete grandpa.id;
+    test(`Should reject ${JSON.stringify(child)}`, ctx => ctx.assert(validate_type(type, child).length, '=', 4));
+    //#endregion
+
+    //#region MapInt2Str
+    schema.buildType({ name:'MapInt2Str', type:'map', keyType:'int', valueType:'string' });
+    test('Should have MapInt2Str type', ctx => {
+        type = schema.types.get('MapInt2Str');
+        ctx.assert(type, '!null');
+        ctx.assert(type.baseType.name, '=', 'map');
+        ctx.assert(type.keyType.name, '=', 'int');
+        ctx.assert(type.valueType.name, '=', 'string');
+    });
+    var map = { 1:'1', 2:'2', 3:'3' };
+    test(`Should accept object:${JSON.stringify(map)}`, ctx => ctx.assert(validate_type(type, map), 'empty'));
+
+    map = { a:'1', 2:2, 3:'3' };
+    test(`Should reject object:${JSON.stringify(map)}`, ctx => ctx.assert(validate_type(type, map).length, '=', 2));
+    //#endregion
+
+    //#region MyObject
+    schema.buildType({ name:'MyObject', type:'object', attributes: {
+        "id": { type:"int" },
+        "text": { type:"string" },
+        "map": { type:"MapInt2Str" }
+    }});
+    test('Should have MyObject type', ctx => {
+        type = schema.types.get('MyObject');
+        ctx.assert(type, '!null');
+        ctx.assert(type.baseType.name, '=', 'object');
+        ctx.assert(type.attributes.size, '=', '3');
+    });
+
+    var obj1 = { 'id': 12, 'text': 'Hello World!', map: {1:'one', 2:'two', 3:'three'} };
+    test(`Should accept object:${JSON.stringify(obj1)}`, ctx => ctx.assert(validate_type(type, obj1), 'empty'));
+    
+    var obj2 = { 'id': 12, 'text': 'Hello World!', map: {1:'one', '2a':'two', 3:'three'}, 'isValid':false };
+    test(`Should reject object:${JSON.stringify(obj2)}`, ctx => ctx.assert(validate_type(type, obj2).length, '=', 2));
+    //#endregion
+
+    //#region MyObjectList
+    schema.buildType({ name:'MyObjectList', type:'list', elemType:'MyObject'});
+    test('Should have MyObjectList type', ctx => {
+        type = schema.types.get('MyObjectList');
+        ctx.assert(type, '!null');
+        ctx.assert(type.baseType.name, '=', 'list');
+        ctx.assert(type.elemType.name, '=', 'MyObject');
+    });
+
+    var objList1 = [
+        { 'id': 1, 'text': 'Hello #1!', map: {1:'one', 2:'two', 3:'three'} },
+        { 'id': 2, 'text': 'Hello #2!', map: {1:'one', 2:'two', 3:'three'} }
+    ];
+    test('Should accept object list', ctx => ctx.assert(validate_type(type, objList1), 'empty'));
+    var objList2 = [
+        { 'id': 'a', 'text': 'Hello #1!', map: {1:'one', '2a':'two', 3:'three'} },
+        { 'id': 2, 'text': 123 }
+    ];
+    test('Should reject object list', ctx => ctx.assert(validate_type(type, objList2).length, '=', 4));
+    //#endregion
+
+    //#region MySuperObject
+    schema.buildType({ name:'MySuperObject', type:"MyObject", attributes: {
+            "sid": { type:"int" },
+            "guid": { type:"string" },
+            "parent": { type:"MySuperObject", isRequired:false },
+            "children": { type:"MyObjectList"}
+    }});
+    test('Should have MySuperObject type', ctx => {
+        type = schema.types.get('MySuperObject');
+        ctx.assert(type, '!null');
+        ctx.assert(type.baseType.name, '=', 'MyObject');
+        ctx.assert(Object.keys(schema.missingTypes), ':=', ['MySuperObject']);
+        schema.checkMissingTypes();
+    });
+    var superObject = {
+        id: 1,
+        text: "Hello",
+        map: {1:'one', 2:'two', 3:'three'},
+        sid: 12,
+        guid: "a213-124f",
+        parent: null,
+        children: objList1
+    }
+    test('Should accept super object', ctx => ctx.assert(validate_type(type, superObject), 'empty'));
+
+    test('Should create reference types', ctx => {
+        schema.buildType({ type:'ref    MyObject' });
+        schema.buildType({ name:'MyRefList', type:'list', elemType:'ref \n  MyObject' });
+        schema.buildType({ name:'MyIndex', attributes: {
+            persons: { type:{ type:'list', elemType:'ref Person' }}}
+        });
+        
+        ctx.assert(schema.types.get('refMyObject'), '!null');
+        ctx.assert(schema.types.get('refPerson'), '!null');
+        ctx.assert(schema.types.get('MyIndex').attributes.get('persons').type.baseType, '=', schema.types.get('list'));
+        ctx.assert(schema.types.get('MyIndex').attributes.get('persons').type.elemType, '=', schema.types.get('refPerson'));
+    });
+
+    schema.buildType({ name:'MyDataTypes', type:Schema.Types.LIST, elemType:'type'});
+    test('Should accept run-time types', ctx => {
+        var rtTypes = [
+            { "name":"String256", "type":"string", "length":256 },
+            { "name":"Byte", "type":"int", "min":0,"max":255 },
+            { "name":"Method", "attributes": [
+                    { "name":"name", "type":"String256" },
+                    { "name":"arguments", "type":"AttributeList" },
+                    { "name":"return", "type":"type" }
+                ]
+            },
+            { "name":"Class",
+                "attributes": [
+                    { "name":"name", "type":"String256" },
+                    { "name":"extends", "type":"String256" },
+                    { "name":"properties", "type":"AttributeList" },
+                    { "name":"methods", "type":{ "type":"list", "elemType":"Method" } }
+                ]
+            }
+        ];
+        var type = schema.types.MyDataTypes;
+        var errors = type.validate(rtTypes);
+        if (!schema.types.String256 || schema.types.String256.basicType != schema.types.string) errors.push(new Error('String256 is not defined!'));
+        if (!schema.types.Byte || schema.types.Byte.basicType != schema.types.int) errors.push(new Error('Byte is not defined!'));
+        if (!schema.types.Class || schema.types.Class.basicType != schema.types.object) errors.push(new Error('Class is not defined!'));
+        if (errors.length > 0) message_errors(errors);
+        ctx.assert(errors.length, '=', 0);
+
+        var myClass = {
+            "name":"MyFirstClass",
+            "extends":"BaseClass",
+            "properties": [
+                {"name":"id", "type":"int"}
+            ],
+            "methods": [
+                { "name":"Print", "arguments":[], "return":"Byte" }
+            ]
+        };
+        type = schema.types.Class;
+        errors = type.validate(myClass);
+        if (errors.length > 0) message_errors(errors);
+        ctx.assert(errors.length, '=', 0);
+    });
+    test('Should handle late type definitions', ctx => {
+        var mySchema = new Schema([
+            {
+                "name":"Code",
+                "attributes": [
+                    { "name":"types", "type":"TypeList" },
+                    { "name":"methods", "type":{ "type":"list", "elemType":"Method" } },
+                    { "name":"master", "type":"type" }
+                ]
+            },
+            {
+                "name": "Method",
+                "attributes": [
+                    { "name":"name", "type":"string100" },
+                    { "name":"id", "type":"int100" },
+                    { "name":"arguments", "type":"AttributeList" },
+                    { "name":"returns", "type":"Types" }
+                ]
+            },
+            { "name":"string100", "type":"string", "length":100 },
+            { "name":"int100", "type":"int", "min":0, "max":100 }
+        ]);
+        ctx.assert(mySchema.types.Code, '!null');
+        ctx.assert(mySchema.types.Code.attributes.methods.type.elemType, '=', mySchema.types.Method);
+        var code = {
+            "master":{ "name":"Master", "type":"i100" },
+            "methods": [
+                {   "name":"read", "id":1,
+                    "arguments": [
+                        { "name":"deviceId", "type":"DeviceId", "isRequired":true },
+                        { "name":"length", "type":"DWORD", "isRequired":true },
+                        { "name":"offset", "type":"DWORD", "isRequired":false }
+                    ],
+                    "returns":"Buffer"
+                },
+                { "name":"write", "id":2, "arguments": [
+                    { "name":"deviceId", "type":"DeviceId", "isRequired":true },
+                    { "name":"buffer", "type":"Buffer", "isRequired":true },
+                    { "name":"length", "type":"DWORD", "isRequired":false },
+                    { "name":"offset", "type":"DWORD", "isRequired":false }
+                ]}
+            ],
+            "types": [
+                { "name":"DeviceId", "type":"i100", "min":1, "max":20 },
+                { "name":"DWORD", "type":"int", "min":0, "max":4294967296 },
+                { "name":"Buffer",
+                    "attributes": [
+                        { "name":"address", "type":"DWORD" },
+                        { "name":"length", "type":"int" }
+                    ]
+                },
+                { "name":"i100", "type":"int100" }
+            ]
+        };
+        var errors = [];
+        mySchema.validate(mySchema.types.Code, code, errors);
+        if (errors.length > 0) message_errors(errors);
+        ctx.assert(errors, 'empty');
+    });
+}
+
 function test_create_schema() {
     header('Test create schema');
     var schema = new Schema();
@@ -357,7 +673,6 @@ function test_build_schema() {
 
     test('Should build types successfully', ctx => {
         ctx.assert(schema.types.get('int8'), '!null');
-debugger
             ctx.assert(schema.types.get('int8').min, '=', -128);
         ctx.assert(schema.types.get('string20'), '!null');
             ctx.assert(schema.types.get('string20').length, '=', 20);

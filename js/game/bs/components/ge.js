@@ -40,8 +40,8 @@ include('/lib/math/v3.js');
             'SegmentManager': {
                 'source': 'actor/segment-manager.js'
             },
-            'SimpleMechanics': {
-                'source': 'mechanics/simple-mechanics.js'
+            'BasicMechanics': {
+                'source': 'mechanics/basic-mechanics.js'
             },
             'KeyboardHandler': {
                 'source': 'input/input-handler.js'
