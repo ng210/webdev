@@ -10,14 +10,14 @@ include('/lib/player/grammar.js');
 // include('/lib/glui/glui-lib.js');
 
 (function() {
-    function PlayerExt() {
-        PlayerExt.base.constructor.call(this);
-        this.schema = null;
-    }
-    extend(Ps.Player, PlayerExt);
-    implements(PlayerExt, Ps.IAdapterExt);
+    // function PlayerExt() {
+    //     PlayerExt.base.constructor.call(this);
+    //     this.schema = null;
+    // }
+    // extend(Ps.Player, PlayerExt);
+    implements(Ps.Player, Ps.IAdapterExt);
     // Extensions to the player-adapter
-    PlayerExt.prototype.makeCommand = function(command)  {
+    Ps.Player.prototype.makeCommand = function(command)  {
         var stream = new Stream(128);
         if (typeof command == 'string') {
             command = Ps.Player.Commands[command.toUpperCase()];
@@ -56,7 +56,7 @@ include('/lib/player/grammar.js');
         return stream;
     };
 
-    PlayerExt.prototype.getSymbol = function getSymbol(name) {
+    Ps.Player.prototype.getSymbol = function getSymbol(name) {
         var types = this.schema.types;
         return {
             'Player': { 'type':types.get('uint8'), 'value': Ps.Player.Device.PLAYER },
@@ -68,7 +68,7 @@ include('/lib/player/grammar.js');
         }[name];
     };
 
-    PlayerExt.prototype.importScript = function(script) {
+    Ps.Player.prototype.importScript = function(script) {
         var errors = [];
         var syntax = new Syntax(grammar, 2);
         var context = {
@@ -152,9 +152,8 @@ include('/lib/player/grammar.js');
                 }                        
                 if (adapter) {
                     this.adapters.push({ adapter:adapter, datablock:this.parseValue(dbRef).value });
-                } else {
-                    //error = `Unknown adapter '${type}'!`
                 }
+                return adapter;
             },
             addDatablock: function addDatablock(name, data) {
                 this.datablocks.add(name, this.createStream(data));
@@ -178,26 +177,36 @@ include('/lib/player/grammar.js');
             errors.push(`Syntax error around '${arr.join('')}'`);
         } else {
             var result = expr.evaluate(context);
-            debugger
+            if (!result.type.start) {
+                errors.push('Could not process input!');
+            } else {
+                for (var i=0; i<context.datablocks.size; i++) {
+                    this.datablocks.push(context.datablocks.getAt(i));
+                }
+                for (var i=0; i<context.adapters.length; i++) {
+                    if (!this.addAdapter(context.adapters[i].adapter.constructor, context.adapters[i].datablock)) {
+                        errors.push(`Unknown adapter '${type}'!`);
+                    }
+                }
+            }
         }
         return errors;
     };
 
-    PlayerExt.prototype.exportScript = function() {
+    Ps.Player.prototype.exportScript = function() {
         var arr = [];
 
         return arr.join('\n');
     };
 
-    PlayerExt.create = async function create() {
-        var playerExt = new PlayerExt();
-        playerExt.initialize();
-        playerExt.schema = await Schema.build(
+    Ps.Player.createExt = async function createExt() {
+        var player = Ps.Player.create();
+        player.schema = await Schema.build(
             {
                 'use-default-types': true
             }
         );
-        return playerExt;
+        return player;
     };
 
 //     Ps.Player.prototype.makeCommand = function(command) {
@@ -375,5 +384,5 @@ include('/lib/player/grammar.js');
 //     NewDevice.prototype.onclick = function(e) {
 //         console.log('Hello ' + e.control.id);
 //     }
-    publish(PlayerExt, 'PlayerExt', Ps);
+    //publish(PlayerExt, 'PlayerExt', Ps);
 })();

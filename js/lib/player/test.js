@@ -127,7 +127,7 @@ include('./player-ext.js');
         sequences.push(sequence);
         //#endregion
 
-        var testAdapter = player.adapters[TestAdapter.getInfo().id].adapter;
+        var testAdapter = player.adapters[TestAdapter.info.id].adapter;
 
         //#region Sequence #1
         sequence = new Ps.Sequence(testAdapter);
@@ -221,7 +221,8 @@ include('./player-ext.js');
 
     function test_create_player() {
         header('Test create player');
-        var player = Ps.Player.create();
+        var player = new Ps.Player();
+        player.initialize();
         test('Player should have 1 adapter and 2 devices', ctx => {
             ctx.assert(Object.keys(player.adapters).length, '=', 1);
             ctx.assert(player.adapters[player.getInfo().id].adapter, '=', player);
@@ -233,7 +234,6 @@ include('./player-ext.js');
 
     function test_sequence_toFrames() {
         header('Test Sequence.toFrames');
-
         var player = Ps.Player.create();
         player.addAdapter(TestAdapter);
         var sequence = createSequences(player)[1];
@@ -284,7 +284,7 @@ include('./player-ext.js');
             ctx.assert(stream.readUint16(offset), '=', 3);  // data block count
         });
         test('Adapter should be TestAdapter with init data block id #1', ctx => {
-            ctx.assert(stream.readUint8(9), '=', TestAdapter.getInfo().id);
+            ctx.assert(stream.readUint8(9), '=', TestAdapter.info.id);
             ctx.assert(stream.readUint8(10), '=', 1);
         });
         test('Sequence #1 should consist of 6 frames, frames #1-#5 with 2 commands each', ctx => {
@@ -320,7 +320,7 @@ include('./player-ext.js');
     function test_create_channel() {
         header('Test create channel');
         var player = createPlayer();
-        var adapter = player.adapters[TestAdapter.getInfo().id].adapter;
+        var adapter = player.adapters[TestAdapter.info.id].adapter;
         var channel = createTestChannel(player, 'testChannel');
         test('Channel should use TestAdapter', ctx => {
             ctx.assert(channel.adapter, '=', adapter);
@@ -333,7 +333,7 @@ include('./player-ext.js');
     async function test_run_channel() {
         header('Test run channel');
         var player = createPlayer();
-        player.adapters[TestAdapter.getInfo().id].adapter.prepareContext(player.datablocks[1]);
+        player.adapters[TestAdapter.info.id].adapter.prepareContext(player.datablocks[1]);
         var channel = createTestChannel(player, 'testChannel');
         channel.loopCount = 1;
         await run(() => channel.run(1), 40);
@@ -345,7 +345,7 @@ include('./player-ext.js');
     async function test_run_player() {
         header('Test run player');
         var player = createPlayer();
-        var adapter = player.adapters[TestAdapter.getInfo().id].adapter;
+        var adapter = player.adapters[TestAdapter.info.id].adapter;
         // init adapters
         player.prepareContext(player.datablocks[0]);
         adapter.prepareContext(player.datablocks[1]);
@@ -397,6 +397,25 @@ include('./player-ext.js');
         });
     }
 
+    async function test_import_script() {
+        header('Test import script');
+        Ps.Player.registerAdapter(Ps.Player);
+        Ps.Player.registerAdapter(TestAdapter);
+        var res = await load('test-script.txt')
+        if (res.error) throw res.error;
+        var player = await Ps.Player.createExt();
+        var results = player.importScript(res.data);
+        test('Should load script successfully', ctx => {
+            ctx.assert(results, 'empty');
+            for (var i=0; i<results.length; i++) {
+                message(results[i]);
+            }
+            ctx.assert(player.adapters.length, '=', 2);
+            ctx.assert(player.sequences.length, '=', 3);
+
+        });
+    }
+
     async function test_export_script() {
         // register adapter types
         Ps.Player.registerAdapter(Ps.Player);
@@ -413,27 +432,6 @@ include('./player-ext.js');
         //save(script, 'test-script.txt');
     }
 
-
-    async function test_import_script() {
-        header('Test import script');
-        Ps.Player.registerAdapter(Ps.Player);
-        Ps.Player.registerAdapter(TestAdapter);
-        var res = await load('test-script.txt')
-        if (res.error) throw res.error;
-        var player = await Ps.PlayerExt.create();
-        var results = player.importScript(res.data);
-        test('Should load script successfully', ctx => {
-            ctx.assert(results, 'empty');
-            for (var i=0; i<results.length; i++) {
-                message(results[i]);
-            }
-            ctx.assert(player.adapters.length, '=', 2);
-            ctx.assert(player.sequences.length, '=', 3);
-
-        });
-    }
-
-
     var tests = () => [
         // test_create_player,
         // test_sequence_toFrames,
@@ -444,8 +442,8 @@ include('./player-ext.js');
         // test_run_channel,
         // test_run_player,
         // test_complete_player,
-        //test_export_script,
-        test_import_script
+        test_import_script,
+        // test_export_script
     ];
 
     publish(tests, 'Player tests');

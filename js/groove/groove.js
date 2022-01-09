@@ -1,10 +1,11 @@
-include('/lib/math/noise.js');
 include('/lib/ge/sound.js');
 include('/lib/player/player-lib.js');
+include('/lib/player/player-ext.js');
 include('/lib/synth/synth.js');
-include('/lib/synth/synth-adapter.js');
+include('/lib/synth/synth-adapter-ext.js');
 include('/lib/webgl/webgl.js');
-include('/lib/webgl/compute-shader.js');
+include('./fbm-scope.js');
+include('./fire-scope.js');
 
 const SAMPLE_RATE = 48000;
 const SCOPE_MAX_SIZE = 4096;
@@ -19,6 +20,11 @@ const ABCnames = [
     'A-', 'A#',
     'H-'
 ];
+
+//#region Misc
+
+var app_ = null;
+var btn_ = null;
 
 function writeTokenToStream(namespace, token, stream) {
 
@@ -66,48 +72,63 @@ function writeTokenToStream(namespace, token, stream) {
     }
 }
 
+function startStop() {
+    if (sound.isRunning) {
+        btn_.style.textShadow = '';
+        btn_.style.color = '#0020a0';
+        sound.stop();
+    } else {
+        sound.start();
+        btn_.style.color = '#4080ff';
+        btn_.style.textShadow = '0px 0px 6px rgba(160, 240, 255, 1)';
+    }
+}
+
+function render() {
+    app_.frames++;
+    app_.update();
+    app_.render();
+    requestAnimationFrame(render);
+};
+
+async function onpageload(e) {
+    if (e.length > 0) {
+        alert(e.join('\n'));
+    } else {
+        app_ = new SynthApp();
+        await app_.initialize();
+        app_.run((left, right, bufferSize) => app_.playerBasedFillBuffer(left, right, bufferSize, app_.player));
+        btn_ = document.getElementById('start');
+        btn_.addEventListener('click', startStop);
+        render();
+    }
+}
+//#endregion
+
+//#region SynthApp
 function SynthApp() {
     this.settings = {
         'bpm':          101,
         'scopewindow':  0.3
     };
 
-    //#region playback
+    // playback
     this.player = null;
     this.synthAdapter = null;
     this.synth = null;
     this.frame = 0;
     this.samplePerFrame = 0;
     this.isDone = false;
-    //#endregion
 
-    //#region scope
-    this.scopeLength = 0;
-    this.scopeBuffers = [
-        new Float32Array(SCOPE_MAX_SIZE),
-        new Float32Array(SCOPE_MAX_SIZE)
-    ];
-    this.scopeBufferIndex = 0;
-    this.scopeReadPosition = 0;
-    this.scopeWritePosition = 0;
-    this.scopeSamplingStep = 0;
+    this.scope = null;
     this.isScopeVisible = true;
-    //#endregion
 
-    //#region rendering
-    this.prg = null;
-    this.vbo = null;
-    this.buffer = null;
-    this.uniforms = {
-        'u_length': 0,
-        'u_shade': 0.0
-    };
-    this.noise = new Noise();
-    //#endregion
+    // rendering
+    this.frames = 0;
 }
 
-SynthApp.prototype.createPlayer = function createPlayer(data) {
-    var player = Ps.Player.create();
+SynthApp.prototype.createPlayer = async function createPlayer(data) {
+    var player = await Ps.Player.createExt();
     // create data blocks
     for (var i=0; i<data['data-blocks'].length; i++) {
         var block = data['data-blocks'][i];
@@ -129,13 +150,13 @@ SynthApp.prototype.createPlayer = function createPlayer(data) {
         var adapter = player.addAdapter(adapterType, blockId);
         adapter.prepareContext(player.datablocks[blockId]);
     }
-
     // create sequences
     for (var si=0; si<data.sequences.length; si++) {
         var seqData = data.sequences[si];
-        var adapterType = Object.values(Ps.Player.adapterTypes).find(x => x.name == seqData.adapter);
-        if (!adapterType) throw new Error('Unknown adapter: ' + adapterType);
-        var adapter = player.adapters[adapterType.getInfo().id].adapter;
+        var adapterInfo = player.adapters.find(x => x.adapter.getInfo().name == seqData.adapter);
+        if (!adapterInfo) throw new Error('Unknown adapter: ' + seqData.adapter);
+        var adapter = adapterInfo.adapter;
+        adapterType = adapter.constructor;
         var frames = [];
         for (var fi=0; fi<seqData.frames.length; fi++) {
             var frame = new Ps.Frame();
@@ -149,11 +170,11 @@ SynthApp.prototype.createPlayer = function createPlayer(data) {
                 }
                 commandCopy[0] = command;
                 if (adapterType == psynth.SynthAdapter) {
-                    if (command == adapterType.Commands.SETNOTE) {
+                    if (command == adapterType.Commands.SetNote) {
                         // decode note
                         var note = commandCopy[1].toUpperCase();
                         commandCopy[1] = ABCnames.indexOf(note.substr(0, 2)) + 12*parseInt(note.charAt(2)) + 1;
-                    } else if (command >= adapterType.Commands.SETUINT8 && command <= adapterType.Commands.SETFLOAT) {
+                    } else if (command >= adapterType.Commands.SetUint8 && command <= adapterType.Commands.SetFloat) {
                         // decode synth controller id
                         commandCopy[1] = psynth.Synth.controls[commandCopy[1]];
                     }
@@ -170,20 +191,6 @@ SynthApp.prototype.createPlayer = function createPlayer(data) {
     return player;
 };
 
-SynthApp.prototype.updateScope = function updateScope() {
-    this.scopeWritePosition = 0;
-    var smpCount = 0.1 * this.settings.scopewindow * SAMPLE_RATE;
-    this.scopeBackBuffer = new Float32Array(gl.canvas.width*gl.canvas.height*4);
-    if (smpCount < gl.canvas.width) {
-        this.scopeSamplingStep = 1;
-        this.scopeLength = Math.floor(smpCount);
-    } else {
-        this.scopeSamplingStep = smpCount/gl.canvas.width;
-        this.scopeLength = gl.canvas.width;
-    }
-    this.uniforms.u_length = this.scopeLength;
-};
-
 SynthApp.prototype.initialize = async function initialize() {
     // init sound and playback
     this.samplePerFrame = SAMPLE_RATE*60/FRAMES_PER_BEAT/this.settings.bpm;
@@ -191,103 +198,23 @@ SynthApp.prototype.initialize = async function initialize() {
     Ps.Player.registerAdapter(psynth.SynthAdapter);
     var data = await load('./data.json');
     if (data.error) throw new Error(data.error);
-    this.player = this.createPlayer(data.data);
+    this.player = await this.createPlayer(data.data);
     this.synthAdapter = this.player.adapters[psynth.SynthAdapter.getInfo().id].adapter;
     this.synth = this.synthAdapter.devices[0];
-    //this.createSequences();
 
     // init gfx
     webGL.init(null, true);
     webGL.useExtension('EXT_color_buffer_float');
     gl.canvas.style.zIndex = 1000;
     gl.canvas.style.background = 'transparent';
-    this.vbo = webGL.createBuffer(gl.ARRAY_BUFFER, new Array(SCOPE_MAX_SIZE), gl.DYNAMIC_DRAW);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    var shaders = {};
-    shaders[gl.VERTEX_SHADER] = 
-       `#version 300 es
-        in float a_position;
-        uniform float u_length;
-
-        void main(void) {
-            vec2 pos = vec2(2.*float(gl_VertexID)/u_length - 1.0, 2.0*a_position);
-            gl_Position = vec4(pos, 0., 1.);
-        }`;
-    shaders[gl.FRAGMENT_SHADER] =
-       `#version 300 es
-        precision highp float;
-        out vec4 color;
-
-        void main(void) {
-            color = vec4(1.0);
-        }`;
-    this.prg = webGL.createProgram(shaders, { 'a_position': { 'buffer': 1 }});
-    
-    this.buffer = webGL.Buffer.create(null, 'byte[4]');
-    this.buffer.createArrayBuffer();
-    var f = '1.1';
-    this.buffer.setShader(
-   `#version 300 es
-    precision highp float;
-
-    in vec2 v_texcoord;
-    uniform mediump usampler2D u_texture0;
-    uniform sampler2D u_texture1;
-    out vec4 color;
-
-    // sharpen
-    vec3 mf1[10] = vec3[](
-        vec3( 0.0), vec3( 1.0), vec3( 1.7),
-        vec3(-1.0), vec3(${f}), vec3( 1.0),
-        vec3(-1.7), vec3(-1.0), vec3( 0.0),
-        vec3( 1.0/${f})
-    );
-
-    // smoothen
-    vec3 mf2[10] = vec3[](
-        vec3(${f}), vec3( 0.5), vec3(${f}),
-        vec3( 0.5), vec3( 0.0), vec3( 0.5),
-        vec3(${f}), vec3( 0.5), vec3(${f}),
-        vec3(1.0/(4.*${f}+2.))
-    );
-
-    void main(void) {
-        ivec2 texSize = textureSize(u_texture0, 0);
-        vec2 d = 1./vec2(texSize);
-        vec2 dij = vec2(-d);
-        vec3 c;
-        int k = 0;
-        for (int j=-1; j<2; j++)
-        {
-            dij.x = -d.x;
-            for (int i=-1; i<2; i++)
-            {
-                c += vec3(texture(u_texture0, v_texcoord + dij).xyz) * mf2[k++];
-                dij.x += d.x;
-            }
-            dij.y += d.y;
-        }
-        color = vec4(mix(c*mf2[9]/255., texture(u_texture1, v_texcoord).xyz, 0.2), 1.) ;
-        //color = vec4(texture(u_texture1, v_texcoord)) ;
-    }`);
-    var k = 0;
-    this.background = webGL.createTexture([this.buffer.width, this.buffer.height], 'float[4]');
-    for (var j=0; j<this.buffer.height; j++) {
-        for (var i=0; i<this.buffer.width; i++) {
-            var v = this.noise.fbm2d(16*i/this.background.width, 9*j/this.background.height, 5, 0.80, 1.00, 0.38, 2.52);
-            var fx = i/this.background.width;
-            var fy = j/this.background.height;
-            var f = Math.floor(10*(fx + fy))/10;
-            v *= f;
-            this.background.data[k++] = v * Math.pow(fx, 1.4);
-            this.background.data[k++] = v * (1 - fy);
-            this.background.data[k++] = v * Math.pow(1 - fx, 1.6);
-            this.background.data[k++] = 1;
-        }
-    }
-    this.background.setTexture();
-
-    this.updateScope();
+    //this.scope = new FireScope();
+    this.scope = new FbmScope();
+    this.scope.initialize();
+    this.scope.setSize(0.004);
+    this.scope.refreshRate = 2;
+    //this.scope.resize();
 };
 
 SynthApp.prototype.playerBasedFillBuffer = function playerBasedFillBuffer(left, right, bufferSize, player) {
@@ -322,16 +249,7 @@ SynthApp.prototype.playerBasedFillBuffer = function playerBasedFillBuffer(left, 
     }
 
     if (this.isScopeVisible) {
-        while (this.scopeReadPosition < bufferSize) {
-            var pos = Math.floor(this.scopeReadPosition);
-            this.scopeBuffers[this.scopeBufferIndex][this.scopeWritePosition++] = 0.5*(left[pos] + right[pos]);
-            if (this.scopeWritePosition == this.scopeLength) {
-                this.scopeWritePosition = 0;
-                this.scopeBufferIndex = 1 - this.scopeBufferIndex;
-            }
-            this.scopeReadPosition += this.scopeSamplingStep;
-        }
-        this.scopeReadPosition -= bufferSize;
+        this.scope.setData(left, right, bufferSize);
     }
 };
 SynthApp.prototype.run = function run(callback) {
@@ -346,59 +264,11 @@ SynthApp.prototype.run = function run(callback) {
 //     this.updateScope();
 // };
 
-SynthApp.prototype.renderScope = function renderScope() {
-    // gl.enable(gl.BLEND);
-    // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-    gl.clearColor(0, 0, 0, 0.2);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    this.buffer.updateTexture();
-
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this.background.texture);
-    this.buffer.render({ 'u_texture0': 0, 'u_texture1': 1 });
-
-    // draw new state
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo.ref);
-    gl.bufferData(gl.ARRAY_BUFFER, this.scopeBuffers[1 - this.scopeBufferIndex], gl.DYNAMIC_DRAW);
-    webGL.useProgram(this.prg, this.uniforms);
-    gl.drawArrays(gl.LINE_STRIP, 0, this.scopeLength);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    gl.readPixels(0, 0, this.buffer.width, this.buffer.height, gl.RGBA, gl.UNSIGNED_BYTE, this.buffer.data);
-    //gl.readPixels(0, 0, this.buffer.width, this.buffer.height, this.buffer.format, gl[this.buffer.type.type], this.buffer.data);
+SynthApp.prototype.update = function update() {
+    this.scope.update(this.frames);
 };
 
-function startStop() {
-    if (sound.isRunning) {
-        btn_.style.textShadow = '';
-        btn_.style.color = '#0020a0';
-        sound.stop();
-    } else {
-        sound.start();
-        btn_.style.color = '#4080ff';
-        btn_.style.textShadow = '0px 0px 6px rgba(160, 240, 255, 1)';
-    }
-}
-
-function render() {
-    app_.renderScope();
-    requestAnimationFrame(render);
+SynthApp.prototype.render = function render() {
+    this.scope.render(this.frames);
 };
-
-var app_ = null;
-var btn_ = null;
-
-async function onpageload(e) {
-    if (e.length > 0) {
-        alert(e.join('\n'));
-    } else {
-        app_ = new SynthApp();
-        await app_.initialize();
-        app_.run((left, right, bufferSize) => app_.playerBasedFillBuffer(left, right, bufferSize, app_.player));
-        btn_ = document.getElementById('start');
-        btn_.addEventListener('click', startStop);
-        render();
-    }
-}
+//#endregion

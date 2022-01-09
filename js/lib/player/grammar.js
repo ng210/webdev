@@ -77,7 +77,7 @@
         'adapter':      { 'symbol': 'A', 'action': function(o, type, dbRef) { this.addAdapter(type.data.getValue(), dbRef.data.getValue()); } },
         'sequence':     { 'symbol': 'S', 'action': function(o, name, adapter, frames) { this.addSequence(name, adapter,  frames); } },
         'frame':        { 'symbol': 'F', 'action': function(o, delta, commands) { this.addFrame(delta, commands); } },
-        'command':      { 'symbol': 'C', 'action': function(o, command, args) { this.addCommand(command, args); } },
+        'command':      { 'symbol': 'O', 'action': function(o, command, args) { debugger; this.addCommand(command, args); } },
         'datablock':    { 'symbol': 'B', 'action': function(o, name, list) { this.addDatablock(name.data.getValue(), list.data.getValue()); } },
         //#endregion
 
@@ -122,9 +122,11 @@
         '__F3': { 'symbol': 'F3' },
         '__F4': { 'symbol': 'F4' },
         '__F5': { 'symbol': 'F5' },
-        '__F6': { 'symbol': 'F6' },
-        '__F7': { 'symbol': 'F7' },
-        '__Fx': { 'symbol': 'Fx' },
+        // '__F6': { 'symbol': 'F6' },
+        // '__F7': { 'symbol': 'F7' },
+        // '__Fx': { 'symbol': 'Fx' },
+
+        '__O1': { 'symbol': 'O1' },
 
         '__S1': { 'symbol': 'S1' },
         '__S2': { 'symbol': 'S2' },
@@ -139,6 +141,7 @@
        '__S12': { 'symbol': 'S12' },
        '__S13': { 'symbol': 'S13' },
        '__S20': { 'symbol': 'S20' },
+
         '__R1': { 'symbol': 'R1' },
          '__V': { 'symbol': 'V' },
         '__V1': { 'symbol': 'V1' }
@@ -157,14 +160,38 @@
 
         //#region data array
         { input:'C1W',  output:'C1', priority: 1400, action: null }, // '{ '
-        { input:'C1T',  output:'C1', priority: 1400, action: null }, // '{\n'
+        { input:'C1T',  output:'C1', priority: 1400, action: null }, // '{<NL>'
         { input:'C1L',  output:'L1', priority: 1400, action: null }, // '{1'
+        { input:'C1T',  output:'C1', priority: 1300, action: null }, // '{1<NL>'
         { input:'L1W',  output:'L1', priority: 1300, action: null }, // '{1 '
         { input:'L1C',  output:'L0', priority: 1300, action: null }, // '{1, '
+        { input:'L0T',  output:'L0', priority: 1300, action: null }, // '{1,<NL>'
         { input:'L0W',  output:'L0', priority: 1300, action: null }, // '{1, '
         { input:'L0L',  output:'L1', priority: 1300, action: null }, // '{1,2'
-        { input:'L1C2', output:'L2', priority: 1200, action: null }, // '{1}'
+        { input:'L1T',  output:'L1', priority: 1300, action: null }, // '{1,2<NL>'
+        { input:'L1C2', output:'L2', priority: 1200, action: null }, // '{1,2}'
         //#endregion
+
+        //#region command { ... }
+        { input:'OW',  output:'O',  priority: 1100, action: null }, // 'command   '
+        { input:'OL2', output:'O1', priority: 1100, action: null }, // 'command { ... }'
+        //#endregion
+
+        //#region frame 0, { command { ... }, ... }
+        { input:'FW',  output:'F',  priority: 1400, action: null }, // 'frame '
+        { input:'FL',  output:'F1', priority: 1400, action: null }, // 'frame 0'
+        { input:'F1W', output:'F1', priority: 1400, action: null }, // 'frame 0 '
+        { input:'F1C', output:'F2', priority: 1400, action: null }, // 'frame 0,'
+        { input:'F2W', output:'F2', priority: 1300, action: null }, // 'frame 0, '
+        { input:'F2C1',output:'F3', priority: 1300, action: null }, // 'frame 0, {'
+        { input:'F3W', output:'F3', priority: 1300, action: null }, // 'frame 0, { '
+        { input:'F3O1',output:'F4', priority: 1300, action: null }, // 'frame 0, { command { ... }'
+        { input:'F4W', output:'F4', priority: 1300, action: null }, // 'frame 0, { command { ... } '
+        { input:'F4T', output:'F4', priority: 1300, action: null }, // 'frame 0, { command { ... }<NL>'
+        { input:'F4C', output:'F3', priority: 1300, action: null }, // 'frame 0, { command { ... },'
+        { input:'F4C2',output:'F5', priority: 1300, action: null }, // 'frame 0, { command { ... } }'
+        //#endregion
+
 
         //#region set <symbol> <value>
         { input:'DW',   output:'D1', priority: 900,  action: null }, // 'set '
@@ -198,21 +225,26 @@
         { input:'B2C',  output:'B3', priority: 700,  action: null }, // 'datablock "Master",'
         { input:'B3W',  output:'B3', priority: 700,  action: null }, // 'datablock "Master", '
         { input:'B3L2', output:'B4', priority: 700,  action: null }, // 'datablock "Master",{...}'
-        { input:'B4W',  output:'B4', priority: 700,  action: null }, // 'datablock "Master" { '
-        { input:'B4T',  output:'G',  priority: 700,  action: null }, // 'datablock "Master" { 1<NL>'
+        { input:'B4W',  output:'B4', priority: 700,  action: null }, // 'datablock "Master" {...}'
+        { input:'B4T',  output:'G',  priority: 700,  action: null }, // 'datablock "Master" {...}<NL>'
         //#endregion
 
-        // //#region sequence "Master", "Player" { frame(  0, assign(CHN1, "MySequence", SPR0, 1)) }
-        // { input:'SW',   output:'S1', priority: 600,  action: null }, // 'sequence '
-        // { input:'S1W',  output:'S1', priority: 600,  action: null }, // 'sequence    '
-        // { input:'S1L',  output:'S2', priority: 600,  action: null }, // 'sequence "Master"'
-        // { input:'S2W',  output:'S2', priority: 600,  action: null }, // 'sequence "Master"   '
-        // { input:'S2C',  output:'S3', priority: 600,  action: null }, // 'sequence "Master",'
-        // { input:'S3W',  output:'S3', priority: 600,  action: null }, // 'sequence "Master",   '
-        // { input:'S3L',  output:'S5', priority: 600,  action: null }, // 'sequence "Master","Player"'
-        // { input:'S5W',  output:'S5', priority: 600,  action: null }, // 'sequence "Master","Player"   '
-        // { input:'S5C1', output:'S6', priority: 600,  action: function(s5) { this.createSub(s5, 'frames'); } }, // 'sequence "Master","Player" {'
-        // { input:'S6T',  output:'S6', priority: 600,  action: null }, // 'sequence "Master","Player" {<NL>'
+        //#region sequence "Master", "Player", { frame 0, { command { TestAdapter.SetText, "Seq1.1" }, ... } ... }
+        { input:'SW',   output:'S1', priority: 600,  action: null }, // 'sequence '
+        { input:'S1W',  output:'S1', priority: 600,  action: null }, // 'sequence    '
+        { input:'S1L',  output:'S2', priority: 600,  action: null }, // 'sequence "Master"'
+        { input:'S2W',  output:'S2', priority: 600,  action: null }, // 'sequence "Master"   '
+        { input:'S2C',  output:'S3', priority: 600,  action: null }, // 'sequence "Master",'
+        { input:'S3W',  output:'S3', priority: 600,  action: null }, // 'sequence "Master",   '
+        { input:'S3L',  output:'S4', priority: 600,  action: null }, // 'sequence "Master","Player"'
+        { input:'S4W',  output:'S4', priority: 600,  action: null }, // 'sequence "Master","Player"   '
+        { input:'S4C1', output:'S5', priority: 600,  action: null }, // 'sequence "Master","Player" {'
+        { input:'S5W',  output:'S5', priority: 600,  action: null }, // 'sequence "Master","Player" { '
+        { input:'S5F5', output:'S6', priority: 600,  action: null }, // 'sequence "Master","Player" { frame 0, {...}'
+        { input:'S6W',  output:'S6', priority: 600,  action: null }, // 'sequence "Master","Player" { frame 0, {...} '
+        { input:'S6C',  output:'S5', priority: 600,  action: null }, // 'sequence "Master","Player" { frame 0, {...},'
+        { input:'S6C2', output:'S7', priority: 600,  action: null }, // 'sequence "Master","Player" { ... }'
+        { input:'S7T',  output:'G',  priority: 600,  action: null }, // 'sequence "Master","Player" { ... }<NL>'
         // { input:'S6W',  output:'S6', priority: 600,  action: null }, // 'sequence "Master","Player" {    '
         // { input:'S6Fx', output:'S6', priority: 600,  action: function(s6, fx) { return this.addParameter(s6, fx); } }, // 'sequence "Master","Player" { frame(...)'
         // { input:'S6C2', output:'S7', priority: 600,  action: null }, // 'sequence "Master","Player" { ... }'

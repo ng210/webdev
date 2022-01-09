@@ -157,7 +157,7 @@
                 n.data.value = n.data.type.action.apply(context, args);
             }
         });
-        return this.lastNode.data.value;
+        return this.lastNode.data;  //.value;
     };
     Expression.prototype.mergeNodes = function(nodes) {
         if (this.syntax.debug > 2) console.log('merge in: ' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));

@@ -1,4 +1,21 @@
 set ZERO w:0
 adapter "Player",0
 adapter "TestAdapter","db1"
-datablock "db1",{ 1,ZERO,TestAdapter.Div,w:120,f:1.2 }
+datablock "db1", {
+    1, ZERO, TestAdapter.Div,
+    w:120, f:1.2
+}
+sequence "master", "Player", {
+    frame 0, {
+        command { Player.Assign, 1, seq1, 0, 0 }
+    },
+    frame 96, {
+        command { Player.End }
+    }
+}
+sequence "seq1", "TestAdapter", {
+    frame 0, {
+        command { TestAdapter.SetText, "Seq1.1" },
+        command { TestAdapter.SetInk, 0 }
+    }
+}

@@ -7,11 +7,18 @@ include('/lib/synth/synth-adapter.js');
 
 // Extensions to the synth-adapter
 (function() {
+    // function SynthAdapterExt() {
+    //     SynthAdapterExt.base.constructor.call(this);
+    //     this.schema = null;
+    // }
+    //extend(psynth.SynthAdapter, SynthAdapterExt);
+    implements(psynth.SynthAdapter, Ps.IAdapterExt);
+
     psynth.SynthAdapter.prototype.makeCommand = function(command) {
         var stream = new Stream(128);
         stream.writeUint8(command);
         switch (command) {
-            case psynth.SynthAdapter.Commands.SETNOTE:      // uint8 note, uint8 velocity
+            case psynth.SynthAdapter.Commands.SetNote:      // uint8 note, uint8 velocity
                 if (arguments[1] instanceof Ps.Sequence) {
                     stream.writeStream(arguments[1].stream, arguments[2], 2);
                 } else {
@@ -19,8 +26,8 @@ include('/lib/synth/synth-adapter.js');
                     stream.writeUint8(arguments[2]);
                 }
                 break;
-			case psynth.SynthAdapter.Commands.SETUINT8:     // uint8 controllerId, uint8 value
-			case psynth.SynthAdapter.Commands.SETFLOAT8:	// uint8 controllerId, uint8 value
+			case psynth.SynthAdapter.Commands.SetUint8:     // uint8 controllerId, uint8 value
+			case psynth.SynthAdapter.Commands.SetFloat8:	// uint8 controllerId, uint8 value
                 if (arguments[1] instanceof Ps.Sequence) {
                     stream.writeStream(arguments[1].stream, arguments[2], 2);
                 } else {
@@ -36,7 +43,7 @@ include('/lib/synth/synth-adapter.js');
             //         stream.writeUint16(arguments[2]);
             //     }
             //     break;
-			case psynth.SynthAdapter.Commands.SETFLOAT:		// uint8 controllerId, float32 value
+			case psynth.SynthAdapter.Commands.SetFloat:		// uint8 controllerId, float32 value
                 if (arguments[1] instanceof Ps.Sequence) {
                     stream.writeStream(arguments[1].stream, arguments[2], 5);
                 } else {
@@ -44,7 +51,7 @@ include('/lib/synth/synth-adapter.js');
 					stream.writeFloat32(arguments[2]);
                 }
                 break;
-			case psynth.SynthAdapter.Commands.SETPROGRAM:
+			case psynth.SynthAdapter.Commands.SetProgram:
 				if (arguments[1] instanceof Ps.Sequence) {
 					stream.writeStream(arguments[1].stream, arguments[2], 1);
 				} else {
@@ -68,7 +75,7 @@ include('/lib/synth/synth-adapter.js');
 			case psynth.Synth.controls.flt1mode:
 				var uint8 = Math.floor(value);
 				if (uint8 < 0) uint8 = 0; else if (uint8 > 255) uint8 = 255;
-				command = this.makeCommand(psynth.SynthAdapter.Commands.SETUINT8, controlId, uint8);
+				command = this.makeCommand(psynth.SynthAdapter.Commands.SetUint8, controlId, uint8);
 				break;
 		
 		// out = uint8/256
@@ -96,7 +103,7 @@ include('/lib/synth/synth-adapter.js');
 			case psynth.Synth.controls.flt1mod:
 				var uint8 = Math.floor(value*255);
 				if (uint8 < 0) uint8 = 0; else if (uint8 > 255) uint8 = 255;
-				command = this.makeCommand(psynth.SynthAdapter.Commands.SETFLOAT8, controlId, uint8);
+				command = this.makeCommand(psynth.SynthAdapter.Commands.SetFloat8, controlId, uint8);
 				break;
 		
 		// out = uint16
@@ -121,7 +128,7 @@ include('/lib/synth/synth-adapter.js');
 			case psynth.Synth.controls.osc2amp:
 			case psynth.Synth.controls.osc2fre:
 			case psynth.Synth.controls.flt1amp:
-				command = this.makeCommand(psynth.SynthAdapter.Commands.SETFLOAT, controlId, value);
+				command = this.makeCommand(psynth.SynthAdapter.Commands.SetFloat, controlId, value);
 				break;
 
 			default:
@@ -129,15 +136,25 @@ include('/lib/synth/synth-adapter.js');
 		}
 		return command;
 	};
+    psynth.SynthAdapter.createExt = async function createExt() {
+        var synthAdapterExt = psynth.SynthAdapter.create();
+        synthAdapterExt.schema = await Schema.build(
+            {
+                'use-default-types': true
+            }
+        );
+        return synthAdapterExt;
+    };
 
+    //publish(SynthAdapterExt, 'SynthAdapterExt', psynth);
 
     // psynth.SynthAdapter.prototype.toDataSeries = function(sequence) {
     //     var noteMap = {};
     //     return Ps.IAdapterExt.toDataSeries.call(this, sequence,
-    //         (cmd, stream) => cmd == psynth.SynthAdapter.SETNOTE ? cmd : stream.readUint8(),
+    //         (cmd, stream) => cmd == psynth.SynthAdapter.SetNote ? cmd : stream.readUint8(),
     //         (cmd, delta, stream, ds) => {
     //             switch (cmd) {
-    //                 case psynth.SynthAdapter.SETNOTE:
+    //                 case psynth.SynthAdapter.SetNote:
     //                     var pitch = stream.readUint8();
     //                     var velocity = stream.readUint8();
     //                     if (velocity != 0) {
@@ -193,7 +210,7 @@ include('/lib/synth/synth-adapter.js');
     //                     sequence.writeDelta(f0 - f1);
     //                     // make and write command
     //                     var dataPoint = Array.from(dataPoints[i]);
-    //                     dataPoint[0] = key == psynth.SynthAdapter.SETNOTE ? key : psynth.SynthAdapter.SETCTRL8;
+    //                     dataPoint[0] = key == psynth.SynthAdapter.SetNote ? key : psynth.SynthAdapter.SETCTRL8;
     //                     var cmd = sequence.adapter.makeCommand.apply(null, dataPoint);
     //                     sequence.stream.writeStream(cmd);
     //                     noteMap[dataPoint[1]] = f0 + dataPoint[3];
@@ -206,7 +223,7 @@ include('/lib/synth/synth-adapter.js');
     //                 if (lastWrite == sequence.cursor) {
     //                     sequence.writeDelta(f0 - f1);
     //                 }
-    //                 sequence.writeCommand(psynth.SynthAdapter.SETNOTE);
+    //                 sequence.writeCommand(psynth.SynthAdapter.SetNote);
     //                 sequence.stream.writeUint8(parseInt(n));
     //                 sequence.stream.writeUint8(0);
     //                 noteMap[n] = undefined;

@@ -236,6 +236,7 @@ include('/lib/synth/synth-adapter-ext.js');
     var _isStopped = false;
     async function run(callback) {
         _isDone = false;
+        _isStopped = false;
         sound.init(SAMPLE_RATE,
             function fillBuffer(left, right, bufferSize, channel) {
                 _isDone = !callback(left, right, bufferSize, channel);
@@ -266,32 +267,32 @@ include('/lib/synth/synth-adapter-ext.js');
         var list = [], frames = null;
         //#region sequence #1
         frames = [];
-        frames.push(new Ps.Frame().setDelta( 0).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 24, 240)));
-        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 24,   0)));
+        frames.push(new Ps.Frame().setDelta( 0).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 24, 240)));
+        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 24,   0)));
 
-        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 12, 120)));
-        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 12,   0)));
+        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 12, 120)));
+        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 12,   0)));
 
-        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 27, 160)));
-        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 27,   0)));
+        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 27, 160)));
+        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 27,   0)));
 
-        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 15, 200)));
-        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 15,   0)));
+        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 15, 200)));
+        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 15,   0)));
 
-        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 24, 140)));
-        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 24,   0)));
+        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 24, 140)));
+        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 24,   0)));
 
-        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 12, 200)));
-        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 12,   0)));
+        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 12, 200)));
+        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 12,   0)));
 
-        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 22, 140)));
-        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 22,   0)));
+        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 22, 140)));
+        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 22,   0)));
 
-        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 12, 120)));
-        frames.push(new Ps.Frame().setDelta( 1).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 12,   0)));
+        frames.push(new Ps.Frame().setDelta( 2).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 12, 120)));
+        frames.push(new Ps.Frame().setDelta( 1).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 12,   0)));
 
-        frames.push(new Ps.Frame().setDelta( 1).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 15, 150)));
-        frames.push(new Ps.Frame().setDelta( 1).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 15,   0)));
+        frames.push(new Ps.Frame().setDelta( 1).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 15, 150)));
+        frames.push(new Ps.Frame().setDelta( 1).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 15,   0)));
 
         frames.push(new Ps.Frame().setDelta( 1).addCommand(adapter.makeCommand(Ps.Player.EOS)));
 
@@ -300,17 +301,17 @@ include('/lib/synth/synth-adapter-ext.js');
 
         //#region sequence #2
         frames = [];
-        frames.push(new Ps.Frame().setDelta( 0).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 36, 240)));
-        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 36,   0)));
+        frames.push(new Ps.Frame().setDelta( 0).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 36, 240)));
+        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 36,   0)));
 
-        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 48, 240)));
-        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 48,   0)));
+        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 48, 240)));
+        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 48,   0)));
 
-        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 48, 240)));
-        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 48,   0)));
+        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 48, 240)));
+        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 48,   0)));
 
-        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 48, 240)));
-        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, 48,   0)));
+        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 48, 240)));
+        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 48,   0)));
 
         frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(Ps.Player.EOS)));
 
@@ -323,12 +324,12 @@ include('/lib/synth/synth-adapter-ext.js');
     function createSequences(player) {
         var sequences = [];
         // MASTER sequence
-        var sequence = new Ps.Sequence(player.adapters[Ps.Player.getInfo().id].adapter);
+        var sequence = new Ps.Sequence(player.adapters[Ps.Player.info.id].adapter);
         sequence.writeHeader();
         // Frame #1
         sequence.writeDelta(0);
         sequence.stream.writeStream(player.makeCommand(Ps.Player.Commands.ASSIGN, 1, 1, 0, 4));
-        sequence.stream.writeStream(player.makeCommand(Ps.Player.Commands.TEMPO, 4*120/60));
+        //sequence.stream.writeStream(player.makeCommand(Ps.Player.Commands.TEMPO, 4*120/60));
         sequence.writeEOF();
         // Frame #2
         sequence.writeDelta(2*32);
@@ -410,9 +411,9 @@ include('/lib/synth/synth-adapter-ext.js');
         var adapter = new psynth.SynthAdapter();
         var command = null;
         var testData = [
-            { ctrlId: 'osc1wave', cmd: 'SETUINT8', write: 'writeUint8', in: 123.5, out: 123 },
-            { ctrlId: 'osc2fre', cmd: 'SETFLOAT', write: 'writeFloat32', in: 12.35, out: 12.35 },
-            { ctrlId: 'env1atk', cmd: 'SETFLOAT8', write: 'writeUint8', in: 123.5/256, out: 123 }
+            { ctrlId: 'osc1wave', cmd: 'SetUint8', write: 'writeUint8', in: 123.5, out: 123 },
+            { ctrlId: 'osc2fre', cmd: 'SetFloat', write: 'writeFloat32', in: 12.35, out: 12.35 },
+            { ctrlId: 'env1atk', cmd: 'SetFloat8', write: 'writeUint8', in: 123.5/256, out: 123 }
         ];
 
         for (var i=0; i<testData.length; i++) {
@@ -443,9 +444,9 @@ include('/lib/synth/synth-adapter-ext.js');
         var frames = createFrames(adapter);
         test('Sequence #0 should contain 19 frames', ctx => ctx.assert(frames[0].length, '=', 19));
         for (var i=1; i<18; i++) {
-            test(`Frame #${i} should contain a SETNOTE command`, ctx => {
+            test(`Frame #${i} should contain a SetNote command`, ctx => {
                 ctx.assert(frames[0][i].commands.length, '=', 1);
-                ctx.assert(frames[0][i].commands[0].readUint8(), '=', psynth.SynthAdapter.Commands.SETNOTE);
+                ctx.assert(frames[0][i].commands[0].readUint8(), '=', psynth.SynthAdapter.Commands.SetNote);
             });
         }
     }
@@ -638,12 +639,12 @@ include('/lib/synth/synth-adapter-ext.js');
             if (pattern1[i] != -1) {
                 // frame on
                 var frame = new Ps.Frame(); frame.delta = delta;
-                frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, note, 240));
+                frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, note, 240));
                 frames.push(frame);
                 // frame off
                 frame = new Ps.Frame(); frame.delta = 2;
                 delta = 2;
-                frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.Commands.SETNOTE, note, 0));
+                frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, note, 0));
                 frames.push(frame);
             } else {
                 delta = 6;
@@ -766,15 +767,15 @@ include('/lib/synth/synth-adapter-ext.js');
     }
 
     var tests = () => [
-        // test_freqTable,
-        // test_control_labels,
-        // test_create_synth,
-        // test_run_env,
-        // test_osc_run,
-        // test_generate_sound_simple,
-        // test_synthAdapter_makeSetCommandForContoller,
-        // test_synthAdapter_prepareContext,
-        // test_synthAdapter_makeCommands,
+        test_freqTable,
+        test_control_labels,
+        test_create_synth,
+        test_run_env,
+        test_osc_run,
+        test_generate_sound_simple,
+        test_synthAdapter_makeSetCommandForContoller,
+        test_synthAdapter_prepareContext,
+        test_synthAdapter_makeCommands,
         test_run_channel,
         test_complete_player,
         // test_synthAdapterToDataSeries/*, test_synthAdapterFromDataSeries, test_synth_Ui_binding, test_synth_fromPreset*/

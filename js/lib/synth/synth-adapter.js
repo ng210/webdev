@@ -12,6 +12,7 @@ include('/lib/ge/sound.js');
 	extend(Ps.IAdapter, SynthAdapter);
 
 	// IAdapter implementation
+	SynthAdapter.prototype.getInfo = function() { return psynth.SynthAdapter.info; };
 	SynthAdapter.prototype.prepareContext = function prepareContext(data) {
 		var sampleRate = data.readUint16();
 		sound.init(sampleRate, (left, right, bufferSize) => this.fillSoundBuffer(left, right, bufferSize));
@@ -44,28 +45,31 @@ include('/lib/ge/sound.js');
         var sequence = channel.sequence;
         var cursor = channel.cursor;
 		switch (command) {
-			case psynth.SynthAdapter.Commands.SETNOTE:
+			case psynth.SynthAdapter.Commands.SetNote:
 				device.setNote(sequence.getUint8(cursor++), sequence.getUint8(cursor++)/256);
 				break;
-			case psynth.SynthAdapter.Commands.SETUINT8:
+			case psynth.SynthAdapter.Commands.SetUint8:
 				device.setControl(sequence.getUint8(cursor++), sequence.getUint8(cursor++));
 				break;
-			case psynth.SynthAdapter.Commands.SETFLOAT8:
+			case psynth.SynthAdapter.Commands.SetFloat8:
 				device.setControl(sequence.getUint8(cursor++), sequence.getUint8(cursor++)/256);
 				break;
 			// case psynth.SynthAdapter.Commands.SETCTRL16:
 			// 	device.setControl(sequence.getUint8(cursor++), sequence.getUint16(cursor));
 			// 	cursor += 2;
 			// 	break;
-			case psynth.SynthAdapter.Commands.SETFLOAT:
+			case psynth.SynthAdapter.Commands.SetFloat:
 				device.setControl(sequence.getUint8(cursor++), sequence.getFloat32(cursor));
 				cursor += 4;
 				break;
-			case psynth.SynthAdapter.Commands.SETPROGRAM:
+			case psynth.SynthAdapter.Commands.SetProgram:
 				device.setProgram(sequence.getUint8(cursor++));
 				break;
 		}
 		return cursor;
+	};
+	SynthAdapter.prototype.updateRefreshRate = function updateRefreshRate(fps) {
+		this.samplePerFrame = sound.smpRate/fps;
 	};
 
 	SynthAdapter.getInfo = () => SynthAdapter.info;
@@ -73,13 +77,13 @@ include('/lib/ge/sound.js');
 	SynthAdapter.info = { name: 'SynthAdapter', id: 1 };
 
 	SynthAdapter.Commands = {
-		SETNOTE: 2,
-		SETUINT8: 3,
-		SETFLOAT8: 4,
+		SetNote: 2,
+		SetUint8: 3,
+		SetFloat8: 4,
 		// SETUINT16 = 4;
-		SETFLOAT: 5,
-		SETVELOCITY: 6,
-		SETPROGRAM: 7
+		SetFloat: 5,
+		SetVelocity: 6,
+		SetProgram: 7
 	};
 	
 	SynthAdapter.Device = {

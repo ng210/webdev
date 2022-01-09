@@ -76,7 +76,6 @@ include('./iadapter-ext.js');
 
     // Player methods
     Player.prototype.addAdapter = function addAdapter(adapterType, datablockId) {
-debugger
         var adapter = Reflect.construct(adapterType, [this]);
         if (!this.adapters.find(x => x.adapter.getInfo().id == adapter.getInfo().id)) {
             this.adapters.push({ adapter:adapter, datablock:datablockId });
@@ -222,7 +221,6 @@ debugger
         return player;
     };
 
-    //Player.getInfo = () => Player.info;
     Player.info = { name: 'PlayerAdapter', id: 0 };
     
     Player.Device = {
