@@ -1,5 +1,8 @@
-require('service/nodejs.js');
-include('/lib/utils/schema.js');
+console.log('NODE_PATH='+process.env.NODE_PATH)
+console.log('jslib='+process.env.jslib)
+
+require('nodejs/nodejs.js');
+include('/lib/type/schema.js');
 
 function processArguments() {
     var args = {};
@@ -24,47 +27,41 @@ async function main() {
     console.log('\n\n * Schema validation\n');
     var args = processArguments();
 
-    var schemaInfo = {
-        schemaDefinition: null,
-        schema: null,
-        validate: ''
-    };
     if (args.schema) {
-        if (args.input && args.type) {
-            //var inputUrl = new Url(args.input);
-            appUrl = new Url(args.input);
-            var ix = appUrl.path.lastIndexOf('/');
-            if (ix == -1) ix = appUrl.path.lastIndexOf('\\');
-            ix++;
-            var inputName = appUrl.path.substring(ix);
-            appUrl.path = appUrl.path.slice(0, ix);
-            // validate type of definition against schema
-            schemaInfo.schemaDefinition = args.schema;
-            schemaInfo.validate = args.type;
-            var errors = [];
-            console.log(`Validate '${args.type}' from '${inputName}' against schema`);
-            var schema = await Schema.load(schemaInfo, args.input, errors);
-            if (schema && errors.length == 0) {
-                console.log('* Validation successful!');
+        try {
+            if (args.input) {
+                appUrl = new Url(args.input);
+                var ix = appUrl.path.lastIndexOf('/');
+                if (ix == -1) ix = appUrl.path.lastIndexOf('\\');
+                ix++;
+                var inputName = appUrl.path.substring(ix);
+                appUrl.path = appUrl.path.slice(0, ix);
+                // validate type of definition against schema
+                var schema = await Schema.load(args.schema);
+                if (!schema) throw new Error(`Could not load '${args.schema}'!`);
+                var type = arts.type || schema.types.getAt(0);
+                var res = await load(args.input);
+                if (res.error) throw res.error;
+                console.log(`Validate '${type}' from '${inputName}' against schema`);
+                var errors = schema.validate(res.data, type);
+                if (errors.length == 0) {
+                    console.log('* Validation successful!');
+                } else {
+                    for (var i=0; i<errors.length; i++) {
+                        console.log(errors[i]);
+                    }
+                }
                 // print types
                 console.log('Simple Types');
-                for (var i in schema.types) {
-                    if (schema.types.hasOwnProperty(i) && schema.types[i].attributes == undefined && !schema.builtInTypes.includes(schema.types[i].name)) {
-                        console.log('- ' + i);
-                    }
-                }
+                schema.types.iterate( (k,v) => { if (!(v.basicType instanceof ObjectType)) console.log(`- ${k}`); });
                 console.log('Complex Types');
-                for (var i in schema.types) {
-                    if (schema.types.hasOwnProperty(i) && schema.types[i].attributes != undefined && !schema.builtInTypes.includes(schema.types[i].name)) {
-                        console.log('- ' + i);
-                    }
-                }
+                schema.types.iterate( (k,v) => { if (v.basicType instanceof ObjectType) console.log(`- ${k}`); });
             } else {
-                console.log(errors.join('\n'));
-            }
-        } else {
-            // validate schema
+                // validate schema
 
+            }
+        } catch (err) {
+            console.error(err);
         }
     } else {
         // print usage info
