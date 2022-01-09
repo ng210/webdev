@@ -1,6 +1,6 @@
-include('/utils/syntax.js');
-include('grammar.js');
-include('/base/dbg.js');
+include('/lib/utils/syntax.js');
+include('./grammar.js');
+include('/lib/base/dbg.js');
 include('/lib/ui/board.js');
 include('/lib/ui/textbox.js');
 include('/lib/ui/button.js');
