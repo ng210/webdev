@@ -63,7 +63,7 @@ Render visible items and characters, selected and groupped by pass type, materia
 - mesh selection is cached
   - define triggers to discard selection
 
-
+``` javascript
 scene = repository.get(sceneId);
 // scene(passes, models, effects)
 for (model in scene.models)
@@ -85,3 +85,4 @@ for (pass in scene.passes)
       render(object);
     }
 }
+```

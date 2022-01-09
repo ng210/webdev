@@ -29,12 +29,6 @@
         message('Done.');
     }
 
-    function onevent(e) {
-        switch (e.type) {
-            case 'mousemove': break
-        }
-    }
-
     function initWebGL() {
         //if (!window.gl) {
             webGL.init(null, true);
@@ -104,7 +98,7 @@
                 sphere.vertices.push(u, v);
                 // color
                 //sphere.vertices.push(0.5*(x + r), 0.5*(y + r), 0.5*(z + r));
-                sphere.vertices.push(1,1,1);
+                sphere.vertices.push(2,2,2);
                 // normal
                 var normal = new V3(x, y, z).norm();
                 sphere.vertices.push(normal.x, normal.y, normal.z);
@@ -152,7 +146,7 @@
         var errors = res.select(x => x.error instanceof Error).map(x => x.error);
         if (errors.length == 0) {
             // #region create geometry
-            scene.models = [createCube(), createSphere(150)];
+            scene.models = [createCube(), createSphere(180)];
             // combine vertices into 1 buffer
             // combine indices into 1 buffer
             var vb = [];
@@ -180,7 +174,7 @@
             shaders[gl.VERTEX_SHADER] = res[0].data;
             shaders[gl.FRAGMENT_SHADER] = res[1].data;
             scene.shaders = [
-                webGL.createProgram(shaders)
+                webGL.createProgram(shaders, { 'a_position': { 'buffer': 1 }, 'a_texcoord': { 'buffer': 1 }, 'a_color': { 'buffer': 1 }, 'a_normal': { 'buffer': 1 }})
             ];
             scene.textures = [
                 webGL.createTexture(res[2].node), // 0: blank
@@ -293,7 +287,7 @@
     }
 
     function teardown() {
-        webGL.shutDown();   
+        webGL.shutDown();
     }
 
     function setMaterial(mat, shaderArgs) {
@@ -309,86 +303,6 @@
             shaderArgs['u_' + i] = mat.args[i]
         }
         webGL.useProgram(mat.shader, shaderArgs);
-    }
-
-    async function test_simple_render() {
-        // Includes
-        // - geometry
-        // - material: shader and texture
-        // - vertex color
-        // - directional and point lights
-        header('Test simple rendering');
-        var scene = {};
-        var errors = await setup(scene);
-        test('Should setup the scene', ctx => ctx.assert(errors.length, '=', 0));
-        if (errors.length == 0) {
-
-            // #region prepare rendering
-            webGL.useExtension('EXT_color_buffer_float');
-            //gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-            gl.clearColor(0.01, 0.02, 0.04, 1.0);
-            gl.frontFace(gl.CCW);
-            gl.cullFace(gl.BACK);
-            gl.enable(gl.CULL_FACE);
-            gl.enable(gl.DEPTH_TEST);
-            // #endregion
-
-            // set basic uniforms
-            var shaderArgs = {
-                'u_viewProjectionMat4': scene.viewProjection,
-                'u_camera_position': new V3(0.0, 0.0, 0.0)
-            };
-            // set lights
-            for (var i=0; i<scene.lights.length; i++) {
-                var li = scene.lights[i];
-                var lid = li.id;
-                shaderArgs[`u_${lid}_color`] = new Float32Array(li.color);
-                switch (li.type) {
-                    case 'diffuse': shaderArgs[`u_${lid}_direction`] = li.direction.norm(); break;
-                    case 'point': shaderArgs[`u_${lid}_position`] = li.position; break;
-                }
-            }
-
-            // setup controls
-            // document.addEventListener('mouseup', onevent);
-            // document.addEventListener('mousedown', onevent);
-            // document.addEventListener('mousemove', onevent);
-            // document.addEventListener('dragging', onevent);
-
-            await animate(
-                time => {
-                    // select model
-                    var model = scene.models[1];
-
-                    // #region update
-                    var rotZ = //time*Math.PI/24000;
-                               -22/180*Math.PI
-                    var rotY = time*Math.PI/12000;
-                    var pos = new V3(0.0, 0.0, -3.5);
-                    var posInv = new V3(0.0).sub(pos);
-                    var modelMat = M44.rotateY(rotY).mul(M44.rotateZ(rotZ)).mul(M44.translate(pos));
-                    var normalMat = M44.translate(posInv).mul(M44.rotateZ(-rotZ)).mul(M44.rotateY(-rotY)).transpose();
-                    // #endregion
-
-                    // set material
-                    setMaterial(scene.materials[3], shaderArgs);
-                    // #region render
-                    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-                    //gl.blendFunc(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA);
-                    scene.shaders[0].setUniform('u_normalMat4', normalMat);
-                    scene.shaders[0].updateUniform('u_normalMat4');
-                    scene.shaders[0].setUniform('u_modelMat4', modelMat);
-                    scene.shaders[0].updateUniform('u_modelMat4');
-                    // render
-                    gl.drawElements(gl.TRIANGLES, model.indexCount, gl.UNSIGNED_SHORT, 2*model.indexOffset);
-                    //setMaterial(scene.materials[0], shaderArgs);
-                    //gl.drawElements(gl.LINES, model.indexCount, gl.UNSIGNED_SHORT, 2*model.indexOffset);
-                }
-            );
-        }
-        for (var i=0; i<errors.length; i++) error(errors[i]);
-        teardown();
     }
 
     async function test_buffer() {
@@ -446,6 +360,7 @@ void main(void) {
     }
 
     async function test_compute_shader_inputs() {
+        header('Test ComputeShader inputs');
         initWebGL();
         webGL.useExtension('EXT_color_buffer_float');
         var imgSize = [32, 32];
@@ -635,11 +550,195 @@ void main(void) {
         cs.destroy();
     }
 
+    async function test_render_cube_flat() {
+        header('Test flat rendering a cube');
+
+        webGL.init(null, true);
+
+        //#region create model and projection matrices
+        var fov = Math.PI*60/180;
+        var aspect = gl.canvas.width/gl.canvas.height;
+        var zNear = 1, zFar = -20;
+        var viewProjectionMat = M44.perspective(fov, aspect, zNear, zFar);
+        // var camera = new V3(0.0, 0.0, 0.0);
+        // var lookAt = new V3(0.0, 0.0, -1.0);
+        //#endregion
+
+        //#region create vbo
+        //   7-+- *----------* 6++-
+        //       /|         /|
+        // 3-++ *-+--------* | 2+++
+        //      | |        | |
+        //      | |        | |
+        // 4--- | *--------+-* 5+--
+        //      |/         |/
+        // 0--+ *----------* 1+-+
+
+        var model = {
+            vertices: [
+                -1,-1, 1,   1,-1, 1,   1, 1, 1,  -1, 1, 1,
+                -1,-1,-1,   1,-1,-1,   1, 1,-1,  -1, 1,-1
+            ], 
+            vertexCount: 0,
+            indices: [
+                0,1,2, 2,3,0,
+                1,5,6, 6,2,1,
+                5,4,7, 7,6,5,
+                4,0,3, 3,7,4,
+                3,2,6, 6,7,3,
+                4,5,1, 1,0,4
+            ],
+            indexCount: 0,
+        };
+        model.vertexCount = model.vertices.length;
+        model.indexCount = model.indices.length;
+        var vbo = webGL.createBuffer(gl.ARRAY_BUFFER, new Float32Array(model.vertices), gl.STATIC_DRAW);
+        var ibo = webGL.createBuffer(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(model.indices), gl.STATIC_DRAW);
+        //#endregion
+
+        //#region create shader program
+        var shaders = {};
+        shaders[gl.VERTEX_SHADER] = 
+           `#version 300 es
+
+           uniform mat4 u_viewProjectionMat4;
+           uniform mat4 u_modelMat4;
+           
+           in vec3 a_position;
+           out vec3 v_color;
+
+           vec3 colors[8] = vec3[] (
+                vec3(0.5, 0.5, 0.5), vec3(0.5, 0.5, 1.0), vec3(0.5, 1.0, 0.5), vec3(0.5, 1.0, 1.0),
+                vec3(1.0, 0.5, 0.5), vec3(1.0, 0.5, 1.0), vec3(1.0, 1.0, 0.5), vec3(1.0, 1.0, 1.0)
+           );
+
+           mat4 m;
+           
+           void main(void) {
+               v_color = colors[gl_VertexID];
+               gl_Position = u_viewProjectionMat4 * u_modelMat4 * vec4(a_position.xyz, 1.);
+           }`;
+        shaders[gl.FRAGMENT_SHADER] =
+           `#version 300 es
+            precision highp float;
+            in vec3 v_color;
+            out vec4 color;
+    
+            void main(void) {
+                color = vec4(v_color, 1.);
+            }`;
+        var prg = webGL.createProgram(shaders, { 'a_position': { 'buffer': 1 }});
+        //#endregion
+
+        // render
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+        gl.clearColor(0.08, 0.08, 0.14, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.frontFace(gl.CCW);
+        gl.cullFace(gl.BACK);
+        //gl.enable(gl.CULL_FACE);
+        gl.enable(gl.DEPTH_TEST);
+        webGL.useProgram(prg, {
+            'u_viewProjectionMat4': viewProjectionMat
+        });
+
+        await animate(
+            time => {
+                var rotZ = time*Math.PI/8000;
+                var rotY = time*Math.PI/6000;
+                var pos = new V3(0.0, 0.0, -3.5);
+                var modelMat = M44.rotateY(rotY).mul(M44.rotateZ(rotZ)).mul(M44.translate(pos));
+                prg.setUniform('u_modelMat4', modelMat);
+                prg.updateUniform('u_modelMat4');
+		        gl.drawElements(gl.TRIANGLES, model.indexCount, gl.UNSIGNED_SHORT, 0);
+            }
+        );
+
+        webGL.shutDown();
+    }
+
+    async function test_render_geoscope() {
+        // Includes
+        // - geometry
+        // - material: shader and texture
+        // - vertex color
+        // - directional and point lights
+        header('Test simple rendering');
+        var scene = {};
+        var errors = await setup(scene);
+        test('Should setup the scene', ctx => ctx.assert(errors.length, '=', 0));
+        if (errors.length == 0) {
+
+            // #region prepare rendering
+            webGL.useExtension('EXT_color_buffer_float');
+            //gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+            gl.clearColor(0.01, 0.02, 0.04, 1.0);
+            gl.frontFace(gl.CCW);
+            gl.cullFace(gl.BACK);
+            gl.enable(gl.CULL_FACE);
+            gl.enable(gl.DEPTH_TEST);
+            gl.bindBuffer(gl.ARRAY_BUFFER, scene.vbo.ref);
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, scene.ibo.ref);
+            // #endregion
+
+            // set basic uniforms
+            var shaderArgs = {
+                'u_viewProjectionMat4': scene.viewProjection,
+                'u_camera_position': new V3(0.0, 0.0, 0.0)
+            };
+            // set lights
+            for (var i=0; i<scene.lights.length; i++) {
+                var li = scene.lights[i];
+                var lid = li.id;
+                shaderArgs[`u_${lid}_color`] = new Float32Array(li.color);
+                switch (li.type) {
+                    case 'diffuse': shaderArgs[`u_${lid}_direction`] = li.direction.norm(); break;
+                    case 'point': shaderArgs[`u_${lid}_position`] = li.position; break;
+                }
+            }
+
+            await animate(
+                time => {
+                    // select model
+                    var model = scene.models[1];
+
+                    // #region update
+                    var rotZ = //time*Math.PI/24000;
+                               -22/180*Math.PI
+                    var rotY = time*Math.PI/12000;
+                    var pos = new V3(0.0, 0.0, -3.5);
+                    var posInv = new V3(0.0).sub(pos);
+                    var modelMat = M44.rotateY(rotY).mul(M44.rotateZ(rotZ)).mul(M44.translate(pos).mul(M44.scale([3.0, 3.0, 2.0])));
+                    var normalMat = M44.translate(posInv).mul(M44.rotateZ(-rotZ)).mul(M44.rotateY(-rotY)).transpose();
+                    // #endregion
+
+                    // set material
+                    setMaterial(scene.materials[3], shaderArgs);
+                    // #region render
+                    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+                    //gl.blendFunc(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA);
+                    scene.shaders[0].setUniform('u_normalMat4', normalMat);
+                    scene.shaders[0].updateUniform('u_normalMat4');
+                    scene.shaders[0].setUniform('u_modelMat4', modelMat);
+                    scene.shaders[0].updateUniform('u_modelMat4');
+                    // render
+                    gl.drawElements(gl.TRIANGLES, model.indexCount, gl.UNSIGNED_SHORT, 2*model.indexOffset);
+                    //setMaterial(scene.materials[0], shaderArgs);
+                    //gl.drawElements(gl.LINES, model.indexCount, gl.UNSIGNED_SHORT, 2*model.indexOffset);
+                }
+            );
+        }
+        for (var i=0; i<errors.length; i++) error(errors[i]);
+        teardown();
+    }
+
     var tests = () => [
         test_compute_shader_inputs,
         test_buffer,
         test_image_processing,
-        test_simple_render        
+        test_render_cube_flat,
+        test_render_geoscope
     ];
 
     publish(tests, 'WebGL tests');

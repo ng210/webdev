@@ -61,7 +61,7 @@ void main(void) {
     vec3 lampColor = pointLight(u_lamp1_position, u_lamp1_color, normal, cameraDirection);
     lampColor += pointLight(u_lamp2_position, u_lamp2_color, normal, cameraDirection);
 
-    vec3 col = /*v_color */ u_color * (ambColor + clamp(sunDiffuse + lampColor, 0., 1.));
+    vec3 col = v_color * u_color * (ambColor + clamp(sunDiffuse + lampColor, 0., 1.));
 
     fragColor = vec4(col, 1.) * texColor;
 }

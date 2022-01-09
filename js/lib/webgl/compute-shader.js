@@ -39,6 +39,7 @@ include('webgl.js');
         gl.viewport(0, 0, this.output.width, this.output.height);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
         webGL.useProgram(this.prg, constants);
+        gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.input.texture);
         if (typeof fill === 'function') {
             var size = this.input.type.length;
