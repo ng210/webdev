@@ -1,4 +1,5 @@
 (function() {
+    include('/lib/data/dictionary.js');
     include('/lib/data/graph.js');
 
     var rs = r => `${r.priority} ${r.input}(${r.in.join('.')})=>${r.output}(${r.out})`
@@ -38,8 +39,8 @@
     // 4. Resolution
     // The resolve method of the Expression accepts a 'context' argument and follows the steps below:
     // - tries to apply the rules on the input starting with the rule of the highest priority and with the longest input sequence
-    // - applying a rule means executing the rule's action if defined and merging the input nodes if possible
-    //    - the merge works on 2 and only 2 nodes
+    // - applying a rule means executing the rule's action if defined and eventually merging the input nodes if the left side of the rule contains more symbols than the right side.
+    //    - if the left side contains more than 2 symbols the node with the symbol missing on the right side is merge into the leftmost node
     //    - a literal node is always merged into the other node
     //    - a node without action is never merged into the other node, as such nodes should represent syntax elements only
     // - the merge adds a node to another node as a child node defining an edge in the tree that represents the dependency of the 2 nodes
@@ -63,12 +64,13 @@
         var value = null;
         if (this.vertex.edges.length > 0) {
             value = [];
-            if (this.term != undefined) value.push(this.term);
+            this.value != undefined ? value.push(this.value) : value.push(this.term);
             for (var i=0; i<this.vertex.edges.length; i++) {
-                if (this.vertex.edges[i].to.data.term != undefined) value.push(this.vertex.edges[i].to.data.term);
+                var n = this.vertex.edges[i].to.data;
+                n.value != undefined ? value.push(n.value) : value.push(n.term);
             }
         } else {
-            value = this.term;
+            value = this.value != undefined ? this.value : this.term;
         }
         return value;
     };
@@ -79,69 +81,165 @@
         this.expression = '';
         this.lastNode = null;
     }
+    Expression.prototype.createInOutMap = function createInOutMap(ruleIn, ruleOut, missing) {
+        var inOutMap = new Dictionary();
+        var arr = Array.from(ruleOut);
+        for (var i=0; i<ruleIn.length; i++) {
+            var found = false;
+            for (var j = 0; j<arr.length; j++) {
+                if (ruleIn[i] == arr[j] && arr[j] != this.syntax.literalCode) {
+                    inOutMap.put(i, j);
+                    arr[j] = null;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                missing.push(i);
+            }
+        }
+        return inOutMap;
+    };
+    Expression.prototype.mergeNodes = function mergeNodes(nodes, inOutMap) {
+        if (this.syntax.debug > 2) console.log('merge in: ' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
+        var parents = nodes.map(() => 0);
+        for (var i=0; i<nodes.length; i++) {
+            var node = nodes[i];
+            // candidate for parent:
+            // - appears on both sides of the rule, strongest rule
+            if (inOutMap.has(i)) parents[i] += 10;
+            // - has an edge
+            if (node.edges.length > 0) parents[i]++;
+            // - has an action
+            if (node.data.type.action != null) parents[i]++;
+            // - non-literal node
+            if (node.data.code == this.syntax.literalCode) parents[i] -= 8;
+            // - is a start node
+            if (node.data.type.start) parents[i]++;
+            // - not ignored
+            if (node.data.type.ignore) parents[i] -= 10;
+        }
+        // - leftmost node wins
+        var pi = 0;
+        for (var i=1; i<parents.length; i++) {
+            if (parents[i] > parents[pi]) pi = i;
+        }
+        var parent = nodes[pi];
+        var remains = [];
+        var ci = nodes.length - inOutMap.size;
+        for (var i=0; i<nodes.length; i++) {
+            if (!nodes[i].data.type.ignore) {
+                if (i == pi || inOutMap.has(i)) {
+                    remains.push(nodes[i]);
+                    continue;
+                }
+                this.tree.addEdge(parent, nodes[i]);
+                nodes[i] = null;
+            }
+            if (ci-- == 0) break;
+        }
+        if (this.syntax.debug > 2) console.log('merge out: ' + remains.map(n => `{${this.nodeToString(n)}}`).join('  '));
+        return remains;
+    };
+    Expression.prototype.shuffleNodes = function shuffleNodes(nodes, inOutMap) {
+        var arr = new Array(nodes.length);
+        for (var j=0; j<nodes.length; j++) {
+            var ix = inOutMap.has(j) ? inOutMap.get(j) : j;
+            arr[ix] = nodes[j];
+        }
+        return arr;
+    };
+    Expression.prototype.applyRule = function applyRule(rule, nodes, n, context) {
+        // match found, replace input by output
+        var i = rule.in.length;
+        if (this.syntax.debug > 0) console.log(`match: ${rs(rule)}`);
+        // extract rule's input
+        var inNodes = nodes.splice(n, i);
+        // get output
+        var ruleOut = rule.out;
+        if (typeof rule.action === 'function') {
+            var outNodes = rule.action.apply(context, inNodes);
+            if (outNodes != null) {
+                ruleOut = outNodes.map(x => x.data.type.symbol);
+            }
+        }
+
+        if (ruleOut) {
+            if (rule.in.length < ruleOut.length) {
+                throw new Error('Invalid rule: output cannot be longer than input!');
+            }
+            var missing = [];
+            var outNodes = inNodes;
+            // get mapping between in-out symbols and missing symbols
+            var inOutMap = this.createInOutMap(rule.in, ruleOut, missing);
+            if (rule.in.length > ruleOut.length) {
+                // merge nodes
+                outNodes = this.mergeNodes(inNodes, inOutMap);
+            }
+
+            // shuffle nodes
+            if (inOutMap.size > 0) {
+                outNodes = this.shuffleNodes(outNodes, inOutMap);
+            }
+
+            // relabel nodes
+            for (var i=0; i<ruleOut.length; i++) {
+                var code = ruleOut[i];
+                outNodes[i].data.code = code;
+            }
+            // re-insert the processed nodes
+            nodes.splice(n, 0, ...outNodes);
+            if (nodes[0]) {
+                this.lastNode = nodes[0];
+            }
+        }
+        //if (this.syntax.debug > 1) console.log(`result: ${nodes.map(x => `${this.syntax.symbols.getAt(x.data.code).symbol}['${x.data.term.replace(/[\n\r]/g, '\\n')}']`)}`);
+        if (this.syntax.debug > 1) console.log('result: ' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
+    };
+    Expression.prototype.matchRule = function matchRule(rule, nodes, context) {
+        // apply the rule on the input as many times as possible
+        var hasMatch = false;
+        for (var n=0; n<nodes.length;) {
+            var i = 0;
+            // rule's input is shorter than the rest of the input
+            if (rule.in.length <= nodes.length - n) {
+                while (i<rule.in.length) {
+                    if (rule.in[i] != nodes[n+i].data.code && rule.in[i] != this.syntax.wildcardCode) break;
+                    i++;
+                }
+                if (i == rule.in.length) {
+                    // apply the matching rule
+                    this.applyRule(rule, nodes, n, context);
+                    hasMatch = true;
+                    break;
+                } else {
+                    // step to next symbol of input
+                    n++;
+                }
+            } else {
+                // rule's input too long, skip to next rule
+                break;
+            }
+        }
+        return hasMatch;
+    };
     Expression.prototype.resolve = function(context) {
         this.lastNode = null;
         var nodes = Array.from(this.tree.vertices);
-        if (this.syntax.debug > 1) console.log(`input: ${nodes.map(x => `${this.syntax.symbols[x.data.code]}['${x.data.term.replace(/[\n\r]/g, '\\n')}']`)}`);
+        if (this.syntax.debug > 1) console.log(`input: ${nodes.map(x => `${x.data.type.symbol}['${x.data.term.replace(/[\n\r]/g, '\\n')}']`)}`);
         // try to apply rules as long as there are nodes
         while (nodes.length > 0) {
-            for (var r=0; r<this.syntax.ruleMap.length;) {
-                var hasMatch = false;
+            var r = 0;
+            while (r<this.syntax.ruleMap.length) {
                 var rule = this.syntax.ruleMap[r];
-                // apply the rule on the input as many times as possible
-                for (var n=0; n<nodes.length;) {
-                    var i = 0;
-                    // rule's input is shorter than the rest of the input
-                    if (rule.in.length <= nodes.length - n) {
-                        //while (i<rule.in.length && rule.in[i] == nodes[n+i].data.code) i++;
-                        while (i<rule.in.length) {
-                            if (rule.in[i] != nodes[n+i].data.code && rule.in[i] != this.syntax.wildcardCode) break;
-                            i++;
-                        }
-                    } else {
-                        // skip to next rule (iteration with r)
-                        break;
-                    }
-                    if (i == rule.in.length) {
-                        // match found, replace input by output
-                        if (this.syntax.debug > 0) console.log(`match: ${rs(rule)}`);
-                        // extract rule's input
-                        var args = nodes.slice(n, n+i);
-                        var output = null;
-                        if (typeof rule.action === 'function') {
-                            // rule has an action, it can return the output
-                            output = rule.action.apply(context, args);
-                        }
-                        if (rule.out && output) {
-                            // overwrite the output code returned by the rule's action with the output defined be the rule
-                            output.data.code = rule.out;
-                            // replace the input by the output
-                            nodes.splice(n, i, output);
-                        } else if (rule.out && !output) {
-                            // merge nodes: parent node depends on child node
-                            // parent node returned as output
-                            output = this.mergeNodes(args);
-                            output.data.code = rule.out;
-                            // replace the input by the output
-                            nodes.splice(n, i, output);
-                        } else if (!rule.out && !output) {
-                            // remove the input (no output)
-                            nodes.splice(n, i);
-                        } else if (!rule.out && output) {
-                            // replace the input by the output returned by the rule's action
-                            nodes.splice(n, i, output);
-                        } else {
-                            throw new Error('Error!');
-                        }
-                        if (output) {
-                            this.lastNode = output;
-                        }
-                        hasMatch = true;
-                        if (this.syntax.debug > 1) console.log(`result: ${nodes.map(x => `${this.syntax.symbols[x.data.code]}['${x.data.term.replace(/[\n\r]/g, '\\n')}']`)}`);
-                        break;
-                    } else n++;
+                if (this.matchRule(rule, nodes, context)) {
+                    // has a match, start over
+                    // TODO: sort rules by prio and input length
+                    r = 0;
+                } else {
+                    // has no match, try the next rule
+                    r++;
                 }
-                r = hasMatch ? 0 : r + 1;
             }
             break;
         }
@@ -159,58 +257,9 @@
         });
         return this.lastNode.data;  //.value;
     };
-    Expression.prototype.mergeNodes = function(nodes) {
-        if (this.syntax.debug > 2) console.log('merge in: ' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
-        // merge b into a if
-        // - a is the start node
-        // - a has an action attribute or has an edge
-        // - b is a literal
-        // - b has an action attribute or has an edge
-        var aix = 0;
-        var bix = 0;
-        if (nodes.length == 2) {
-            bix = nodes.findIndex(x => x.data.type.ignore == true);
-            if (bix == -1) {
-                aix = nodes.findIndex(x => x.data.type.start === true);
-                if (aix == -1) {
-                    // b is a literal
-                    var bix = nodes.findIndex(x => x.data.code == this.syntax.literalCode);
-                    if (bix == -1) {
-                        var an = nodes[0].data.type.action != null || nodes[0].edges.length > 0;
-                        var bn = nodes[1].data.type.action != null || nodes[1].edges.length > 0;
-                    //  an  bn => 0  1
-                    //  an !bn => 0  1
-                    // !an  bn => 1  0
-                    // !an !bn => 0  0
-                        aix = !an && bn ? 1 : 0;
-                        bix = an ? 1 : 0;
-                    } else {
-                        aix = 1 - bix;
-                    }
-                } else {
-                    bix = 1 - aix;
-                }
-                if (this.syntax.debug > 2) console.log(`aix=${aix}, bix=${bix}`);
-                if (aix != bix) {
-                    this.tree.addEdge(nodes[aix], nodes[bix]);
-                } else bix = 1 - aix;
-            } else {
-                aix = 1 - bix;
-                if (nodes[aix].data.type.ignore == true) {
-                    aix = 0;
-                }
-            }
-        } else {
-            if (nodes.length > 2) {
-                throw new Error('More than 2 nodes passed.');
-            }
-        }
-        if (this.syntax.debug > 2) console.log('merge out: ' + this.nodeToString(nodes[aix]));
-        return nodes[aix];
-    };
     Expression.prototype.nodeToString = function(node, simple) {
         var term = node.data.term.replace(/[\n\r]/g, '\\n');
-        var text = `#${node.id}:'${term}'(${this.syntax.symbols[node.data.code]}:${node.data.type.symbol})`;
+        var text = `#${node.id}:'${term}'(${this.syntax.symbols.getAt(node.data.code).symbol}:${node.data.type.symbol})`;
         if (!simple) {
             text += `${node.edges.map( x => ` [${this.nodeToString(x.to, true)}]`)}`;
         }
@@ -225,60 +274,80 @@
         this.debug = debug;
         this.grammar = grammar;
 
-        // add the literal symbol for non-keyword terms
-        this.literal = '_L';
-        this.literalType = { 'symbol': 'L'}
-        this.grammar.prototypes[this.literal] = this.literalType;
-        // add the wildcard symbol
-        this.wildcard = '_*';
-        this.wildcardType = { 'symbol': '*'}
-        this.grammar.prototypes[this.wildcard] = this.wildcardType;
+        if (grammar) {
+            // add the literal symbol for non-keyword terms
+            this.literal = '_L';
+            this.literalType = { 'symbol': 'L'}
+            this.grammar.prototypes[this.literal] = this.literalType;
+            // add the wildcard symbol
+            this.wildcard = '_*';
+            this.wildcardType = { 'symbol': '*'}
+            this.grammar.prototypes[this.wildcard] = this.wildcardType;
 
-        this.startTerm = null;
+            this.startTerm = null;
 
-        // build list of symbols
-        this.symbols = [];
-        for (var term in this.grammar.prototypes) {
-            var type = this.grammar.prototypes[term]
-            var symbol = type.symbol;
-            if (this.symbols.indexOf(symbol) == -1) {
-                this.symbols.push(symbol);
+            // build list of symbols
+            this.symbols = new Dictionary();
+
+            for (var term in this.grammar.prototypes) {
+                var type = this.grammar.prototypes[term]
+                var symbol = type.symbol;
+                if (!this.symbols.has(symbol)) {
+                    this.symbols.set(symbol, type);
+                }
+                if (type.start) this.startTerm = term;
             }
-            if (type.start) this.startTerm = term;
-        }
-        this.literalCode = this.symbols.length - 2;
-        this.wildcardCode = this.symbols.length - 1;
+            this.literalCode = this.symbols.size - 2;
+            this.wildcardCode = this.symbols.size - 1;
 
-        //for (var i=0; i<this.symbols.length; i++)//console.log(`${i} => '${this.symbols[i]}'`);
-
-        // sort rules by priority and input
-        this.ruleMap = this.grammar.rules.sort( (a,b) => 1000*(b.priority - a.priority) + b.input.localeCompare(a.input) );
-
-        // transform rules to use indices in the symbols array instead of symbols
-        for (var rk=0; rk<this.ruleMap.length; rk++) {
-            var rule = this.ruleMap[rk];
-            var key = [];
-            for (var i=0; i<rule.input.length; ) {
-                var candidate = -1, ci = 0;
-                for (var ni=0; ni<this.symbols.length; ni++) {
-                    var symbol = this.symbols[ni];
-                    if (symbol.length > 0 && rule.input.substring(i).startsWith(symbol) && symbol.length > ci) {
-                        candidate = ni;
-                        ci = symbol.length;
+            // extract symbols from rules' outputs
+            for (var ri=0; ri<this.grammar.rules.length; ri++) {
+                var rule = this.grammar.rules[ri];
+                if (rule.output != null) {
+                    var symbols = rule.output.split(' ');
+                    for (var i=0; i<symbols.length; i++) {
+                        if (!this.symbols.has(symbols[i])) {
+                            this.symbols.set(symbols[i], {'symbol':symbols[i]});
+                        }
                     }
-                 }
-                 if (candidate > -1) {
-                     key.push(candidate);
-                     i += ci;
-                 } else {
-                    throw new Error(`Could not transform symbol '${rule.input.substring(i)}'!`);
                 }
             }
-            var value = this.symbols.indexOf(rule.output);
-            rule.in = key;
-            rule.out = value != -1 ? value : null;
+
+            // sort rules by priority and input length
+            this.ruleMap = this.grammar.rules.sort( (a,b) => 1000*(b.priority - a.priority) + b.input.length - a.input.length );
+
+            // transform rules to use indices in the symbols array instead of symbols
+            for (var rk=0; rk<this.ruleMap.length; rk++) {
+                var rule = this.ruleMap[rk];
+                var symbols = rule.input.split(' ');
+                rule.in = [];
+                for (var i=0; i<symbols.length; i++) {
+                    var ix = this.symbols.indexOf(symbols[i]);
+                    if (ix != -1) {
+                        rule.in.push(ix);
+                    } else {
+                        throw new Error(`Could not transform symbol '${symbols[i]}'!`);
+                    }
+                }
+
+                rule.out = null;
+                if (rule.output != null) {
+                    symbols = rule.output.split(' ');
+                    if (symbols.length > 0) {
+                        rule.out = [];
+                        for (var i=0; i<symbols.length; i++) {
+                            var ix = this.symbols.indexOf(symbols[i]);
+                            if (ix != -1) {
+                                rule.out.push(ix);
+                            } else {
+                                throw new Error(`Could not transform symbol '${symbols[i]}'!`);
+                            }
+                        }
+                    }
+                }
+            }
+            //console.log(this.ruleMap.map(r => rs(r)).join('\n'));
         }
-        //console.log(this.ruleMap.map(r => rs(r)).join('\n'));
     };
 
     Syntax.prototype.createExpression = function createExpression() {

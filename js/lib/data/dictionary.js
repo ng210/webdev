@@ -24,7 +24,7 @@
 			get() { return this._keys.length }
 		}
 	});
-	Dictionary.prototype.add = Dictionary.prototype.set = function add(key, value) {
+	Dictionary.prototype.add = Dictionary.prototype.put = Dictionary.prototype.set = function add(key, value) {
 		if (this._map[key] == undefined) {
 			this._keys.push(key);
 		}
@@ -66,6 +66,16 @@
 			values = values.map(callback);
 		}
 		return values;
+	};
+
+	Dictionary.fromObject = function fromObject(obj, includeAll) {
+		var dict = new Dictionary();
+		for (var i in obj) {
+			if (includeAll || obj.hasOwnProperty(i)) {
+				dict.put(i, obj[i]);
+			}
+		}
+		return dict;
 	};
 
 	publish(Dictionary, 'Dictionary');
