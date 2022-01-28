@@ -10,7 +10,8 @@ include('./iadapter.js');
 
     // data handling extensions
     IAdapterExt.prototype.makeCommand = function makeCommand(command) { throw new Error('Not implemented!'); };
-    IAdapterExt.prototype.getSymbol = function getSymbol(name) { throw new Error('Not implemented!'); };
+    IAdapterExt.prototype.getSymbol = function getSymbol(name) { return this.getSymbols()[name]; };
+    IAdapterExt.prototype.getSymbols = function getSymbols() { throw new Error('Not implemented!'); };
     // //getCommandSize: function(command, args) { throw new Error('Not implemented!'); },
     // IAdapterExt.prototype.toDataSeries = function toDataSeries(sequence, getSeriesId, convertCommand) {
     //     var series = {};

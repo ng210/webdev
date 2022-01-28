@@ -12,13 +12,7 @@ var grammar = {
         '(':    { 'symbol': 'B1', 'ignore':true },
         ')':    { 'symbol': 'B2', 'ignore':true },
         ',':    { 'symbol': 'C',  'ignore':true },
-        // //states
-        // '__A1': { 'symbol': 'A1' },
-        // '__A2': { 'symbol': 'A2' },
-        // '__M1': { 'symbol': 'M1' },
-        // '__M2': { 'symbol': 'M2' },
-        // '__F1': { 'symbol': 'F1' },
-        // '__F2': { 'symbol': 'F2' }
+        //states
     },
     'rules': [
         { input:'F B1',     output:'F1', priority: 100,  action: null },

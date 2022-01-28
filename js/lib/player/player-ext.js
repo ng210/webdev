@@ -3,13 +3,13 @@ include('/lib/player/iadapter-ext.js');
 include('/lib/player/player.js');
 include('/lib/utils/syntax.js');
 include('/lib/type/schema.js');
-include('/lib/player/grammar.js');
+include('/lib/player/script-processor.js');
 // include('/lib/data/dataseries.js');
 // include('/lib/data/stream.js');
 // include('/lib/synth/synth-adapter.js');
 // include('/lib/glui/glui-lib.js');
 
-(function() {
+(async function() {
     // function PlayerExt() {
     //     PlayerExt.base.constructor.call(this);
     //     this.schema = null;
@@ -45,10 +45,10 @@ include('/lib/player/grammar.js');
                 }
                 break;
             case Ps.Player.Commands.EOF:
-                stream.writeUint8(Ps.Player.Commands.EOF);
+                //stream.writeUint8(Ps.Player.Commands.EOF);
                 break;
             case Ps.Player.Commands.EOS:
-                stream.writeUint8(Ps.Player.Commands.EOS);
+                //stream.writeUint8(Ps.Player.Commands.EOS);
                 break;
         }
 
@@ -57,137 +57,120 @@ include('/lib/player/grammar.js');
     };
 
     Ps.Player.prototype.getSymbol = function getSymbol(name) {
-        var types = this.schema.types;
-        return {
-            'Player': { 'type':types.get('uint8'), 'value': Ps.Player.Device.PLAYER },
-            'Channel': { 'type':types.get('uint8'), 'value': Ps.Player.Device.CHANNEL },
-            'EOF': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.EOF },
-            'EOS': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.EOS },
-            'Assign': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.Assign },
-            'Tempo': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.Tempo }
-        }[name];
+        return Ps.Player.symbols[name];
     };
 
-    Ps.Player.prototype.importScript = function(script) {
+    Ps.Player.prototype.getSymbols = () => Ps.Player.symbols;
+
+    Ps.Player.prototype.importScript = async function(script) {
         var errors = [];
-        var syntax = new Syntax(grammar, 2);
-        var context = {
-            lineNumber: 1,
-            parseValue: function parseValue(term) {
-                var types = this.player.schema.types;
-                var data = {
-                    'type': types.get('string'),
-                    'value': null
-                };
-                var start = 0, length = term.length;
-                // detect type from term
-                // 1. "string" => string
-                if (term.startsWith('"')) {
-                    data.value = types.get('string').parse(term);
-                } else {
-                    // 1.3          => float
-                    // 23           => uint8
-                    // b:213        => uint8 (byte)
-                    // w:2313       => uint16 (word)
-                    // d:1073741824 => uint32 (dword)
-                    // f:1.3        => float
-                    // <symbol>     => lookup symbol
-                    start = 2;
-                    switch (term.charAt(0)) {
-                        case 'b': data.type = types.get('uint8'); break;
-                        case 'w': data.type = types.get('uint16'); break;
-                        case 'd': data.type = types.get('uint32'); break;
-                        case 'f': data.type = types.get('float'); break;
-                        default:
-                            data.value = Number(term);
-                            if (!isNaN(data.value)) {
-                                data.type = term.indexOf('.') == -1 ? types.get('uint8') : types.get('float');
-                            } else {
-                                // look up term
-                                var s = this.symbols[term];
-                                if (!s) {
-                                    var tokens = term.split('.');
-                                    // check adapters
-                                    var def = this.adapters.find(x => x.adapter.getInfo().name == tokens[0]);
-                                    data = def.adapter.getSymbol(tokens[1]);
-                                } else {
-                                    data.type = s.type;
-                                    data.value = s.value;
-                                }
-                            }
-                            break;
-                    }
-                }
-                if (data.value == null) {
-                    data.value = data.type.parse(term.substr(start, length));
-                }
-                data.value = data.value.valueOf();
-                
-                return data;
-            },
-            createStream: function createStream(data) {
-                var stream = new Stream(4096);
-                for (var i=0; i<data.length; i++) {
-                    var v = this.parseValue(data[i]);
-                    switch (v.type.name) {
-                        case 'string': stream.writeString(v.value); break;
-                        case 'uint8': stream.writeUint8(v.value); break;
-                        case 'uint16': stream.writeUint16(v.value); break;
-                        case 'uint32': stream.writeUint32(v.value); break;
-                        case 'float': stream.writeFloat32(v.value); break;
-                    }
-                }
-                return new Stream(stream.length).writeStream(stream, 0, stream.length);
-            },
-            addLineNumber: function addLineNumber(n) {
-                n.lineNumber = this.lineNumber++;
-                return n;
-            },
-            addAdapter: function addAdapter(type, dbRef) {
-                type = this.parseValue(type).value;
-                var adapter = null;
-                for (var i in Ps.Player.adapterTypes) {
-                    var ad = Reflect.construct(Ps.Player.adapterTypes[i], [this.player]);
-                    if (ad.getInfo().name == type) { adapter = ad; break; }
-                }                        
-                if (adapter) {
-                    this.adapters.push({ adapter:adapter, datablock:this.parseValue(dbRef).value });
-                }
-                return adapter;
-            },
-            addDatablock: function addDatablock(name, data) {
-                this.datablocks.add(name, this.createStream(data));
-            },
-            addSymbol: function addSymbol(name, value) {
-                this.symbols[name] = this.parseValue(value);
-            },
-            symbols: {},
-            player: this,
-            adapters: [],
-            datablocks: new Dictionary(),
-            sequences: []
-        };
+        var scriptProcessor = new ScriptProcessor();
+        var syntax = new Syntax(scriptProcessor.grammar, 0);
+        scriptProcessor.player = this;
+        // add symbols
+        for (var i in Ps.Player.adapterTypes) {
+            var type = Ps.Player.adapterTypes[i];
+            var symbols = type.adapter.getSymbols();
+            for (var s in symbols) {
+                scriptProcessor.symbols[`${type.name}.${s}`] = symbols[s];
+            }
+        }
         var expr = syntax.parse(script + '\r');
-        expr.resolve(context);
+        expr.resolve(scriptProcessor);
         if (expr.lastNode.data.type.start != true) {
-            var arr = [];
-            expr.tree.DFS(expr.lastNode, null, n => {
-                arr.unshift(n.data.term);
-            });
-            errors.push(`Syntax error around '${arr.join('')}'`);
+            var error = expr.lastNode.data.getValue().slice(0, 3).join(' ');
+            errors.push(`Syntax error around '${error}' in line ${expr.lastNode.lineNumber}`);
         } else {
-            var result = expr.evaluate(context);
+            var result = expr.evaluate(scriptProcessor);
             if (!result.type.start) {
                 errors.push('Could not process input!');
             } else {
-                for (var i=0; i<context.datablocks.size; i++) {
-                    this.datablocks.push(context.datablocks.getAt(i));
+                // add datablock names as symbols
+                for (var i=0; i<scriptProcessor.datablockInfo.length; i++) {
+                    var key = scriptProcessor.parseValue(scriptProcessor.datablockInfo[i].name);
+                    if (key.type.name == 'string') scriptProcessor.symbols[key.value] = scriptProcessor.parseValue(i);
                 }
-                for (var i=0; i<context.adapters.length; i++) {
-                    if (!this.addAdapter(context.adapters[i].adapter.constructor, context.adapters[i].datablock)) {
-                        errors.push(`Unknown adapter '${type}'!`);
+                // add sequence names as symbols
+                for (var i=0; i<scriptProcessor.sequenceInfo.length; i++) {
+                    var key = scriptProcessor.parseValue(scriptProcessor.sequenceInfo[i].name);
+                    if (key.type.name == 'string') scriptProcessor.symbols[key.value] = scriptProcessor.parseValue(i);
+                }
+                // ensure player adapter's datablock is at #0
+                for (var i=0; i<scriptProcessor.adapterInfo.length; i++) {
+                    var ai = scriptProcessor.adapterInfo[i];
+                    var type = scriptProcessor.parseValue(ai.adapter).value;
+                    if (type == this.getInfo().name) {
+                        var dbId = scriptProcessor.datablockInfo.findIndex(x => x.name == ai.datablock);
+                        if (dbId == -1) {
+                            errors.push(`Could not find master data block '${ai.datablock}'!`);
+                            break;
+                        }
+                        for (var j=0; j<dbId; j++) {
+                            var key = scriptProcessor.parseValue(scriptProcessor.datablockInfo[j].name).value;
+                            scriptProcessor.symbols[key].value++;
+                        }
+                        var db = scriptProcessor.datablockInfo.splice(dbId, 1)[0];
+                        scriptProcessor.datablockInfo.unshift(db);
+                        ai.datablock = 0;
+                        break;
                     }
                 }
+
+                // create datablocks
+                this.datablocks = [];
+                for (var i=0; i<scriptProcessor.datablockInfo.length; i++) {
+                    this.datablocks.push(scriptProcessor.createStream(scriptProcessor.datablockInfo[i].data));
+                }
+
+                // create and prepare adapters
+                await this.prepareContext(this.datablocks[0]);
+                for (var i=0; i<scriptProcessor.adapterInfo.length; i++) {
+                    var ai = scriptProcessor.adapterInfo[i];
+                    var adapterTypeName = scriptProcessor.parseValue(ai.adapter).value;
+                    var datablockId = scriptProcessor.parseValue(ai.datablock).value;
+                    var adapter = this;
+                    if (adapterTypeName != this.getInfo().name) {
+                        adapter = this.addAdapter(Ps.Player.getAdapterType(adapterTypeName), datablockId);
+                    }
+                    await adapter.prepareContext(this.datablocks[datablockId]);
+                }
+
+                // ensure master sequence is at #0
+                var seqId = scriptProcessor.sequenceInfo.findIndex(x => scriptProcessor.parseValue(x.adapter).value == this.getInfo().name);
+                if (seqId > 0) {
+                    for (var i=0; i<seqId; i++) {
+                        var key = scriptProcessor.parseValue(scriptProcessor.sequenceInfo[i].name).value;
+                        scriptProcessor.symbols[key].value++;
+                    }
+                    var seq = scriptProcessor.sequenceInfo.splice(seqId, 1)[0];
+                    scriptProcessor.sequenceInfo.unshift(seq);
+                }
+
+                // create sequences
+                for (var i=0; i<scriptProcessor.sequenceInfo.length; i++) {
+                    var si = scriptProcessor.sequenceInfo[i];
+                    var adapterTypeName = scriptProcessor.parseValue(si.adapter).value;
+                    var adapter = this.adapters.find(x => x.adapter.getInfo().name == adapterTypeName).adapter;
+                    var frames = [];
+                    for (var j=0; j<si.frames.length; j++) {
+                        var frj = si.frames[j];
+                        var frame = new Ps.Frame();
+                        frame.delta = scriptProcessor.parseValue(frj.delta).value;
+                        for (var k=0; k<frj.commands.length; k++) {
+                            var command = frj.commands[k];
+                            var args = [];
+                            for (var l=0; l<command.length; l++) {
+                                args.push(scriptProcessor.parseValue(command[l]).value);
+                            }
+                            var stream = adapter.makeCommand(...args);
+                            frame.commands.push(stream);
+                        }
+                        frames.push(frame);
+                    }
+                    var sequence = Ps.Sequence.fromFrames(frames, adapter);
+                    this.sequences.push(sequence);
+                }
+                this.masterChannel.assign(0, this.sequences[0]);
             }
         }
         return errors;
@@ -199,15 +182,27 @@ include('/lib/player/grammar.js');
         return arr.join('\n');
     };
 
-    Ps.Player.createExt = async function createExt() {
-        var player = Ps.Player.create();
-        player.schema = await Schema.build(
-            {
-                'use-default-types': true
-            }
-        );
-        return player;
+    Ps.Player.schema = await Schema.build( { 'use-default-types': true } );
+
+    var types = Ps.Player.schema.types;
+    Ps.Player.symbols = {
+        'Player': { 'type':types.get('uint8'), 'value': Ps.Player.Device.PLAYER },
+        'Channel': { 'type':types.get('uint8'), 'value': Ps.Player.Device.CHANNEL },
+        'EOF': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.EOF },
+        'EOS': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.EOS },
+        'Assign': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.Assign },
+        'Tempo': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.Tempo }
     };
+
+    // Ps.Player.createExt = async function createExt() {
+    //     var player = Ps.Player.create();
+    //     player.schema = await Schema.build(
+    //         {
+    //             'use-default-types': true
+    //         }
+    //     );
+    //     return player;
+    // };
 
 //     Ps.Player.prototype.makeCommand = function(command) {
 //         var stream = new Stream(128);

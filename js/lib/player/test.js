@@ -84,14 +84,14 @@ include('./player-ext.js');
     TestAdapter.SetInk = 3;
     TestAdapter.Div = 0;
 
-    TestAdapter.prototype.getSymbol = function getSymbol(name) {
-        var types = this.player.schema.types;
-        return {
-            'Div': { 'type':types.get('uint8'), 'value': TestAdapter.Div },
-            'SetText': { 'type':types.get('uint8'), 'value': TestAdapter.SetText },
-            'SetInk': { 'type':types.get('uint8'), 'value': TestAdapter.SetInk }
-        }[name];
+    var types = Ps.Player.schema.types;
+    TestAdapter.symbols = {
+        'Div': { 'type':types.get('uint8'), 'value': TestAdapter.Div },
+        'SetText': { 'type':types.get('uint8'), 'value': TestAdapter.SetText },
+        'SetInk': { 'type':types.get('uint8'), 'value': TestAdapter.SetInk }
     };
+
+    TestAdapter.prototype.getSymbols = () => TestAdapter.symbols;
 
     function createPlayer() {
         var player = Ps.Player.create();
@@ -262,17 +262,20 @@ include('./player-ext.js');
     function test_sequence_fromFrames() {
         header('Test Sequence.fromFrames');
         var player = Ps.Player.create();
-        var adapter = player.addAdapter(TestAdapter);
+        player.addAdapter(TestAdapter);
         var sequence1 = createSequences(player)[1];
         var frames = sequence1.toFrames();
-        var sequence2 = Ps.Sequence.fromFrames(frames, adapter);
+        var sequence2 = Ps.Sequence.fromFrames(frames, sequence1.adapter);
         Dbg.prln('Input:\n' + sequence1.stream.dump(32));
         Dbg.prln('Output:\n' + sequence2.stream.dump(32));
+
         test('Sequence should be created from frames successfully', ctx => ctx.assert(sequence1.stream, ':=', sequence2.stream));
+
+
     }
 
     function test_binary(stream, player) {
-        test('Binary data should contain 1 adapter, 4 sequences and 3 data block', ctx => {
+        test('Binary data should contain 1 adapter, 4 sequences and 3 data blocks', ctx => {
             var offset = stream.readUint16(2);              // offset to adapter list
             ctx.assert(offset, '=', 8);
             ctx.assert(stream.readUint8(offset), '=', 1);   // adapter count should be 1
@@ -308,7 +311,7 @@ include('./player-ext.js');
         var player = createPlayer();
         var stream = Ps.Player.createBinaryData(player);
         test_binary(stream, player);
-        // stream.toFile('test-data.bin', 'application/octet-stream');
+        //stream.toFile('test-data.bin', 'application/octet-stream');
     }
 
     async function test_load_binary() {
@@ -377,7 +380,6 @@ include('./player-ext.js');
         var player = Ps.Player.create();
         // load binary data, prepare adapters
         await player.load('./test-data.bin');
-
         test('Player should have 2 adapters', ctx => {
             ctx.assert(Object.keys(player.adapters).length, '=', 2);
         });
@@ -403,17 +405,21 @@ include('./player-ext.js');
         Ps.Player.registerAdapter(TestAdapter);
         var res = await load('test-script.txt')
         if (res.error) throw res.error;
-        var player = await Ps.Player.createExt();
-        var results = player.importScript(res.data);
+        var player = await Ps.Player.create();
+        var results = await player.importScript(res.data);
         test('Should load script successfully', ctx => {
             ctx.assert(results, 'empty');
             for (var i=0; i<results.length; i++) {
                 message(results[i]);
             }
             ctx.assert(player.adapters.length, '=', 2);
-            ctx.assert(player.sequences.length, '=', 3);
-
+            ctx.assert(player.sequences.length, '=', 4);
+            ctx.assert(player.datablocks.length, '=', 3);
         });
+        var stream = Ps.Player.createBinaryData(player);
+        // stream.toFile('test-data2.bin', 'application/octet-stream');
+        test_binary(stream, player);
+        await run(() => player.run(1), 20);
     }
 
     async function test_export_script() {
@@ -436,7 +442,7 @@ include('./player-ext.js');
         // test_create_player,
         // test_sequence_toFrames,
         // test_sequence_fromFrames,
-        // test_create_binary,
+        test_create_binary,
         // test_load_binary,
         // test_create_channel,
         // test_run_channel,

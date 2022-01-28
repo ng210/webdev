@@ -128,11 +128,10 @@
         var remains = [];
         var ci = nodes.length - inOutMap.size;
         for (var i=0; i<nodes.length; i++) {
-            if (!nodes[i].data.type.ignore) {
-                if (i == pi || inOutMap.has(i)) {
-                    remains.push(nodes[i]);
-                    continue;
-                }
+            if (i == pi || inOutMap.has(i)) {
+                remains.push(nodes[i]);
+                continue;
+            } else if (!nodes[i].data.type.ignore) {
                 this.tree.addEdge(parent, nodes[i]);
                 nodes[i] = null;
             }
@@ -152,7 +151,7 @@
     Expression.prototype.applyRule = function applyRule(rule, nodes, n, context) {
         // match found, replace input by output
         var i = rule.in.length;
-        if (this.syntax.debug > 0) console.log(`match: ${rs(rule)}`);
+        if (this.syntax.debug > 1) console.log(`match: ${rs(rule)}`);
         // extract rule's input
         var inNodes = nodes.splice(n, i);
         // get output
@@ -160,16 +159,18 @@
         if (typeof rule.action === 'function') {
             var outNodes = rule.action.apply(context, inNodes);
             if (outNodes != null) {
-                ruleOut = outNodes.map(x => x.data.type.symbol);
+                if (!Array.isArray(outNodes)) outNodes = [outNodes];
+                ruleOut = outNodes.map(x => x.data.code);
             }
         }
 
-        if (ruleOut) {
-            if (rule.in.length < ruleOut.length) {
-                throw new Error('Invalid rule: output cannot be longer than input!');
-            }
+        if (rule.in.length < ruleOut.length) {
+            throw new Error('Invalid rule: output cannot be longer than input!');
+        }
+        var outNodes = [];
+        if (!this.syntax.symbols.getAt(ruleOut[0]).empty) {
             var missing = [];
-            var outNodes = inNodes;
+            outNodes = inNodes;
             // get mapping between in-out symbols and missing symbols
             var inOutMap = this.createInOutMap(rule.in, ruleOut, missing);
             if (rule.in.length > ruleOut.length) {
@@ -183,18 +184,22 @@
             }
 
             // relabel nodes
-            for (var i=0; i<ruleOut.length; i++) {
-                var code = ruleOut[i];
-                outNodes[i].data.code = code;
-            }
-            // re-insert the processed nodes
-            nodes.splice(n, 0, ...outNodes);
-            if (nodes[0]) {
-                this.lastNode = nodes[0];
+            if (outNodes.length > 0) {
+                for (var i=0; i<ruleOut.length; i++) {
+                    var code = ruleOut[i];
+                    outNodes[i].data.code = code;
+                    outNodes[i].data.type = this.syntax.symbols.getAt(code);
+                }
             }
         }
+        // re-insert the processed nodes
+        nodes.splice(n, 0, ...outNodes);
+        if (nodes[0]) {
+            this.lastNode = nodes[0];
+        }
+
         //if (this.syntax.debug > 1) console.log(`result: ${nodes.map(x => `${this.syntax.symbols.getAt(x.data.code).symbol}['${x.data.term.replace(/[\n\r]/g, '\\n')}']`)}`);
-        if (this.syntax.debug > 1) console.log('result: ' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
+        if (this.syntax.debug > 0) console.log('result: ' + nodes.map(n => `{${this.nodeToString(n)}}`).join('  '));
     };
     Expression.prototype.matchRule = function matchRule(rule, nodes, context) {
         // apply the rule on the input as many times as possible
@@ -226,7 +231,7 @@
     Expression.prototype.resolve = function(context) {
         this.lastNode = null;
         var nodes = Array.from(this.tree.vertices);
-        if (this.syntax.debug > 1) console.log(`input: ${nodes.map(x => `${x.data.type.symbol}['${x.data.term.replace(/[\n\r]/g, '\\n')}']`)}`);
+        if (this.syntax.debug > 0) console.log(`input: ${nodes.map(x => `${x.data.type.symbol}['${x.data.term.replace(/[\n\r]/g, '\\n')}']`)}`);
         // try to apply rules as long as there are nodes
         while (nodes.length > 0) {
             var r = 0;
@@ -258,8 +263,9 @@
         return this.lastNode.data;  //.value;
     };
     Expression.prototype.nodeToString = function(node, simple) {
-        var term = node.data.term.replace(/[\n\r]/g, '\\n');
-        var text = `#${node.id}:'${term}'(${this.syntax.symbols.getAt(node.data.code).symbol}:${node.data.type.symbol})`;
+        var value = typeof node.data.value !== 'object' ? node.data.value.toString() : node.data.term;
+        value = value.replace(/[\n\r]/g, '\\n');
+        var text = `#${node.id}:'${value}'(${this.syntax.symbols.getAt(node.data.code).symbol}:${node.data.type.symbol})`;
         if (!simple) {
             text += `${node.edges.map( x => ` [${this.nodeToString(x.to, true)}]`)}`;
         }
@@ -293,32 +299,31 @@
                 var type = this.grammar.prototypes[term]
                 var symbol = type.symbol;
                 if (!this.symbols.has(symbol)) {
-                    this.symbols.set(symbol, type);
+                    this.symbols.put(symbol, type);
                 }
                 if (type.start) this.startTerm = term;
             }
             this.literalCode = this.symbols.size - 2;
             this.wildcardCode = this.symbols.size - 1;
-
             // extract symbols from rules' outputs
             for (var ri=0; ri<this.grammar.rules.length; ri++) {
                 var rule = this.grammar.rules[ri];
-                if (rule.output != null) {
-                    var symbols = rule.output.split(' ');
+                var symbols = rule.output != null ? rule.output.split(' ') : [''];
+                if (symbols[0] != '') {
                     for (var i=0; i<symbols.length; i++) {
                         if (!this.symbols.has(symbols[i])) {
-                            this.symbols.set(symbols[i], {'symbol':symbols[i]});
+                            this.symbols.put(symbols[i], {'symbol':symbols[i]});
                         }
+                    }
+                } else {
+                    if (!this.symbols.has('')) {
+                        this.symbols.put('', {'symbol':'', 'empty':true});
                     }
                 }
             }
-
-            // sort rules by priority and input length
-            this.ruleMap = this.grammar.rules.sort( (a,b) => 1000*(b.priority - a.priority) + b.input.length - a.input.length );
-
             // transform rules to use indices in the symbols array instead of symbols
-            for (var rk=0; rk<this.ruleMap.length; rk++) {
-                var rule = this.ruleMap[rk];
+            for (var rk=0; rk<this.grammar.rules.length; rk++) {
+                var rule = this.grammar.rules[rk];
                 var symbols = rule.input.split(' ');
                 rule.in = [];
                 for (var i=0; i<symbols.length; i++) {
@@ -346,6 +351,9 @@
                     }
                 }
             }
+            // sort rules by priority and input length
+            this.ruleMap = this.grammar.rules.sort( (a,b) => 1000*(b.priority - a.priority) + b.input.length - a.input.length );
+
             //console.log(this.ruleMap.map(r => rs(r)).join('\n'));
         }
     };

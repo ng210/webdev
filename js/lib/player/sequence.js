@@ -41,16 +41,15 @@ include('/lib/data/stream.js');
                 cmd = this.getUint8(cursor++);
                 if (cmd > Ps.Player.Commands.EOS) {
                     var command = this.adapter.makeCommand(cmd, this, cursor);
+                    command.buffer = command.buffer.slice(0, command.length);
                     frame.commands.push(command);
                     cursor += command.length - 1;
-                } else if (cmd == Ps.Player.Commands.EOF) {
-                    if (frame.commands.length == 0) {
-                        cmd = new Stream(1);
-                        cmd.writeUint8(0);
-                        frame.commands.push(cmd);
+                } else {
+                    if (cmd == Ps.Player.Commands.EOF && frame.commands.length == 0) {
+                        var command = new Stream([cmd]);
+                        frame.commands.push(command);
+                        console.log(command.hexdump());
                     }
-                    break;
-                } else if (cmd == 1) {
                     break;
                 }
             }
@@ -80,6 +79,7 @@ include('/lib/data/stream.js');
                 }
                 if (cmd == 1) {
                     hasEOS = true;
+                    hasEOF = true;
                     break;
                 }
             }
@@ -92,7 +92,7 @@ include('/lib/data/stream.js');
         if (!hasEOS) {
             sequence.writeUint8(1);
         }
-
+        sequence.stream.buffer = sequence.stream.buffer.slice(0, sequence.stream.length);
         return sequence;
     };
 

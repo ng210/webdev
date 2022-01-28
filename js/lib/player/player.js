@@ -105,9 +105,9 @@ include('./iadapter-ext.js');
         offset = stream.readUint16(2);
         count = stream.readUint8(offset++);
         for (var i=0; i<count; i++) {
-            var adapterType = stream.readUint8(offset++);
+            var adapterTypeId = stream.readUint8(offset++);
             var datablockId = stream.readUint8(offset++);
-            var adapter = this.addAdapter(Ps.Player.adapterTypes[adapterType], datablockId);
+            var adapter = this.addAdapter(Ps.Player.adapterTypes[adapterTypeId].type, datablockId);
             await adapter.prepareContext(this.datablocks[datablockId]);
         }
         // create sequences
@@ -154,8 +154,23 @@ include('./iadapter-ext.js');
     Player.adapterTypes = {};
     Player.registerAdapter = function(adapterType) {
         var adapter = Reflect.construct(adapterType, [null]);
-        Ps.Player.adapterTypes[adapter.getInfo().id] = adapterType;
+        var info = adapter.getInfo();
+        Ps.Player.adapterTypes[info.id] = {
+            'name': info.name,
+            'type': adapterType,
+            'adapter': adapter
+        };
     };
+    Player.getAdapterType = function getAdapterType(typeName) {
+        var adapterType = null;
+        for (var i in Ps.Player.adapterTypes) {
+            if (Ps.Player.adapterTypes[i].name == typeName) {
+                adapterType = Ps.Player.adapterTypes[i];
+                break;
+            }
+        }
+        return adapterType.type;
+    }
     Player.createBinaryData = function createBinaryData(player, createAdapterList, createSequences, createDataBlocks) {
         var data = new Stream(256);
         if (typeof createAdapterList != 'function') createAdapterList = () => player.adapters;
@@ -213,6 +228,7 @@ include('./iadapter-ext.js');
             data.writeStream(datablocks[i]);
         }
 
+        data.buffer = data.buffer.slice(0, data.length);
         return data;
     };
     Player.create = function create() {
