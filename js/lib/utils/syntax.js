@@ -52,7 +52,7 @@
 
     function Node(code, type, term) {
         // interpreted value (parsed or calculated)
-        this.value = parseFloat(term) || term;
+        this.value = term;
         // prototype defined in the grammar
         this.type = type;
         // code used in the transformed grammatic rules
@@ -70,7 +70,7 @@
                 n.value != undefined ? value.push(n.value) : value.push(n.term);
             }
         } else {
-            value = this.value != undefined ? this.value : this.term;
+            value = [this.value != undefined ? this.value : this.term];
         }
         return value;
     };

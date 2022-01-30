@@ -5,18 +5,10 @@ include('/lib/utils/syntax.js');
 include('/lib/type/schema.js');
 include('/lib/player/script-processor.js');
 // include('/lib/data/dataseries.js');
-// include('/lib/data/stream.js');
-// include('/lib/synth/synth-adapter.js');
 // include('/lib/glui/glui-lib.js');
 
 (async function() {
-    // function PlayerExt() {
-    //     PlayerExt.base.constructor.call(this);
-    //     this.schema = null;
-    // }
-    // extend(Ps.Player, PlayerExt);
     implements(Ps.Player, Ps.IAdapterExt);
-    // Extensions to the player-adapter
     Ps.Player.prototype.makeCommand = function(command)  {
         var stream = new Stream(128);
         if (typeof command == 'string') {
@@ -72,7 +64,7 @@ include('/lib/player/script-processor.js');
             var type = Ps.Player.adapterTypes[i];
             var symbols = type.adapter.getSymbols();
             for (var s in symbols) {
-                scriptProcessor.symbols[`${type.name}.${s}`] = symbols[s];
+                scriptProcessor.symbols[s] = symbols[s];
             }
         }
         var expr = syntax.parse(script + '\r');
@@ -186,12 +178,12 @@ include('/lib/player/script-processor.js');
 
     var types = Ps.Player.schema.types;
     Ps.Player.symbols = {
-        'Player': { 'type':types.get('uint8'), 'value': Ps.Player.Device.PLAYER },
-        'Channel': { 'type':types.get('uint8'), 'value': Ps.Player.Device.CHANNEL },
-        'EOF': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.EOF },
-        'EOS': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.EOS },
-        'Assign': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.Assign },
-        'Tempo': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.Tempo }
+        'Ps.Player': { 'type':types.get('uint8'), 'value': Ps.Player.Device.PLAYER },
+        'Ps.Channel': { 'type':types.get('uint8'), 'value': Ps.Player.Device.CHANNEL },
+        'Ps.EOF': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.EOF },
+        'Ps.EOS': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.EOS },
+        'Ps.Assign': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.Assign },
+        'Ps.Tempo': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.Tempo }
     };
 
     // Ps.Player.createExt = async function createExt() {

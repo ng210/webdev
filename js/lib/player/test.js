@@ -86,9 +86,9 @@ include('./player-ext.js');
 
     var types = Ps.Player.schema.types;
     TestAdapter.symbols = {
-        'Div': { 'type':types.get('uint8'), 'value': TestAdapter.Div },
-        'SetText': { 'type':types.get('uint8'), 'value': TestAdapter.SetText },
-        'SetInk': { 'type':types.get('uint8'), 'value': TestAdapter.SetInk }
+        'TA.Div': { 'type':types.get('uint8'), 'value': TestAdapter.Div },
+        'TA.SetText': { 'type':types.get('uint8'), 'value': TestAdapter.SetText },
+        'TA.SetInk': { 'type':types.get('uint8'), 'value': TestAdapter.SetInk }
     };
 
     TestAdapter.prototype.getSymbols = () => TestAdapter.symbols;
@@ -124,6 +124,7 @@ include('./player-ext.js');
         // Frame #2
         sequence.writeDelta(96);
         sequence.writeEOS();
+        sequence.stream.buffer = sequence.stream.buffer.slice(0, sequence.stream.length);
         sequences.push(sequence);
         //#endregion
 
@@ -161,6 +162,7 @@ include('./player-ext.js');
         sequence.writeDelta(16);
         sequence.writeCommand(TestAdapter.SetInk); sequence.writeUint8(0);
         sequence.writeEOS();
+        sequence.stream.buffer = sequence.stream.buffer.slice(0, sequence.stream.length);
         sequences.push(sequence);
         //#endregion
 
@@ -177,6 +179,7 @@ include('./player-ext.js');
         sequence.writeCommand(TestAdapter.SetText); sequence.writeString('Seq2.2 - End');
         sequence.writeCommand(TestAdapter.SetInk); sequence.writeUint8(2);
         sequence.writeEOS();
+        sequence.stream.buffer = sequence.stream.buffer.slice(0, sequence.stream.length);
         sequences.push(sequence);
         //#endregion
 
@@ -193,6 +196,7 @@ include('./player-ext.js');
         sequence.writeCommand(TestAdapter.SetText); sequence.writeString('Seq3.2 - End');
         sequence.writeCommand(TestAdapter.SetInk); sequence.writeUint8(3);
         sequence.writeEOS();
+        sequence.stream.buffer = sequence.stream.buffer.slice(0, sequence.stream.length);
         sequences.push(sequence);
         //#endregion
         return sequences;
@@ -268,7 +272,7 @@ include('./player-ext.js');
         var sequence2 = Ps.Sequence.fromFrames(frames, sequence1.adapter);
         Dbg.prln('Input:\n' + sequence1.stream.dump(32));
         Dbg.prln('Output:\n' + sequence2.stream.dump(32));
-
+debugger
         test('Sequence should be created from frames successfully', ctx => ctx.assert(sequence1.stream, ':=', sequence2.stream));
 
 
@@ -442,7 +446,7 @@ include('./player-ext.js');
         // test_create_player,
         // test_sequence_toFrames,
         // test_sequence_fromFrames,
-        test_create_binary,
+        // test_create_binary,
         // test_load_binary,
         // test_create_channel,
         // test_run_channel,

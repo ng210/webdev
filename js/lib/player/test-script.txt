@@ -1,29 +1,29 @@
 adapter "TestAdapter", db1
 
-datablock "db0", { 1, PlayerAdapter.Channel }
-datablock "db1", { 1, TestAdapter.Div, w:120, w:200 }
+datablock "db0", { 1, Ps.Channel }
+datablock "db1", { 1, TA.Div, w:120, w:200 }
 datablock "db2", { "Hello world!" }
 
 sequence "master", "PlayerAdapter", {
-    frame  0, { PlayerAdapter.Assign(1, seq1, 0, 0) },
-    frame 96, { PlayerAdapter.EOS() }
+    frame  w:0, { Ps.Assign(1, seq1, 0, 0) },
+    frame w:96, { Ps.EOS() }
 }
 
 sequence "seq1", "TestAdapter", {
-    frame  0, { TestAdapter.SetText("Seq1.1"), TestAdapter.SetInk(0) },
-    frame 16, { TestAdapter.SetText("Seq1.2"), TestAdapter.SetInk(1) },
-    frame 16, { TestAdapter.SetText("Seq1.3"), TestAdapter.SetInk(2) },
-    frame 16, { TestAdapter.SetText("Seq1.4"), TestAdapter.SetInk(3) },
-    frame 16, { TestAdapter.SetText("End"), TestAdapter.SetInk(4) },
-    frame 16, { TestAdapter.SetInk(0),  PlayerAdapter.EOS() }
+    frame  w:0, { TA.SetText("Seq1.1"), TA.SetInk(0) },
+    frame w:16, { TA.SetText("Seq1.2"), TA.SetInk(1) },
+    frame w:16, { TA.SetText("Seq1.3"), TA.SetInk(2) },
+    frame w:16, { TA.SetText("Seq1.4"), TA.SetInk(3) },
+    frame w:16, { TA.SetText("End"), TA.SetInk(4) },
+    frame w:16, { TA.SetInk(0),  Ps.EOS() }
 }
 
 sequence "seq2", "TestAdapter", {
-    frame 16, { TestAdapter.SetText("Seq2.1"), TestAdapter.SetInk(4) },
-    frame 16, { TestAdapter.SetText("Seq2.2 - End"), TestAdapter.SetInk(2) }
+    frame w:16, { TA.SetText("Seq2.1"), TA.SetInk(4) },
+    frame w:16, { TA.SetText("Seq2.2 - End"), TA.SetInk(2) }
 }
 
 sequence "seq3", "TestAdapter", {
-    frame 16, { TestAdapter.SetText("Seq3.1"), TestAdapter.SetInk(1) },
-    frame 16, { TestAdapter.SetText("Seq3.2 - End"), TestAdapter.SetInk(3) }
+    frame w:16, { TA.SetText("Seq3.1"), TA.SetInk(1) },
+    frame w:16, { TA.SetText("Seq3.2 - End"), TA.SetInk(3) }
 }

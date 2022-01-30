@@ -155,6 +155,9 @@ include('./iadapter-ext.js');
     Player.registerAdapter = function(adapterType) {
         var adapter = Reflect.construct(adapterType, [null]);
         var info = adapter.getInfo();
+        if (typeof adapterType.initialize === 'function') {
+            adapterType.initialize();
+        }
         Ps.Player.adapterTypes[info.id] = {
             'name': info.name,
             'type': adapterType,

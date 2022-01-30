@@ -6,17 +6,20 @@
         status: 0,
         context: null,
         audioNode: null,
-        smpRate: 0,
+        sampleRate: 0,
         isRunning: false,
 
         init: function(smpRate, callback) {
-            this.smpRate = smpRate || 48000;
+            this.sampleRate = smpRate || 48000;
             // TODO: if (this.context) delete context/change sampling rate
-            this.context = self.AudioContext ? new self.AudioContext() :
-                self.webkitAudioContext ? new self.webkitAudioContext() :
-                self.mozAudioContext ? new self.mozAudioContext() :
-                self.oAudioContext ? new self.oAudioContext() :
-                self.msAudioContext ? new self.msAudioContext() :
+            var o = {
+                sampleRate: smpRate
+            };
+            this.context = self.AudioContext ? new self.AudioContext(o) :
+                self.webkitAudioContext ? new self.webkitAudioContext(o) :
+                self.mozAudioContext ? new self.mozAudioContext(o) :
+                self.oAudioContext ? new self.oAudioContext(o) :
+                self.msAudioContext ? new self.msAudioContext(o) :
                 undefined;
             if (!this.context) throw new Error('Could not create sound context!');
             this.audioNode = this.context.createScriptProcessor(this.BUFFER_SIZE, 0, 2);

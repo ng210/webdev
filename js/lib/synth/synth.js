@@ -147,7 +147,7 @@ include('voice.js');
 
     Synth.controls = (function() {
         var map = {};
-        var synth = new Synth(48000, 1);
+        var synth = new Synth(sound.SamplingRate, 1);
         var id = 0;
         var keys1 = Object.keys(synth.controls);
         for (var i=0; i<keys1.length; i++) {

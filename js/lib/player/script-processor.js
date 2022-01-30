@@ -251,7 +251,7 @@ ScriptProcessor.prototype.addLineNumber = function addLineNumber(n) {
 
 ScriptProcessor.prototype.createQuotedString = function createQuotedString(s) {
     var props = s.data.getValue();
-    s.data.value = `${Array.isArray(props) ? props.join('') : props}`;
+    s.data.value = props.join('');
     s.edges.length = 0;
 };
 
@@ -322,7 +322,7 @@ ScriptProcessor.prototype.parseValue = function parseValue(term) {
 
 ScriptProcessor.prototype.createStream = function createStream(data) {
     var stream = new Stream(4096);
-    if (!Array.isArray(data)) data = [data];
+    if (!Array.isArray(data)) throw new Error('ScriptProcessor.createStream input is not array!');
     for (var i=0; i<data.length; i++) {
         var v = this.parseValue(data[i]);
         if (v.type != null) {
@@ -352,9 +352,8 @@ ScriptProcessor.prototype.addAdapterInfo = function addAdapterInfo(n) {
     n.data.value = ai;
 };
 ScriptProcessor.prototype.addDatablockInfo = function addDatablockInfo(n) {
-    var name = n.edges[0].to.data.getValue();
+    var name = n.edges[0].to.data.getValue()[0];
     var data = n.edges[1].to.data.getValue();
-    if (!Array.isArray(data)) data = [data];
     var di = { name:name, data:data };
     this.datablockInfo.push(di);
     n.data.value = di;
@@ -370,70 +369,13 @@ ScriptProcessor.prototype.getFrames = function getFrames(s) {
     var frames = [];
     for (var i=2; i<s.edges.length; i++) {
         var f = s.edges[i].to;
-        var delta = f.edges[0].to.data.getValue();
+        var delta = f.edges[0].to.data.getValue()[0];
         var frame = { delta: delta, commands:[] };
         for (j=1; j<f.edges.length; j++) {
             var command = f.edges[j].to.data.getValue();
-            if (!Array.isArray(command)) command = [command];
             frame.commands.push(command);
         }
         frames.push(frame);
     }
     return frames;
 };
-ScriptProcessor.prototype.addAdapter = function addAdapter(ai) {
-debugger
-    var type = this.parseValue(ai.adapter).value;
-    var adapterType = null;
-    for (var i in Ps.Player.adapterTypes) {
-        if (Ps.Player.adapterTypes[i].name == type) {
-            adapterType = Ps.Player.adapterTypes[i].type;
-            break;
-        }
-    }
-debugger
-    if (!adapterType) throw new Error(`Unknown adapter type '${type}'!`);
-    var datablock = this.parseValue(ai.datablock).value;
-    this.player.addAdapter(adapterType, datablock);
-};
-ScriptProcessor.prototype.addDatablock = function addDatablock(di) {
-debugger
-};
-    //     addFrame = function addFrame(node) {
-    //         var delta = this.parseValue(node.edges[0].to.data.value).value;
-    //         var frame = new Ps.Frame();
-    //         frame.setDelta(delta);
-    //         for (var i=1; i<node.edges.length; i++) {
-    //             var cmd = node.edges[i].to;
-    //             // make command
-    //             frame.addCommand(cmd);
-    //         }
-    //         this.frames.push(frame);
-    //     },
-    //     addSequence = function addSequence(seqName, adapterType) {
-    //         var name = this.parseValue(seqName).value;
-    //         var type = this.parseValue(adapterType).value;
-    //         // var adapterInfo = this.adapters.find(x => x.adapter.getInfo().name == type);
-    //         for (var i=0; i<this.frames.length; i++) {
-    //             for (var j=0; j<this.frames[i].commands.length; j++) {
-    //                 var args = this.frames[i].commands[j].data.getValue();
-    //                 if (!Array.isArray(args)) args = [args];
-    //                 for (var k=0; k<args.length; k++) {
-    //                     var term = args[k];
-    //                     var v = this.parseValue(term).value;
-    //                     if (v == null) {
-    //                         // unknown symbol
-    //                         if (!this.missingSymbols[term]) this.missingSymbols[term] = [];
-    //                         this.missingSymbols[term].push([(v, a) => a.args[a.k] = v.value, {'args':args, 'k':k}]);
-    //                     } else {
-    //                         args[k] = v;
-    //                     }
-    //                 }
-    //                 this.frames[i].commands[j] = args;
-    //             }
-    //         }
-    //         this.sequences.push({name:name, adapter:type, frames:this.frames});
-    //         // this.symbols[name] = { type:Ps.Player.schema.types.get('uint8'), value: this.sequences.length };
-    //         // this.sequences.push([this.frames, adapterInfo.adapter, name]);
-    //         this.frames = [];
-    //     },

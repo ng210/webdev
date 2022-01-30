@@ -26,14 +26,14 @@ include('/lib/ge/sound.js');
 			case psynth.SynthAdapter.Device.SYNTH:
 				var voiceCount = initData.readUint8();
 				if (voiceCount != 0) {
-					device = new psynth.Synth(sound.smpRate, voiceCount);
+					device = new psynth.Synth(sound.sampleRate, voiceCount);
 					device.soundBank = this.player.datablocks[initData.readUint8()];
 					device.setProgram(0);
 				}
 				break;
 			case psynth.SynthAdapter.Device.DELAY:
 				// todo: add presets
-				device = new psynth.Delay(sound.smpRate);
+				device = new psynth.Delay(sound.sampleRate);
 				break;
 			default:
 				throw new Error(`Invalid device type: ${deviceType}`);
@@ -69,7 +69,7 @@ include('/lib/ge/sound.js');
 		return cursor;
 	};
 	SynthAdapter.prototype.updateRefreshRate = function updateRefreshRate(fps) {
-		this.samplePerFrame = sound.smpRate/fps;
+		this.samplePerFrame = sound.sampleRate/fps;
 	};
 
 	SynthAdapter.getInfo = () => SynthAdapter.info;

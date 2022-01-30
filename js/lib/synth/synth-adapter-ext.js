@@ -7,12 +7,20 @@ include('/lib/synth/synth-adapter.js');
 
 // Extensions to the synth-adapter
 (function() {
-    // function SynthAdapterExt() {
-    //     SynthAdapterExt.base.constructor.call(this);
-    //     this.schema = null;
-    // }
-    //extend(psynth.SynthAdapter, SynthAdapterExt);
     implements(psynth.SynthAdapter, Ps.IAdapterExt);
+
+    psynth.SynthAdapter.initialize = function initialize() {
+        var notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'H']
+        for (var i=0; i<8; i++) {
+            for (var j=0; j<notes.length; j++) {
+                psynth.SynthAdapter.symbols[`Sy.${notes[j]}${i}`] = { 'type':uint8, 'value': i*12 + j };
+            }
+        }
+    
+        for (var i in psynth.Synth.controls) {
+            psynth.SynthAdapter.symbols['Sy.'+i] = { 'type':uint8, 'value': psynth.Synth.controls[i] };
+        }
+    };
 
     psynth.SynthAdapter.prototype.makeCommand = function(command) {
         var stream = new Stream(128);
@@ -136,15 +144,43 @@ include('/lib/synth/synth-adapter.js');
 		}
 		return command;
 	};
-    psynth.SynthAdapter.createExt = async function createExt() {
-        var synthAdapterExt = psynth.SynthAdapter.create();
-        synthAdapterExt.schema = await Schema.build(
-            {
-                'use-default-types': true
-            }
-        );
-        return synthAdapterExt;
+
+    psynth.SynthAdapter.prototype.getSymbols = () => psynth.SynthAdapter.symbols;
+
+    var uint8 = Ps.Player.schema.types.get('uint8');
+    psynth.SynthAdapter.symbols = {
+        // commands
+		'Sy.SetNote':       { 'type':uint8, 'value': psynth.SynthAdapter.Commands.SetNote },
+		'Sy.SetUint8':      { 'type':uint8, 'value': psynth.SynthAdapter.Commands.SetUint8 },
+		'Sy.SetFloat8':     { 'type':uint8, 'value': psynth.SynthAdapter.Commands.SetFloat8 },
+		'Sy.SetFloat':      { 'type':uint8, 'value': psynth.SynthAdapter.Commands.SetFloat },
+		'Sy.SetVelocity':   { 'type':uint8, 'value': psynth.SynthAdapter.Commands.SetVelocity },
+		'Sy.SetProgram':    { 'type':uint8, 'value': psynth.SynthAdapter.Commands.SetProgram },
+        // devices
+        'Sy.Synth':         { 'type':uint8, 'value': psynth.SynthAdapter.Device.SYNTH },
+        'Sy.Delay':         { 'type':uint8, 'value': psynth.SynthAdapter.Device.DELAY },
+        // synth controls
+        'Sy.Sin':           { 'type':uint8, 'value': psynth.Osc.waveforms.SINUS },
+        'Sy.Tri':           { 'type':uint8, 'value': psynth.Osc.waveforms.TRIANGLE },
+        'Sy.Saw':           { 'type':uint8, 'value': psynth.Osc.waveforms.SAW },
+        'Sy.Pls':           { 'type':uint8, 'value': psynth.Osc.waveforms.PULSE },
+        'Sy.Rnd':           { 'type':uint8, 'value': psynth.Osc.waveforms.NOISE },
+
+        'Sy.LowPass':       { 'type':uint8, 'value': psynth.Filter.modes.LOWPASS },
+        'Sy.BandPass':      { 'type':uint8, 'value': psynth.Filter.modes.BANDPASS },
+        'Sy.HighPass':      { 'type':uint8, 'value': psynth.Filter.modes.HIGHPASS },
     };
+
+
+    // psynth.SynthAdapter.createExt = async function createExt() {
+    //     var synthAdapterExt = psynth.SynthAdapter.create();
+    //     synthAdapterExt.schema = await Schema.build(
+    //         {
+    //             'use-default-types': true
+    //         }
+    //     );
+    //     return synthAdapterExt;
+    // };
 
     //publish(SynthAdapterExt, 'SynthAdapterExt', psynth);
 

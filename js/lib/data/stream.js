@@ -200,7 +200,7 @@
         var ri = 0, j = 0, k = 0;
         var row = new Array(256);
         length += offset;
-        if (length > this.length) length = this.length - offset;
+        if (length > this.length) length = this.length;
         for (var i=offset; i<length; i++) {
             var b = this.readUint8(i);
             b = b.toString(16);

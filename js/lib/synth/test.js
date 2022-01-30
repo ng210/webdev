@@ -1,13 +1,10 @@
 include('/lib/player/player-lib.js');
 include('/lib/player/player-ext.js');
 include('/lib/ge/sound.js');
-include('/lib/glui/glui-lib.js');
+//include('/lib/glui/glui-lib.js');
 include('./synth.js');
-//include('./synth-adapter.js');
-include('./score-control.js');
+//include('./score-control.js');
 include('/lib/synth/synth-adapter-ext.js');
-// include('/utils/syntax.js');
-// include('/synth/grammar.js');
 
 (function(){
 
@@ -254,7 +251,7 @@ include('/lib/synth/synth-adapter-ext.js');
         var synth = new psynth.Synth(SAMPLE_RATE, 1);
         await loadPreset('./res/preset.json', synth);
         synth.isActive = true;
-        synth.setNote(36, 1.0);
+        synth.setNote(16, 1.0);
 
         await run((left, right, bufferSize) => {
             for (var i=0; i<bufferSize; i++) left[i] = right[i] = 0.0;
@@ -453,7 +450,7 @@ include('/lib/synth/synth-adapter-ext.js');
 
     var _frame = 0;
     var _bpm = 101;
-    var _samplePerFrame = 0;
+    var _samplePerFrame = SAMPLE_RATE*3.75/_bpm;
 
     function setBpm(bpm) {
         _bpm = bpm;
@@ -500,7 +497,12 @@ include('/lib/synth/synth-adapter-ext.js');
             var frameInt = Math.floor(_frame);
             if (frameInt == 0) {
                 Dbg.pr('.');
-                if (!player.run(1)) break;
+                if (!player.run(1)) {
+                    player.reset();
+                    player.run(0)
+                    this.currentStep = 0;
+                    //break;
+                }
                 _frame += _samplePerFrame;
             }
             var len = _frame < remains ? frameInt : remains;
@@ -573,211 +575,234 @@ include('/lib/synth/synth-adapter-ext.js');
         // player.start();
         // await poll( () => !player.isActive, 100);
     }
-    
-    var App = {
-        bpm: 60,
-        channel: null,
-        synthAdapter: null,
 
-        onchange: function onchange(e, ctrl) {
-            if (ctrl.id == 'bpm') {
-                setBpm(ctrl.getValue());
-            } else if (ctrl.id == 'score') {
-                App.channel.cursor = 0;
-                // release every voice
-                var dev = App.channel.device;
-                for (var i=0; i<dev.voices.length; i++) {
-                    var voice = dev.voices[i];
-                    voice.setNote(0, 0);
-                }
-                App.channel.sequence = ctrl.getAsSequence(App.synthAdapter);
-            }
-        },
-        onclick: function onclick(e, ctrl) {
-            if (ctrl.id == 'run') {
-                if (!sound.isRunning) {
-                    ctrl.setValue('Stop');
-                    sound.start();
-                } else {
-                    ctrl.setValue('Play');
-                    sound.stop();
-                }
-            }
-        },
-
-        fillBuffer: function fillBuffer(left, right, bufferSize, ch) {
-            _isDone = !channelBasedFillBuffer(left, right, bufferSize, App.channel);
-        }
-    };
-
-    setBpm(App.bpm);
-
-    async function test_synth_ui() {
-        message('Test synth ui', 1);
-
-        //#region init glui
-        glui.scale.x = 0.8;
-        glui.scale.y = 0.8;
-
-        glui.initialize(App, true);
-        await glui.setRenderingMode(glui.Render2d);
-        glui.buildUI(App);
-        //#endregion
-
-        //#region create synth, sound playback
-        var player = Ps.Player.create();
-        var adapter = player.addAdapter(psynth.SynthAdapter.create(player));
-        sound.init(48000, this.fillSoundBuffer);
-        // create dummy sequence
-        var frames = [];
-        var delta = 0;
-        var pattern1 = [
-            0,-1,24,12,  0,-1,12,-1, 0,10,-1,12, 0,15,0,-1
-        ];
-        for (var i=0; i<pattern1.length; i++) {
-            var note = pattern1[i] + 12;
-            if (pattern1[i] != -1) {
-                // frame on
-                var frame = new Ps.Frame(); frame.delta = delta;
-                frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, note, 240));
-                frames.push(frame);
-                // frame off
-                frame = new Ps.Frame(); frame.delta = 2;
-                delta = 2;
-                frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, note, 0));
-                frames.push(frame);
-            } else {
-                delta = 6;
-            }
-        }
-        // EOS
-        var frame = new Ps.Frame(); frame.delta = delta;
-        frames.push(frame);
-        App.synthAdapter = player.adapters[psynth.SynthAdapter.getInfo().id].adapter;
-        var sequence = Ps.Sequence.fromFrames(frames, App.synthAdapter);
-        var sequences = [sequence];
-        player.sequences = sequences;
-
-        var synth = new psynth.Synth(sound.smpRate, 6);
-        App.synthAdapter.devices.push(synth);
-        await loadPreset('./res/preset.json', synth);
-        synth.isActive = true;
-
-        // create test channel
-        App.channel = player.createDevice(Ps.Player.Device.CHANNEL, null);
-        App.channel.assign(0, player.sequences[0]);
-        App.channel.loopCount = 16;
-        //#endregion
-
-        //#region create playback controls
-        res = await load('./ui/controls.layout.json');
+    async function test_synthAdapter_importscript() {
+        header('Test import script');
+        Ps.Player.registerAdapter(Ps.Player);
+        Ps.Player.registerAdapter(psynth.SynthAdapter);
+        var res = await load('./res/test-script.txt')
         if (res.error) throw res.error;
-        var template = res.data;
-        template.type = 'Panel';
-        var controls = await glui.create('controls', template, null, App);
-        await controls.build();
-        controls.move(10, 60);
-        controls.getControlById('bpm').dataBind(App, 'bpm');
-        controls.render();
-        // #endregion
-
-        //#region create synth UI
-        var res = await load('./ui/synth1.layout.json');
-        if (res.error) throw res.error;
-        var template = res.data;
-        template.type = 'Panel';
-        var synthUi = await glui.create('synth1', template, null, null);
-        await synthUi.build(synth);
-        var polyCtrl = synthUi.items.find(x => x.id == 'poly');
-        polyCtrl.setValue(synth.voices.length);
-        polyCtrl.addHandler('change', synthUi,
-            function(e, ctrl) {
-                this.boundObject.setVoiceCount(ctrl.getValue());
+        var player = await Ps.Player.create();
+        var result = null;
+        await measure('import script', async function() { results = await player.importScript(res.data) }, 1);
+        test('Should load script successfully', ctx => {
+            ctx.assert(results, 'empty');
+            for (var i=0; i<results.length; i++) {
+                message(results[i]);
             }
-        );
-        synthUi.move(10, controls.top + controls.height + 4);
-        synthUi.render();
-        //#endregion
-
-        //#region create Score-Control
-        var score = await glui.create('score', {
-            'type': 'Score',
-            'style': {
-                'color': '#ffd080',
-                'background-color': '#102040'
-            },
-            'scroll-x-min': 0,
-            'scroll-x-max': 0,
-            'scroll-y-min': 0,
-            'scroll-y-max': 48,
-
-            'scale-x-min': 0,
-            'scale-x-max': 0,
-            'scale-y-min': 0.5,
-            'scale-y-max': 4,
-
-            'insert-mode': 'x-bound',
-            'drag-mode': 'free',
-            'curve-mode': 'line'
-        }, null, null);
-        score.unitX = 4;
-        score.scaleX = synthUi.width / 64;
-        var width = Math.floor(score.scaleX*score.unitX)*16;
-        var bw = synthUi.width - width;
-        score.style.border = `#000000 ${bw/2}px solid`;
-        score.style.width = width + bw;
-        score.unitY = 12;
-        score.scaleY = 1.5;
-        score.style.height = (score.scaleY*score.unitY)*36;
-        score.renderer.initialize(score, glui.renderingContext);
-        score.scaleRangeX[0] = score.scaleRangeX[1] = score.scaleX;
-        score.setScale();
-        score.scrollTop = score.stepY * 12;
-        score.move(10, synthUi.top + synthUi.height + 4);
-        score.setFromSequence(player.sequences[0]);
-        score.render();
-        //#endregion
-
-        test('Should create and bind all UI controls', ctx => {
-            for (var i in psynth.Synth.controls) {
-                var ctrl = synth.getControl(psynth.Synth.controls[i]);
-                var ui = synthUi.items.find(x => x.id == i);
-                if (!ui) {
-                    var grp = synthUi.items.find(x => i.startsWith(x.id));
-                    if (grp) {
-                        ui = grp.items.find(x => i.endsWith(x.id));
-                    }
-                }
-                if (!ui) continue;
-                ctx.assert(ui && ui.dataSource instanceof DataLink && ui.dataSource.obj == ctrl && ui.dataField == 'value', 'true');
-            }
+            ctx.assert(player.adapters.length, '=', 2);
+            ctx.assert(player.sequences.length, '=', 8);
+            ctx.assert(player.datablocks.length, '=', 3);
         });
 
-        glui.animate();
-
-        sound.init(SAMPLE_RATE, App.fillBuffer);
-
-        _isDone = false;
-        var button = addButton('End', () => _isDone = true);
-        await poll( () => _isDone, 10);
-        sound.stop();
-        button.innerHTML = 'Done';
-
-        glui.shutdown();
+        await run((left, right, bufferSize) => playerBasedFillBuffer(left, right, bufferSize, player));
     }
+    
+    // var App = {
+    //     bpm: 60,
+    //     channel: null,
+    //     synthAdapter: null,
+
+    //     onchange: function onchange(e, ctrl) {
+    //         if (ctrl.id == 'bpm') {
+    //             setBpm(ctrl.getValue());
+    //         } else if (ctrl.id == 'score') {
+    //             App.channel.cursor = 0;
+    //             // release every voice
+    //             var dev = App.channel.device;
+    //             for (var i=0; i<dev.voices.length; i++) {
+    //                 var voice = dev.voices[i];
+    //                 voice.setNote(0, 0);
+    //             }
+    //             App.channel.sequence = ctrl.getAsSequence(App.synthAdapter);
+    //         }
+    //     },
+    //     onclick: function onclick(e, ctrl) {
+    //         if (ctrl.id == 'run') {
+    //             if (!sound.isRunning) {
+    //                 ctrl.setValue('Stop');
+    //                 sound.start();
+    //             } else {
+    //                 ctrl.setValue('Play');
+    //                 sound.stop();
+    //             }
+    //         }
+    //     },
+
+    //     fillBuffer: function fillBuffer(left, right, bufferSize, ch) {
+    //         _isDone = !channelBasedFillBuffer(left, right, bufferSize, App.channel);
+    //     }
+    // };
+
+    // setBpm(App.bpm);
+
+    // async function test_synth_ui() {
+    //     message('Test synth ui', 1);
+
+    //     //#region init glui
+    //     glui.scale.x = 0.8;
+    //     glui.scale.y = 0.8;
+
+    //     glui.initialize(App, true);
+    //     await glui.setRenderingMode(glui.Render2d);
+    //     glui.buildUI(App);
+    //     //#endregion
+
+    //     //#region create synth, sound playback
+    //     var player = Ps.Player.create();
+    //     var adapter = player.addAdapter(psynth.SynthAdapter.create(player));
+    //     sound.init(48000, this.fillSoundBuffer);
+    //     // create dummy sequence
+    //     var frames = [];
+    //     var delta = 0;
+    //     var pattern1 = [
+    //         0,-1,24,12,  0,-1,12,-1, 0,10,-1,12, 0,15,0,-1
+    //     ];
+    //     for (var i=0; i<pattern1.length; i++) {
+    //         var note = pattern1[i] + 12;
+    //         if (pattern1[i] != -1) {
+    //             // frame on
+    //             var frame = new Ps.Frame(); frame.delta = delta;
+    //             frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, note, 240));
+    //             frames.push(frame);
+    //             // frame off
+    //             frame = new Ps.Frame(); frame.delta = 2;
+    //             delta = 2;
+    //             frame.commands.push(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, note, 0));
+    //             frames.push(frame);
+    //         } else {
+    //             delta = 6;
+    //         }
+    //     }
+    //     // EOS
+    //     var frame = new Ps.Frame(); frame.delta = delta;
+    //     frames.push(frame);
+    //     App.synthAdapter = player.adapters[psynth.SynthAdapter.getInfo().id].adapter;
+    //     var sequence = Ps.Sequence.fromFrames(frames, App.synthAdapter);
+    //     var sequences = [sequence];
+    //     player.sequences = sequences;
+
+    //     var synth = new psynth.Synth(sound.smpRate, 6);
+    //     App.synthAdapter.devices.push(synth);
+    //     await loadPreset('./res/preset.json', synth);
+    //     synth.isActive = true;
+
+    //     // create test channel
+    //     App.channel = player.createDevice(Ps.Player.Device.CHANNEL, null);
+    //     App.channel.assign(0, player.sequences[0]);
+    //     App.channel.loopCount = 16;
+    //     //#endregion
+
+    //     //#region create playback controls
+    //     res = await load('./ui/controls.layout.json');
+    //     if (res.error) throw res.error;
+    //     var template = res.data;
+    //     template.type = 'Panel';
+    //     var controls = await glui.create('controls', template, null, App);
+    //     await controls.build();
+    //     controls.move(10, 60);
+    //     controls.getControlById('bpm').dataBind(App, 'bpm');
+    //     controls.render();
+    //     // #endregion
+
+    //     //#region create synth UI
+    //     var res = await load('./ui/synth1.layout.json');
+    //     if (res.error) throw res.error;
+    //     var template = res.data;
+    //     template.type = 'Panel';
+    //     var synthUi = await glui.create('synth1', template, null, null);
+    //     await synthUi.build(synth);
+    //     var polyCtrl = synthUi.items.find(x => x.id == 'poly');
+    //     polyCtrl.setValue(synth.voices.length);
+    //     polyCtrl.addHandler('change', synthUi,
+    //         function(e, ctrl) {
+    //             this.boundObject.setVoiceCount(ctrl.getValue());
+    //         }
+    //     );
+    //     synthUi.move(10, controls.top + controls.height + 4);
+    //     synthUi.render();
+    //     //#endregion
+
+    //     //#region create Score-Control
+    //     var score = await glui.create('score', {
+    //         'type': 'Score',
+    //         'style': {
+    //             'color': '#ffd080',
+    //             'background-color': '#102040'
+    //         },
+    //         'scroll-x-min': 0,
+    //         'scroll-x-max': 0,
+    //         'scroll-y-min': 0,
+    //         'scroll-y-max': 48,
+
+    //         'scale-x-min': 0,
+    //         'scale-x-max': 0,
+    //         'scale-y-min': 0.5,
+    //         'scale-y-max': 4,
+
+    //         'insert-mode': 'x-bound',
+    //         'drag-mode': 'free',
+    //         'curve-mode': 'line'
+    //     }, null, null);
+    //     score.unitX = 4;
+    //     score.scaleX = synthUi.width / 64;
+    //     var width = Math.floor(score.scaleX*score.unitX)*16;
+    //     var bw = synthUi.width - width;
+    //     score.style.border = `#000000 ${bw/2}px solid`;
+    //     score.style.width = width + bw;
+    //     score.unitY = 12;
+    //     score.scaleY = 1.5;
+    //     score.style.height = (score.scaleY*score.unitY)*36;
+    //     score.renderer.initialize(score, glui.renderingContext);
+    //     score.scaleRangeX[0] = score.scaleRangeX[1] = score.scaleX;
+    //     score.setScale();
+    //     score.scrollTop = score.stepY * 12;
+    //     score.move(10, synthUi.top + synthUi.height + 4);
+    //     score.setFromSequence(player.sequences[0]);
+    //     score.render();
+    //     //#endregion
+
+    //     test('Should create and bind all UI controls', ctx => {
+    //         for (var i in psynth.Synth.controls) {
+    //             var ctrl = synth.getControl(psynth.Synth.controls[i]);
+    //             var ui = synthUi.items.find(x => x.id == i);
+    //             if (!ui) {
+    //                 var grp = synthUi.items.find(x => i.startsWith(x.id));
+    //                 if (grp) {
+    //                     ui = grp.items.find(x => i.endsWith(x.id));
+    //                 }
+    //             }
+    //             if (!ui) continue;
+    //             ctx.assert(ui && ui.dataSource instanceof DataLink && ui.dataSource.obj == ctrl && ui.dataField == 'value', 'true');
+    //         }
+    //     });
+
+    //     glui.animate();
+
+    //     sound.init(SAMPLE_RATE, App.fillBuffer);
+
+    //     _isDone = false;
+    //     var button = addButton('End', () => _isDone = true);
+    //     await poll( () => _isDone, 10);
+    //     sound.stop();
+    //     button.innerHTML = 'Done';
+
+    //     glui.shutdown();
+    // }
 
     var tests = () => [
-        test_freqTable,
-        test_control_labels,
-        test_create_synth,
-        test_run_env,
-        test_osc_run,
-        test_generate_sound_simple,
-        test_synthAdapter_makeSetCommandForContoller,
-        test_synthAdapter_prepareContext,
-        test_synthAdapter_makeCommands,
-        test_run_channel,
-        test_complete_player,
+        // test_freqTable,
+        // test_control_labels,
+        // test_create_synth,
+        // test_run_env,
+        // test_osc_run,
+        // test_generate_sound_simple,
+        // test_synthAdapter_makeSetCommandForContoller,
+        // test_synthAdapter_prepareContext,
+        // test_synthAdapter_makeCommands,
+        // test_run_channel,
+        // test_complete_player,
+        test_synthAdapter_importscript,
         // test_synthAdapterToDataSeries/*, test_synthAdapterFromDataSeries, test_synth_Ui_binding, test_synth_fromPreset*/
         // test_synth_ui
     ];
