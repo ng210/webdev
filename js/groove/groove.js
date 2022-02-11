@@ -8,7 +8,7 @@ include('./fbm-scope.js');
 include('./fire-scope.js');
 
 const SAMPLE_RATE = 48000;
-const SCOPE_MAX_SIZE = 4096;
+const SCOPE_MAX_SIZE = 2048;
 const FRAMES_PER_BEAT = 16;
 
 const ABCnames = [
@@ -128,7 +128,7 @@ function SynthApp() {
 }
 
 SynthApp.prototype.createPlayer = async function createPlayer(data) {
-    var player = await Ps.Player.createExt();
+    var player = await Ps.Player.create();
     // create data blocks
     for (var i=0; i<data['data-blocks'].length; i++) {
         var block = data['data-blocks'][i];
@@ -147,7 +147,7 @@ SynthApp.prototype.createPlayer = async function createPlayer(data) {
         var adapterType = Object.values(Ps.Player.adapterTypes).find(x => x.name == data.adapters[i]);
         if (!adapterType) throw new Error('Unknown adapter: ' + adapterType);
         var blockId = data.adapters[i+1];
-        var adapter = player.addAdapter(adapterType, blockId);
+        var adapter = player.addAdapter(adapterType.type, blockId);
         adapter.prepareContext(player.datablocks[blockId]);
     }
     // create sequences
@@ -212,7 +212,7 @@ SynthApp.prototype.initialize = async function initialize() {
     //this.scope = new FireScope();
     this.scope = new FbmScope();
     this.scope.initialize();
-    this.scope.setSize(0.004);
+    this.scope.setSize(0.006);
     this.scope.refreshRate = 2;
     //this.scope.resize();
 };

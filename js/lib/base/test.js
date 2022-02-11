@@ -304,9 +304,193 @@ include('/lib/base/html.js');
         test('Should get value from a list at path', ctx => ctx.assert(getObjectAt('itemList.items.0.name', testData), '=',  testData.itemList.items[0].name));
     }
 
+    function test_hash() {
+        header('Test hash');
+        test('Should return hash for number', ctx => {
+            ctx.assert(getHash(0), '=', '{0}');
+            ctx.assert(getHash(123), '=', '{123}');
+            ctx.assert(getHash(-123), '=', '{-123}');
+        });
+
+        test('Should return hash for string', ctx => {
+            ctx.assert(getHash('A'), '=', '{A}');
+            ctx.assert(getHash('Abc'), '=', '{Abc}');
+        });
+
+        test('Should return hash for boolean', ctx => {
+            ctx.assert(getHash(true), '=', '{true}');
+            ctx.assert(getHash(false), '=', '{false}');
+        });
+
+        test('Should return hash for array', ctx => {
+            var h = getHash([1,2,3,4]);
+            message(h);
+            ctx.assert(h, '=', '{0:{1}.1:{2}.2:{3}.3:{4}}');
+
+            var h = getHash(['A','B',3,4]);
+            message(h);
+            ctx.assert(h, '=', '{0:{A}.1:{B}.2:{3}.3:{4}}');
+
+            var h = getHash([[1,2,3],'B',3,4]);
+            message(h);
+            ctx.assert(h, '=', '{0:{0:{1}.1:{2}.2:{3}}.1:{B}.2:{3}.3:{4}}');
+        });
+
+        test('Should return hash for object', ctx => {
+            var h = getHash({'id':1, 'name':'A'});
+            message(h);
+            ctx.assert(h, '=', '{id:{1}.name:{A}}');
+
+            h = getHash({'id':1, 'name':'A', 'child':{'id':2, 'name':'B'}});
+            message(h);
+            ctx.assert(h, '=', '{id:{1}.name:{A}.child:{id:{2}.name:{B}}}');
+            
+            var obj = {'id':1, 'name':'A', 'child':{'id':2, 'name':'B'}};
+            obj.child.child = obj;
+            var h = getHash(obj);
+            message(h);
+            ctx.assert(h, '=', '{id:{1}.name:{A}.child:{id:{2}.name:{B}.child:#0}}');
+        });
+    }
+
+    function test_deepComapre() {
+        header('Test deep compare');
+        test('Should compare numbers successfully', ctx => {
+            var result = deepCompare(1, 1);
+            ctx.assert(result, 'null');
+            result = deepCompare(1, 2);
+            message(result);
+            ctx.assert(result, '!empty');
+            result = deepCompare(1, '1')
+            message(result);
+            ctx.assert(result, '!empty');
+        });
+
+        test('Should compare strings successfully', ctx => {
+            var result = deepCompare('Abc', 'Abc');
+            ctx.assert(result, 'null');
+            result = deepCompare('Abc', 'Ab');
+            message(result);
+            ctx.assert(result, '!empty');
+            result = deepCompare('Abc', 1)
+            message(result);
+            ctx.assert(result, '!empty');
+        });
+
+        test('Should compare booleans successfully', ctx => {
+            var result = deepCompare(true, true);
+            ctx.assert(result, 'null');
+            result = deepCompare(true, false);
+            message(result);
+            ctx.assert(result, '!empty');
+            result = deepCompare(true, 1)
+            message(result);
+            ctx.assert(result, '!empty');
+        });
+
+        test('Should compare arrays successfully', ctx => {
+            var arr1 = [1,2,3,4], arr2 = [1,2,3,4], arr3 = [1,2,3], arr4 = [1,2,3,5];
+            var result = deepCompare(arr1, arr2);
+            ctx.assert(result, 'null');
+            result = deepCompare(arr1, arr3);
+            message(result);
+            ctx.assert(result, '!empty');
+            result = deepCompare(arr1, arr4)
+            message(result);
+            ctx.assert(result, '!empty');
+            result = deepCompare(arr1, '1,2,3,4');
+            message(result);
+            ctx.assert(result, '!empty');
+        });
+
+        test('Should compare simple objects successfully', ctx => {
+            function O1(id, name) {
+                this.id = id;
+                this.name = name;
+            }
+            function O2(id, name) {
+                this.id = id;
+                this.name = name;
+            }
+            var obj1 = new O1(1, 'A'), obj2 = new O1(1, 'A'), obj3 = new O2(1, 'A'), obj4 = new O1(1, 'B'), obj5 = new O1(2, 'A');
+            var result = deepCompare(obj1, obj2);
+            ctx.assert(result, 'null');
+            obj2.say = 'Hello!';
+            result = deepCompare(obj1, obj2);
+            message(result);
+            ctx.assert(result, '!empty');
+            result = deepCompare(obj1, obj3)
+            message(result);
+            ctx.assert(result, '!empty');
+            result = deepCompare(obj1, obj4)
+            message(result);
+            ctx.assert(result, '!empty');
+            result = deepCompare(obj1, obj5)
+            message(result);
+            ctx.assert(result, '!empty');
+        });
+
+        test('Should compare complex objects successfully', ctx => {
+            function O0(id, name) {
+                this.id = id;
+                this.name = name;
+            }
+
+            function O1(id, name, children) {
+                this.o0 = new O0(id, name);
+                this.children = children;
+            }
+
+            function O2(id, name) {
+                this.o0 = new O0(id, name);
+                this.children = children;
+            }
+
+            var c1 = new O1(1, 'C1', null);
+            var c2 = new O1(1, 'C1', null);
+            var c3 = new O1(2, 'C3', null);
+
+            var p1 = new O1(4, 'P1', [c1, c2]);
+            var p2 = new O1(4, 'P1', [c1, c2]);
+            var p3 = new O1(4, 'P1', [c1, c3]);
+            var p4 = new O1(5, 'P4', [c1, c2]);
+
+            var g1 = new O1(6, 'G1', [p1, p2]);
+            var g2 = new O1(6, 'G1', [p1, p2]);
+            var g3 = new O1(6, 'G2', [p1, p2]);
+            var g4 = new O1(6, 'G1', [p1, p3]);
+
+            var result = deepCompare(c1, c2);
+            ctx.assert(result, 'null');
+            result = deepCompare(c1, c3);
+            message(result);
+            ctx.assert(result, '!empty');
+
+            result = deepCompare(p1, p2)
+            ctx.assert(result, 'null');
+            result = deepCompare(p1, p3)
+            message(result);
+            ctx.assert(result, '!empty');
+            result = deepCompare(p1, p4)
+            message(result);
+            ctx.assert(result, '!empty');
+
+            result = deepCompare(g1, g2)
+            ctx.assert(result, 'null');
+            result = deepCompare(g1, g3)
+            message(result);
+            ctx.assert(result, '!empty');
+            result = deepCompare(g1, g4)
+            message(result);
+            ctx.assert(result, '!empty');
+        });
+    }
+
     var tests = () => [
+        test_hash,
+        test_deepComapre,
         // test_getObjectAt,
-        test_clone,
+        // test_clone,
         // test_mergeObjects,
         // test_getSetObjectAt,
         // test_load,

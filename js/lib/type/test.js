@@ -309,6 +309,86 @@ function message_errors(errors) {
     }
 }
 
+function test_compare() {
+    header('Test compare');
+    var types = {
+        'int': new IntType('int'),
+        'float': new FloatType('float'),
+        'string': new StringType('string')
+    }
+
+    var data = [
+        {
+            'type': new BoolType('bool'),
+            'tests': [
+                [false, false,  0],
+                [true,   true,  0],
+                [true,  false,  1],
+                [false,  true, -1]
+            ],
+        },
+        {   'type': types.int,
+            'tests': [
+                [0, 0,  0],
+                [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, 0],
+                [1, 0,  1],
+                [0, 1, -1]
+            ]
+        },
+        {   'type': new IntType('uint8', types.int, { 'min': 0, 'max': 255 }),
+            'tests': [
+                [0,     0,  0],
+                [255, 255,  0],
+                [255,   0,  1],
+                [0,   255, -1]
+            ]
+        },
+        {   'type': types.float,
+            'tests': [
+                [0, 0,  0],
+                [Number.MAX_VALUE, Number.MAX_VALUE, 0],
+                [Number.MAX_VALUE, 0,  1],
+                [0, Number.MAX_VALUE, -1]
+            ]
+        },
+        {   'type': new FloatType('normalized', types.float, { 'min': 0, 'max': 1 }),
+            'tests': [
+                [0.0, 0.0,  0],
+                [1.0, 1.0,  0],
+                [1.0, 0.0,  1],
+                [0.0, 1.0, -1]
+            ]
+        },
+        {   'type': types.string,
+            'tests': [
+                ['ABCDEFG', 'ABCDEFG',  0],
+                ['',               '',  0],
+                ['ABDCDEH', 'ABCDEFG',  1],
+                ['ABCDEFG',      'AB',  1],
+                ['ABCDEFG', 'ABDCDEH', -1],
+                ['AB',      'ABCDEFG', -1]
+            ]
+        },
+        {   'type': new StringType('string4', types.string, { 'length': 4 }),
+            'tests': [
+                ['abcd', 'abcd',  0],
+                ['bcde', 'abcd',  1],
+                ['abcd',  'abc',  1],
+                ['abcd', 'bcde', -1],
+                ['abc',  'abcd',  -1]
+            ]
+        }
+    ];
+
+    for (var i=0; i<data.length; i++) {
+        var type = data[i].type;
+        for (var j=0; j<data[i].tests.length; j++) {
+            var tj = data[i].tests[j];
+            test(`Should compare '${type.name}' correctly (${tj[2]})`, ctx => ctx.assert(type.compare(tj[0], tj[1]), '=', tj[2]));
+        }
+    }
+}
+
 function validate_type(type, value) {
     var results = [];
     type.validate(value, results);
@@ -514,6 +594,7 @@ function test_schema() {
         ctx.assert(schema.types.get('MyIndex').attributes.get('persons').type.baseType, '=', schema.types.get('list'));
         ctx.assert(schema.types.get('MyIndex').attributes.get('persons').type.elemType, '=', schema.types.get('refPerson'));
     });
+    //#endregion
 
     schema.buildType({ name:'MyDataTypes', type:Schema.Types.LIST, elemType:'type'});
     test('Should accept run-time types', ctx => {
@@ -822,6 +903,7 @@ var tests = () => [
     test_types,
     test_complex_type,
     test_type_enum,
+    test_compare,
     test_create_schema,
     test_build_schema,
     test_complex_schema

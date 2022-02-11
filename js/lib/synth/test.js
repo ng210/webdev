@@ -580,7 +580,9 @@ include('/lib/synth/synth-adapter-ext.js');
         header('Test import script');
         Ps.Player.registerAdapter(Ps.Player);
         Ps.Player.registerAdapter(psynth.SynthAdapter);
-        var res = await load('./res/test-script.txt')
+        //var res = await load('./res/test-script.txt')
+        var res = await load('./res/drums1.ssng')
+        setBpm(121);
         if (res.error) throw res.error;
         var player = await Ps.Player.create();
         var result = null;

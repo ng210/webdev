@@ -191,54 +191,58 @@ function test_context(lbl) {
     this.errors = 0;
 }
 
-function deepCompare(a, b, path) {
-    a = a && a.valueOf();
-    b = b && b.valueOf();
-    path = path || '';
-    var result = null;
-    if (a == null && b == null) result = null;
-    else if (a == null && b != null) result = `${path} [null ! b]`;
-    else if (a != null && b == null) result = `${path} [a ! null]`;
-    else if (typeof a !== typeof b)  result = `${path} [type a (${typeof a}) ! type b (${typeof a})]`;
-    else if (a instanceof ArrayBuffer) {
-        var va = new DataView(a);
-        var vb = new DataView(b);
-        for (var i=0; i<va.byteLength; i++) {
-            if (va.getInt8(i) != vb.getInt8(i)) {
-                result = `${path} a[${i}] ! b[${i}]`;
-                break;
-            }
-        }
-    } else if (a.constructor == Map) {
-        for (var [key, value] of a) {
-            if (typeof key === 'object') key = key.valueOf();
-            if (typeof value === 'object') value = value.valueOf();
-            if (!b.has(key)) {
-                result = `${path} [key (${key}) in a missing in b]`;
-                break;
-            }
-            result = deepCompare(value, b.get(key), `${path}.${key}`);
-            if (result) {
-                break;
-            }
-        }
-    } else if (typeof a === 'object' || Array.isArray(a)) {
-        var keysA = Object.keys(a);
-        var keysB = Object.keys(b);
-        if (keysA.length !== keysB.length) result = `${path} [keys a (${keysA.length}) ! keys b (${keysB.length})]`;
-        else {
-            for (var i=0; i<keysA.length; i++) {
-                result = deepCompare(a[keysA[i]], b[keysA[i]], `${path}.${keysA[i]}`);
-                if (result) {
-                    break;
-                }
-            }
-        }
-    } else {
-        result = equals(a, b) ? null : `${path} [${a} ! ${b}]`;
-    }
-    return result;
-}
+// function deepCompare(a, b, path) {
+//     a = a && a.valueOf();
+//     b = b && b.valueOf();
+//     path = path || '';
+//     var result = null;
+//     if (a == null && b == null) result = null;
+//     else if (a == null && b != null) result = `${path} [null ! b]`;
+//     else if (a != null && b == null) result = `${path} [a ! null]`;
+//     else if (typeof a !== typeof b)  result = `${path} [type a (${typeof a}) ! type b (${typeof a})]`;
+//     else if (a instanceof ArrayBuffer) {
+//         var va = new DataView(a);
+//         var vb = new DataView(b);
+//         for (var i=0; i<va.byteLength; i++) {
+//             if (va.getInt8(i) != vb.getInt8(i)) {
+//                 result = `${path} a[${i}] ! b[${i}]`;
+//                 break;
+//             }
+//         }
+//     } else if (a.constructor == Map) {
+//         for (var [key, value] of a) {
+//             if (typeof key === 'object') key = key.valueOf();
+//             if (typeof value === 'object') value = value.valueOf();
+//             if (!b.has(key)) {
+//                 result = `${path} [key (${key}) in a missing in b]`;
+//                 break;
+//             }
+//             result = deepCompare(value, b.get(key), `${path}.${key}`);
+//             if (result) {
+//                 break;
+//             }
+//         }
+//     } else if (typeof a === 'object' || Array.isArray(a)) {
+//         if (typeof a.deepCompare === 'function') {
+//             result = a.deepCompare(b);
+//         } else {
+//             var keysA = Object.keys(a);
+//             var keysB = Object.keys(b);
+//             if (keysA.length !== keysB.length) result = `${path} [keys a (${keysA.length}) ! keys b (${keysB.length})]`;
+//             else {
+//                 for (var i=0; i<keysA.length; i++) {
+//                     result = deepCompare(a[keysA[i]], b[keysA[i]], `${path}.${keysA[i]}`);
+//                     if (result) {
+//                         break;
+//                     }
+//                 }
+//             }
+//         }
+//     } else {
+//         result = equals(a, b) ? null : `${path} [${a} ! ${b}]`;
+//     }
+//     return result;
+// }
 
 function _testDeepCompare(a, b) {
     console.log(`${JSON.stringify(a)}\n${JSON.stringify(b)}\n => ${deepCompare(a, b)}`)

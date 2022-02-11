@@ -101,11 +101,11 @@ datablock "soundbank", {
         Sy.lfo1amp, 0.0,    Sy.lfo2amp, 0.0,
         Sy.lfo1fre, 0.0,    Sy.lfo2fre, 35.0,
 
-        Sy.env1amp,    1.0,     Sy.env2amp,    1.0,     Sy.env3amp,    1.0,     Sy.env4amp,  210.0,
-        Sy.env1dc,     0.0,     Sy.env2dc,    80.0,     Sy.env3dc,     0.0,     Sy.env4dc,    30.0,
+        Sy.env1amp,    1.0,     Sy.env2amp,    1.0,     Sy.env3amp,    1.0,     Sy.env4amp,  410.0,
+        Sy.env1dc,     0.0,     Sy.env2dc,    80.0,     Sy.env3dc,     0.0,     Sy.env4dc,    10.0,
         Sy.env1atk,      0,     Sy.env2atk,      0,     Sy.env3atk,      0,     Sy.env4atk,      0,
-        Sy.env1dec,      2,     Sy.env2dec,      0,     Sy.env3dec,      1,     Sy.env4dec,      4,
-        Sy.env1sus,    120,     Sy.env2sus,     80,     Sy.env3sus,      1,     Sy.env4sus,      4,
+        Sy.env1dec,      2,     Sy.env2dec,      0,     Sy.env3dec,      1,     Sy.env4dec,      3,
+        Sy.env1sus,    120,     Sy.env2sus,     80,     Sy.env3sus,      1,     Sy.env4sus,     40,
         Sy.env1rel,     12,     Sy.env2rel,     10,     Sy.env3rel,      1,     Sy.env4rel,     10,
         
         Sy.osc1amp,    0.9,     Sy.osc2amp,    0.1,

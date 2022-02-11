@@ -777,6 +777,87 @@ self.iterate = function iterate(obj, action) {
             break;
     }
 };
+self.getHash = function getHash(obj, cache) {
+    var hash = [];
+    cache = cache || [];
+    if (typeof obj === 'object') {
+        cache.push(obj);
+        var keys = Object.keys(obj);
+        for (var i=0; i<keys.length; i++) {
+            var prop = obj[keys[i]];
+            var ix = cache.findIndex(x => x == prop);
+            var h = ix == -1 ? getHash(prop, cache) : '#' + ix;
+            hash.push(keys[i] + ':' + h);
+        }
+    } else {
+        hash.push(obj.toString());
+    }
+    return '{' + hash.join('.') + '}';
+}
+self.deepCompare = function deepCompare(a, b, path, cache, lvl) {
+    var result = null;
+    a = a && a.valueOf();
+    b = b && b.valueOf();
+    path = path || [];
+    cache = cache || [];
+    if (lvl == undefined) lvl = 0;
+    var typeA = typeof a;
+    var typeB = typeof b;
+    if (typeA != typeB) {
+        result = `Type mismatch: '${typeA}' and '${typeB}'!`;
+    } else {
+        switch (typeA) {
+            case 'number':
+                if (Math.abs(a - b) > Number.EPSILON) result = 'Value mismatch!';
+                break;
+            case 'string':
+                if (a.localeCompare(b) != 0) result = 'Value mismatch!';
+                break;
+            case 'boolean':
+                if (a !== b) result = 'Value mismatch!';
+                break;
+            case 'object':
+                if (a == null || b == null) {
+                    if (a != b) result = 'Value mismatch!';
+                    break;
+                }
+                if (a == b) break;
+                var ix = cache.findIndex(x => x.a == a && x.b == b);
+                if (ix == -1) {
+                    cache.push({'a':a, 'b':b});
+                    var typeA = a.constructor;
+                    var typeB = b.constructor;
+                    if (typeA != typeB) {
+                        result = `Constructor mismatch: '${typeA.name}' and '${typeB.name}'!`;
+                    } else {
+                        if (typeof a.deepCompare === 'function') result = a.deepCompare(b);
+                        else {
+                            var keysA = Object.keys(a);
+                            var keysB = Object.keys(b);
+                            if (keysA.length != keysB.length) result = `Key count mismatch: ${keysA.length} and ${keysB.length}`;
+                            else {
+                                for (var i=0; i<keysA.length; i++) {
+                                    var keyA = keysA[i];
+                                    var keyB = keysB[i];
+                                    path.push(keyA);
+                                    result = deepCompare(a[keyA], b[keyB], path, cache, lvl+1);
+                                    if (result) {
+                                        if (lvl == 0) result += ` at (${path.join('.')})`;
+                                        break;
+                                    }
+                                    path.pop();
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+            case 'function':
+                break;
+        }
+    }
+    return result;    
+};
 
 
 //#region UTILITIES: POLL,LOCK,MERGEOBJECTS,OBJECT-PATH

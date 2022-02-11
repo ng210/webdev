@@ -33,6 +33,11 @@ include('/lib/type/type.js');
         this.setType(v);
         return v;
     };
+    BoolType.prototype.compare = function compare(a, b) {
+        var i = a ? 1 : 0;
+        var j = b ? 1 : 0;
+        return i - j;
+    };
     BoolType.prototype.parse = function parse(term) {
         return term != '' ? BoolType.base.parse.call(this, term) : false;
     };

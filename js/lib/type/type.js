@@ -41,6 +41,9 @@ include('/lib/type/validation-result.js');
     Type.prototype.createDefaultValue = function createDefaultValue() {
         throw new Error('Not implemented!');
     };
+    Type.prototype.compare = function compare(a, b) {
+        return JSON.serialize(a).localeCompare(JSON.serialize(b));
+    }
     Type.prototype.parse = function parse(term) {
         var value = this.createValue(JSON.parse(term));
         var results = [];

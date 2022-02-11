@@ -4,14 +4,13 @@ include('../type/schema.js');
 (function(){
     self.grammar = null;
     async function test_syntax() {
+        header('Test syntax');
         if (!self.grammar) {
             await load('./test/grammar.js');
         }
 
         header('Test syntax');
-        var results = [
-            'Test syntax'
-        ];
+        var results = [];
         var tests = {
             '6': '1+2+3',
             '7': '1+2*3',
@@ -36,7 +35,8 @@ include('../type/schema.js');
         message('Evaluate on ' + JSON.stringify(obj));
         for (var r in tests) {
             var expr = syntax.parse(tests[r]);
-            var result = expr.resolve().evaluate(obj);
+            var resolution = expr.resolve();
+            var result = resolution.evaluate(obj);
             test(`Should evaluate -> '${tests[r]}' to ${r}`, context => context.assert(r, '=', result.value));
         }
 

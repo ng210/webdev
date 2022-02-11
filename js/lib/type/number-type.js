@@ -14,6 +14,12 @@ include('/lib/type/type.js');
     }
     extend(Type, NumberType);
 
+    NumberType.prototype.compare = function compare(a, b) {
+        var r = a - b;
+        if (r > 0) r = 1;
+        else if (r < 0) r = -1;
+        return r;
+    };
     NumberType.prototype.validate = function validate(value, results, path) {
         var isValid = true;
         var v = value + 0;

@@ -163,7 +163,6 @@
                 ruleOut = outNodes.map(x => x.data.code);
             }
         }
-
         if (rule.in.length < ruleOut.length) {
             throw new Error('Invalid rule: output cannot be longer than input!');
         }
@@ -188,7 +187,7 @@
                 for (var i=0; i<ruleOut.length; i++) {
                     var code = ruleOut[i];
                     outNodes[i].data.code = code;
-                    outNodes[i].data.type = this.syntax.symbols.getAt(code);
+                    //outNodes[i].data.type = this.syntax.symbols.getAt(code);
                 }
             }
         }

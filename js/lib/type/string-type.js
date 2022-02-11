@@ -53,6 +53,13 @@ include('/lib/type/type.js');
         this.setType(v);
         return v;
     };
+    StringType.prototype.compare = function compare(a, b) {
+        //return a.localeCompare(b);
+        var result = 0;
+        if (a < b) result = -1;
+        else if (a > b) result = 1;
+        return result;
+    };
 
     publish(StringType, 'StringType');
 })();
