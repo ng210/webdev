@@ -60,7 +60,7 @@ function animate(ts) {
 
 window.onload = async function(e) {
     _mapService = new MapService();
-    _mapService.create(128, 112);
+    _mapService.create(144, 166);
     var w = 32, h = 20;
 
     _map = new Map(w, h, false);
@@ -72,7 +72,7 @@ window.onload = async function(e) {
     document.addEventListener('mousedown', onmousedown);
     document.addEventListener('mousemove', onmousemove);
     document.addEventListener('mouseup', onmouseup);
-    //document.addEventListener('wheel', onwheel);
+    document.addEventListener('wheel', onwheel);
 
     requestAnimationFrame(animate);
 }
