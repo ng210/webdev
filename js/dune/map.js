@@ -11,7 +11,10 @@ function Map(width, height, isWrapped) {
     this.motion = [0, 0];
     this.offsetLeft = 0;
     this.offsetTop = 0;
+    this.fetchLeft = 0;
+    this.fetchTop = 0;
     this.isWrapped = isWrapped;
+    this.elevation = 0;
     this.scale = 1;
 }
 
@@ -30,32 +33,27 @@ Map.prototype.loadTiles = async function loadTiles(url) {
     if (res.error) alert(res.error.message);
     else {
         var img = await ajax.processContent(options);
-        var tileData = [
-            //0, 1, 2, 3, 4 // shades
-            21,15,0,18,24  // dune2
-            //  0,         // sand
-            //  1, 2, 3, 14,15,16, 27,28,29,   // spice
-            //  7, 8, 9, 20,21,22, 33,34,35,   // rich spice
-            //  4, 5, 6, 17,18,19, 30,31,32,   // rock
-            // 10,11,12, 23,24,25, 36,37,38,   // rock 2
-            // 39,40       // spice bloom, small rock
-        ];
         this.tiles = {
             image: img,
             width: 16, height: 16,
-            rowSize: 13,
+            rowSize: 16,
+            count: 84,
             data: []
         };
-        for (var i=0; i<tileData.length; i++) {
-            var col = tileData[i] % this.tiles.rowSize;
-            var row = (tileData[i] - col)/this.tiles.rowSize;
+        for (var i=0; i<this.tiles.count; i++) {
+            var col = i % this.tiles.rowSize;
+            var row = (i - col)/this.tiles.rowSize;
             this.tiles.data.push(this.tiles.width * col, this.tiles.height * row);
         }
     }
 };
 
+Map.prototype.fetch = function fetch() {
+    this.data = this.service.fetch(this.fetchLeft, this.fetchTop, this.width, this.height);
+};
+
 Map.prototype.move = function move(dx, dy) {
-    var f = 0.15;
+    var f = 0.25;
     this.motion[0] += f*dx;
     this.motion[1] += f*dy;
     var limit = 2;
@@ -66,25 +64,41 @@ Map.prototype.move = function move(dx, dy) {
 
     var left = this.left + f*this.motion[0];
     var top = this.top + f*this.motion[1];
+    var w = this.width - 1;
+    var h = this.height - 1;
     if (left < 0) { left = 0; this.motion[0] = 0; }
-    else if (left >= this.mapSize[0]-this.width) { left = this.mapSize[0]-this.width; this.motion[0] = 0; }
+    else if (left > this.mapSize[0]-w) { left = this.mapSize[0]-w; this.motion[0] = 0; }
     if (top < 0) { top = 0; this.motion[1] = 0; }
-    else if (top >= this.mapSize[1]-this.height) { top = this.mapSize[1]-this.height; this.motion[1] = 0; }
+    else if (top > this.mapSize[1]-h) { top = this.mapSize[1]-h; this.motion[1] = 0; }
     this.left = left;
     this.top = top;
-    var leftInt = Math.trunc(left);
-    var topInt = Math.trunc(top);
-    this.offsetLeft = Math.trunc((leftInt - left) * this.tiles.width);
-    this.offsetTop = Math.trunc((topInt - top) * this.tiles.height);
-    this.data = this.service.fetch(leftInt, topInt, this.width, this.height);
+    this.fetchLeft = Math.trunc(left);
+    this.fetchTop = Math.trunc(top);
+    this.offsetLeft = Math.trunc((this.fetchLeft - left) * this.tiles.width);
+    this.offsetTop = Math.trunc((this.fetchTop - top) * this.tiles.height);
+    this.fetch();
 };
 
 Map.prototype.zoom = function zoom(f) {
     var scale = this.scale + 0.01*Math.sign(f);
-    if (scale < 0.25) scale = 0.25;
-    else if (scale > 4) scale = 4;
+    if (scale > 4) scale = 4;
+    var width = Math.trunc(this.width/scale);
+    var height = Math.trunc(this.height/scale);
+    var scaleX = 1, scaleY = 1;
+    if (width >= this.mapSize[0]) {
+        width = this.mapSize[0] - 1;
+        scaleX = width/this.mapSize[0];
+    }
+
+    if (height >= this.mapSize[1]) {
+        height = this.mapSize[1] - 1;
+        scaleY = height/this.mapSize[1];
+    }
+
+    this.width = width + 1;
+    this.height = height + 1;
     this.scale = scale;
-    // this.move
+    
     this.render();
 };
 
@@ -94,13 +108,25 @@ Map.prototype.render = function render(canvas) {
     }
     var k = 0;
     var y = this.offsetTop;
+    var w = this.tiles.width - 0;
+    var h = this.tiles.height - 0;
+    // this.ctx.font = '10px Arial';
+    // this.ctx.textAlign = 'left';
+    // this.ctx.strokeStyle = '#ffffff';
     for (var j=0; j<this.height; j++) {
         var x = this.offsetLeft;
         for (var i=0; i<this.width; i++) {
             var ti = this.data[k++];
-            var sx = this.tiles.data[2*ti];
-            var sy = this.tiles.data[2*ti+1]
-            this.ctx.drawImage(this.tiles.image, sx, sy, this.tiles.width, this.tiles.height, this.scale*x, this.scale*y, this.scale*this.tiles.width, this.scale*this.tiles.height);
+            if (this.isShadeMode) {
+                this.ctx.fillStyle = `rgb(${ti}, ${ti}, ${ti})`;
+                this.ctx.fillRect(this.scale*x, this.scale*y, this.scale*this.tiles.width, this.scale*this.tiles.height);
+                // this.ctx.strokeText(`${ti}`, this.scale*x, this.scale*y + this.scale*h, this.scale*w);
+            } else {
+                var sx = this.tiles.data[2*ti];
+                var sy = this.tiles.data[2*ti+1];
+                this.ctx.drawImage(this.tiles.image, sx, sy, w, h, this.scale*x, this.scale*y, this.scale*w, this.scale*h);
+                //this.ctx.fillText(`${ti}`, this.scale*x, this.scale*y + this.scale*h, this.scale*w);
+            }
             x += this.tiles.width;
         }
         y += this.tiles.height;
@@ -109,7 +135,7 @@ Map.prototype.render = function render(canvas) {
 
 Map.prototype.update = function update(delta) {
     var isMoving = false;
-    var f = 0.004 * delta;
+    var f = 0.002 * delta;
     var m0 = this.motion[0];
     if (m0 != 0) {
         if (m0 < 0) {
