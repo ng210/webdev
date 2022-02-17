@@ -76,9 +76,9 @@ include('/lib/base/html.js');
 		if (desc.value != undefined) {
 			o.__value = desc.value;
 			delete desc.value;
-			desc.get = function() { debugger; return this.__value; };
+			desc.get = onread ? function() { debugger; return this.__value; } : function() { return this.__value; };
 			if (desc.writable) {
-				desc.set = function(v) { debugger; return this.__value = v; };
+				desc.set = onwrite ? function(v) { debugger; return this.__value = v; } : function(v) { return this.__value = v; };
 			}
 			delete desc.writable;
 		} else {

@@ -70,7 +70,7 @@
         return vertex;
     };
     Graph.prototype.removeVertex = function removeVertex(vertex) {
-        if (this.vertices[vertex.id] != vertex) throw new Error('Vertex invalid!');
+        if (this.vertices[vertex.id] != vertex) throw new Error(`Vertex ${vertex.id} invalid!`);
         var last = this.vertices.pop();
         last.id = vertex.id;
         this.vertices[vertex.id] = last;

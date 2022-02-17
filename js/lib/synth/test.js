@@ -449,7 +449,7 @@ include('/lib/synth/synth-adapter-ext.js');
     }
 
     var _frame = 0;
-    var _bpm = 101;
+    var _bpm =  82;
     var _samplePerFrame = SAMPLE_RATE*3.75/_bpm;
 
     function setBpm(bpm) {

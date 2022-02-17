@@ -67,6 +67,13 @@
 		}
 		return values;
 	};
+	Dictionary.prototype.deepCompare = function deepCompare(dict) {
+		var result = self.deepCompare(this._keys, dict._keys);
+		if (!result) {
+			result = self.deepCompare(this._map, dict._map);
+		}
+		return result;
+	};
 
 	Dictionary.fromObject = function fromObject(obj, includeAll) {
 		var dict = new Dictionary();
