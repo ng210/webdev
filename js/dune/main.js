@@ -123,10 +123,11 @@ window.onload = async function(e) {
     var w = 48, h = 27;
 
     _map = new Map(w, h, false);
-    //_map.isShadeMode = true;
-    //_mapService.shadeMode = true;
-    await _map.initialize('res/earth-tiles.png', _mapService);
+    // _map.isShadeMode = true;
+    // _mapService.shadeMode = true;
+
     var cvs = document.getElementById('cvs');
+    await _map.initialize('res/earth-tiles.png', _mapService, cvs);
     cvs.width = _map.tiles.width*w; cvs.height = _map.tiles.height*h;
     _map.render(cvs);
     document.addEventListener('keydown', onkeydown);

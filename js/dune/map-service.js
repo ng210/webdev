@@ -7,6 +7,7 @@ function MapService() {
     this.levels = 6;
     this.elevation = -0.2;
     this.shadeMode = false;
+    this.minimap = null;
 }
 
 MapService.prototype.create = function create(width, height) {
@@ -16,7 +17,8 @@ MapService.prototype.create = function create(width, height) {
     this.height = height;
     this.data = new Array(this.width * this.height);
     var data = new Array(this.data.length);
-
+    this.miniMap = new Uint8Array(this.data.length);
+    
     // generate noise
     this.noise.transform2d = (x, y, v, buffer, ix) => { buffer[ix] = v < 1 ? v : 1; return ix+1; };
     this.noise.createFbm2d(width, height, 32, 24, 3, 0.94, 1.07, 0.51, 1.17, this.data);
@@ -412,12 +414,16 @@ MapService.prototype.create = function create(width, height) {
                 ix++;
             }
         }
+        this.miniMap = this.data;
         this.data = data;
         //#endregion
     }
 };
 MapService.prototype.getSize = function getSize() {
     return [this.width, this.height];
+};
+MapService.prototype.getMiniMap = function getMiniMap() {
+    return this.miniMap;
 };
 
 MapService.prototype.fetch = function fetch(left, top, width, height) {

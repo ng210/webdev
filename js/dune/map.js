@@ -16,14 +16,37 @@ function Map(width, height, isWrapped) {
     this.isWrapped = isWrapped;
     this.elevation = 0;
     this.scale = 1;
+    this.miniMap = null;
+    this.colorMap = [];
 }
 
-Map.prototype.initialize = async function initialize(url, service) {
+Map.prototype.initialize = async function initialize(tilesUrl, service, canvas) {
     this.service = service;
-    await this.loadTiles(url);
+    await this.loadTiles(tilesUrl);
     this.mapSize = this.service.getSize();
     this.data = this.service.fetch(this.left, this.top, this.width, this.height);
+    this.colorMap = [[0,106,162], [127,179,197], [81,173,153], [137,169,70], [80,80,60], [76,48,4]];
+    if (!this.ctx && canvas) this.ctx = canvas.getContext('2d');
+    await this.createMiniMap();
 }
+
+Map.prototype.createMiniMap = async function createMiniMap() {
+    var data = this.service.getMiniMap();
+    this.miniMap = this.ctx.createImageData(this.mapSize[0], this.mapSize[1]);
+    var ix = 0;
+    for (var y=0; y<this.mapSize[1]; y++) {
+        for (var x=0; x<this.mapSize[0]; x++) {
+            var v = data[ix];
+            var col = this.colorMap[v];
+            this.miniMap.data[4*ix]   = col[0];
+            this.miniMap.data[4*ix+1] = col[1];
+            this.miniMap.data[4*ix+2] = col[2];
+            this.miniMap.data[4*ix+3] = 255;
+            ix++;
+        }
+    }
+    this.miniMap.data = new Uint8ClampedArray(data);
+};
 
 Map.prototype.loadTiles = async function loadTiles(url) {
     var options = {
@@ -102,14 +125,11 @@ Map.prototype.zoom = function zoom(f) {
     this.render();
 };
 
-Map.prototype.render = function render(canvas) {
-    if (canvas) {
-        this.ctx = canvas.getContext('2d');
-    }
+Map.prototype.render = function render() {
     var k = 0;
     var y = this.offsetTop;
-    var w = this.tiles.width - 0;
-    var h = this.tiles.height - 0;
+    var w = this.tiles.width;
+    var h = this.tiles.height;
     // this.ctx.font = '10px Arial';
     // this.ctx.textAlign = 'left';
     // this.ctx.strokeStyle = '#ffffff';
@@ -131,6 +151,11 @@ Map.prototype.render = function render(canvas) {
         }
         y += this.tiles.height;
     }
+
+    // draw minimap
+    w = this.mapSize[0];
+    h = this.mapSize[1];
+    this.ctx.putImageData(this.miniMap, this.ctx.canvas.width - w, this.ctx.canvas.height - h, 0, 0, w, h);
 };
 
 Map.prototype.update = function update(delta) {
