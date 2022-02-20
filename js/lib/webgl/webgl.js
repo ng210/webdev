@@ -135,7 +135,7 @@
 		if (data.buffer instanceof ArrayBuffer) {
 			gl.texImage2D(gl.TEXTURE_2D, 0, this.type.id, this.width, this.height, 0, this.format, gl[this.type.type], data, 0);
 		} else {
-			gl.texImage2D(gl.TEXTURE_2D, 0, this.type.id, this.format, gl[this.type.type], data);
+			gl.texImage2D(gl.TEXTURE_2D, 0, this.type.id, this.width, this.height, 0, this.format, gl[this.type.type], data);
 		}
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);

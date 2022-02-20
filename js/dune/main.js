@@ -120,11 +120,11 @@ function animate(ts) {
 window.onload = async function(e) {
     _mapService = new MapService();
     _mapService.create(200, 200);
-    var w = 48, h = 27;
+    var w = 80, h = 64;
 
     _map = new Map(w, h, false);
-    // _map.isShadeMode = true;
-    // _mapService.shadeMode = true;
+    _map.isShadeMode = true;
+    _mapService.shadeMode = true;
 
     var cvs = document.getElementById('cvs');
     await _map.initialize('res/earth-tiles.png', _mapService, cvs);

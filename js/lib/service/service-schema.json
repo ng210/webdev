@@ -54,6 +54,7 @@
                 "imports": { "type":"stringList", "isRequired":false },
                 "id": { "type":"String10", "isRequired":true },
                 "url": { "type":"string", "isRequired":true },
+                "types": { "type":"typeList", "isRequired":false },
                 "authorization": { "type":"Authorization" },
                 "resources": { "type":"ResourceList" },
                 "endpoints": { "type":{ "name":"EndpointMap", "type":"map", "keyType":"string", "valueType":"Endpoint" } }

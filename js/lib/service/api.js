@@ -83,9 +83,10 @@ if (ISNODEAPP) {
                         case 'read':
                         case 'delete':
                             callDef.request.arguments = [ { "name":"id", "type":`ref ${resourceType.name}` } ];
-                            callDef.request.type = resourceType;
+                            callDef.response.type = resourceType;
                             break;
                     }
+
                     var call = this.createApiCall(ep, callDef, method);
                     ep.addCall(call.method.toUpperCase(), call);
                 }
@@ -306,10 +307,13 @@ if (ISNODEAPP) {
     };
 
     ApiServer.prototype.createApiCall = function ApiServerCreateApiCall(endpoint, def, method) {
-        var handler = this[`${method}_${endpoint.id}`];
+        var handlerName = `${method}_${endpoint.id}`;
+        var handler = this[handlerName];
         var call = null;
         if (typeof handler === 'function') {
             call = new ApiCall(endpoint, def, method, handler);
+        } else {
+            throw new Error(`Handler '${handlerName} not found!`);
         }
         return call;
     };

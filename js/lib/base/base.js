@@ -493,7 +493,7 @@ Url.prototype.getHostAndPort_ = function getHostAndPort_(str, pos) {
             var tokens = str.substring(pos, ix).split(':');
             this.host = tokens[0];
             this.port = tokens[1];
-            pos = ix + 1;
+            pos = ix;
         } else {
             ix = str.length;
         }
@@ -527,7 +527,7 @@ Url.prototype.getPath_ = function getPath_(str, currentPath, pos) {
             this.path = pathParts.join('/');
         }
     } else {
-        this.path = '/' + path;
+        this.path = path;
     }
     return pos;
 };

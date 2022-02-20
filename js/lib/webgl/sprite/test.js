@@ -1,5 +1,4 @@
 include('/lib/glui/glui-lib.js');
-include('./sprite.js');
 include('./sprite-manager.js');
 
 (function() {

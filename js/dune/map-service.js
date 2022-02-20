@@ -4,9 +4,9 @@ function MapService() {
     this.height = 0;
     this.data = null;
     this.normalize = true;
-    this.levels = 6;
-    this.elevation = -0.2;
-    this.shadeMode = false;
+    this.levels = 64;
+    this.elevation = 0.0;
+    this.shadeMode = true;
     this.minimap = null;
 }
 
@@ -21,7 +21,7 @@ MapService.prototype.create = function create(width, height) {
     
     // generate noise
     this.noise.transform2d = (x, y, v, buffer, ix) => { buffer[ix] = v < 1 ? v : 1; return ix+1; };
-    this.noise.createFbm2d(width, height, 32, 24, 3, 0.94, 1.07, 0.51, 1.17, this.data);
+    this.noise.createFbm2d(width, height, 12, 10, 6, 0.54, 1.07, 0.51, 1.17, this.data);
 
     if (this.normalize) {
         var min = 1, max = 0;

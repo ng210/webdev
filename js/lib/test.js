@@ -1,14 +1,14 @@
 (function(){
     var testUrls = [
-        // './base/test.js',
-        // './data/test.js',
-        // './glui/test.js',
-        // './math/test.js',
-        // './player/test.js',
+        './base/test.js',
+        './data/test.js',
+        './glui/test.js',
+        './math/test.js',
+        './player/test.js',
         './synth/test.js',
         './utils/test.js',
         './webgl/test.js',
-        //'./webgl/sprite/test.js'
+        './webgl/sprite/test.js'
     ];
 
     var success = 0;

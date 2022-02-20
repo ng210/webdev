@@ -155,7 +155,7 @@ Map.prototype.render = function render() {
     // draw minimap
     w = this.mapSize[0];
     h = this.mapSize[1];
-    this.ctx.putImageData(this.miniMap, this.ctx.canvas.width - w, this.ctx.canvas.height - h, 0, 0, w, h);
+    //this.ctx.putImageData(this.miniMap, this.ctx.canvas.width - w, this.ctx.canvas.height - h, 0, 0, w, h);
 };
 
 Map.prototype.update = function update(delta) {

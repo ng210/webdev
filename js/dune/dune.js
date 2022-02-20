@@ -158,25 +158,25 @@ Building.prototype.toRow = function toRow(tab, disabled) {
 
 
 //*****************************************************************************
-var house = 'Atreides';
+var house = ['Atreides', 'Harkonnen'][1];
 
 var currentBuildings = [
-    new Building('Windfalle', 90, null),
-    new Building('Raffinerie', 1000, new Production('Melange', 180, 'kg')),
-    new Building('Ofen', 0, new Production('Stahl', 36, 't')),
-    new Building('Silo', 90, new Production('Spice', 19, 'g')),
+    new Building('Windfalle', 20, null),
+    new Building('Raffinerie', 20, new Production('Melange', 180, 'kg')),
+    new Building('Ofen', 120, new Production('Stahl', 36, 't')),
+    new Building('Silo', 20, new Production('Spice', 19, 'g')),
     new Building('Zollstation', 0, null),
    
     new Building('Bauhof', 0, null),
     new Building('Leichte Waffenfabrik', 0, null),
-    new Building('Schwere Waffenfabrik', 810, null),
-    new Building('Forschungszentrum', 1620, null),
+    new Building('Schwere Waffenfabrik', 0, null),
+    new Building('Forschungszentrum', 0, null),
 
-    new Building('Werkstatt', 305, null),
-    new Building('Wor', 225, null),
-    new Building('Kaserne', 0, null),
-    new Building('Vorposten', 180, null),
-    new Building('Geschützturm', 180, null),
+    new Building('Werkstatt', 0, null),
+    new Building('Wor', 0, null),
+    new Building('Kaserne', 20, null),
+    new Building('Vorposten', 0, null),
+    new Building('Geschützturm', 0, null),
     new Building('Raketenturm', 0, null)
 ];
 
@@ -285,13 +285,14 @@ async function onpageload(errors) {
         Dbg.con.style.visibility = 'visible';
 
         // set house prod.bonus
+
         if (house == 'Atreides') setBonus('Raffinerie', 'house', .10);
         if (house == 'Harkonnen') setBonus('Ofen', 'house', .10);
 
         // set research #1
-        setBonus('Raffinerie', 'rs1', .05);
-        setBonus('Raffinerie', 'rs2', .10);
-        setBonus('Raffinerie', 'rs3', .15);
+        // setBonus('Raffinerie', 'rs1', .05);
+        // setBonus('Raffinerie', 'rs2', .10);
+        // setBonus('Raffinerie', 'rs3', .15);
         // setBonus('Raffinerie', 'rs4', .25);
 
         // setBonus('Ofen', 'rs1', .05);
@@ -299,15 +300,16 @@ async function onpageload(errors) {
         // setBonus('Ofen', 'rs3', .15);
         // setBonus('Ofen', 'rs4', .25);
 
-        setBonus('Silo', 'rs1', .05);
+        // setBonus('Silo', 'rs1', .05);
         // setBonus('Silo', 'rs2', .10);
         // setBonus('Silo', 'rs3', .15);
         // setBonus('Silo', 'rs4', .25);
 
-        setBonus('Raffinerie', 'sg1', .10);
-        setBonus('Ofen', 'sg1', .10);
-        setBonus('Silo', 'sg1', .10);
+        // setBonus('Raffinerie', 'sg1', .10);
+        // setBonus('Ofen', 'sg1', .10);
+        // setBonus('Silo', 'sg1', .10);
 
+        Building.land = 100;
         await Ui.create();
         Ui.update();
         var p = parseInt(Ui.plannedBuildings.tbTotal.value), c = parseInt(Ui.currentBuildings.tbTotal.value);
