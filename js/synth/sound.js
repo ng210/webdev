@@ -1,11 +1,5 @@
-/* Sound subsystem
- *
- *
- * 
- * 
- */
-
-include('/lib/synth/synth-adapter.js');
+/* Sound subsystem */
+include('/lib/synth/synth-adapter-ext.js');
 
 const SAMPLE_RATE = 48000;
 
