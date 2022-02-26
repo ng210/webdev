@@ -1,0 +1,68 @@
+{
+    "imports":[],
+
+    "id":"testsrv",
+    "url":"http://localhost:4000/js/map/map-api/",
+    "authorization": "None",
+    "types": [
+        {
+            "name":"Map",
+            "attributes": {
+                "width": { "type": "int", "required":true },
+                "height": { "type": "int", "required":true },
+                "tiles-url": { "type":"string", "required":true }
+            }
+        },
+        {
+            "name":"Range",
+            "attributes": {
+                "left": { "type":"int" },
+                "top": { "type":"int" },
+                "width": { "type":"int" },
+                "height": { "type":"int" },
+                "data": { "type":"intList" }
+            }
+        }
+    ],    
+    "resources": [
+        { "type":"Map", "methods": ["READ"] }
+    ],
+    "endpoints": {
+        "range": {
+            "id":"range",
+            "calls": {
+                "GET": {
+                    "request": {
+                        "mimeType": "application/json",
+                        "arguments": [
+                            { "name":"left", "type":"int" },
+                            { "name":"top", "type":"int" },
+                            { "name":"width", "type":"int" },
+                            { "name":"height", "type":"int" }
+                        ]
+                    },
+                    "response": {
+                        "mimeType": "application/json",
+                        "type": "intList"
+                    }
+                },
+                "POST": {
+                    "request": {
+                        "mimeType": "application/json",
+                        "arguments": [
+                            { "name":"left", "type":"int" },
+                            { "name":"top", "type":"int" },
+                            { "name":"width", "type":"int" },
+                            { "name":"height", "type":"int" },
+                            { "name":"data", "type":"intList" }
+                        ]
+                    },
+                    "response": {
+                        "mimeType": "application/json",
+                        "type": "int"
+                    }
+                }
+            }
+        }
+    }
+}

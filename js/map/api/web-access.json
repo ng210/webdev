@@ -1,0 +1,7 @@
+{
+    "default": "deny",
+    "allow": [
+        "map-service",
+        "map.js"
+    ]
+}
