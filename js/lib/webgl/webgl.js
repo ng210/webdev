@@ -47,6 +47,7 @@
 			case gl.RG32UI:     this.internalFormat = gl.RG32UI;    this.format = gl.RG_INTEGER;    break;
 			case gl.RG32F:      this.internalFormat = gl.RG32F;     this.format = gl.RG;			break;
 
+			case gl.RGBA8:    	this.internalFormat = gl.RGBA8;   	this.format = gl.RGBA;			break;
 			case gl.RGBA8UI:    this.internalFormat = gl.RGBA8UI;   this.format = gl.RGBA_INTEGER;	break;
 			case gl.RGBA32UI:   this.internalFormat = gl.RGBA32UI;  this.format = gl.RGBA_INTEGER;	break;
 			case gl.RGBA32F:    this.internalFormat = gl.RGBA32F;   this.format = gl.RGBA;			break;
@@ -141,6 +142,8 @@
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		//gl.generateMipmap(gl.TEXTURE_2D);
+		
 	};
     Buffer.prototype.setTexture = function setTexture(data) {
         data = data || this.data;
@@ -548,6 +551,7 @@ SAMPLER2D:	{ 'name': 'SAMPLER_2D',			'base':null, 	'id': 0, 'size':  1, 'length'
 		RG8UI:	{ 'name':'RG8UI',		'base':'UINT', 		'id': 0, 'size':  2, 'length':  2, 'type': 'UNSIGNED_BYTE' 	},
 		RG32UI:	{ 'name':'RG32UI',		'base':'UINT', 		'id': 0, 'size':  8, 'length':  2, 'type': 'UNSIGNED_INT' 	},
 		RG32F:	{ 'name':'RG32F',		'base':'FLOAT', 	'id': 0, 'size':  8, 'length':  2, 'type': 'FLOAT' 			},
+	    RGBA8:	{ 'name':'RGBA8', 		'base':'UINT',		'id': 0, 'size':  4, 'length':  4, 'type': 'UNSIGNED_BYTE' 	},
 	   RGBA8UI:	{ 'name':'RGBA8UI', 	'base':'UINT',		'id': 0, 'size':  4, 'length':  4, 'type': 'UNSIGNED_BYTE' 	},
 	  RGBA32UI:	{ 'name':'RGBA32UI',	'base':'UINT', 		'id': 0, 'size': 16, 'length':  4, 'type': 'UNSIGNED_INT' 	},
 	   RGBA32F:	{ 'name':'RGBA32F',		'base':'FLOAT', 	'id': 0, 'size': 16, 'length':  4, 'type': 'FLOAT' 			}

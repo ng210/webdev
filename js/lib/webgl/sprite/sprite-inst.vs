@@ -11,7 +11,7 @@ in float a_rotateZ;
 in vec4 a_color;
 in vec4 a_texcoord;
 
-uniform mat4 u_projection;
+uniform mat4 u_projectionView;
 
 out vec2 v_texcoord;
 out vec4 v_color;
@@ -30,7 +30,7 @@ void main() {
   m[3][1] = a_translate.y;
   m[3][2] = a_translate.z;
   m[3][3] = 1.0;
-  gl_Position = u_projection * m * vec4(a_position, 0., 1.);
+  gl_Position = u_projectionView * m * vec4(a_position, 0., 1.);
   
   if (gl_VertexID == 0) v_texcoord = a_texcoord.zw;
   else if (gl_VertexID == 1) v_texcoord = a_texcoord.zy;

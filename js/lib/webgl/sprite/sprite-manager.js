@@ -17,33 +17,40 @@ include('sprite.js');
         this.program = null;
         this.spriteAttributeBuffer = null;
         this.spriteAttributeData = null;
-        this.projection = new Float32Array(16);
+        this.projectionMatrix = null;
+        this.viewMatrix = M44.identity();
+        this.projectionView = null;
+        this.matrixChanged = false;
     }
     extend(Ps.IAdapter, SpriteManager);
 
-    SpriteManager.prototype.initialize = async function initialize(mapUrl, spriteCount) {
+    SpriteManager.prototype.initialize = async function initialize(mapUrl, spriteCount, shaders) {
         if (!window.gl) {
             webGL.init(null, true);
         }
         spriteCount = spriteCount || 100;
         this.sprites = new Array(spriteCount || SPRITE_COUNT);
         //this.angleExtension = webGL.useExtension('ANGLE_instanced_arrays');
-        var shaderName = 'sprite-inst';
-        // load resources
-        var resources = await Promise.all([
-            load({ url: `/lib/webgl/sprite/${shaderName}.vs`, contentType: 'x-shader/x-vertex', shaderType:gl.VERTEX_SHADER }),
-            load({ url: `/lib/webgl/sprite/${shaderName}.fs`, contentType: 'x-shader/x-fragment', shaderType:gl.FRAGMENT_SHADER })
-        ]);
-        var errors = [];
-        if (resources[0].error) errors.push(resources[0].error.message);
-        if (resources[1].error) errors.push(resources[1].error.message);
+        if (!shaders) {
+            var shaderName = 'sprite-inst';
+            // load resources
+            var resources = await load([
+                { url: `/lib/webgl/sprite/${shaderName}.vs`, contentType: 'x-shader/x-vertex', shaderType:gl.VERTEX_SHADER },
+                { url: `/lib/webgl/sprite/${shaderName}.fs`, contentType: 'x-shader/x-fragment', shaderType:gl.FRAGMENT_SHADER }
+            ]);
+            var errors = [];
+            if (resources[0].error) errors.push(resources[0].error.message);
+            if (resources[1].error) errors.push(resources[1].error.message);
+            shaders = {};
+            shaders[gl.VERTEX_SHADER] = resources[0].data;
+            shaders[gl.FRAGMENT_SHADER] = resources[1].data;
+        }
         await this.createMap(mapUrl, errors);
         if (errors.length > 0) throw new Error(`Could not load resources: ${errors.join()}`);
         // create shaders and program
-        M44.projection(gl.canvas.width, gl.canvas.height, 1, this.projection);
-        var shaders = {};
-        shaders[gl.VERTEX_SHADER] = resources[0].data;
-        shaders[gl.FRAGMENT_SHADER] = resources[1].data;
+        this.projectionMatrix = M44.projection(gl.canvas.width, gl.canvas.height, 1);
+        this.projectionView = this.projectionMatrix.mul(this.viewMatrix);
+
         var bufferId = webGL.buffers.length;
         this.program = webGL.createProgram(shaders, {
             a_position: { buffer:bufferId },
@@ -61,11 +68,11 @@ include('sprite.js');
     };
 
     SpriteManager.prototype.resize = function resize(width, height) {
-        // gl.canvas.width = width || window.innerWidth;
-        // gl.canvas.height = height || window.innerHeight;
+        if (width) gl.canvas.width = width || window.innerWidth;
+        if (height) gl.canvas.height = height || window.innerHeight;
         if (this.program) {
             M44.projection(gl.canvas.width, gl.canvas.height, 1, this.projection);
-            this.program.uniforms.u_projection.value = this.projection;
+            this.program.uniforms.u_projectionView.value = this.projection;
         }
     };
 
@@ -94,16 +101,16 @@ include('sprite.js');
             else {
                 map.image = res.node;
                 this.map = map;
-                this.map.texture = webGL.createTexture(map.image);
+                this.map.texture = webGL.createTexture(map.image, webGL.types.RGBA8);
                 map.data = new Float32Array(6*map.frames.length);
                 var k = 0;
                 for (var i=0; i<map.frames.length; i++) {
                     map.data[k++] = map.frames[i][0]/map.image.width;
                     map.data[k++] = map.frames[i][1]/map.image.height;
-                    map.data[k++] = map.frames[i][2]/map.image.width;
-                    map.data[k++] = map.frames[i][3]/map.image.height;
-                    map.data[k++] = (map.frames[i][2] - map.frames[i][0]);
-                    map.data[k++] = (map.frames[i][3] - map.frames[i][1]);
+                    map.data[k++] = (map.frames[i][0] + map.frames[i][2])/map.image.width;
+                    map.data[k++] = (map.frames[i][1] + map.frames[i][3])/map.image.height;
+                    map.data[k++] = map.frames[i][2];
+                    map.data[k++] = map.frames[i][3];
                 }
                 // map.buffer = gl.createBuffer();
                 // gl.bindBuffer(gl.ARRAY_BUFFER, map.buffer);
@@ -122,13 +129,78 @@ include('sprite.js');
         return spr;
     };
 
-    SpriteManager.prototype.update = function update() {
-        for (var i=0; i<this.count; i++) {
-            var spr = this.sprites[i];
-            this.updateSprite(spr);
-        }
+    //#region UPDATE
+    SpriteManager.prototype.updateBuffer = function updateBuffer() {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteAttributeBuffer.ref);
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.spriteAttributeData);
+    };
+
+    SpriteManager.prototype.update = function update(callback, context) {
+        if (typeof callback === 'function') {
+            for (var i=0; i<this.count; i++) {
+                var spr = this.sprites[i];
+                callback.call(context, spr);
+                this.updateSprite(spr);
+            }
+        } else {
+            for (var i=0; i<this.count; i++) {
+                var spr = this.sprites[i];
+                this.updateSprite(spr);
+            }
+        }
+        this.updateBuffer();
+        if (this.matrixChanged) {
+            this.projectionView = this.projectionMatrix.mul(this.viewMatrix);
+        }
+    };
+    SpriteManager.prototype.resetView = function resetView() {
+        M44.identity(this.viewMatrix);
+    };
+    SpriteManager.prototype.translate = function translate(t) {
+        var mat44 = M44.translate(t);
+        this.viewMatrix = this.viewMatrix.mul(mat44);
+        this.matrixChanged = true;
+    };
+    SpriteManager.prototype.scale = function scale(s) {
+        var mat44 = M44.scale(s);
+        this.viewMatrix = this.viewMatrix.mul(mat44);
+        this.matrixChanged = true;
+    };
+    SpriteManager.prototype.rotateZ = function rotateZ(r) {
+        var mat44 = M44.rotateZ(r);
+        this.viewMatrix = this.viewMatrix.mul(mat44);
+        this.matrixChanged = true;
+    };
+
+    SpriteManager.prototype.updateSpritePosition = function updateSpritePosition(spr) {
+        this.spriteAttributeData[spr.offset+ 0] = spr.position.x;
+        this.spriteAttributeData[spr.offset+ 1] = spr.position.y;
+        this.spriteAttributeData[spr.offset+ 2] = spr.position.z;
+    };
+
+    SpriteManager.prototype.updateSpriteScale = function updateSpriteScale(spr) {
+        var frameOffset = spr.frame*6;
+        this.spriteAttributeData[spr.offset+ 3] = spr.scale.x * this.map.data[frameOffset+4];
+        this.spriteAttributeData[spr.offset+ 4] = spr.scale.y * this.map.data[frameOffset+5];
+    };
+
+    SpriteManager.prototype.updateSpriteRotZ = function updateSpriteRotZ(spr) {
+        this.spriteAttributeData[spr.offset+ 5] = spr.rotationZ;
+    };
+
+    SpriteManager.prototype.updateSpriteColor = function updateSpriteColor(spr) {
+        this.spriteAttributeData[spr.offset+ 6] = spr.color[0];
+        this.spriteAttributeData[spr.offset+ 7] = spr.color[1];
+        this.spriteAttributeData[spr.offset+ 8] = spr.color[2];
+        this.spriteAttributeData[spr.offset+ 9] = spr.color[3];
+    };
+
+    SpriteManager.prototype.updateSpriteFrame = function updateSpriteFrame(spr) {
+        var frameOffset = spr.frame*6;
+        this.spriteAttributeData[spr.offset+10] = this.map.data[frameOffset+0];
+        this.spriteAttributeData[spr.offset+11] = this.map.data[frameOffset+1];
+        this.spriteAttributeData[spr.offset+12] = this.map.data[frameOffset+2];
+        this.spriteAttributeData[spr.offset+13] = this.map.data[frameOffset+3];
     };
 
     SpriteManager.prototype.updateSprite = function updateSprite(spr) {
@@ -152,9 +224,10 @@ include('sprite.js');
             spr.isDirty = false;
         }
     };
+    //#endregion
 
     SpriteManager.prototype.render = function render() {
-        webGL.useProgram(this.program, { 'u_projection': this.projection });
+        webGL.useProgram(this.program, { 'u_projectionView': this.projectionView });
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.map.texture.texture);
         gl.enable(gl.BLEND);

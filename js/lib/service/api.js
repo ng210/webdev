@@ -394,7 +394,7 @@ if (ISNODEAPP) {
                                     if (!arg) {
                                         results.push(new Schema.ValidationResult(i, 'Invalid request argument!'));
                                     } else {
-                                        args.push( this.schema.types.get(arg.type).isNumeric ? parseFloat(reqUrl.query[i]) : reqUrl.query[i]);
+                                        args.push( arg.type.isNumeric ? parseFloat(reqUrl.query[i]) : reqUrl.query[i]);
                                     }
                                 }
                             } else {

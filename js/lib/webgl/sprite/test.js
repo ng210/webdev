@@ -11,15 +11,32 @@ include('./sprite-manager.js');
 
     var totalTime = 0;
     var totalFrame = 0;
+    var frame = 0;
+    var isRunning = false;
     var fpsRange = 20;
     var fpsDisplay = null;
+    var rafId = null;
+
+    function updateFpsDisplay() {
+        if (frame == fpsRange) {
+            var time = new Date().getTime();
+            var fps = frame*1000/(time - totalTime);
+            totalTime = time;
+            fpsDisplay.setValue(fps.toFixed(2) + ' fps');
+            fpsDisplay.render();
+            frame = 0;
+        }
+        frame++;
+        glui.repaint();
+    }
+
     async function setup(url, count) {
         url = url || './res/fighter.spr.json';
+        count = count || 100;
         if (_sprMgr == null) {
             _sprMgr = new webGL.SpriteManager();
             await _sprMgr.initialize(url, count);
         }
-        count = count || 100;
         glui.initialize();
         fpsDisplay = await glui.create('fps', {
             'type':'Label',
@@ -36,7 +53,23 @@ include('./sprite-manager.js');
         fpsDisplay.setValue('00.0 fps');
     }
 
+    var frames = [0, 1, 2, 3, 2, 1];
+    function animateSprites(callback) {
+        if (isRunning) {
+            for (var i=0; i<_sprMgr.count; i++) {
+                var spr = _sprMgr.sprites[i];
+                callback(spr);
+            }
+            _sprMgr.update();
+            _sprMgr.render();
+            totalFrame++;
+            updateFpsDisplay();
+            rafId = requestAnimationFrame(() => animateSprites(callback));
+        }
+    };
+
     async function tearDown() {
+        if (rafId) cancelAnimationFrame(rafId);
         _sprMgr.destroy();
         delete _sprMgr;
         _sprMgr = null;
@@ -103,35 +136,66 @@ include('./sprite-manager.js');
         await button('Next');
         tearDown();
     }
-
-    var frame = 0;
-    var isRunning = false;
-    var frames = [0, 1, 2, 3, 2, 1];
-    function animateSprites(callback) {
-        if (isRunning) {
-            for (var i=0; i<_sprMgr.count; i++) {
-                var spr = _sprMgr.sprites[i];
-                callback(spr);
+    
+    async function test_transformSprites() {
+        message('Transform sprites', 1);
+        await setup(null, 20);
+        for (var i=0; i<_sprMgr.sprites.length; i++) {
+            var spr = _sprMgr.addSprite();
+            spr.setFrame(0);
+            spr.setPosition(V3.fromPolar(2*Math.PI*Math.random(0), 0, Math.min(gl.canvas.width, gl.canvas.height)/10 * (Math.random() + 1.0)).add([gl.canvas.width/2, gl.canvas.height/2]));
+            spr.setRotationZ(0);
+            spr.setScale([1.0, 1.0]);
+        }
+        _sprMgr.update();
+        _sprMgr.render();
+        totalFrame = 0;
+        
+        var transforms = [
+            () => _sprMgr.translate(new V3(0.25*Math.sin(0.02*totalFrame), 0.2*Math.sin(0.1 + 0.03*totalFrame), 0))
+        ];
+        var callback = function() {
+            _sprMgr.resetView();
+            for (var i=0; i<transforms.length; i++) {
+                transforms[i]();
             }
             _sprMgr.update();
             _sprMgr.render();
-
-            requestAnimationFrame(() => animateSprites(callback));
-
+            updateFpsDisplay();
+            rafId = requestAnimationFrame(callback);
             totalFrame++;
-            // update fps
-            if (frame == fpsRange) {
-                var time = new Date().getTime();
-                var fps = frame*1000/(time - totalTime);
-                totalTime = time;
-                fpsDisplay.setValue(fps.toFixed(2) + ' fps');
-                fpsDisplay.render();
-                frame = 0;
-            }
-            frame++;
-            glui.repaint();
         }
-    };
+
+        isRunning = true;
+        callback();
+        await button('Next');
+        isRunning = false;
+        cancelAnimationFrame(rafId);
+
+        transforms.push(
+            () => _sprMgr.scale(new V3(1.5 * (1.1 + Math.sin(0.01*totalFrame)), 1.2*(1.2 + Math.sin(0.5 + 0.02*totalFrame)), 1))
+        );
+
+        isRunning = true;
+        callback();
+        await button('Next');
+        isRunning = false;
+        cancelAnimationFrame(rafId);
+
+        transforms.push(
+            () => _sprMgr.rotateZ(0.01*Math.PI*totalFrame)
+        );
+
+        isRunning = true;
+        callback();
+        await button('Next');
+        isRunning = false;
+        cancelAnimationFrame(rafId);
+
+        tearDown();
+
+    }
+
     async function test_animateSprites1() {
         message('Animate sprites #1', 1);
         await setup();
@@ -148,7 +212,7 @@ include('./sprite-manager.js');
         isRunning = true;
 
         animateSprites( spr => {
-            if (totalFrame % 5 == 4) {
+            if (totalFrame % 8 == 7) {
                 spr.setFrame(frames[spr.frameId]);
                 spr.frameId = (spr.frameId + 1) % 3;
             }
@@ -194,14 +258,16 @@ include('./sprite-manager.js');
         tearDown();
     }
 
-    window.onresize = () => _sprMgr.onresize();
+    //window.onresize = () => _sprMgr.onresize();
 
     var tests = () => [
-        test_spriteManager,
-        test_createSprite,
-        test_renderSprites,
+        // test_spriteManager,
+        // test_createSprite,
+        // test_renderSprites,
+        test_transformSprites,
         test_animateSprites1,
-        test_animateSprites2,
+        // test_animateSprites2,
+
         // test_animateWithPlayer
     ];
 

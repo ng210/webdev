@@ -224,8 +224,7 @@ MapService.prototype.create = function create(width, height) {
                         case 186:
                         case 187:
                         case 190:
-                        case 191:
-                            value += 11; break;
+                        case 191: value += 11; break;
                         //#endregion
                         //#region bottom 14
                         case 88:
@@ -385,8 +384,7 @@ MapService.prototype.create = function create(width, height) {
                         case 224:
                         case 236:
                         case 225:
-                        case 237:
-                            value += 12; break;
+                        case 237: value += 12; break;
                         //#endregion
                         //#region bottom-right 6
                         case 80:

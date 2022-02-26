@@ -84,92 +84,11 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         },
     });
 
-    function setParent(parent) {
-        if (this.parent) {
-            this.parent.remove(this);
-            parent.add(this);
-        }
-    }
-
     Control.prototype.destroy = function destroy() {
         delete this.renderer;
     };
     Control.prototype.setVisible = function setVisible(visible) {
         this.style.visible = visible;
-    };
-    Control.prototype.getHandlers = function getHandlers() {
-        return [
-            { name: 'mouseover', topDown: true },
-            { name: 'mouseout', topDown: false },
-            { name: 'click', topDown: true },
-            { name: 'dblclick', topDown: true },
-            { name: 'focus', topDown: true },
-            { name: 'blur', topDown: false }
-        ];
-    };
-    Control.prototype.addHandler = function addHandler(eventName, obj, handler) {
-        if (handler !== undefined) {
-            var handlerType = this.getHandlers().find(x => x.name == eventName);
-            if (handlerType && typeof handler === 'function') {
-                if (this.handlers[eventName] === undefined) {
-                    this.handlers[eventName] = [];
-                }
-                if (this.handlers[eventName].findIndex(x => x.obj == obj && x.fn == handler) == -1) {
-                    if (eventName.match(DEBUG_EVENT)) debug_(`Add handler of ${eventName} '${obj.id}::${handler.name} to ${this.id}`, 1);
-                    handlerType.topDown ? this.handlers[eventName].unshift({obj:obj, fn:handler}) : this.handlers[eventName].push({obj:obj, fn:handler});
-                }
-            }
-        }
-    };
-    Control.prototype.addEventHandlers = function addEventHandlers(eventName, topDown) {
-        var nodes = [];
-        var node = this;
-        if (eventName.match(DEBUG_EVENT)) debug_(`addHandler for ${node.id} (${node.constructor.name})`, 2);
-        while (node) {
-            nodes.push(node);
-            node = node.context;
-        }
-        for (var i=0; i<nodes.length; i++) {
-            node = nodes[i];
-            var handler = node['on'+eventName];
-            this.addHandler(eventName, node, handler);
-        }
-        if (eventName.match(DEBUG_EVENT) && this.handlers[eventName]) debug_(`${this.id}.${eventName} = ${this.handlers[eventName].map(x => x.obj.id + '::' + x.fn.name)}`, 1);
-    };
-    Control.prototype.addHandlers = function addHandlers(template) {
-        if (template) {
-            throw new Error('Not implemented!');
-            // for (var i in template) {
-            //     if (i.startsWith('on') && template.hasOwnProperty(i)) {
-            //         var name = i.substr(2);
-            //         // todo: templated function calls
-            //         this.addHandler(name);
-            //     }
-            // }
-        } else {
-            var handlers = this.getHandlers();
-            for (var i=0; i<handlers.length; i++) {
-                this.addEventHandlers(handlers[i].name, handlers[i].topDown);
-            }
-        }
-    };
-    Control.prototype.callHandler = async function(eventName, event) {
-        var control = this;
-        if (eventName.match(DEBUG_EVENT)) debug_(`${eventName} on ${getObjectPath(control, 'parent').map(x=>x.id).join('.')} (${event.control ? `${getObjectPath(event.control, 'parent').map(x=>x.id).join('.')}` : 'null'})`, 0);
-        while (control) {
-            var handlers = control.handlers[eventName];
-            if (handlers) {
-                for (var i=0; i<handlers.length; i++) {
-                    var handler = handlers[i];
-                    if (eventName.match(DEBUG_EVENT)) debug_(` - ${handler.obj.id}::${handler.fn.name}`, 0);
-                    var isCancelled = Boolean(await handler.fn.call(handler.obj, event, control));
-                    if (isCancelled) return true;
-                }
-                break;
-            } else {
-                control = control.parent;
-            }
-        }
     };
     Control.prototype.getTemplate = function getTemplate() {
         var template = {
@@ -268,8 +187,8 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         return this.style.visible && 0 <= x && x < rect[2] && 0 <= y && y < rect[3] ? this : null;
     };    
     Control.prototype.size = function(width, height, isInner) {
-        if (width == null) width = this.style.width;
-        if (height == null) height = this.style.height;
+        if (width == null) width = /*this.width ||*/ this.style.width;
+        if (height == null) height = /*this.height ||*/ this.style.height;
         if (width) this.renderer.setWidth(width, isInner);
         if (height == undefined) height = width;
         if (height) this.renderer.setHeight(height, isInner);
@@ -325,6 +244,83 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
             this.isHighlighted = false;
         }
     };
+
+    //#region event handling
+    Control.prototype.getHandlers = function getHandlers() {
+        return [
+            { name: 'mouseover', topDown: true },
+            { name: 'mouseout', topDown: false },
+            { name: 'click', topDown: true },
+            { name: 'dblclick', topDown: true },
+            { name: 'focus', topDown: true },
+            { name: 'blur', topDown: false }
+        ];
+    };
+    Control.prototype.addHandler = function addHandler(eventName, obj, handler) {
+        var handlerType = this.getHandlers().find(x => x.name == eventName);
+        if (handlerType && typeof handler === 'function') {
+            if (this.handlers[eventName] === undefined) {
+                this.handlers[eventName] = [];
+            }
+            if (this.handlers[eventName].findIndex(x => x.obj == obj && x.fn == handler) == -1) {
+                if (eventName.match(DEBUG_EVENT)) debug_(`Add handler of ${eventName} '${obj.id}::${handler.name} to ${this.id}`, 1);
+                handlerType.topDown ? this.handlers[eventName].unshift({obj:obj, fn:handler}) : this.handlers[eventName].push({obj:obj, fn:handler});
+            }
+        }
+    };
+    Control.prototype.addEventHandlers = function addEventHandlers(eventName, topDown) {
+        var nodes = [];
+        var node = this;
+        if (eventName.match(DEBUG_EVENT)) debug_(`addHandler for ${node.id} (${node.constructor.name})`, 2);
+        while (node) {
+            nodes.push(node);
+            node = node.context;
+        }
+        for (var i=0; i<nodes.length; i++) {
+            node = nodes[i];
+            var handler = node['on'+eventName];
+            if (typeof handler === 'function') {
+                this.addHandler(eventName, node, handler);
+            }
+        }
+        if (eventName.match(DEBUG_EVENT) && this.handlers[eventName]) debug_(`${this.id}.${eventName} = ${this.handlers[eventName].map(x => x.obj.id + '::' + x.fn.name)}`, 1);
+    };
+    Control.prototype.addHandlers = function addHandlers(template) {
+        if (template) {
+            throw new Error('Not implemented!');
+            // for (var i in template) {
+            //     if (i.startsWith('on') && template.hasOwnProperty(i)) {
+            //         var name = i.substr(2);
+            //         // todo: templated function calls
+            //         this.addHandler(name);
+            //     }
+            // }
+        } else {
+            var handlers = this.getHandlers();
+            for (var i=0; i<handlers.length; i++) {
+                this.addEventHandlers(handlers[i].name, handlers[i].topDown);
+            }
+        }
+    };
+    Control.prototype.callHandler = async function(eventName, event) {
+        var control = this;
+        if (eventName.match(DEBUG_EVENT)) debug_(`${eventName} on ${getObjectPath(control, 'parent').map(x=>x.id).join('.')} (${event.control ? `${getObjectPath(event.control, 'parent').map(x=>x.id).join('.')}` : 'null'})`, 0);
+        while (control) {
+            var handlers = control.handlers[eventName];
+            if (handlers) {
+                for (var i=0; i<handlers.length; i++) {
+                    var handler = handlers[i];
+                    if (eventName.match(DEBUG_EVENT)) debug_(` - ${handler.obj.id}::${handler.fn.name}`, 0);
+                    var isCancelled = Boolean(await handler.fn.call(handler.obj, event, control));
+                    if (isCancelled) return true;
+                }
+                break;
+            } else {
+                control = control.parent;
+            }
+        }
+    };
+
     Control.prototype.onmouseover = function onmouseover(e) {
         this.highlight();
     };
@@ -338,6 +334,8 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         this.isFocused = false;
         this.dehighlight();
     };
+    //#endregion
+
     Control.prototype.setRenderer = async function setRenderer(mode, context) {
         if (mode == glui.Render2d) {
             if (this.renderer2d == null) {
@@ -381,6 +379,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         if (isChanged) await this.renderer.initialize();
     };
 
+    // simulate click event
     Control.prototype.click = function click() {
         var x = (this.left + this.width/2)/glui.scale.x;
         var y = (this.top + this.height/2)/glui.scale.y;
@@ -396,6 +395,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         });
     };
 
+    //#region Static methods
     Control.create = async function create(id, template, parent, context) {
         var type = template.type;
         if (typeof glui[type] === 'function') {
@@ -470,6 +470,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
             'visible': true
         };
     };
+    //#endregion
 
     Control.order = {
         'TOP': 1,
