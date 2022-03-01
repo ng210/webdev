@@ -22,7 +22,7 @@ var TestConfig = {
             ">": { "term": "be greater", "action": (a, b) => a > b },
             "<=": { "term": "be less or equal", "action": (a, b) => a <= b },
             ">=": { "term": "be greater or equal", "action": (a, b) => a >= b },
-            ":=": { "term": "match", "action": (a, b) => deepCompare(a, b) },
+            ":=": { "term": "match", "action": (a, b) => deepCompare(a, b, false) },
         "empty": { "term": "be empty", "action": a => isEmpty(a) },
         "!empty": { "term": "have an element", "action": a => !isEmpty(a) },
         "true":   { "term": "be true", "action": a => a == true },
@@ -62,8 +62,10 @@ function print_result(context, result) {
         var errorText = 'Failed';
         if (result instanceof Error) {
             errorText += ' => <div class="error-details"><pre>ERROR: ' + result.stack.replace(/[<>&]/g, v => ({'<':'&lt;', '>':'&gt;', '&':'&amp;'}[v])) + '</pre></div>';
-        };
-        var text = (context.errors == 0 && !result) ? `${lbl}..<span style="color:#40ff40">Ok</span>` : `${lbl}..<span style="color:#ff4040">${errorText}</span>`;
+        } else {
+            result = result || 'Ok';
+        }
+        var text = (context.errors == 0/* && !result*/) ? `${lbl}..<span style="color:#40ff40">${result}</span>` : `${lbl}..<span style="color:#ff4040">${errorText}</span>`;
         var spans = Dbg.con.querySelectorAll('.test'); //Dbg.con.getElementsByTagName('span');
         for (var i=0; i<spans.length; i++) {
             spans[i].innerHTML = spans[i].innerHTML.replace(`${lbl}..[result]`, text);
@@ -121,7 +123,8 @@ async function button(text, handler, isPermanent) {
     await poll( () => isDone, 10);
     clearTimeout(timer);
     if (!isPermanent) {
-        btn.parentNode.removeChild(btn);
+        var span = btn.parentNode;
+        span.parentNode.removeChild(span);
         btn = null;
     }
     if (btn) btn.innerHTML = 'Done';
@@ -145,7 +148,6 @@ async function test(lbl, action) {
     if (result instanceof Promise) {
         TestConfig.pending++;
         result.lbl = lbl;
-//console.log('111')
         result.then(
             value => { console.log('222'); TestConfig.pending--; print_result(context, value); },
             error => { debugger; this.hasErrors = true; TestConfig.pending--; print_result(context, error); }
@@ -157,33 +159,52 @@ async function test(lbl, action) {
 //console.log('333')
 }
 
-async function measure(lbl, action, batchSize) {
-    batchSize = batchSize || 100;
-    var count = 0;
+async function measure(lbl, action, runs) {
+    lbl = lbl || 'Measuring';
+    println(lbl + '[result]', [208, 208, 128]);
+    var spans = Dbg.con.querySelectorAll('.test');
+    var span = spans[spans.length-1];
+    var iteration = 0;
+    var result = null;
+    var context = new test_context(lbl);
+    var start = new Date().getTime();
     var duration = 0;
     var lastTick = 0;
-    print(`<span style="color:#f0e080">Measuring ${lbl}</span>`);
-    var start = new Date().getTime();
-    var iteration = 0;
-    await poll( () => {
-        for (var i=0; i<batchSize; i++) action(iteration++, i);
-        count += batchSize;
-        duration = new Date().getTime() - start;
-        if (duration < 1000) {
-            var tick = Math.floor(duration/100);
-            if (tick > lastTick) {
-                if (!TestConfig.isSilent) Dbg.pr('.');
-                lastTick = tick;
+    await poll( async function() {
+        var isDone = false;
+        try {
+            await action(iteration++, 0);
+            duration = new Date().getTime() - start;
+            if (duration - lastTick > 1000) {
+                lastTick = duration;
+                if (!TestConfig.isSilent) {
+                    lbl += '.';
+                    span.innerHTML = lbl;
+                    context.lbl = lbl;
+                }
             }
-            return false;
-        } else {
-            if (!TestConfig.isSilent) Dbg.prln('done');
-            return true;
+            if (iteration == runs) {
+                span.innerHTML = lbl + '..[result]<br/>'
+                result = `${runs} iterations took <b>${duration}ms</b> (avg: ${(duration/runs).toPrecision(4)})`;
+                isDone = true;
+            }
+        } catch (err) {
+            span.innerHTML = lbl + '..[result]<br/>'
+            context.errors++;
+            result = err;
+            isDone = true;
         }
-    }, 5);  
-    if (!TestConfig.isSilent) {
-        Dbg.prln(`<span style="color:#f0e080">${count} iterations took <b>${duration}ms</b> (avg: ${(duration/count).toPrecision(4)})</span>`);
-    }
+        return isDone;
+    }, 5);
+    print_result(context, result);
+    TestConfig.indent--;
+    // if (context.errors > 0 && result instanceof Error) {
+    //     print_results(context, result);
+    // } else {
+    //     if (!TestConfig.isSilent) {
+    //         Dbg.prln(`<span style="color:#f0e080">${count} iterations took <b>${duration}ms</b> (avg: ${(duration/count).toPrecision(4)})</span>`);
+    //     }
+    // }
 }
 
 function test_context(lbl) {

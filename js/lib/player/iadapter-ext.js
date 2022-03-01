@@ -12,6 +12,28 @@ include('./iadapter.js');
     IAdapterExt.prototype.makeCommand = function makeCommand(command) { throw new Error('Not implemented!'); };
     IAdapterExt.prototype.getSymbol = function getSymbol(name) { return this.getSymbols()[name]; };
     IAdapterExt.prototype.getSymbols = function getSymbols() { throw new Error('Not implemented!'); };
+
+    function getArgument(a, i, reader) {
+        var arg = null;
+        var stream = null;
+        if (a instanceof Ps.Sequence) {
+            stream = a[1].stream;
+        } else if (a instanceof Stream) {
+            stream = a[1];
+        }
+        if (stream != null) {
+            arg = reader.call(stream, a[2]);
+        } else {
+            arg = a[1+i];
+        }
+        return arg;
+    };
+    IAdapterExt.prototype.getUint8Argument = (a, i) => getArgument(a, i, Stream.readUint8);
+    IAdapterExt.prototype.getUint16Argument = (a, i) => getArgument(a, i, Stream.readUint16);
+    IAdapterExt.prototype.getUint32Argument = (a, i) => getArgument(a, i, Stream.readUint32);
+    IAdapterExt.prototype.getFloat32Argument = (a, i) => getArgument(a, i, Stream.readFloat32);   
+
+
     // //getCommandSize: function(command, args) { throw new Error('Not implemented!'); },
     // IAdapterExt.prototype.toDataSeries = function toDataSeries(sequence, getSeriesId, convertCommand) {
     //     var series = {};

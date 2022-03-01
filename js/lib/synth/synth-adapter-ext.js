@@ -27,44 +27,33 @@ include('/lib/synth/synth-adapter.js');
         stream.writeUint8(command);
         switch (command) {
             case psynth.SynthAdapter.Commands.SetNote:      // uint8 note, uint8 velocity
-                if (arguments[1] instanceof Ps.Sequence) {
-                    stream.writeStream(arguments[1].stream, arguments[2], 2);
-                } else {
-                    stream.writeUint8(arguments[1]);
-                    stream.writeUint8(arguments[2]);
-                }
+                var note = this.getUint8Argument(arguments, 0);
+                var velocity = this.getUint8Argument(arguments, 1);
+                stream.writeUint8(note);
+                stream.writeUint8(velocity);
                 break;
 			case psynth.SynthAdapter.Commands.SetUint8:     // uint8 controllerId, uint8 value
 			case psynth.SynthAdapter.Commands.SetFloat8:	// uint8 controllerId, uint8 value
-                if (arguments[1] instanceof Ps.Sequence) {
-                    stream.writeStream(arguments[1].stream, arguments[2], 2);
-                } else {
-                    stream.writeUint8(arguments[1]);
-                    stream.writeUint8(arguments[2]);
-                }
+                var controllerId = this.getUint8Argument(arguments, 0);
+                var value = this.getUint8Argument(arguments, 1);
+                stream.writeUint8(controllerId);
+                stream.writeUint8(value);
 				break;
-            // case psynth.SynthAdapter.Commands.SETCTRL16:	// uint8 controllerId, uint16 value
-            //     if (arguments[1] instanceof Ps.Sequence) {
-            //         stream.writeStream(arguments[1].stream, arguments[2], 3);
-            //     } else {
-            //         stream.writeUint8(arguments[1]);
-            //         stream.writeUint16(arguments[2]);
-            //     }
-            //     break;
+            case psynth.SynthAdapter.Commands.SetUint16:	// uint8 controllerId, uint16 value
+                var controllerId = this.getUint8Argument(arguments, 0);
+                var value = this.getUint16Argument(arguments, 1);
+                stream.writeUint8(controllerId);
+                stream.writeUint16(value);
+                break;
 			case psynth.SynthAdapter.Commands.SetFloat:		// uint8 controllerId, float32 value
-                if (arguments[1] instanceof Ps.Sequence) {
-                    stream.writeStream(arguments[1].stream, arguments[2], 5);
-                } else {
-                    stream.writeUint8(arguments[1]);
-					stream.writeFloat32(arguments[2]);
-                }
+                var controllerId = this.getUint8Argument(arguments, 0);
+                var value = this.getFloat32Argument(arguments, 1);
+                stream.writeUint8(controllerId);
+                stream.writeFloat32(value);
                 break;
 			case psynth.SynthAdapter.Commands.SetProgram:
-				if (arguments[1] instanceof Ps.Sequence) {
-					stream.writeStream(arguments[1].stream, arguments[2], 1);
-				} else {
-					stream.writeUint8(arguments[1]);
-				}				
+                var programId = this.getUint8Argument(arguments, 0);
+                stream.writeUint8(programId);
 				break;
 		}
 		stream.buffer = stream.buffer.slice(0, stream.length);

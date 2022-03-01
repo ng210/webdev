@@ -1,0 +1,48 @@
+adapter "SpriteManager", spriteInit
+
+datablock "playerInit", { 3, Ps.Channel, Ps.Channel, Ps.Channel }
+datablock "spriteInit", { "./res/dexter.spr.json", 10, 2,
+    Spr.Sprite, Spr.Sprite
+}
+
+sequence "masterSeq", "PlayerAdapter", {
+    frame  w:0, {
+        Ps.Assign(1, Test1, 0, 0),
+        Ps.Assign(2, Test2, 1, 0)
+    },
+    frame  w:10, {
+        Ps.Assign(1, Test3, 0, 10),
+        Ps.Assign(2, Test3, 1, 10),
+        Ps.Assign(3, Test4, 1, 4)
+    },
+   frame w:200, { Ps.EOS() }
+}
+
+sequence "Test1", "SpriteManager", {
+    frame  w:0, {
+        Spr.SetSprite(0, 1700.0,400.0,0.0, 2.0,2.0, 0.0,  200,200,200,255),
+        Spr.Show()
+    },
+    frame w:20, { Ps.EOS() }
+}
+sequence "Test2", "SpriteManager", {
+    frame  w:0, {
+        Spr.SetSprite(3, 1692,416,0.0, 2.0,2.0, 0.0, 200,200,200,255),
+        Spr.Show()
+    },
+    frame w:10, { Ps.EOS() }
+}
+sequence "Test3", "SpriteManager", {
+    frame  w:0, { Spr.Delta(Spr.tx, 10, -20), Spr.Delta(Spr.ty, 10, -20) },
+    frame w:10, { Spr.Delta(Spr.tx, 10, -20), Spr.Delta(Spr.ty, 10,  20) },
+    frame w:10, { Spr.Delta(Spr.tx, 10, -20), Spr.Delta(Spr.ty, 10, -20) },
+    frame w:10, { Spr.Delta(Spr.tx, 10, -20), Spr.Delta(Spr.ty, 10,  20) },
+    frame w:10, { Ps.EOS() }
+}
+sequence "Test4", "SpriteManager", {
+    frame  w:0, { Spr.SetFrame(2) },
+    frame w:16, { Spr.SetFrame(3) },
+    frame  w:2, { Spr.SetFrame(2) },
+    frame w:28, { Spr.SetFrame(3) },
+    frame  w:4, { Ps.EOS() }
+}

@@ -794,7 +794,8 @@ self.getHash = function getHash(obj, cache) {
     }
     return '{' + hash.join('.') + '}';
 }
-self.deepCompare = function deepCompare(a, b, path, cache, lvl) {
+self.deepCompare = function deepCompare(a, b, checkType, path, cache, lvl) {
+    if (checkType == undefined) checkType = true;
     var result = null;
     a = a && a.valueOf();
     b = b && b.valueOf();
@@ -827,7 +828,7 @@ self.deepCompare = function deepCompare(a, b, path, cache, lvl) {
                     cache.push({'a':a, 'b':b});
                     var typeA = a.constructor;
                     var typeB = b.constructor;
-                    if (typeA != typeB) {
+                    if (typeA != typeB && checkType) {
                         result = `Constructor mismatch: '${typeA.name}' and '${typeB.name}'!`;
                     } else {
                         if (typeof a.deepCompare === 'function') result = a.deepCompare(b);
@@ -840,7 +841,7 @@ self.deepCompare = function deepCompare(a, b, path, cache, lvl) {
                                     var keyA = keysA[i];
                                     var keyB = keysB[i];
                                     path.push(keyA);
-                                    result = deepCompare(a[keyA], b[keyB], path, cache, lvl+1);
+                                    result = deepCompare(a[keyA], b[keyB], checkType, path, cache, lvl+1);
                                     if (result) {
                                         if (lvl == 0) result += ` at (${path.join('.')})`;
                                         break;

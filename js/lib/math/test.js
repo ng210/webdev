@@ -201,7 +201,7 @@ include('fn.js');
             m44[i] = Math.random();
             n44[i] = Math.random();
         }
-        await measure('Matrix multiplication', () => m44.mul(n44), 10000);
+        await measure('Matrix multiplication', () => m44.mul(n44), 1000);
     }
 
     async function test_intersect() {

@@ -1,0 +1,76 @@
+adapter "SpriteManager", spriteInit
+
+datablock "playerInit", { 5, Ps.Channel, Ps.Channel, Ps.Channel, Ps.Channel, Ps.Channel }
+datablock "spriteInit", { "./res/dexter.spr.json", 10, 4,
+    Spr.Sprite, Spr.Sprite,
+    Spr.Sprite, Spr.Sprite
+}
+
+sequence "masterSeq", "PlayerAdapter", {
+    frame  w:0, {
+        Ps.Assign(1, LeftFootStart, 0, 0),
+        Ps.Assign(2, RightFootStart, 1, 0),
+        Ps.Assign(3, BodyStart, 2, 0),
+        Ps.Assign(4, EyesStart, 3, 0)
+    },
+    frame  w:1, {
+        Ps.Assign(2, FootLoop, 1, 20)
+    },
+    frame  w:12, {
+        Ps.Assign(1, FootLoop, 0, 20),
+        Ps.Assign(3, BodyLoop, 2, 40),
+        Ps.Assign(4, BodyLoop, 3, 40),
+        Ps.Assign(5, EyesLoop, 3,  8)
+    },
+    frame w:480, { Ps.EOS() }
+}
+
+sequence "LeftFootStart", "SpriteManager", {
+    frame  w:0, {
+        Spr.SetSprite(1, 1756.0,380.0,0.0, 4.0,4.0, 0.0, 200,200,200,255),
+        Spr.Show(),
+        Ps.EOS()
+    }
+}
+sequence "RightFootStart", "SpriteManager", {
+    frame  w:0, {
+        Spr.SetSprite(1, 1814.0,380.0,0.0, 4.0,4.0, 0.0, 200,200,200,255),
+        Spr.Show(),
+        Ps.EOS()
+    }
+}
+sequence "FootLoop", "SpriteManager", {
+    frame  w:0, { Spr.Delta(Spr.ty, w:8,  8.0) },
+    frame  w:8, { Spr.Delta(Spr.rz, w:4, 0.2) },
+    frame  w:4, { Spr.Delta(Spr.ty, w:5,  8.0), Spr.Delta(Spr.tx, w:5, -40.0), Spr.Delta(Spr.rz, w:6, -0.4) },
+    frame  w:6, { Spr.Delta(Spr.ty, w:5,-16.0), Spr.Delta(Spr.tx, w:5, -48.0), Spr.Delta(Spr.rz, w:4,  0.2) },
+    frame  w:6, { Ps.EOS() }
+}
+
+sequence "BodyStart", "SpriteManager", {
+    frame  w:0, {
+        Spr.SetSprite(0, 1800.0,496.0,0.0, 4.0,4.0, 0.0, 200,200,200,255),
+        Spr.Show(),
+        Ps.EOS()
+    }
+}
+sequence "BodyLoop", "SpriteManager", {
+    frame w:0, { Spr.Delta(Spr.ty, w:5, 8.0), Spr.Delta(Spr.tx, w:5, -22.0) },
+    frame w:6, { Spr.Delta(Spr.ty, w:5, -8.0), Spr.Delta(Spr.tx, w:5, -22.0) },
+    frame w:6, { Ps.EOS() }
+}
+
+sequence "EyesStart", "SpriteManager", {
+    frame  w:0, {
+        Spr.SetSprite(2, 1784.0,528.0,0.0, 4.0,4.0, 0.0, 200,200,200,255),
+        Spr.Show(),
+        Ps.EOS()
+    }
+}
+sequence "EyesLoop", "SpriteManager", {
+    frame  w:0, { Spr.SetFrame(2) },
+    frame w:20, { Spr.SetFrame(3) },
+    frame  w:2, { Spr.SetFrame(2) },
+    frame w:32, { Spr.SetFrame(3) },
+    frame  w:6, { Ps.EOS() }
+}

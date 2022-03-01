@@ -21,6 +21,8 @@ include('sprite.js');
         this.viewMatrix = M44.identity();
         this.projectionView = null;
         this.matrixChanged = false;
+
+        this.fps = 0;
     }
     extend(Ps.IAdapter, SpriteManager);
 
@@ -135,18 +137,11 @@ include('sprite.js');
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.spriteAttributeData);
     };
 
-    SpriteManager.prototype.update = function update(callback, context) {
-        if (typeof callback === 'function') {
-            for (var i=0; i<this.count; i++) {
-                var spr = this.sprites[i];
-                callback.call(context, spr);
-                this.updateSprite(spr);
-            }
-        } else {
-            for (var i=0; i<this.count; i++) {
-                var spr = this.sprites[i];
-                this.updateSprite(spr);
-            }
+    SpriteManager.prototype.update = function update(dt) {
+        for (var i=0; i<this.count; i++) {
+            var spr = this.sprites[i];
+            spr.update(dt);
+            this.updateSprite(spr);
         }
         this.updateBuffer();
         if (this.matrixChanged) {
@@ -173,26 +168,26 @@ include('sprite.js');
     };
 
     SpriteManager.prototype.updateSpritePosition = function updateSpritePosition(spr) {
-        this.spriteAttributeData[spr.offset+ 0] = spr.position.x;
-        this.spriteAttributeData[spr.offset+ 1] = spr.position.y;
-        this.spriteAttributeData[spr.offset+ 2] = spr.position.z;
+        this.spriteAttributeData[spr.offset+ 0] = spr.controllers[webGL.Sprite.Fields.tx].value;
+        this.spriteAttributeData[spr.offset+ 1] = spr.controllers[webGL.Sprite.Fields.ty].value;
+        this.spriteAttributeData[spr.offset+ 2] = spr.controllers[webGL.Sprite.Fields.tz].value;
     };
 
     SpriteManager.prototype.updateSpriteScale = function updateSpriteScale(spr) {
         var frameOffset = spr.frame*6;
-        this.spriteAttributeData[spr.offset+ 3] = spr.scale.x * this.map.data[frameOffset+4];
-        this.spriteAttributeData[spr.offset+ 4] = spr.scale.y * this.map.data[frameOffset+5];
+        this.spriteAttributeData[spr.offset+ 3] = spr.controllers[webGL.Sprite.Fields.sx].value * this.map.data[frameOffset+4];
+        this.spriteAttributeData[spr.offset+ 4] = spr.controllers[webGL.Sprite.Fields.sy].value * this.map.data[frameOffset+5];
     };
 
     SpriteManager.prototype.updateSpriteRotZ = function updateSpriteRotZ(spr) {
-        this.spriteAttributeData[spr.offset+ 5] = spr.rotationZ;
+        this.spriteAttributeData[spr.offset+ 5] = spr.controllers[webGL.Sprite.Fields.rz].value;
     };
 
     SpriteManager.prototype.updateSpriteColor = function updateSpriteColor(spr) {
-        this.spriteAttributeData[spr.offset+ 6] = spr.color[0];
-        this.spriteAttributeData[spr.offset+ 7] = spr.color[1];
-        this.spriteAttributeData[spr.offset+ 8] = spr.color[2];
-        this.spriteAttributeData[spr.offset+ 9] = spr.color[3];
+        this.spriteAttributeData[spr.offset+ 6] = spr.controllers[webGL.Sprite.Fields.cr].value;
+        this.spriteAttributeData[spr.offset+ 7] = spr.controllers[webGL.Sprite.Fields.cg].value;
+        this.spriteAttributeData[spr.offset+ 8] = spr.controllers[webGL.Sprite.Fields.cb].value;
+        this.spriteAttributeData[spr.offset+ 9] = spr.controllers[webGL.Sprite.Fields.ca].value;
     };
 
     SpriteManager.prototype.updateSpriteFrame = function updateSpriteFrame(spr) {
@@ -207,16 +202,21 @@ include('sprite.js');
         if (spr.isDirty) {
             // update matrix
             var frameOffset = spr.frame*6;
-            this.spriteAttributeData[spr.offset+ 0] = spr.position.x;
-            this.spriteAttributeData[spr.offset+ 1] = spr.position.y;
-            this.spriteAttributeData[spr.offset+ 2] = spr.position.z;
-            this.spriteAttributeData[spr.offset+ 3] = spr.scale.x * this.map.data[frameOffset+4];
-            this.spriteAttributeData[spr.offset+ 4] = spr.scale.y * this.map.data[frameOffset+5];
-            this.spriteAttributeData[spr.offset+ 5] = spr.rotationZ;
-            this.spriteAttributeData[spr.offset+ 6] = spr.color[0];
-            this.spriteAttributeData[spr.offset+ 7] = spr.color[1];
-            this.spriteAttributeData[spr.offset+ 8] = spr.color[2];
-            this.spriteAttributeData[spr.offset+ 9] = spr.color[3];
+            this.spriteAttributeData[spr.offset+ 0] = spr.controllers[webGL.Sprite.Fields.tx].value;
+            this.spriteAttributeData[spr.offset+ 1] = spr.controllers[webGL.Sprite.Fields.ty].value;
+            this.spriteAttributeData[spr.offset+ 2] = spr.controllers[webGL.Sprite.Fields.tz].value;
+            var wi = 0, he = 0;
+            if (spr.visible) {
+                wi = spr.controllers[webGL.Sprite.Fields.sx].value * this.map.data[frameOffset+4];
+                he = spr.controllers[webGL.Sprite.Fields.sy].value * this.map.data[frameOffset+5];
+            }
+            this.spriteAttributeData[spr.offset+ 3] = wi;
+            this.spriteAttributeData[spr.offset+ 4] = he;
+            this.spriteAttributeData[spr.offset+ 5] = spr.controllers[webGL.Sprite.Fields.rz].value;
+            this.spriteAttributeData[spr.offset+ 6] = spr.controllers[webGL.Sprite.Fields.cr].value;
+            this.spriteAttributeData[spr.offset+ 7] = spr.controllers[webGL.Sprite.Fields.cg].value;
+            this.spriteAttributeData[spr.offset+ 8] = spr.controllers[webGL.Sprite.Fields.cb].value;
+            this.spriteAttributeData[spr.offset+ 9] = spr.controllers[webGL.Sprite.Fields.ca].value;
             this.spriteAttributeData[spr.offset+10] = this.map.data[frameOffset+0];
             this.spriteAttributeData[spr.offset+11] = this.map.data[frameOffset+1];
             this.spriteAttributeData[spr.offset+12] = this.map.data[frameOffset+2];
@@ -240,7 +240,8 @@ include('sprite.js');
         var r2 = r*r;
         for (var i=0; i<this.count; i++) {
             var spr = this.sprites[i];
-            var dx = x - spr.position.x, dy = y - spr.position.y;
+            var dx = x - spr.controllers[webGL.Sprite.Fields.tx].value;
+            var dy = y - spr.controllers[webGL.Sprite.Fields.ty].value;
             var d = dx*dx + dy*dy;
             if (d < r2) {
                 d = Math.sqrt(d);
@@ -256,8 +257,9 @@ include('sprite.js');
         var x2 = x + width, y2 = y + height;
         for (var i=0; i<this.count; i++) {
             var spr = this.sprites[i];
-            var dx = x - spr.position.x, dy = y - spr.position.y;
-            if (dx < 0 && dy < 0 && spr.position.x < x2 && spr.position.y < y2) {
+            var dx = x - spr.controllers[webGL.Sprite.Fields.tx].value;
+            var dy = y - spr.controllers[webGL.Sprite.Fields.ty].value;
+            if (dx < 0 && dy < 0 && spr.controllers[webGL.Sprite.Fields.tx].value < x2 && spr.controllers[webGL.Sprite.Fields.ty].value < y2) {
                 action(spr, x,y, dx,dy, args);
             }
         }
@@ -297,17 +299,17 @@ include('sprite.js');
     };
 
     //#region IAdapter implementation
+    SpriteManager.prototype.getInfo = function() { return webGL.SpriteManager.info; };
 	SpriteManager.prototype.prepareContext = async function prepareContext(data) {
         var url = data.readString();
         var count = data.readUint8();
         await this.initialize(url, count);
-        data.readPosition--;
         SpriteManager.base.prepareContext.call(this, data);
 	};
 	SpriteManager.prototype.createDeviceImpl = function createDeviceImpl(deviceType, initData) {
 		var device = null;
 		switch (deviceType) {
-			case SpriteManager.Device.SPRITE:
+			case SpriteManager.Device.Sprite:
                 device = this.addSprite();
 				break;
 			default:
@@ -320,7 +322,7 @@ include('sprite.js');
         var sequence = channel.sequence;
         var cursor = channel.cursor;
         switch (command) {
-            case SpriteManager.Commands.SETSPRITE:
+            case SpriteManager.Commands.SetSprite:
                 var fr = sequence.getUint8(cursor++);
                 var tx = sequence.getFloat32(cursor); cursor += 4;
                 var ty = sequence.getFloat32(cursor); cursor += 4;
@@ -328,145 +330,99 @@ include('sprite.js');
                 var sx = sequence.getFloat32(cursor); cursor += 4;
                 var sy = sequence.getFloat32(cursor); cursor += 4;
                 var rz = sequence.getFloat32(cursor); cursor += 4;
+                var col = sequence.getUint32(cursor); cursor += 4;
+                var a = col & 0xff; col >>= 8;
+                var b = col & 0xff; col >>= 8;
+                var g = col & 0xff; col >>= 8;
+                var r = col & 0xff;
                 spr.setFrame(fr);
                 spr.setPosition([tx, ty, tz]);
                 spr.setScale([sx, sy, 1.0]);
                 spr.setRotationZ(rz);
+                spr.setColor([r/255, g/255, b/255, a/255]);
                 break;
-            case SpriteManager.Commands.SETFRAME:
+            case SpriteManager.Commands.SetFrame:
                 spr.setFrame(sequence.getUint8(cursor++));
                 break;
-			case SpriteManager.Commands.SETPOSITION:
-				spr.setPosition([sequence.getFloat32(cursor++), sequence.getFloat32(cursor++), sequence.getFloat32(cursor++)]);
+			case SpriteManager.Commands.SetPosition:
+				spr.setPosition([sequence.getFloat32(cursor), sequence.getFloat32(cursor+4), sequence.getFloat32(cursor+8)]);
+                cursor += 12;
 				break;
-			case SpriteManager.Commands.SETSCALE:
+			case SpriteManager.Commands.SetScale:
 				spr.setScale([sequence.getFloat32(cursor++), sequence.getFloat32(cursor++)]);
 				break;
-			case SpriteManager.Commands.SETROTATION:
+			case SpriteManager.Commands.SetRotation:
 				spr.setRotationZ(sequence.getFloat32(cursor++));
 				break;
-            case SpriteManager.Commands.CHANGE:
-                var field = sequence.getUint8(cursor++);
-                switch (field) {
-                   case webGL.Sprite.Fields.tx: spr.position[0] += sequence.getFloat32(cursor); cursor += 4; break;
-                   case webGL.Sprite.Fields.ty: spr.position[1] += sequence.getFloat32(cursor); cursor += 4; break;
-                   case webGL.Sprite.Fields.tz: spr.position[2] += sequence.getFloat32(cursor); cursor += 4; break;
-                   case webGL.Sprite.Fields.sx: spr.scale[0] += sequence.getFloat32(cursor); cursor += 4; break;
-                   case webGL.Sprite.Fields.sy: spr.scale[1] += sequence.getFloat32(cursor); cursor += 4; break;
-                   case webGL.Sprite.Fields.rz: spr.rotationZ += sequence.getFloat32(cursor); cursor += 4; break;
-                   case webGL.Sprite.Fields.col:
-                       spr.color[0] += sequence.getUint8(cursor++);
-                       spr.color[1] += sequence.getUint8(cursor++);
-                       spr.color[2] += sequence.getUint8(cursor++);
-                       break;
-                }
-                spr.isDirty = true;
+            case SpriteManager.Commands.Color:
+                var col = sequence.getUint32(cursor); cursor += 4;
+                var a = col && 0xff; col >>= 8;
+                var b = col && 0xff; col >>= 8;
+                var g = col && 0xff; col >>= 8;
+                var r = col && 0xff;
+                spr.setColor([r/255, g/255, b/255, a/255]);
+                break;
+            case SpriteManager.Commands.Alpha:
+                spr.setAlpha(sequence.getUint8(cursor++));
+                break;
+            case SpriteManager.Commands.Show:
+                spr.show(true);
+                break;
+            case SpriteManager.Commands.Hide:
+                spr.show(false);
+                break;
+            case SpriteManager.Commands.Delta:
+                var ci = sequence.getUint8(cursor++);
+                var df = sequence.getUint16(cursor); cursor += 2;
+                var dv = sequence.getFloat32(cursor); cursor += 4;
+                spr.setDelta(ci, df/this.fps, dv);
+                break;
+            // case SpriteManager.Commands.CHANGE:
+            //     var field = sequence.getUint8(cursor++);
+            //     switch (field) {
+            //        case webGL.Sprite.Fields.tx: spr.position[0] += sequence.getFloat32(cursor); cursor += 4; break;
+            //        case webGL.Sprite.Fields.ty: spr.position[1] += sequence.getFloat32(cursor); cursor += 4; break;
+            //        case webGL.Sprite.Fields.tz: spr.position[2] += sequence.getFloat32(cursor); cursor += 4; break;
+            //        case webGL.Sprite.Fields.sx: spr.scale[0] += sequence.getFloat32(cursor); cursor += 4; break;
+            //        case webGL.Sprite.Fields.sy: spr.scale[1] += sequence.getFloat32(cursor); cursor += 4; break;
+            //        case webGL.Sprite.Fields.rz: spr.rotationZ += sequence.getFloat32(cursor); cursor += 4; break;
+            //        case webGL.Sprite.Fields.col:
+            //            spr.color[0] += sequence.getUint8(cursor++);
+            //            spr.color[1] += sequence.getUint8(cursor++);
+            //            spr.color[2] += sequence.getUint8(cursor++);
+            //            break;
+            //     }
+            //     spr.isDirty = true;
     	}
 		return cursor;
 	};
-    SpriteManager.prototype.updateRefreshRate = function(device, command) { throw new Error('Not implemented!'); };
-
-    // IAdapterExt implementation
-    SpriteManager.prototype.makeCommand = function(command)  {
-        var stream = new Stream(128);
-        if (typeof command == 'string') {
-            command = SpriteManager.Commands[command.toUpperCase()];
-        }
-        stream.writeUint8(command);
-        var inputStream = null;
-        if (arguments[1] instanceof Ps.Sequence) inputStream = arguments[1].stream;
-        else if (arguments[1] instanceof Stream) inputStream = arguments[1];
-
-        switch (command) {
-            case SpriteManager.Commands.SETSPRITE:
-                if (inputStream) {
-                    stream.writeStream(inputStream, arguments[2], 25);
-                } else {
-                    stream.writeUint8(arguments[1]);    // frame number
-                    stream.writeFloat32(arguments[2]);  // tx
-                    stream.writeFloat32(arguments[3]);  // ty
-                    stream.writeFloat32(arguments[4]);  // tz
-                    stream.writeFloat32(arguments[5]);  // sx
-                    stream.writeFloat32(arguments[6]);  // sy
-                    stream.writeFloat32(arguments[7]);  // rz
-                }
-                break;
-            case SpriteManager.Commands.SETFRAME:
-                if (inputStream) {
-                    stream.writeStream(inputStream, arguments[2], 1);
-                } else {
-                    stream.writeUint8(arguments[1]);    // frame number
-                }
-                break;
-            case SpriteManager.Commands.SETPOSITION:
-                if (inputStream) {
-                    stream.writeStream(inputStream, arguments[2], 12);
-                } else {
-                    stream.writeFloat32(arguments[1]);  // tx
-                    stream.writeFloat32(arguments[2]);  // ty
-                    stream.writeFloat32(arguments[3]);  // tz
-                }
-                break;
-            case SpriteManager.Commands.SETSCALE:
-                if (inputStream) {
-                    stream.writeStream(inputStream, arguments[2], 8);
-                } else {
-                    stream.writeFloat32(arguments[1]);  // sx
-                    stream.writeFloat32(arguments[2]);  // sy
-                }
-                break;
-            case SpriteManager.Commands.SETROTATION:
-                if (inputStream) {
-                    stream.writeStream(inputStream, arguments[2], 4);
-                } else {
-                    stream.writeFloat32(arguments[1]);  // rz
-                }
-                break;
-            case SpriteManager.Commands.CHANGE:
-                if (inputStream) {
-                    var field = inputStream.readUint(8);
-                    stream.writeStream(inputStream, arguments[2], field == webGL.Sprite.Fields.col ? 3 : 4);
-                } else {
-                    var field = arguments[1];
-                    stream.writeUint8(field);               // field
-                    if (field == webGL.Sprite.Fields.col) {
-                        stream.writeUint8(arguments[2]);    // r
-                        stream.writeUint8(arguments[3]);    // g
-                        stream.writeUint8(arguments[4]);    // b
-                    } else {
-                        stream.writeFloat32(arguments[2]);  // value
-                    }
-                }
-                break;
-        }
-
-        stream.buffer = stream.buffer.slice(0, stream.length);
-        return stream;
+    SpriteManager.prototype.updateRefreshRate = function(fps) {
+        this.fps = fps;
     };
 
     //#endregion
-
-    SpriteManager.getInfo = () => SpriteManager.info;
+    SpriteManager.getInfo = () => webGL.SpriteManager.info;
     SpriteManager.info = { name: 'SpriteManager', id: 3 };
+    SpriteManager.create = player => Reflect.constructor(webGL.SpriteManager, [player]);
     
     // device types
     SpriteManager.Device = {
-        SPRITE: 0,
-        BATCH: 1
+        Sprite: 0,
+        Batch: 1
     };
 
     // commands
     SpriteManager.Commands = {
-        SETFRAME:       0x02,
-        SETPOSITION:    0x03,
-        SETSCALE:       0x04,
-        SETROTATION:    0x05,
-        SETALPHA:       0x06,
-        SETSPRITE:      0x07,
-        CHANGE:         0x08,
-        SCALE:          0x09,
-        ROTATE:         0x0A,
-        ALPHA:          0x0B
+        SetFrame:       2,
+        SetPosition:    3,
+        SetScale:       4,
+        SetRotation:    5,
+        SetColor:       6,
+        SetAlpha:       7,
+        SetSprite:      8,
+        Show:           9,
+        Hide:          10,
+        Delta:         11
     };
 
     publish(SpriteManager, 'SpriteManager', webGL);

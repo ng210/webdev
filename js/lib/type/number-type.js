@@ -56,6 +56,14 @@ include('/lib/type/type.js');
     }
     extend(NumberType, IntType);
 
+    IntType.prototype.parse = function parse(term) {
+        var base = 10;
+        if (term.startsWith('0b')) base = 2;
+        else if (term.startsWith('0x')) base = 16;
+        var value = parseInt(term, base);
+        return IntType.base.parse.call(this, value);
+    };
+
     IntType.prototype.validate = function validate(value, results, path) {
         path = path || [];
         var isValid = IntType.base.validate.call(this, value, results, path);
