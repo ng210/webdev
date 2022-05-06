@@ -64,6 +64,9 @@ Building.createTable = function createTable(id, data, disabled) {
     tab.datasource = data;
     // create header
     var tr = document.createElement('TR'); tab.appendChild(tr);
+    var cell = createCell(tr, id.charAt(0).toUpperCase() + id.substr(1) + ' Buildings', false, true);
+    cell.setAttribute('colspan', 6);
+    tr = document.createElement('TR'); tab.appendChild(tr);
     createCell(tr, 'Name', false, true);
     createCell(tr, 'Anzahl', false, true);
     createCell(tr, '%', false, true);
@@ -231,7 +234,7 @@ var Ui = {
     buildings: null,
     production: null,
 
-    create: async function create() {
+    create: function create() {
         var left = document.getElementById('left');
         var middle = document.getElementById('middle');
         var right = document.getElementById('right');
@@ -260,7 +263,6 @@ function update(e) {
     var el = e.target;
     var cell = el.parentNode;
     var tab = cell.parentNode.parentNode;
-
     var b = cell.building;
     var l = tab.rows.length;
     var total = parseInt(tab.rows[l-1].cells[1].children[0].value);
@@ -274,11 +276,11 @@ function update(e) {
     }
     if (tab != Ui.calculatedBuildings) {
         Building.update(cell.parentNode.parentNode, total);
-    } else {
-        calculatedBuildings.total = total;
-        Building.interpolate(currentBuildings, plannedBuildings, calculatedBuildings);
-        Building.update(Ui.calculatedBuildings, total, true);
     }
+    total = parseInt(document.querySelector('.calculated #total > input').value);
+    calculatedBuildings.total = total;
+    Building.interpolate(currentBuildings, plannedBuildings, calculatedBuildings);
+    Building.update(Ui.calculatedBuildings, total, true);
 
     saveToCookie();
 }
@@ -400,7 +402,7 @@ async function onpageload(errors) {
             reset();
         }
         Building.land = 100;
-        await Ui.create();
+        Ui.create();
         Ui.update();
         var p = parseInt(Ui.plannedBuildings.tbTotal.value), c = parseInt(Ui.currentBuildings.tbTotal.value);
         calculatedBuildings.total = Math.floor(p - c)/2 + c;

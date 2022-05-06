@@ -1,75 +1,101 @@
 function format(n) {
-    var arr = [];
-    var i = 0;
-    while (n != 0) {
-        var r = n % 10;
-        if (i > 0 && i % 3 == 0) arr.unshift('.');
-        arr.unshift(r);
-        n = (n - r)/10;
-        i++;
+    var parts = [];
+    var isNegative = false;
+    if (n < 0) {
+        isNegative = true;
+        n = -n;
     }
-    return arr.join('');
+    if (n == 0) {
+        parts.push(0);
+    } else {
+        while (n != 0) {
+            var r = n % 1000;
+            if (n > 1000) r = ('000'+r).slice(-3);
+            parts.unshift(r);
+            n = Math.trunc(n/1000);
+        }
+    }
+    var text = parts.join('.');
+    if (isNegative) text = '-'+text;
+    return text;
 }
 
 var prod = {
-    'melange': 351464,
-    'spice': 4035,
-    'solari': 374722
+    'melange': 32000,
+    'spice': 0,
+    'stahl': 35700,
+    'solari': 53331
 };
 var store = {
-    'melange': 10000000,
-    'spice': 900000,
-    'solari': 1527802
+    'melange': 1600000,
+    'spice': 3800,
+    'stahl': 120000,
+    'solari': 3500000
 };
 var target = {
-    'melange': 15000000,
-    'spice': 1500000
+    'melange': 7500000,
+    'spice': 750000
 };
 var price = {
-    'melange': 1.1,
-    'spice': 12.0
+    'melange': 1.0,
+    'spice': 10.5,
+    'stahl': 7.0
+};
+var result = {
+    'melange': 0.0,
+    'spice': 0.0,
+    'stahl': 0.0,
+    'solari': 0.0
 };
 
-var tax = 0.14;
+var tax = 0.0;
 
 var mm = target.melange - store.melange;
 var ms = target.spice - store.spice;
 var t = 0;
-if (mm/prod.melange < ms/prod.spice) {
-    // sell melange to get spice
-    // solari = (t * prod.melange - mm)*price.melange + store.solari + t * prod.solari;
-    // solari = t * (prod.melange * price.melange + prod.solari) - mm * price.melange + store.solari;
-    // ps = solari/price.spice;
-    // ps = ms - t * prod.spice;
-    // ms - t * prod.spice = solari/price.spice;
-    // t * prod.spice = ms - solari/price.spice;
-    // t * prod.spice = ms - (t * (prod.melange * price.melange + prod.solari)/price.spice - (mm * price.melange + store.solari)/price.spice);
-    // t * prod.spice = ms - t * (prod.melange * price.melange + prod.solari)/price.spice + (mm * price.melange + store.solari)/price.spice;
-    // t * prod.spice + t * (prod.melange * price.melange + prod.solari)/price.spice = ms + (mm * price.melange + store.solari)/price.spice;
-    // t * (prod.spice + (prod.melange * price.melange + prod.solari)/price.spice) = ms + (mm * price.melange + store.solari)/price.spice;
 
-    // t = (ms + mm * price.melange + store.solari)/price.spice)/(prod.spice + (prod.melange * price.melange + prod.solari)/price.spice);
-    t = (ms + (mm * price.melange + store.solari)/price.spice)/(prod.spice + (prod.melange * price.melange + prod.solari)/price.spice);
+// missing = target - store
+// T = missing/prod
+// surplus = T.spice > T.melange ? (t*prod.melange - missing.melange)*price.melange : (t*prod.spice - missing.spice)*price.spice
+// missing.melange*price.melange + missing.spice*price.spice = store.solari + t*prod.solari + (store.stahl + t*prod.stahl)*price.stahl + surplus
+// missing.melange*price.melange + missing.spice*price.spice - store.solari - store.stahl*price.stahl = t*prod.solari + t*prod.stahl*price.stahl + surplus
+var fixSum = mm*price.melange + ms*price.spice - store.solari - store.stahl*price.stahl;
+var fixProd = prod.solari + prod.stahl*price.stahl;
+if (prod.spice == 0 || ms/prod.spice > mm/prod.melange) {
+// fixSum = t*fixProd + (t*prod.melange - missing.melange)*price.melange
+// fixSum = t*fixProd + t*prod.melange*price.melange - missing.melange*price.melange
+// fixSum + missing.melange*price.melange = t*(fixProd + prod.melange*price.melange)
+    t = (mm*price.melange + fixSum) / (fixProd + prod.melange*price.melange);
 } else {
-    // sell spice to get melange
-    // solari = t * (prod.spice * price.spice + prod.solari) - mm * price.spice + store.solari;
-    // mm - t * prod.melange = solari/price.melange;
-    // t * prod.melange = mm - (t * (prod.spice * price.spice + prod.solari) - mm * price.spice + store.solari)/price.melange;
-    // t * prod.melange = mm - t * (prod.spice * price.spice + prod.solari)/price.melange + (mm * price.spice + store.solari)/price.melange;
-    // t * (prod.melange + (prod.spice * price.spice + prod.solari)/price.melange) = mm + (mm * price.spice + store.solari)/price.melange;
-    t = (mm + (mm * price.spice + store.solari)/price.melange)/(prod.melange + (prod.spice * price.spice + prod.solari)/price.melange);
+// fixSum = t*fixProd + (t*prod.spice - missing.spice)*price.spice
+// fixSum = t*fixProd + t*prod.spice*price.spice - missing.spice*price.spice
+// fixSum + missing.spice*price.spice = t*(fixProd + prod.spice*price.spice)
+    t = (ms*price.spice + fixSum) / (fixProd + prod.spice*price.spice);
 }
 
-console.log(t.toPrecision(4));
+console.log('Ticks: ' + t.toPrecision(4));
 t = Math.ceil(t);
-var pm = t * prod.melange;
-var ps = t * prod.spice;
-var pso = t * prod.solari;
-console.log(`Melange produced: ${format(pm)} (${format(Math.ceil(pm/(1-tax)))})`);
-console.log(`Spice produced: ${format(ps)} (${format(Math.ceil(ps/(1-tax)))})`);
-console.log(`Solari produced: ${format(pso)}`);
-if (mm < pm) {
-    console.log('Melange to sell: ' + format(pm - mm));
-} else {
-    console.log('Spice to sell: ' + format(ps - ms));
+for (var i in prod) {
+    result[i] = t*prod[i];
+    print_stats(i);
 }
+
+function print_stats(key) {
+    var label = key.charAt(0).toUpperCase() + key.substr(1);
+    var worth = key != 'solari' ? ` (${format(result[key]*price[key])} Sol)` : '';
+    console.log(`${label}\n store: ${format(store[key])}\n produced: ${format(result[key])}${worth}`);
+    if (key == 'spice' || key == 'melange') {
+        var miss = target[key] - store[key];
+        if (result[key] < miss) {
+            var buy = miss - result[key];
+            console.log(` buy: ${format(buy)} (${format(buy*price[key])} Sol)`);
+        } else {
+            var sell = result[key] - miss;
+            console.log(` sell: ${format(sell)} (${format(sell*price[key])} Sol)`);
+        }
+    } else if (key == 'stahl') {
+        var sell = result[key] + store[key];
+        console.log(` sell: ${format(sell)} (${format(sell*price[key])} Sol)`);
+    }
+}
+

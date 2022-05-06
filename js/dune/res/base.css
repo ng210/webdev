@@ -85,6 +85,9 @@ td {
 th {
 	text-align: center;
 	color: white;
+	padding: 2px;
+	border: 1px outset #4080C0;
+	background-color: #306090;
 }
 
 input {
