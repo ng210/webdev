@@ -68,7 +68,7 @@ include('/lib/ge/sound.js');
 		}
 		return cursor;
 	};
-	SynthAdapter.prototype.updateRefreshRate = function updateRefreshRate(fps) {
+	SynthAdapter.prototype.setRefreshRate = function updateRefreshRate(fps) {
 		this.samplePerFrame = sound.sampleRate/fps;
 	};
 

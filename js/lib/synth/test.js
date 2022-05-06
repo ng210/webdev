@@ -454,6 +454,7 @@ include('/lib/synth/synth-adapter-ext.js');
 
     function setBpm(bpm) {
         _bpm = bpm;
+        // samplingRate / (bpm/60*16) = samplingRate * 60/16 / bpm = samplingRate * 3,75 / bpm
         _samplePerFrame = SAMPLE_RATE*3.75/_bpm;
     }
 
@@ -535,8 +536,8 @@ include('/lib/synth/synth-adapter-ext.js');
         channel.assign(0, player.sequences[1]);
         channel.loopCount = 4;
 
-        // var stream = Ps.Player.createBinaryData(player);
-        // stream.toFile('test-data.bin', 'application/octet-stream');
+        var stream = Ps.Player.createBinaryData(player);
+        stream.toFile('test-data.bin', 'application/octet-stream');
 
         await run((left, right, bufferSize) => channelBasedFillBuffer(left, right, bufferSize, channel));
     }
@@ -585,7 +586,8 @@ include('/lib/synth/synth-adapter-ext.js');
         setBpm(121);
         if (res.error) throw res.error;
         var player = await Ps.Player.create();
-        var result = null;
+        var results = null;
+        Stream.isLittleEndian = true;
         await measure('import script', async function() { results = await player.importScript(res.data) }, 1);
         test('Should load script successfully', ctx => {
             ctx.assert(results, 'empty');
@@ -596,6 +598,8 @@ include('/lib/synth/synth-adapter-ext.js');
             ctx.assert(player.sequences.length, '=', 8);
             ctx.assert(player.datablocks.length, '=', 3);
         });
+        var stream = Ps.Player.createBinaryData(player, true);
+        stream.toFile('drums1.bin', 'application/octet-stream');
 
         await run((left, right, bufferSize) => playerBasedFillBuffer(left, right, bufferSize, player));
     }

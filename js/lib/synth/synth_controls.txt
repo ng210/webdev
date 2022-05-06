@@ -1,55 +1,46 @@
-amp:        F8
-
-env1.amp:   Float
-env1.dc:    Float
-env1.atk:   F8
-env1.dec:   F8
-env1.sus:   F8
-env1.rel:   F8
-
-env2.amp:   Float
-env2.dc:    Float
-env2.atk:   F8
-env2.dec:   F8
-env2.sus:   F8
-env2.rel:   F8
-
-env3.amp:   Float
-env3.dc:    Float
-env3.atk:   F8
-env3.dec:   F8
-env3.sus:   F8
-env3.rel:   F8
-
-env4.amp:   Float
-env4.dc:    Float
-env4.atk:   F8
-env4.dec:   F8
-env4.sus:   F8
-env4.rel:   F8
-
-lfo1.amp:   Float
-lfo1.dc:    Float
-
-lfo2.amp:   Float
-lfo2.dc:    Float
-
-osc1.amp:   Float
-osc1.fre:   Float
-osc1.note:  Int
-osc1.tune:  Int
-osc1.psw:   F8
-osc1.wave:  Int
-
-osc2.amp:   Float
-osc2.fre:   Float
-osc2.note:  Int
-osc2.tune:  Int
-osc2.psw:   F8
-osc2.wave:  Int
-
-flt.amp:    Float
-flt.cut:    F8
-flt.res:    F8
-flt.mod:    F8
-flt.mode:   Int
+amp PotF8;      1
+env1amp PotF;   4
+env1dc PotF;    4
+env1atk PotF8;  1
+env1dec PotF8;  1
+env1sus PotF8;  1
+env1rel PotF8;  1
+env2amp PotF;   4
+env2dc PotF;    4
+env2atk PotF8;  1
+env2dec PotF8;  1
+env2sus PotF8;  1
+env2rel PotF8;  1
+env3amp PotF;   4
+env3dc PotF;    4
+env3atk PotF8;  1
+env3dec PotF8;  1
+env3sus PotF8;  1
+env3rel PotF8;  1
+env4amp PotF;   4
+env4dc PotF;    4
+env4atk PotF8;  1
+env4dec PotF8;  1
+env4sus PotF8;  1
+env4rel PotF8;  1
+lfo1amp PotF;   4
+lfo1fre PotF;   4
+lfo2amp PotF;   4
+lfo2fre PotF;   4
+osc1amp PotF8;  1
+osc1fre PotF;   4
+osc1note Pot;   1
+osc1tune Pot;   1
+osc1psw PotF8;  1
+osc1wave Pot;   1
+osc2amp PotF8;  1
+osc2fre PotF;   4
+osc2note Pot;   1
+osc2tune Pot;   1
+osc2psw PotF8;  1
+osc2wave Pot;   1
+flt1amp PotF;   4
+flt1cut PotF8;  1
+flt1res PotF8;  1
+flt1mod PotF8;  1
+flt1mode Pot;   1
