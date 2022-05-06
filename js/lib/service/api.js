@@ -92,7 +92,7 @@ if (ISNODEAPP) {
                 }
             }
             //this.methods = Object.keys(methods);
-            if (this.authorization) {
+            if (this.authorization && this.authorization.toLowerCase() != 'none') {
                 // create login endpoint
                 this.endpoints.login = new Endpoint(this, { 'id':'login' });
                 this.endpoints.login.calls.post = this.createApiCall(
