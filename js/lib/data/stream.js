@@ -62,6 +62,7 @@
         this.writePosition = 0;
         if (!this.view) this.view = new DataView(this.buffer, offset, length);
         this.constructor = Stream;
+        this.isLittleEndian = Stream.isLittleEndian;
     }
     Stream.prototype = {
         get size() { return this.buffer.byteLength; },
@@ -126,7 +127,7 @@
 
     Stream.prototype.writeUint16 = function writeUint16(value) {
         ensureSize(this, 8);
-        this.view.setUint16(this.writePosition, value);
+        this.view.setUint16(this.writePosition, value, this.isLittleEndian);
         this.writePosition += 2;
         if (this.writePosition > this.length) {
             this.length = this.writePosition;
@@ -136,7 +137,7 @@
 
     Stream.prototype.writeUint32 = function writeUint32(value) {
         ensureSize(this, 16);
-        this.view.setUint32(this.writePosition, value);
+        this.view.setUint32(this.writePosition, value, this.isLittleEndian);
         this.writePosition += 4;
         if (this.writePosition > this.length) {
             this.length = this.writePosition;
@@ -146,7 +147,7 @@
 
     Stream.prototype.writeFloat32 = function writeFloat32(value) {
         ensureSize(this, 16);
-        this.view.setFloat32(this.writePosition, value);
+        this.view.setFloat32(this.writePosition, value, this.isLittleEndian);
         this.writePosition += 4;
         if (this.writePosition > this.length) {
             this.length = this.writePosition;
@@ -173,21 +174,21 @@
         this.readPosition = pos != undefined ? pos : this.readPosition;
         var r = this.readPosition;
         this.readPosition += 2;
-        return this.view.getUint16(r);
+        return this.view.getUint16(r, this.isLittleEndian);
     };
 
     Stream.prototype.readUint32 = function readUint32(pos) {
         this.readPosition = pos != undefined ? pos : this.readPosition;
         var r = this.readPosition;
         this.readPosition += 4;
-        return this.view.getUint32(r);
+        return this.view.getUint32(r, this.isLittleEndian);
     };
 
     Stream.prototype.readFloat32 = function readFloat32(pos) {
         this.readPosition = pos != undefined ? pos : this.readPosition;
         var r = this.readPosition;
         this.readPosition += 4;
-        return this.view.getFloat32(r);
+        return this.view.getFloat32(r, this.isLittleEndian);
     };
 
     Stream.prototype.dump = function dump(offset, length, width, separator, linebreaks) {
@@ -273,6 +274,8 @@
 
         return new Stream(s);
     };
+
+    Stream.isLittleEndian = false;
 
     publish(Stream, 'Stream');
 })();

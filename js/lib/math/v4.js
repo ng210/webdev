@@ -108,18 +108,18 @@
             this[0] = x || 0.0;
             this[1] = y == undefined ? this[0] : y;
             this[2] = z == undefined ? this[0] : z;
-            this[3] = w || 1;
+            this[3] = w == undefined ? this[0] : w;
         } else if (Array.isArray(x)) {
-            this[0] = x[0] || 0.0;;
-            this[1] = x[1] || 0.0;
-            this[2] = x[2] || 0.0;
-            this[3] = x[3] || 1;
+            this[0] = x[0] != undefined ? x[0] : 0.0;
+            this[1] = x[1] != undefined ? x[1] : 0.0;
+            this[2] = x[2] != undefined ? x[2] : 0.0;
+            this[3] = x[3] != undefined ? x[3] : 1;
         } else if (x instanceof Float32Array) {
             var o = y || 0;
-            this[0] = x[0+o] || 0.0;
-            this[1] = x[1+o] || 0.0;
-            this[2] = x[2+o] || 0.0;
-            this[3] = x[3+o] || 1;
+            this[0] = x[0+o];
+            this[1] = x[1+o];
+            this[2] = x[2+o];
+            this[3] = x[3+o];
         } else {
             throw new Error('Could not create V4 from these arguments!');
         }
