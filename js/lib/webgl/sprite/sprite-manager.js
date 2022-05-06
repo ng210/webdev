@@ -396,7 +396,7 @@ include('sprite.js');
     	}
 		return cursor;
 	};
-    SpriteManager.prototype.updateRefreshRate = function(fps) {
+    SpriteManager.prototype.setRefreshRate = function(fps) {
         this.fps = fps;
     };
 

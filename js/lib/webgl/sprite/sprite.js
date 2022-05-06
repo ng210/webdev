@@ -41,10 +41,10 @@ include('/lib/math/m44.js');
         this.visible = false;
         this.width = 0;
         this.height = 0;
-        this.position = new V3(0);
-        this.scale = new V3(1.0);
-        this.rotationZ = 0.0;
-        this.color = new V4(1.0);
+        //this.position = new V3(0);
+        //this.scale = new V3(1.0);
+        //this.rotationZ = 0.0;
+        //this.color = new V4(1.0);
         this.controllers = [];
         for (var i in Sprite.Fields) {
             this.controllers.push(new Controller(0));
@@ -52,12 +52,23 @@ include('/lib/math/m44.js');
         this.sprMgr = sprMgr;
     }
 
+    Sprite.prototype.getPosition = function getPosition() {
+        return new V3(
+            this.controllers[Sprite.Fields.tx].value,
+            this.controllers[Sprite.Fields.ty].value,
+            this.controllers[Sprite.Fields.tz].value);
+    };
     Sprite.prototype.setPosition = function setPosition(p) {
         this.controllers[Sprite.Fields.tx].value = p[0];
         this.controllers[Sprite.Fields.ty].value = p[1];
         this.controllers[Sprite.Fields.tz].value = p[2];
         //this.position.set(p);
         this.isDirty = true;
+    };
+    Sprite.prototype.getScale = function getScale() {
+        return new V2(
+            this.controllers[Sprite.Fields.sx].value,
+            this.controllers[Sprite.Fields.sy].value);
     };
     Sprite.prototype.setScale = function setScale(s) {
         this.controllers[Sprite.Fields.sx].value = s[0];
@@ -67,10 +78,16 @@ include('/lib/math/m44.js');
         this.height = this.baseHeight * s[1];
         this.isDirty = true;
     };
+    Sprite.prototype.getRotationZ = function getRotationZ() {
+        return this.controllers[Sprite.Fields.rz].value;
+    };
     Sprite.prototype.setRotationZ = function setRotationZ(r) {
         this.controllers[Sprite.Fields.rz].value = r;
         //this.rotationZ = r;
         this.isDirty = true;
+    };
+    Sprite.prototype.getFrame = function getFrame() {
+        return this.frame;
     };
     Sprite.prototype.setFrame = function setFrame(f) {
         this.frame = f;
@@ -79,6 +96,13 @@ include('/lib/math/m44.js');
         this.baseHeight = this.sprMgr.map.data[frameOffset+5];
         this.isDirty = true;
     };
+    Sprite.prototype.getColor = function getColor() {
+        return new V4(
+            this.controllers[Sprite.Fields.cr].value,
+            this.controllers[Sprite.Fields.cg].value,
+            this.controllers[Sprite.Fields.cb].value,
+            this.controllers[Sprite.Fields.ca].value);
+    };
     Sprite.prototype.setColor = function setColor(c) {
         this.controllers[Sprite.Fields.cr].value = c[0];
         this.controllers[Sprite.Fields.cg].value = c[1];
@@ -86,6 +110,9 @@ include('/lib/math/m44.js');
         this.controllers[Sprite.Fields.ca].value = c[3];
         //this.color.set(c);
         this.isDirty = true;
+    };
+    Sprite.prototype.getAlpha = function getAlpha() {
+        return this.controllers[Sprite.Fields.ca].value;
     };
     Sprite.prototype.setAlpha = function setAlpha(a) {
         this.controllers[Sprite.Fields.ca].value = a;
