@@ -35,7 +35,9 @@ include('./sequence.js');
             throw new Error(`Missing adapter!`);
         }
         this.device = this.adapter.getDevice(deviceId);
+        //this.currentTick = 0;
         this.isActive = true;
+        this.run(0);
     };
 
     Channel.prototype.reset = function() {
@@ -55,9 +57,10 @@ include('./sequence.js');
             var delta = 0;
             while ((delta = this.sequence.getUint16(this.cursor)) <= this.currentTick) {
                 this.currentTick -= delta; this.cursor += 2;
+                var cmd = -1;
                 while (true) {
                     // read command code, 1 byte
-                    var cmd = this.sequence.getUint8(this.cursor++);
+                    cmd = this.sequence.getUint8(this.cursor++);
                     if (cmd > 1) {
                         this.cursor = this.adapter.processCommand(this, cmd);   //this.device, cmd, this.sequence, this.cursor);
                     } else {
@@ -72,6 +75,7 @@ include('./sequence.js');
                 }
                 if (cmd === Ps.Player.Commands.EOS) {
                     // end of sequence
+                    //this.currentTick = 0;
                     break;
                 }
             }

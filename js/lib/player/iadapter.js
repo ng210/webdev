@@ -27,9 +27,9 @@ include('/lib/data/stream.js');
         return device;
     };        
     IAdapter.prototype.getDevice = function getDevice(id) { return this.devices[id]; }
-    IAdapter.prototype.updateRefreshRate = function(fps) {
+    IAdapter.prototype.setRefreshRate = function(fps) {
         for (var i=0; i<this.devices.length; i++) {
-            this.devices[i].updateRefreshRate(fps)
+            this.devices[i].setRefreshRate(fps);
         }
     };
     IAdapter.prototype.createDeviceImpl = function(deviceType, initData) { throw new Error('Not implemented!'); };

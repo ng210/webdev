@@ -54,7 +54,7 @@ include('./player-ext.js');
         }
         return cursor;
     };
-    TestAdapter.prototype.updateRefreshRate = function(device, command) { throw new Error('Not implemented!'); };
+    TestAdapter.prototype.setRefreshRate = function(fps) { throw new Error('Not implemented!'); };
 
     TestAdapter.prototype.makeCommand = function(command)  {
         var stream = new Stream(128);
@@ -272,7 +272,6 @@ include('./player-ext.js');
         var sequence2 = Ps.Sequence.fromFrames(frames, sequence1.adapter);
         Dbg.prln('Input:\n' + sequence1.stream.dump(32));
         Dbg.prln('Output:\n' + sequence2.stream.dump(32));
-debugger
         test('Sequence should be created from frames successfully', ctx => ctx.assert(sequence1.stream, ':=', sequence2.stream));
 
 

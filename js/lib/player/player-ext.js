@@ -9,6 +9,7 @@ include('/lib/player/script-processor.js');
 
 (async function() {
     implements(Ps.Player, Ps.IAdapterExt);
+
     Ps.Player.prototype.makeCommand = function(command)  {
         var stream = new Stream(128);
         if (typeof command == 'string') {

@@ -70,7 +70,10 @@ include('./iadapter-ext.js');
         }
         return cursor;
     };
-    Player.prototype.updateRefreshRate = function(fps) {
+    Player.prototype.setRefreshRate = function(fps) {
+        for (var i=1; i<this.adapters.length; i++) {
+            this.adapters[i].adapter.setRefreshRate(fps);
+        }
         this.refreshRate = fps;
     };
 
@@ -95,7 +98,8 @@ include('./iadapter-ext.js');
         var count = stream.readUint16(offset);
         offset += 2;
         for (var i=0; i<count; i++) {
-            this.datablocks.push(new Stream(stream, stream.readUint32(offset), stream.readUint32(offset+4)));
+            var s = new Stream(stream, stream.readUint32(offset), stream.readUint32(offset+4));
+            this.datablocks.push(s);
             offset += 8;
         }
         // add adapters, prepare context

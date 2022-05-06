@@ -337,7 +337,9 @@ ScriptProcessor.prototype.createStream = function createStream(data) {
             throw new Error(`Unknown symbol '${data[i]}'`);
         }
     }
-    return new Stream(stream.length).writeStream(stream, 0, stream.length);
+    var result = new Stream(stream.length);
+    result.writeStream(stream, 0, stream.length);
+    return result;
 };
 
 ScriptProcessor.prototype.addSymbol = function addSymbol(n) {
