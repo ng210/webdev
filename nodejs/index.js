@@ -1,3 +1,4 @@
+const DEBUG = false;
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -14,10 +15,10 @@ const webAccess = {};
 function readWebAccessFile(dir) {
     var allow = false;
     var fileName = path.resolve(dir, 'web-access.json');
-    console.debug(`check access file '${fileName}'`);
+    if (DEBUG) console.debug(`check access file '${fileName}'`);
     if (fs.existsSync(fileName)) {
         // process file
-        console.debug(`read access file '${fileName}'`);
+        if (DEBUG) console.debug(`read access file '${fileName}'`);
         var file = fs.readFileSync(fileName, { encoding: 'utf-8' });
         var content = JSON.parse(file);
         allow = content.default.toLowerCase() == 'allow';
@@ -35,13 +36,13 @@ function readWebAccessFile(dir) {
         }
     } else {
         // inherit from parent
-        console.debug(`check parent dir '${dir}'`);
+        if (DEBUG) console.debug(`check parent dir '${dir}'`);
         if (dir != documentPath) {
             var parent = path.dirname(dir);
             readWebAccessFile(parent);
             allow = webAccess[dir] != undefined ? webAccess[dir] : webAccess[parent];
         } else {
-            console.debug(`documentPath accessed: '${dir}'`);
+            if (DEBUG) console.debug(`documentPath accessed: '${dir}'`);
         }
     }
     if (webAccess[dir] == undefined) {
@@ -52,19 +53,19 @@ function readWebAccessFile(dir) {
 function checkWebAccess(resPath) {
     if (resPath.toLowerCase().endsWith('web-access.json')) return false;
     var dir = path.dirname(resPath);
-    console.debug(`check access for '${dir}'`);
+    if (DEBUG) console.debug(`check access for '${dir}'`);
     if (webAccess[dir] == undefined) {
         // read the web-access file
         readWebAccessFile(dir);
     }
     var isGranted = webAccess[resPath] != undefined ? webAccess[resPath] : webAccess[dir];
-    console.debug(`Access granted: ${isGranted}`);
+    if (DEBUG) console.debug(`Access granted: ${isGranted}`);
     return isGranted;
 }
 
 app.get('/*', function(req, resp) {
     var resPath = path.normalize(path.join(documentPath, req.path));
-    console.debug(`Access '${resPath}'`);
+    if (DEBUG) console.debug(`Access '${resPath}'`);
     try {
         if (fs.statSync(resPath).isDirectory()) resPath += 'index.html';
         if (fs.existsSync(resPath) && checkWebAccess(resPath)) {
