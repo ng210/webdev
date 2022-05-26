@@ -168,7 +168,7 @@ Building.prototype.getData = function getData() {
 
 
 //*****************************************************************************
-var house = ['Atreides', 'Harkonnen'][1];
+var house = ['Atreides', 'Harkonnen', 'Ordos'][2];
 
 var currentBuildings = [
     new Building('Windfalle', 110, null),
@@ -357,17 +357,27 @@ function reset() {
     currentBuildings = [];
     for (var i=0; i<buildingData.length; i++) {
         var b = buildingData[i];
-        currentBuildings.push(b.name, b.count, b.production ? new Production(b.production.name, b.production.rate, b.production.unit) : null);
+        currentBuildings.push(new Building(b.name, b.count, b.production ? new Production(b.production.name, b.production.rate, b.production.unit) : null));
     }
     plannedBuildings = [];
     for (var i=0; i<buildingData.length; i++) {
         var b = buildingData[i];
-        plannedBuildings.push(b.name, b.count, b.production ? new Production(b.production.name, b.production.rate, b.production.unit) : null);
+        plannedBuildings.push(new Building(b.name, b.count, b.production ? new Production(b.production.name, b.production.rate, b.production.unit) : null));
     }
 
     // set house prod.bonus
-    if (house == 'Atreides') setBonus('Raffinerie', 'house', .10);
-    if (house == 'Harkonnen') setBonus('Ofen', 'house', .10);
+    switch (house) {
+        case 'Atreides':
+            setBonus('Raffinerie', 'house', .10);
+            break;
+        case 'Harkonnen':
+            setBonus('Ofen', 'house', .10);
+            break;
+        case 'Ordos':
+            setBonus('Raffinerie', 'house', -.05);
+            setBonus('Silo', 'house', .10);
+            break;
+    }
 
     // set research #1
     // setBonus('Raffinerie', 'rs1', .05);

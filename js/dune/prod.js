@@ -21,25 +21,25 @@ function format(n) {
 }
 
 var prod = {
-    'melange': 32000,
-    'spice': 0,
-    'stahl': 35700,
-    'solari': 53331
+    'melange': 3594,
+    'spice': 13900,
+    'stahl': 1532,
+    'solari': 0
 };
 var store = {
-    'melange': 1600000,
-    'spice': 3800,
-    'stahl': 120000,
-    'solari': 3500000
+    'melange': 0,
+    'spice': 0,
+    'stahl': 0,
+    'solari': 0
 };
 var target = {
-    'melange': 7500000,
-    'spice': 750000
+    'melange': 2500000,
+    'spice': 250000
 };
 var price = {
-    'melange': 1.0,
-    'spice': 10.5,
-    'stahl': 7.0
+    'melange': 1.4,
+    'spice': 8.2,
+    'stahl': 5.0
 };
 var result = {
     'melange': 0.0,

@@ -14,10 +14,10 @@ const webAccess = {};
 function readWebAccessFile(dir) {
     var allow = false;
     var fileName = path.resolve(dir, 'web-access.json');
-    //console.debug(`check access file '${fileName}'`);
+    console.debug(`check access file '${fileName}'`);
     if (fs.existsSync(fileName)) {
         // process file
-        //console.debug(`read access file '${fileName}'`);
+        console.debug(`read access file '${fileName}'`);
         var file = fs.readFileSync(fileName, { encoding: 'utf-8' });
         var content = JSON.parse(file);
         allow = content.default.toLowerCase() == 'allow';
@@ -35,7 +35,7 @@ function readWebAccessFile(dir) {
         }
     } else {
         // inherit from parent
-        //console.debug(`check parent dir '${dir}'`);
+        console.debug(`check parent dir '${dir}'`);
         if (dir != documentPath) {
             var parent = path.dirname(dir);
             readWebAccessFile(parent);
@@ -52,18 +52,19 @@ function readWebAccessFile(dir) {
 function checkWebAccess(resPath) {
     if (resPath.toLowerCase().endsWith('web-access.json')) return false;
     var dir = path.dirname(resPath);
-    //console.debug(`check access for '${dir}'`);
+    console.debug(`check access for '${dir}'`);
     if (webAccess[dir] == undefined) {
         // read the web-access file
         readWebAccessFile(dir);
     }
     var isGranted = webAccess[resPath] != undefined ? webAccess[resPath] : webAccess[dir];
-    //console.debug(`Access granted: ${isGranted}`);
+    console.debug(`Access granted: ${isGranted}`);
     return isGranted;
 }
 
 app.get('/*', function(req, resp) {
     var resPath = path.normalize(path.join(documentPath, req.path));
+    console.debug(`Access '${resPath}'`);
     try {
         if (fs.statSync(resPath).isDirectory()) resPath += 'index.html';
         if (fs.existsSync(resPath) && checkWebAccess(resPath)) {
