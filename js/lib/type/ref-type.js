@@ -2,6 +2,7 @@ include('/lib/type/type.js');
 (function() {
     function RefType(name, type, args) {
         RefType.base.constructor.call(this, name, type, args);
+        this.isNumeric = type.getAttribute(type.ref)[1].type.isNumeric;
     }
     extend(Type, RefType);
 

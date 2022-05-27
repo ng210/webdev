@@ -84,7 +84,7 @@ include('./api.js');
                         error(response.error);
                         success = false;
                     }
-                    break;
+                    //break;
                 }
             }
             ctx.assert(success, 'true');
