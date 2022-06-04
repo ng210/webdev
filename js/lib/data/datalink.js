@@ -18,89 +18,118 @@
                 configurable: false,
                 writable: false,
                 value: {}
-            },
-            'links': {
-                enumerable: false,
-                configurable: false,
-                writable: false,
-                value: {}
             }
         });
     }
 
-    DataLink.prototype.add = function add(field) {
-        if (this.obj[field] !== undefined) {
-            if (!Object.keys(this).includes(field.toString())) {
-                Object.defineProperty(this, field, {
-                    enumerable: true,
-                    configurable: false,
-                    get: function () {
-                        return this.obj[field];
-                    },
-                    set: function (value) {
-                        var oldValue = this.obj[field];
-                        this.obj[field] = value;
-                        var handlers = this.handlers[field];
-                        if (handlers) {
-                            for (var i=0; i<handlers.length; i++) {
-                                var handler = handlers[i];
-                                var result = handler.fn.call(handler.context, value, oldValue, handler.args);
-                                if (result != undefined) {
-                                    this.obj[field] = result;
-                                }
-                            }
-                        }
-                        var link = this.links[field];
-                        if (link) {
-                            link.fn.call(link.context, value, oldValue, link);
-                        }
-                        return oldValue;
-                    }
-                });
+    DataLink.prototype.callHandlers = function callHandlers(key, value) {
+        var result = null;
+        var handlers = this.handlers[key];
+        if (handlers) {
+            for (var i=0; i<handlers.length; i++) {
+                var handler = handlers[i];
+                var ret = handler.fn.call(handler.target, handler.field, value, handler.args);
+                if (ret != undefined) result = ret;
+            }
+        }
+        return result;
+    };
+
+    DataLink.prototype.addField = function addField(field, setter) {
+        var key = field.toString();
+        if (this.obj[key] !== undefined && !Object.keys(this).includes(key)) {
+            Object.defineProperty(this, key, {
+                enumerable: true,
+                configurable: false,
+                get: function () {
+                    return this.obj[key];
+                },
+                set: function(value) {
+                    var result = this.callHandlers(key, value);
+                    return result;
+                }
+            });
+
+            if (setter !== null) {
+                setter = setter || {};
+                this.addHandler(key, setter, true);
             }
         } else {
-            console.warn(`Object does not have field '${field}'!`);
+            console.warn(`Object already has field '${field}'!`);
         }
     };
 
-    DataLink.prototype.addHandler = function addHandler(field, handler, context, args) {
-        var storedHandler = null;
-        if (this.obj[field] !== undefined) {
-            if (this.handlers[field] === undefined) {
-                this.handlers[field] = [];
-            }
-            var storedHandler = this.handlers[field].find(x => (x.context == context && x.fn == handler && x.args == args));
-            if (!storedHandler) {
-                storedHandler = { context: context || window, fn: handler, args: args || [] };
-                this.handlers[field].push(storedHandler);
+    DataLink.prototype.addHandler = function addHandler(key, handler, asFirst) {
+        if (!this.handlers[key]) this.handlers[key] = [];
+        var handlers = this.handlers[key];
+        if (typeof handler !== 'object') {
+            if (typeof handler === 'function') {
+                handler = { 'fn':handler };
+            } else {
+                throw new Error('Invalid handler as parameter!');
             }
         }
-        return storedHandler;
+        handler.target = handler.target || this.obj;
+        handler.field = handler.field || key;
+        handler.fn = handler.fn || DataLink.defaultHandlers.set;
+        handler.args = handler.args || DataLink.defaultXform;
+        asFirst ? handlers.unshift(handler) : handlers.push(handler);
     };
 
-    DataLink.prototype.link = function link(field1, target, field2, transformToSource, transformToTarget) {
-        this.add(field1);
-        if (!(target instanceof DataLink)) {
-            target = new DataLink(target);
-        }
-        this.links[field1] = {
-            fn: transformToTarget || DataLink.defaultTransform,
-            context: this.obj,
-            target: target.obj,
-            field: field2
-        }
-
-        target.add(field2);
-        target.links[field2] = {
-            fn: transformToSource || DataLink.defaultTransform,
-            context: target.obj,
-            target: this.obj,
-            field: field1
-        };
-        return target;
+    DataLink.prototype.addLink = function addLink(key, target, field, xform) {
+        // initialize field from target
+        this.obj[key] = target[field];
+        // add handler to update target[field]
+        this.addHandler(key, {
+            'target':target,
+            'field':field,
+            'fn':DataLink.defaultHandlers.set,
+            'args': xform || DataLink.defaultXform
+        });
     };
 
-    DataLink.defaultTransform = (value, oldValue, link) => link.target[link.field] = value;
+    DataLink.addLink2 = function addLink2(dataLink1, key1, dataLink2, key2, xform1, xform2) {
+        if (dataLink1[key1] === undefined) {
+            // add handler for dataLink1[key1]
+            dataLink1.addField(key1, {
+                'fn':DataLink.defaultHandlers.set,
+                'args':xform1
+            });
+        }
+        dataLink1.addHandler(key1, {
+            'target':dataLink2.obj,
+            'field':key2,
+            'fn':DataLink.defaultHandlers.set,
+            'args':xform2 || DataLink.defaultXform
+        });
+
+        if (dataLink2[key2] === undefined) {
+            // add handler for dataLink2[key2]
+            dataLink2.addField(key2, {
+                'fn':DataLink.defaultHandlers.set,
+                'args':xform2
+            });
+        }
+        dataLink2.addHandler(key2, {
+            'target':dataLink1.obj,
+            'field':key1,
+            'fn':DataLink.defaultHandlers.set,
+            'args':xform1 || DataLink.defaultXform
+        });
+    };
+
+    DataLink.defaultXform = v => v;
+
+    DataLink.defaultHandlers = {
+        'none': function(field, value, xform) {
+            return this[field];
+        },
+        'set': function(field, value, xform) {
+            var oldValue = this[field];
+            this[field] = xform.call(this, value);
+            return oldValue;
+        }
+    };
 
     publish(DataLink, 'DataLink');
 })();

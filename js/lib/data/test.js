@@ -1,3 +1,4 @@
+include('./data-table.js');
 include('./dictionary.js');
 include('./stream.js');
 include('./dataseries.js');
@@ -7,6 +8,113 @@ include('./b-tree.js');
 include('./map.js');
 
 (function() {
+    async function test_datatable() {
+        header('Test DataTable');
+        var schema = await DataTable.useSchema();
+        var table = new DataTable('Person');
+        var stringType = schema.types.get('string');
+        table.addColumn('id', stringType, null, true);
+        table.addColumn(new DataColumn('name', stringType, 'No data'));
+        table.addColumn('age', schema.types.get('uint8'));
+        test('Should create a table with 3 columns', ctx => {
+            ctx.assert(table.columns.size, '=', 3);
+            ctx.assert(table.columns.get('id'), '!null');
+            ctx.assert(table.columns.get('id').type.name, '=', 'string');
+            ctx.assert(table.columns.get('name').type, '=', stringType);
+            ctx.assert(table.columns.get('age').type.name, '=', 'uint8');
+        });
+
+        table.addIndex('name', 'name', true);
+        test('Should add an explicitly unique index', ctx => {
+            ctx.assert(table.indices.has('name'), 'true');
+            var index = table.indices.get('name');
+            ctx.assert(index.column, '=', table.columns.get('name'));
+            ctx.assert(index.isUnique, 'true');
+        });
+
+        test('Should build DataTable schema successfully', ctx => {
+            ctx.assert(schema, '!null');
+            ctx.assert(schema.types.has('DataColumn'), 'true');
+            ctx.assert(schema.types.has('DataIndex'), 'true');
+            ctx.assert(schema.types.has('DataTable'), 'true');
+            ctx.assert(schema.types.has('ColumnList'), 'true');
+            ctx.assert(schema.types.has('IndexList'), 'true');
+            ctx.assert(schema.types.has('refDataColumn'), 'true');
+        });
+
+        var definition = {
+            "name": "Person",
+            "columns": [
+                { "name":"id", "type":"string", "key":true },
+                { "name":"name", "type":"string", "default":"No data" },
+                { "name":"age", "type":"uint8" }
+            ],
+            "indices": [
+                { "name":"name", "column":"name", "unique":true }
+            ]
+        };
+        var PersonType = schema.buildType({
+            "name": "person", "attributes": {
+                "id": { "type":"string", "key":true },
+                "name": { "type":"string", "default":"No data" },
+                "age": { "type":"uint8" }
+            }
+        });
+        var results = schema.validate(definition, 'DataTable');
+        for (var i=0; i<results.length; i++) {
+            message(results[i]);
+        }
+        test('Should validate schema definition successfully',ctx => ctx.assert(results, 'empty'));
+
+        var table2 = new DataTable(definition);
+        test('Should create the same table from definition', ctx => ctx.assert(table2, ':=', table));
+
+        test('Should add data and update indices successfully', ctx => {
+            for (var i=0; i<100; i++) {
+                var person = PersonType.createPrimitiveValue();
+                person.id = 'p'+('000'+i).slice(-3);
+                person.age = person.age % 100;
+                //message(JSON.stringify(person));
+                table.add(person);
+            }
+    
+            ctx.assert(table.data.length, '=', 100);
+            ctx.assert(table.count, '=', 100);
+        });
+        test('Should return indexed columns in sorted order', ctx => {
+            table.indices.iterate( (colName, index) => {
+                var errors = 0;
+                var i = 0;
+                var item = null;
+                var lastItem = index.getAt(i++);
+                while ((item = index.getAt(i++)) != null) {
+                    if (index.type.compare(lastItem[colName], item[colName]) > 0) errors++;
+                    lastItem = item;
+                }
+                ctx.assert(errors, '=', 0);
+            });            
+        });
+        test('Should get index of item', ctx => {
+            var errors = 0;
+            for (var i=0; i<table.count; i++) {
+                var item = table.data[i];
+                var ix = table.indexOf(item);
+                if (i != ix) errors++;
+            }
+            message('Errors: ' + errors);
+            ctx.assert(errors, '=', 0);
+        });
+
+        test('Should remove data and update indices successfully', ctx => {
+print_tree(table.indices.getAt(0).data);
+            for (var i=0; i<table.data.length; i += 2) {
+                var item = table.data[i];
+message('remove:' + item.id)
+                table.remove(item);
+print_tree(table.indices.getAt(0).data);
+            }
+        });
+    }
 
     function test_dictionary() {
         header('Test dictionary');
@@ -15,7 +123,7 @@ include('./map.js');
             for (var i=0; i<100; i++) {
                 dictionary.add('k'+i, 'v'+i);
             }
-            ctx.assert(dictionary.length, '=', 100);
+            ctx.assert(dictionary.size, '=', 100);
         });
         test('Should get 100 items', ctx => {
             var errors = 0;
@@ -333,7 +441,6 @@ include('./map.js');
         header('Test DataLink');
         var obj1 = {
             name: 'Joe',
-            id: 1,
             age: 32
         };
         var obj2 = {
@@ -345,44 +452,68 @@ include('./map.js');
             name: 'Ryu',
             id: 3,
             age: 26,
-            addName: function addName(name, args) {
-                return `${this.name}-${name}-${args}`;
+            addName: function addName(name) {
+                return `${this.name}-${name}(${this.id})`;
             }
         };
-        var transform = (value, oldValue, args) => `${oldValue} => ${value.charAt(0).toUpperCase() + value.substr(1)} (${args})`;
+        var transform = value => `${value.charAt(0).toUpperCase() + value.substr(1)}`;
 
         test("Should add link to the field 'name' without transform", context => {
             obj1.name = 'Joe';
             var dl1 = new DataLink(obj1);
-            dl1.add('name');
+            dl1.addField('name');
             dl1.name = 'Charlie';
             context.assert(obj1.name, '=', 'Charlie');
         });
-
-        test("Should add link to the field 'name' with transform", context => {
+        test("Should add link to the field 'name' with global transform", context => {
             obj1.name = 'Joe';
             var dl1 = new DataLink(obj1);
-            dl1.add('name');
-            dl1.addHandler('name', transform, null, [1,2,3]);
+            dl1.addField('name', {
+                'fn':DataLink.defaultHandlers.set,
+                'args': transform
+            });
             dl1.name = 'charlie';
-            context.assert(obj1.name, '=', 'Joe => Charlie (1,2,3)');
+            context.assert(obj1.name, '=', 'Charlie');
         });
-        test("Should add link to the field 'name' with transform and handler", context => {
+        test("Should add link to the field 'name' with local transform", context => {
+            obj3.name = 'Ryu';
+            var dl1 = new DataLink(obj3);
+            dl1.addField('name', {
+                'target':obj3,
+                'fn':DataLink.defaultHandlers.set,
+                'args': obj3.addName
+            });
+            dl1.name = 'charlie';
+            context.assert(obj3.name, '=', 'Ryu-charlie(3)');
+        });
+        test("Should add link to the field 'name' with global and local transforms", context => {
+            obj3.name = 'Ryu';
+            var dl1 = new DataLink(obj3);
+            dl1.addField('name', null);
+            dl1.addHandler('name', {
+                'fn': function(k, v, a) {
+                        this.name = this.addName(transform(v));
+                    }
+            });
+            dl1.name = 'charlie';
+            context.assert(obj3.name, '=', 'Ryu-Charlie(3)');
+        });
+        test("Should add link to the field 'name' with link to another field", context => {
             obj1.name = 'Joe';
+            obj2.name = 'Jane';
             var dl1 = new DataLink(obj1);
-            dl1.add( 'name');
-            dl1.addHandler('name', transform, null, [1,2,3]);
-            dl1.addHandler('name', function(value, oldValue, args) { name = this.addName(value, args); }, obj3, [1,2,3]);
-            var name = null;
+            dl1.addField('name');
+            dl1.addLink('name', obj2, 'name', transform);
             dl1.name = 'charlie';
-            context.assert(obj1.name, '=', 'Joe => Charlie (1,2,3)');
-            context.assert(name, '=', 'Ryu-charlie-1,2,3');
+            context.assert(obj1.name, '=', 'charlie');
+            context.assert(obj2.name, '=', 'Charlie');
         });
-
         test("Should link 2 objects", context => {
             obj1.name = 'Joe';
-            var dl1 = new DataLink(obj1);
-            var dl2 = dl1.link('name', obj2, 'name');
+            obj2.name = 'Jane';
+            var dl1 = new DataLink(obj1), dl2 = new DataLink(obj2);
+            DataLink.addLink2(dl1, 'name', dl2, 'name');
+
             dl1.name = 'Charlie';
             context.assert(obj1.name, '=', 'Charlie');
             context.assert(obj2.name, '=', 'Charlie');
@@ -390,6 +521,21 @@ include('./map.js');
             context.assert(obj1.name, '=', 'Joe');
             context.assert(obj2.name, '=', 'Joe');
         });
+        test("Should link 2 objects with transforms", context => {
+            obj1.name = 'Joe';
+            obj3.name = 'Ryu';
+            var dl1 = new DataLink(obj1), dl2 = new DataLink(obj3);
+            DataLink.addLink2(dl1, 'name', dl2, 'name', transform, obj3.addName);
+            message(`dl1.name=${dl1.name}, dl2.name=${dl2.name}`);
+            dl1.name = 'Charlie';
+            context.assert(obj1.name, '=', 'Charlie');
+            context.assert(obj3.name, '=', 'Ryu-Charlie(3)');
+            obj3.name = 'Ryu';
+            dl2.name = 'joe';
+            context.assert(obj1.name, '=', 'Joe');
+            context.assert(obj3.name, '=', 'Ryu-joe(3)');
+        });
+
     }
 
     function createTestGraph() {
@@ -473,6 +619,7 @@ include('./map.js');
 
     function print_tree(tree, start) {
         var sb = [];
+        start = start || tree.root;
         tree.BFS(start,
             v => {
                 sb.push(`${(v.edges.length ? 'I' : 'L') + v.id}: (${v.data.map((x,i) => i<v.length ? x.id : '-')})`);
@@ -484,10 +631,48 @@ include('./map.js');
     function test_BTree() {
         header('Test B-Tree');
 
+        var items = [];
+        function create_tree() {
+            //                            I0:┌─14─┬─19─┐
+            //              ┌────────────────┘    │    └────────────┐
+            //       I1:┌─4─┼─9─┐                 │           I2:┌──24──┐
+            //     ┌────┘   │   └─────┐       L6:15,16         ┌─┘      └─┐
+            // L3:0,1,   L4:5,6,   L5:10,11      17,18      L7:20,21   L8:25,26
+            //    2,3       7,8       12,13                    22,23      27,28
+            //
+            items = [];
+            for (var i=0; i<29; i++) {
+                items.push({id:i, value:i});
+            }
+
+            var tree = new BTree(3, 4, (a, b) => a.id - b.id);
+            // create 3 internal nodes
+            tree.createVertex().add(items[14]).add(items[19]);
+            tree.createVertex(null, tree.root).add(items[4]).add(items[9]);
+            tree.createVertex(null, tree.root).add(items[24]);
+            // create 6 leaf nodes
+            tree.createVertex(null, null, true).addRange(items, null,  0, 4);
+            tree.createVertex(null, null, true).addRange(items, null,  5, 4);
+            tree.createVertex(null, null, true).addRange(items, null, 10, 4);
+            tree.createVertex(null, null, true).addRange(items, null, 15, 4);
+            tree.createVertex(null, null, true).addRange(items, null, 20, 4);
+            tree.createVertex(null, null, true).addRange(items, null, 25, 4);
+            // add 6 edges
+            tree.addEdge(tree.root, tree.vertices[1]);
+            tree.addEdge(tree.root, tree.vertices[6]);
+            tree.addEdge(tree.root, tree.vertices[2]);
+            tree.addEdge(tree.vertices[1], tree.vertices[3]);
+            tree.addEdge(tree.vertices[1], tree.vertices[4]);
+            tree.addEdge(tree.vertices[1], tree.vertices[5]);
+            tree.addEdge(tree.vertices[2], tree.vertices[7]);
+            tree.addEdge(tree.vertices[2], tree.vertices[8]);
+
+            return tree;
+        }
+
         function test_tree(tree, items, ctx) {
             var result = {};
-            //var d = Math.ceil(tree.degree/2);
-            var maxHeight = tree.maxHeight();   //Math.floor(Math.log2((tree.vertices.length+1)/2)/Math.log2(d));
+            var maxHeight = tree.maxHeight();
             message(`Max.height = ${maxHeight.toPrecision(4)}`);
             tree.tryGet(tree.first(), result);
             result.index--;
@@ -496,55 +681,130 @@ include('./map.js');
                 ctx.assert(item, '=', items[i]);
                 ctx.assert(result.path.length, '<=', maxHeight);
             }
-        }
+        }        
+        
+        //#region UNIT TESTS
+        test('Should rotate left (L3 < I1 < L4)', ctx => {
+            // prepare
+            var tree = create_tree();
+            var left = tree.vertices[3];
+            left.data[3] = null; left.length--;
+            parent = left.parent;
+            var ei = parent.edges.findIndex(e => e.to == left);
+            var node = parent.edges[ei+1].to;
+            print_tree(tree);
+            // action
+            tree.rotateLeft(left, parent, ei, node);
+            print_tree(tree);
+            // assert
+            var result = {};
+            ctx.assert(left.data.map(i => i ? i.id : -1), ':=', [0,1,2,4]);
+            ctx.assert(tree.vertices[1].data.map(i => i ? i.id : -1), ':=', [5,9]);
+            ctx.assert(tree.vertices[4].data.map(i => i ? i.id : -1), ':=', [6,7,8,-1]);
+            ctx.assert(tree.tryGet(items[5], result), 'true');
+            ctx.assert(result.node, '=', parent);
+            ctx.assert(tree.tryGet(items[4], result), 'true');
+            ctx.assert(result.node, '=', left);
 
-        //#region CREATE TREE
-        //             14, 19
-        //           /    |   \
-        //       4,9    15,16,  20
-        //     /  |  \  17,18
-        //   /    |    \  
-        // 0,1,  5,6,  10,11,
-        // 2,3   7,8   12,13
-        var items = [];
-        for (var i=0; i<21; i++) {
-            items.push({id:i, value:i});
-        }
-        var tree = new BTree(3, 4, (a, b) => a.id - b.id);
-        // create 2 internal nodes
-        tree.createVertex().add(items[14]).add(items[19]);
-        tree.createVertex(null, tree.root).add(items[4]).add(items[9]);
-        // create 5 leaf nodes
-        tree.createVertex(null, null, true).addRange(items, null,  0, 4);
-        tree.createVertex(null, null, true).addRange(items, null,  5, 4);
-        tree.createVertex(null, null, true).addRange(items, null, 10, 4);
-        tree.createVertex(null, null, true).addRange(items, null, 15, 4);
-        tree.createVertex(null, null, true).addRange(items, null, 20, 1);
-        // add 6 edges
-        tree.addEdge(tree.root, tree.vertices[1]);
-        tree.addEdge(tree.root, tree.vertices[5]);
-        tree.addEdge(tree.root, tree.vertices[6]);
-        tree.addEdge(tree.vertices[1], tree.vertices[2]);
-        tree.addEdge(tree.vertices[1], tree.vertices[3]);
-        tree.addEdge(tree.vertices[1], tree.vertices[4]);
-        print_tree(tree);
+            tree.destroy();
+        });
+        test('Should rotate right (L3 > I1 > L4)', ctx => {
+            // prepare
+            var tree = create_tree();
+            var right = tree.vertices[4];
+            right.data[3] = null; right.length--;
+            parent = right.parent;
+            var ei = parent.edges.findIndex(e => e.to == right) - 1;
+            var node = parent.edges[ei].to;
+            print_tree(tree);
+            // action
+            tree.rotateRight(node, parent, ei, right);
+            print_tree(tree);
+            // assert
+            var result = {};
+            ctx.assert(right.data.map(i => i ? i.id : -1), ':=', [4,5,6,7]);
+            ctx.assert(tree.vertices[1].data.map(i => i ? i.id : -1), ':=', [3,9]);
+            ctx.assert(tree.vertices[3].data.map(i => i ? i.id : -1), ':=', [0,1,2,-1]);
+            ctx.assert(tree.tryGet(items[3], result), 'true');
+            ctx.assert(result.node, '=', parent);
+            ctx.assert(tree.tryGet(items[4], result), 'true');
+            ctx.assert(result.node, '=', right);
+
+            tree.destroy();
+        });
+        test('Should merge left (L3 < I1 < L4)', ctx => {
+            // prepare
+            var tree = create_tree();
+            var left = tree.vertices[3];
+            parent = left.parent;
+            var ei = parent.edges.findIndex(e => e.to == left);
+            var node = parent.edges[ei+1].to;
+            left.data[2] = null; left.data[3] = null; left.length -= 2;
+            node.data[1] = null; node.data[2] = null; node.data[3] = null; node.length -= 3;
+            print_tree(tree);
+            // action
+            tree.mergeLeft(left, parent, ei, node);
+            print_tree(tree);
+            // assert
+            var result = {};
+            ctx.assert(left.data.map(i => i ? i.id : -1), ':=', [0,1,4,5]);
+            ctx.assert(tree.vertices[1].data.map(i => i ? i.id : -1), ':=', [9, -1]);
+            ctx.assert(tree.vertices.find(v => v == node), 'null');
+            ctx.assert(tree.tryGet(items[5], result), 'true');
+            ctx.assert(result.node, '=', left);
+            ctx.assert(tree.tryGet(items[4], result), 'true');
+            ctx.assert(result.node, '=', left);
+
+            tree.destroy();
+        });
+        test('Should merge right (L3 > I1 > L4)', ctx => {
+            // prepare
+            var tree = create_tree();
+            var right = tree.vertices[4];
+            parent = right.parent;
+            var ei = parent.edges.findIndex(e => e.to == right) - 1;
+            var node = parent.edges[ei].to;
+            right.data[2] = null; right.data[3] = null; right.length -= 2;
+            node.data[1] = null; node.data[2] = null; node.data[3] = null; node.length -= 3;
+            print_tree(tree);
+            // action
+            tree.mergeRight(node, parent, ei, right);
+            print_tree(tree);
+            // assert
+            var result = {};
+            //ctx.assert(right.data.map(i => i ? i.id : -1), ':=', [4,5,6,7]);
+            ctx.assert(tree.vertices[1].data.map(i => i ? i.id : -1), ':=', [9, -1]);
+            ctx.assert(right.data.map(i => i ? i.id : -1), ':=', [0,4,5,6]);
+            ctx.assert(tree.tryGet(items[5], result), 'true');
+            ctx.assert(result.node, '=', right);
+            ctx.assert(tree.tryGet(items[4], result), 'true');
+            ctx.assert(result.node, '=', right);
+
+            tree.destroy();
+        });
         //#endregion
 
         //#region BASIC TESTS
+        tree = create_tree();
+        message("Basic tests", 1);
+        print_tree(tree);
         test('Should find the items in ascending order', ctx => {
+            
+            var m = {
+                0: [14, 19],
+                1: [4, 9],
+                2: [24],
+                3: [0,1,2,3],
+                4: [5,6,7,8],
+                5: [10,11,12,13],
+                6: [15,16,17,18],
+                7: [20, 21, 22, 23],
+                8: [25, 26, 27, 28]
+            };
             var result = {};
             for (var i=0; i<items.length; i++) {
                 var isFound = tree.tryGet(items[i], result);
                 ctx.assert(isFound, 'true');
-                var m = {
-                    0: [14, 19],
-                    1: [4, 9],
-                    2: [0,1,2,3],
-                    3: [5,6,7,8],
-                    4: [10,11,12,13],
-                    5: [15,16,17,18],
-                    6: [20]
-                };
                 var ids = m[result.node.id];
                 ctx.assert(ids, '!null');
                 ctx.assert(ids.includes(i), 'true');
@@ -555,15 +815,15 @@ include('./map.js');
 
         test('Should NOT find the items', ctx => {
             var result = {};
-            message('Item #20');
-            var isFound = tree.tryGet({id:21}, result);
+            message('Item #30');
+            var isFound = tree.tryGet({id:30}, result);
             ctx.assert(isFound, 'false');
-            ctx.assert(result.node, '=', tree.vertices[6]);
-            ctx.assert(result.index, '=', -2);
+            ctx.assert(result.node, '=', tree.vertices[8]);
+            ctx.assert(result.index, '=', -5);
             message('Item #10.5');
             isFound = tree.tryGet({id:10.5}, result);
             ctx.assert(isFound, 'false');
-            ctx.assert(result.node, '=', tree.vertices[4]);
+            ctx.assert(result.node, '=', tree.vertices[5]);
             ctx.assert(result.index, '=', -2);
         });
 
@@ -590,264 +850,193 @@ include('./map.js');
             ctx.assert(item, '=', items[20]);
 
             message('from last');
-            tree.tryGet(items[20], result);
+            tree.tryGet(items[items.length-1], result);
             item = tree.next(result);
             ctx.assert(item, 'null');
         });
-
-        // remove some items
-        tree.vertices[3].data[1] = null; tree.vertices[3].data[2] = null; tree.vertices[3].data[3] = null; tree.vertices[3].length -= 3;
-        tree.vertices[4].data[2] = null; tree.vertices[4].data[3] = null; tree.vertices[4].length -= 2;
-        print_tree(tree, tree.vertices[1]);
-        test('Should rotate left', ctx => {
-            var node = tree.vertices[3];
-            var parent = node.parent;
-            var ei = parent.edges.findIndex(x => x.to == node);
-            var right = parent.edges[ei+1].to;
-            tree.rotateLeft(node, parent, ei, right);
-            var result = {};
-            ctx.assert(tree.tryGet(items[5], result), 'true');
-            ctx.assert(result.node, '=', tree.vertices[3]);
-            ctx.assert(tree.tryGet(items[6], result), 'false');
-            ctx.assert(tree.tryGet(items[7], result), 'false');
-            ctx.assert(tree.tryGet(items[8], result), 'false');
-            ctx.assert(result.node, '=', tree.vertices[3]);
-            ctx.assert(tree.tryGet(items[9], result), 'true');
-            ctx.assert(result.node, '=', tree.vertices[3]);
-
-            ctx.assert(tree.tryGet(items[10], result), 'true');
-            ctx.assert(result.node, '=', tree.vertices[1]);
-
-            ctx.assert(tree.tryGet(items[11], result), 'true');
-            ctx.assert(result.node, '=', tree.vertices[4]);
-            ctx.assert(tree.tryGet(items[12], result), 'false');
-            ctx.assert(tree.tryGet(items[13], result), 'false');
-        });
-        print_tree(tree, tree.vertices[1]);
-        test('Should rotate right', ctx => {
-            var node = tree.vertices[4];
-            var parent = node.parent;
-            var ei = parent.edges.findIndex(x => x.to == node) - 1;
-            var left = parent.edges[ei].to;
-            tree.rotateRight(node, parent, ei, left);
-            var result = {};
-            ctx.assert(tree.tryGet(items[5], result), 'true');
-            ctx.assert(result.node, '=', tree.vertices[3]);
-            ctx.assert(tree.tryGet(items[6], result), 'false');
-            ctx.assert(tree.tryGet(items[7], result), 'false');
-            ctx.assert(tree.tryGet(items[8], result), 'false');
-            ctx.assert(result.node, '=', tree.vertices[3]);
-
-            ctx.assert(tree.tryGet(items[9], result), 'true');
-            ctx.assert(result.node, '=', tree.vertices[1]);
-
-            ctx.assert(tree.tryGet(items[10], result), 'true');
-            ctx.assert(result.node, '=', tree.vertices[4]);
-            ctx.assert(tree.tryGet(items[11], result), 'true');
-            ctx.assert(result.node, '=', tree.vertices[4]);
-            ctx.assert(tree.tryGet(items[12], result), 'false');
-            ctx.assert(tree.tryGet(items[13], result), 'false');
-        });
-        print_tree(tree, tree.vertices[1]);
-        test('Should merge left', ctx => {
-            var node = tree.vertices[4];
-            var parent = node.parent;
-            var ei = parent.edges.findIndex(x => x.to == node) - 1;
-            var left = parent.edges[ei].to;
-            tree.mergeLeft(left, parent, ei, node);
-            var result = {};
-            ctx.assert(tree.tryGet(items[5], result), 'true');
-            ctx.assert(result.node, '=', tree.vertices[3]);
-            ctx.assert(tree.tryGet(items[6], result), 'false');
-            ctx.assert(tree.tryGet(items[7], result), 'false');
-            ctx.assert(tree.tryGet(items[8], result), 'false');
-            ctx.assert(tree.tryGet(items[9], result), 'true');
-            ctx.assert(result.node, '=', tree.vertices[3]);
-
-            ctx.assert(tree.tryGet(items[10], result), 'true');
-            ctx.assert(result.node, '=', tree.vertices[3]);
-
-            ctx.assert(tree.tryGet(items[11], result), 'true');
-            ctx.assert(result.node, '=', tree.vertices[3]);
-            ctx.assert(tree.tryGet(items[12], result), 'false');
-            ctx.assert(tree.tryGet(items[13], result), 'false');
-        });
-        print_tree(tree, tree.vertices[1]);
         tree.destroy();
         //#endregion
-
-        var _count = 12;
-        items = [];
-        for (var i=0; i<_count; i++) {
-            items.push({id:i, value:_count-i});
-        }
 
         //#region ADD
         test('Should add items to tree in random order', ctx => {
+            tree = new BTree(3, 4, (a, b) => a.id - b.id);
             var indices = new Array(items.length);
             for (var i=0; i<items.length; i++) indices[i] = i;
-            tree = new BTree(3, 4, (a, b) => a.id - b.id);
             var count = indices.length;
             while (count > 0) {
                 var rnd = Math.floor(count*Math.random());
                 var ix = indices[rnd];
-                tree.add(items[ix]);
                 count--;
                 indices[rnd] = indices[count];
+                indices[count] = ix;
             }
-            ms = Dbg.measure( () => {
+            measure('', () => {
                 for (var i=0; i<items.length; i++) {
                     tree.add(items[indices[i]]);
                 }
-            });
+            }, 1);
             message(tree.vertices.length + ' nodes');
-            message('Added in ' + ms + 'ms');
             test_tree(tree, items, ctx);
-        });
-        tree.destroy();
-
-        test('Should add items to tree in normal order', ctx => {
-            tree = new BTree(3, 4, (a, b) => a.id - b.id);
-            var ms = Dbg.measure( () => {
-                for (var i=0; i<items.length; i++) {
-                    tree.add(items[i]);
-                    var info = [];
-                }
-            });
-            message(tree.vertices.length + ' nodes');
-            message('Added in ' + ms + 'ms');
-            test_tree(tree, items, ctx);
-        });
-
-        test('Should return item at index', ctx => {
-            var indices = [0, Math.floor(items.length/2), items.length-1];
-            for (var i=0; i<indices.length; i++) {
-                var item1 = tree.getAt(indices[i]);
-                var item2 = tree.first();
-                for (var j=0; j<indices[i]; j++) {
-                    item2 = tree.next();
-                }
-                ctx.assert(item1, '=', item2);
-            }
-        });
-        //#endregion
-
-        //#region ITERATE
-        test('Should iterate through a range of items', ctx => {
-            var ms = 0;
-            ms += Dbg.measure( () => {
-                var from = Math.floor(tree.count/2 * Math.random());
-                var length = tree.count/2;
-                var to = from + length;
-                var total = 0;
-                var error = 0;
-                var last = {id:-1, value: -1};
-
-                tree.range(items[from], items[to], x => {
-                    if (x.id < last.id) error++;
-                    total += x.id;
-                    last = x;
-                    return error > 0;
-                }, null);
-                ctx.assert(error, '=', 0);
-                ctx.assert(total, '=', 0.5*(length+1)*(from + to));
-            }, 10);
-            message(`Range took ${(ms/100).toPrecision(4)} ms`);
-        });
-        test('Should iterate through items', ctx => {
-            var ms = 0;
-            ms += Dbg.measure( () => {
-                var from = Math.floor(tree.count/2 * Math.random());
-                var length = tree.count/2;
-                var to = from + length;
-                var total = 0;
-                var error = 0;
-                var last = {id:-1, value: -1};
-
-                var result = {};
-                tree.tryGet(items[from], result);
-                var total = result.node.data[result.index].id;
-                for (var i=from+1; i<=to; i++) {
-                    var item = tree.next(result);
-                    if (item.id < last.id) error++;
-                    total += item.id;
-                    last = item;
-                    if (error > 0) break;
-                }
-                ctx.assert(error, '=', 0);
-                ctx.assert(total, '=', 0.5*(length+1)*(from + to));
-            }, 10);
-            message(`Iteration took ${(ms/100).toPrecision(4)} ms`);
-        });
-        //#endregion
-
-        //#region REMOVE
-        print_tree(tree);
-        test('Should remove an item in a leaf node (simple)', ctx => {
-            // simple: no merge, no item transfer is needed
-            var result = {};
-            var item = tree.vertices[4].data[1];
-            var removed = tree.remove(item);
-            ctx.assert(item, '=', removed);
-            ctx.assert(tree.tryGet(removed, result), 'false');
-        });
-        print_tree(tree);
-        test('Should remove an item in a leaf node (merge)', ctx => {
-            // transfer: left items are moved to neighbours
-            var result = {};
-            var item = tree.vertices[4].data[1];
-            var removed = tree.remove(item);
-            ctx.assert(item, '=', removed);
-            ctx.assert(tree.tryGet(removed, result), 'false');
-        });
-        print_tree(tree);
-        test('Should remove an item from internal node', ctx => {
-            var result = {};
-            var item = tree.vertices[1].data[1];
-            var removed = tree.remove(item);
-            ctx.assert(item, '=', removed);
-            ctx.assert(tree.tryGet(removed, result), 'false');
-        });
-        print_tree(tree);
-        //#endregion
-
-        tree.destroy();
-
-        //#region MULTIPLE INDICES
-        test('Should have 2 tree to index 2 attributes', ctx => {
-            tree = new BTree(3, 4, (a, b) => a.id - b.id);
-            var tree2 = new BTree(3, 4, (a, b) => a.value - b.value);
-            var indices = new Array(items.length);
-            for (var i=0; i<items.length; i++) indices[i] = i;
-            var count = indices.length;
-            while (count > 0) {
-                var rnd = Math.floor(count*Math.random());
-                var ix = indices[rnd];
-                tree.add(items[ix]);
-                tree2.add(items[ix]);
-                count--;
-                indices[rnd] = indices[count];
-            }
-
-            var node = tree.first();
-            var last = {id: -1, value: -1 };
-            while (node) {
-                ctx.assert(tree.compare.method(last, node), '<', 0);
-                last = node;
-                node = tree.next();
-            }
-
-            node = tree2.first();
-            last = {id: -1, value: -1 };
-            while (node) {
-                ctx.assert(tree2.compare.method(last, node), '<', 0);
-                last = node;
-                node = tree2.next();
-            }
-
             tree.destroy();
-            tree2.destroy();
         });
+
+        // test('Should add items to tree in normal order', ctx => {
+        //     tree = new BTree(3, 4, (a, b) => a.id - b.id);
+        //     var ms = Dbg.measure( () => {
+        //         for (var i=0; i<items.length; i++) {
+        //             tree.add(items[i]);
+        //             var info = [];
+        //         }
+        //     });
+        //     message(tree.vertices.length + ' nodes');
+        //     message('Added in ' + ms + 'ms');
+        //     test_tree(tree, items, ctx);
+        // });
+
+        // test('Should return item at index', ctx => {
+        //     message('forward');
+        //     var item1 = tree.getAt(2);
+        //     for (var i=0; i<tree.count; i++) {
+        //         var item1 = tree.getAt(i);
+        //         message(JSON.stringify(item1))
+        //         item1 = tree.next();
+        //         var item1 = tree.getAt(i);
+        //         var item2 = tree.first();
+        //         for (var j=0; j<i; j++) {
+        //             item2 = tree.next();
+        //         }
+        //         ctx.assert(item1, '=', item2);
+        //     }
+        //     message('randomly');
+        //     var indices = [0, Math.floor(items.length/2), items.length-1];
+        //     for (var i=0; i<indices.length; i++) {
+        //         var item1 = tree.getAt(indices[i]);
+        //         var item2 = tree.first();
+        //         for (var j=0; j<indices[i]; j++) {
+        //             item2 = tree.next();
+        //         }
+        //         ctx.assert(item1, '=', item2);
+        //     }
+        // });
+        // //#endregion
+
+        // //#region ITERATE
+        // test('Should iterate through a range of items', ctx => {
+        //     var ms = 0;
+        //     ms += Dbg.measure( () => {
+        //         var from = Math.floor(tree.count/2 * Math.random());
+        //         var length = tree.count/2;
+        //         var to = from + length;
+        //         var total = 0;
+        //         var error = 0;
+        //         var last = {id:-1, value: -1};
+
+        //         tree.range(items[from], items[to], x => {
+        //             if (x.id < last.id) error++;
+        //             total += x.id;
+        //             last = x;
+        //             return error > 0;
+        //         }, null);
+        //         ctx.assert(error, '=', 0);
+        //         ctx.assert(total, '=', 0.5*(length+1)*(from + to));
+        //     }, 10);
+        //     message(`Range took ${(ms/100).toPrecision(4)} ms`);
+        // });
+        // test('Should iterate through items', ctx => {
+        //     var ms = 0;
+        //     ms += Dbg.measure( () => {
+        //         var from = Math.floor(tree.count/2 * Math.random());
+        //         var length = tree.count/2;
+        //         var to = from + length;
+        //         var total = 0;
+        //         var error = 0;
+        //         var last = {id:-1, value: -1};
+
+        //         var result = {};
+        //         tree.tryGet(items[from], result);
+        //         var total = result.node.data[result.index].id;
+        //         for (var i=from+1; i<=to; i++) {
+        //             var item = tree.next(result);
+        //             if (item.id < last.id) error++;
+        //             total += item.id;
+        //             last = item;
+        //             if (error > 0) break;
+        //         }
+        //         ctx.assert(error, '=', 0);
+        //         ctx.assert(total, '=', 0.5*(length+1)*(from + to));
+        //     }, 10);
+        //     message(`Iteration took ${(ms/100).toPrecision(4)} ms`);
+        // });
+        // //#endregion
+
+        // //#region REMOVE
+        // print_tree(tree);
+        // test('Should remove an item in a leaf node (simple)', ctx => {
+        //     // simple: no merge, no item transfer is needed
+        //     var result = {};
+        //     var item = tree.vertices[4].data[1];
+        //     var removed = tree.remove(item);
+        //     ctx.assert(item, '=', removed);
+        //     ctx.assert(tree.tryGet(removed, result), 'false');
+        // });
+        // print_tree(tree);
+        // test('Should remove an item in a leaf node (merge)', ctx => {
+        //     // transfer: remaining items are moved to neighbours
+        //     var result = {};
+        //     var item = tree.vertices[4].data[1];
+        //     //Dbg.breakOn(tree.vertices[4], 'length', false, true);
+        //     var removed = tree.remove(item);
+        //     ctx.assert(item, '=', removed);
+        //     ctx.assert(tree.tryGet(removed, result), 'false');
+        // });
+        // print_tree(tree);
+        // test('Should remove an item from internal node', ctx => {
+        //     var result = {};
+        //     var item = tree.vertices[1].data[1];
+        //     var removed = tree.remove(item);
+        //     ctx.assert(item, '=', removed);
+        //     ctx.assert(tree.tryGet(removed, result), 'false');
+        // });
+        // print_tree(tree);
+        // //#endregion
+
+        // tree.destroy();
+
+        //#_region MULTIPLE INDICES
+        // test('Should have 2 tree to index 2 attributes', ctx => {
+        //     tree = new BTree(3, 4, (a, b) => a.id - b.id);
+        //     var tree2 = new BTree(3, 4, (a, b) => a.value - b.value);
+        //     var indices = new Array(items.length);
+        //     for (var i=0; i<items.length; i++) indices[i] = i;
+        //     var count = indices.length;
+        //     while (count > 0) {
+        //         var rnd = Math.floor(count*Math.random());
+        //         var ix = indices[rnd];
+        //         tree.add(items[ix]);
+        //         tree2.add(items[ix]);
+        //         count--;
+        //         indices[rnd] = indices[count];
+        //     }
+
+        //     var node = tree.first();
+        //     var last = {id: -1, value: -1 };
+        //     while (node) {
+        //         ctx.assert(tree.compare.method(last, node), '<', 0);
+        //         last = node;
+        //         node = tree.next();
+        //     }
+
+        //     node = tree2.first();
+        //     last = {id: -1, value: -1 };
+        //     while (node) {
+        //         ctx.assert(tree2.compare.method(last, node), '<', 0);
+        //         last = node;
+        //         node = tree2.next();
+        //     }
+
+        //     tree.destroy();
+        //     tree2.destroy();
+        // });
         //#endregion
     }
 
@@ -898,14 +1087,15 @@ include('./map.js');
     }
 
     var tests = () => [
-        test_dictionary,
-        test_Stream,
-        test_DataSeries,
-        test_DataSeriesCompare,
+        // test_dictionary,
+        // test_Stream,
+        // test_DataSeries,
+        // test_DataSeriesCompare,
         test_DataLink,
-        test_Graph,
-        test_BTree,
-        test_Map
+        // test_Graph,
+        // test_BTree,
+        // test_Map,
+        // test_datatable
     ];
 
     publish(tests, 'Data tests');

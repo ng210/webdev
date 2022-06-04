@@ -138,13 +138,14 @@
             this.vertices[i].flag = 0;
         }
         startVertex = startVertex || this.root;
+        var level = 0;
         var remaining = [startVertex];
         startVertex.flag = 1;
-        if (typeof preHandler === 'function' && preHandler.call(this, startVertex, null, null, args)) return;
+        if (typeof preHandler === 'function' && preHandler.call(this, startVertex, level, args)) return;
         var isStopped = false;
         while (!isStopped && remaining.length > 0) {
             var vertex = remaining.pop();   //[remaining.length-1];
-            if (typeof postHandler === 'function' && postHandler.call(this, vertex, args)) break;
+            if (typeof postHandler === 'function' && postHandler.call(this, vertex, level, args)) break;
             for (var i=0; i<vertex.edges.length; i++) {
                 var edge = vertex.edges[i];
                 if (edge) {
@@ -153,7 +154,7 @@
                     if (child.flag == 0) {
                         if (typeof edgeHandler !== 'function' || !edgeHandler.call(this, edge, args)) {
                             child.flag = 1;
-                            if (typeof preHandler !== 'function' || !preHandler.call(this, child, args)) {
+                            if (typeof preHandler !== 'function' || !preHandler.call(this, child, level + 1, args)) {
                                 remaining.unshift(child);
                             } else {
                                 isStopped = true;
@@ -163,6 +164,7 @@
                     }
                 }
             }
+            level++;
         }
     };
 
