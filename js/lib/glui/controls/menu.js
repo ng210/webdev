@@ -61,8 +61,8 @@ include('container.js');
         return template;
     };
     Menu.prototype.createRenderer = mode => mode == glui.Render2d ? new MenuRenderer2d() : 'MenuRenderer3d';
-    Menu.prototype.setRenderer = async function(mode, context) {
-        await Menu.base.setRenderer.call(this, mode, context);
+    Menu.prototype.setRenderer = function(mode, context) {
+        Menu.base.setRenderer.call(this, mode, context);
         //this.spacing = this.renderer.convertToPixel(this.style.spacing);
     };
     Menu.prototype.getHandlers = function getHandlers() {

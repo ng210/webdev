@@ -1,5 +1,6 @@
 include('glui-lib.js');
 include('/lib/data/dataseries.js');
+
 (function() {
 
     var style = {
@@ -79,19 +80,30 @@ include('/lib/data/dataseries.js');
     };
 
     var controls = [
-        {
-            'type': 'Label',
-            'style': style,
+        {   'type': 'Label',
+            'style': {
+                'font': 'Arial 14',
+                'width':'auto', 'height':'2.1em',
+                'align':'center middle',
+                'border':'#406080 1px inset',
+                'background-color': '#c0e0ff',
+                'background-image': 'none'
+            },
             'value': 'label'
         },
-        {
-            'type': 'Label',
-            'style': style,
+        {   'type': 'Label',
+            'style': {
+                'font': 'Arial 14',
+                'width':'auto', 'height':'2.1em',
+                'align':'center middle',
+                'border':'#406080 1px inset',
+                'background-color': '#c0ffe0',
+                'background-image': 'none'
+            },
             'data-source': 'data',
             'data-field': 'label1'
         },
-        {
-            'type': 'Label',
+        {   'type': 'Label',
             'style': style,
             'data-type': 'int',
             'decimal-digits': 2,
@@ -99,23 +111,20 @@ include('/lib/data/dataseries.js');
             'data-field': 'label2'
         },
 
-        {
-            'type': 'Textbox',
+        {   'type': 'Textbox',
             'style': style,
             'look': 'textbox',
             'decimal-digits': 3,
             'value': 'textbox'
         },
-        {
-            'type': 'Textbox',
+        {   'type': 'Textbox',
             'style': style,
             'look': 'textbox',
             'decimal-digits': 3,
             'data-source': 'data',
             'data-field': 'textbox1'
         },
-        {
-            'type': 'Textbox',
+        {   'type': 'Textbox',
             'style': style,
             'look': 'potmeter',
             'data-type': 'int',
@@ -124,15 +133,13 @@ include('/lib/data/dataseries.js');
             'data-field': 'textbox2'
         },
 
-        {
-            'type': 'Button',
+        {   'type': 'Button',
             'style': buttonStyle,
             'data-source': 'data',
             'data-field': 'button'
         },
 
-        {
-            'type': 'Image',
+        {   'type': 'Image',
             'style': {
                 'width':'128px', 'height':'96px',
                 'border':'#805020 2px inset',
@@ -141,8 +148,7 @@ include('/lib/data/dataseries.js');
             'source': '/lib/glui/res/test.png'
         },
 
-        {
-            'type': 'Grid',
+        {   'type': 'Grid',
             'style': {
                 'color': '#ffd080',
                 'background-color': '#102040',
@@ -164,8 +170,7 @@ include('/lib/data/dataseries.js');
             'scale-y': 2.0
         },
 
-        {
-            'type': 'Textbox',
+        {   'type': 'Textbox',
             'style': {
                 'font': 'Arial 10',
                 'align':'center middle',
@@ -180,8 +185,7 @@ include('/lib/data/dataseries.js');
             'look': 'knob',
             'min': 0, 'max': 255, 'value': 10
         },
-        {
-            'type': 'Textbox',
+        {   'type': 'Textbox',
             'style': {
                 'font': 'Arial 10',
                 'align':'center middle',
@@ -195,8 +199,37 @@ include('/lib/data/dataseries.js');
             //'decimal-digits': 1,
             'look': 'knob',
             'min': 0, 'max': 255, 'value': 200
-        }
+        },
 
+        // {   'type': 'GraphView',
+        //     'style': {
+        //         'color': '#ffd080',
+        //         'background-color': '#102040',
+        //         'width': '640px', 'height': '400px',
+        //         'border': '#102040 2px inset',
+        //         'line': '#102040 2px normal'
+        //     },
+        //     'data-source': 'data',
+        //     'data-field': 'tree',
+        //     'node-template': {
+        //         'type': 'Label',
+        //         'data-type': 'string',
+        //         'style': {
+        //             'font': 'Arial 10',
+        //             'width':'auto', 'height':'2.2em',
+        //             'align':'left middle',
+        //             'border':'#406080 1px inset',
+        //             'background-color': '#f0f0cf',
+        //             'background-image': 'none'
+        //         },
+        //         'data-source':'',
+        //         'data-field':''
+        //     },
+        //     'look': {
+        //         'type': 'arc',
+        //         'arc-max': '180'
+        //     }
+        // }
 
         // {
         //     'type': 'Combobox',
@@ -283,7 +316,18 @@ include('/lib/data/dataseries.js');
             { 'name': 'image4.png', 'size': 132569 }
         ],
 
-        'combobox': 'James'
+        'combobox': 'James',
+
+        'tree': (function() {
+            var g = new Graph();
+            var v0 = g.addVertex(null, 'Sandor', null);
+            var v1 = g.addVertex(v0, 'Adri', '1977-01-20');
+            // g.addVertex(v1, 'Klari', '2015-12-08');
+            // g.addVertex(v1, 'Jancsi', '2017-08-18');
+            // v1 = g.addVertex(v0, 'Gabor', '1979-04-20');
+            // g.addVertex(v1, 'Gergely', '2008-10-28');
+            return g;
+        })()
     };
 
     var App = {
@@ -325,13 +369,13 @@ include('/lib/data/dataseries.js');
         glui.reset();
     }
 
-    async function createControls() {
+    function createControls() {
         var top = glui.screen.renderer.convertToPixel('3em', true), left = 10;
         var width = 0;
         for (var i=0; i<controls.length; i++) {
-            var ctrl = await glui.create(`${controls[i].type}${i}`, controls[i], null, App);
+            var ctrl = glui.create(`${controls[i].type}${i}`, controls[i], null, App);
             if (ctrl instanceof glui.Table) {
-                await ctrl.build();
+                ctrl.build();
             }
             ctrl.getBoundingBox();
             var top_= top + 8 + parseFloat(ctrl.height);
@@ -431,13 +475,21 @@ include('/lib/data/dataseries.js');
     async function test_render() {
         message('Test rendering', 1);
         await setup();
-        await createControls();
-        glui.repaint();
+        createControls();
+        await glui.repaint();
         glui.animate();
+        await button('Next');
+
+        var ctrl1 = glui.getControlById('Label0');
+        var ctrl2 = glui.getControlById('Label1');
+        ctrl1.dataBind(window.data, 'label1');
+        ctrl2.setValue('Hello world!');
+        // repaint due to possible control resize
+        await glui.repaint();
+        await button('Next');
+
         // var select = await glui.OpenSaveDialog({'title': 'Open image...', 'filters': ['*.png', '*.jpg'], 'init': function() { this.move(100, 100);} }, App);
         // Dbg.prln('Selected image: ' + select);
-
-        await button('Next');
 
         teardown();
     }

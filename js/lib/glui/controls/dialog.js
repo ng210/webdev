@@ -62,8 +62,8 @@ include('renderer2d.js');
         return template;
     };
     Dialog.prototype.createRenderer = mode => mode == glui.Render2d ? new DialogRenderer2d() : 'DialogRenderer3d';
-    Dialog.prototype.setRenderer = async function(mode, context) {
-        await Dialog.base.setRenderer.call(this, mode, context);
+    Dialog.prototype.setRenderer = function(mode, context) {
+        Dialog.base.setRenderer.call(this, mode, context);
     };
 
     Dialog.prototype.add = async function add(ctrl) {
@@ -75,7 +75,7 @@ include('renderer2d.js');
         return ctrl;
     };
 
-    Dialog.prototype.init = async function init(options) {
+    Dialog.prototype.init = function init(options) {
         var top = 0;
         var height = this.innerHeight;
         if (this.showTitlebar) {
@@ -87,7 +87,7 @@ include('renderer2d.js');
         this.body.size(this.innerWidth, height);
 
         if (typeof this.oninit === 'function') {
-            await this.oninit(options.data);
+            this.oninit(options.data);
         }
     };
 
@@ -193,7 +193,7 @@ include('renderer2d.js');
                 // 'value': 'x',
                 'style': {
                     //'background-color': 'transparent',
-                    'background-image': 'glui/res/icon_close.png'
+                    'background-image': 'res/icon_close.png'
                 },
             },
             'command': 'close'

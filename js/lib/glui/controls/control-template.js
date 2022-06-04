@@ -24,8 +24,8 @@ include('renderer2d.js');
 
     };
     _CONTROL_.prototype.createRenderer = mode => mode == glui.Render2d ? new _CONTROL_Renderer2d() : '_CONTROL_Renderer3d';
-    _CONTROL_.prototype.setRenderer = async function(mode, context) {
-        await _CONTROL_.base.setRenderer.call(this, mode, context);
+    _CONTROL_.prototype.setRenderer = function(mode, context) {
+        _CONTROL_.base.setRenderer.call(this, mode, context);
     };
 
     _CONTROL_.prototype.getHandlers = function getHandlers() {

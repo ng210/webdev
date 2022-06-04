@@ -4,6 +4,15 @@ include('control.js');
 
     function ValueControl(id, template, parent, context) {
 		this.isBlank = true;
+		this.value = '';
+		this.dataLink = new DataLink(this);
+		this.dataLink.addField('value');
+		// enforce updating control size
+		this.dataLink.addHandler('value', {
+			'target':this,
+			'fn':() => glui.Control.prototype.size.call(this, null, null, true),
+			'args':this
+		});
 		ValueControl.base.constructor.call(this, id, template, parent, context);
     }
     extend(glui.Control, ValueControl);
@@ -26,7 +35,8 @@ include('control.js');
         template['data-type'] = glui.ValueControl.DataTypes.None;
 		template['decimal-digits'] = 0;
         template['digits'] = 0;
-        template['true-value'] = 0;
+        template['true-value'] = 1;
+		template['false-value'] = 0;
         // from-source
         // to-source
         // scale
@@ -87,64 +97,87 @@ include('control.js');
 			this.addValidation('value', x => x >= this.min, 'Value is less than minimum!', x => this.min);
 			this.addValidation('value', x => x <= this.max, 'Value is greater than maximum!', x => this.max);
 		}
-        this.dataLink = null;
 		this.scale = 1.0;
-		this.value = '';
 		if (template.value != null) {
 			var value = this.isNumeric ? Number(template.value) : template.value;
 			this.setValue(value);
 		}
         this.decimalDigits = template['decimal-digits'];
         if (this.dataSource && this.dataField) {
-            this.dataBind();
+            this.dataBind(this.dataSource, this.dataField);
 		}
 		this.isNormalized = !!template.normalized;
 		return template;
     };
+	ValueControl.prototype.createMapping = function() {
+		var toValue = v => v;
+		var toSource = v => v;
+		this.dataLink.addHandler('value', { 'args':toValue }, true);
+		this.dataSource.addHandler(this.dataField, { 'args':toSource }, true);
+		// if (this.dataType == glui.ValueControl.DataTypes.Bool) {
+		// 	this.value = value ? this.template['true-value'] : this.template['false-value'];
+		// } else {
+		// 	if (this.isNumeric) {
+		// 		this.min = typeof this.dataSource.obj.min === 'number' ? this.dataSource.obj.min : this.min;
+		// 		this.max = typeof this.dataSource.obj.max === 'number' ? this.dataSource.obj.max : this.max;
+		// 		this.step = typeof this.dataSource.obj.step === 'number' ? this.dataSource.obj.step : this.step;
+
+		// 		this.value
+		// 	} else {
+
+		// 	}
+		// 		// calculate xform1() and xform2()
+		// 		// xform1 = 
+		// 		var min = typeof this.dataSource.obj.min === 'number' ? this.dataSource.obj.min : this.min;
+		// 		var max = typeof this.dataSource.obj.max === 'number' ? this.dataSource.obj.max : this.max;
+		// 		var step = typeof this.dataSource.obj.step === 'number' ? this.dataSource.obj.step : this.step;
+		// 		if (this.dataSource.obj.normalized != undefined) {
+		// 			this.isNormalized = this.dataSource.obj.normalized;
+		// 		}
+		// 		var fromDataSource = null;
+		// 		var toDataSource = null;
+		// 		if (this.isNormalized) {
+		// 			step /= (max - min);
+		// 			min = 0.0;
+		// 			max = 1.0;
+		// 			fromDataSource = this.toNormalized;
+		// 			toDataSource = this.fromNormalized;
+		// 		}
+		// 		this.min = min;
+		// 		this.max = max;
+		// 		this.step = step;
+		// 		// this.scale = (max - min)/(this.max - this.min)
+		// 		// // (x-min)/(max-min) = (x'-min')/(max'-min')
+		// 		// // x = (x'-min')(max-min)/(max'-min') + min
+		// 		// this.toSource = x => (x - this.min)*this.scale + min;
+		// 		// this.fromSource = x => (x - min)/this.scale + this.min
+		// 		// this.step = typeof this.dataSource.obj.step === 'number' ? this.fromSource(this.dataSource.obj.step) : this.parse(this.template.step) || this.step;
+		// 		value = this.parse(value);
+		// 	}
+		// }
+	};
+
 	ValueControl.prototype.dataBind = function(source, field) {
 		ValueControl.base.dataBind.call(this, source, field);
-		if (this.dataSource && this.dataField) {
-			var value = this.value;
-			if (this.dataType == glui.ValueControl.DataTypes.Bool) {
-				value = this.template['true-value'] || this.value;
-			} else {
-				value = this.dataSource[this.dataField];
-				if (this.isNumeric) {
-					var min = typeof this.dataSource.obj.min === 'number' ? this.dataSource.obj.min : this.min;
-					var max = typeof this.dataSource.obj.max === 'number' ? this.dataSource.obj.max : this.max;
-					var step = typeof this.dataSource.obj.step === 'number' ? this.dataSource.obj.step : this.step;
-					if (this.dataSource.obj.normalized != undefined) {
-						this.isNormalized = this.dataSource.obj.normalized;
-					}
-					var fromDataSource = null;
-					var toDataSource = null;
-					if (this.isNormalized) {
-						step /= (max - min);
-						min = 0.0;
-						max = 1.0;
-						fromDataSource = this.toNormalized;
-						toDataSource = this.fromNormalized;
-					}
-					this.min = min;
-					this.max = max;
-					this.step = step;
-					// this.scale = (max - min)/(this.max - this.min)
-					// // (x-min)/(max-min) = (x'-min')/(max'-min')
-					// // x = (x'-min')(max-min)/(max'-min') + min
-					// this.toSource = x => (x - this.min)*this.scale + min;
-					// this.fromSource = x => (x - min)/this.scale + this.min
-					// this.step = typeof this.dataSource.obj.step === 'number' ? this.fromSource(this.dataSource.obj.step) : this.parse(this.template.step) || this.step;
-					value = this.parse(value);
-				}
-			}
-			this.dataLink = new DataLink(this);
-			this.dataLink.link('value', this.dataSource, this.dataField, fromDataSource, toDataSource);
-			// this.dataLink.addHandler('value', glui.Control.prototype.render, this);
-			// if (this.dataSource.obj instanceof glui.Control) {
-			// 	this.dataLink.addHandler('value', glui.Control.prototype.render, this.dataSource.obj);
-			// }
-			this.setValue(fromDataSource ? fromDataSource.call(this.dataSource.obj, value, 0, {target:this, field:'value'}) : value);
-			//this.value = fromDataSource ? fromDataSource.call(this.dataSource.obj, value, 0, {target:this, field:'value'}) : value;
+		if (this.dataSource != null) {
+			// initial read from data source
+			var value = this.dataSource[this.dataField];
+			this.createMapping();
+			// set value before linking to data source
+			this.dataLink.value = value;
+			// create link with data source
+			var toValue = this.dataLink.handlers.value[0].args;
+			var toSource = this.dataSource.handlers[this.dataField][0].args;
+			// this.dataLink.addHandler('value', { 'target':this.dataSource.obj, 'args':toSource });
+			// this.dataSource.addHandler(this.dataField, { 'target':this.dataSource.obj, 'args':toSource });
+			DataLink.addLink2(this.dataLink, 'value', this.dataSource, this.dataField, toValue, toSource);
+			// this.dataLink.addHandler('value', function() {
+			// 	if (this.renderer) {
+			// 		this.renderer.applyFont();
+			// 		this.renderer.setWidth(this.style.width);
+			// 		this.renderer.setHeight(this.style.height);
+			// 	}
+			// }, this);
 		}
         return this.dataSource;
 	};

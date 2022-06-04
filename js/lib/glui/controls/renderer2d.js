@@ -12,9 +12,12 @@ include('renderer.js');
         this.font.face = tokens[0];
         this.font.size = parseFloat(tokens[1]);
         this.font.weight = tokens[2];
-        this.context.font = `${this.font.weight || ''} ${this.font.size}px ${this.font.face}`;
+        this.applyFont();
         var metrics = this.context.measureText('@(Q.');
         this.font.em = metrics.width/4;
+    };
+    Renderer2d.prototype.applyFont = function applyFont() {
+        this.context.font = `${this.font.weight || ''} ${this.font.size}px ${this.font.face}`;
     };
     Renderer2d.prototype.drawBorder = function drawBorder(x, y, w, h) {
         if (this.border.style == 'none') return;
@@ -70,7 +73,7 @@ include('renderer.js');
         var dy = this.control.height - cy - h;
         if (alignment & glui.Alignment.MIDDLE) y += Math.floor(dy/2);
         else if (alignment & glui.Alignment.BOTTOM) y += dy;
-
+        this.applyFont();
         for (var i=0; i<lines.length; i++) {
             var metrics = this.context.measureText(lines[i]);
             var w = Math.abs(metrics.actualBoundingBoxLeft) + Math.abs(metrics.actualBoundingBoxRight);

@@ -25,7 +25,7 @@ include('/lib/math/fn.js');
     //     }
     //     return value;
     // };
-    Renderer.prototype.initialize = async function initialize(control, context) {
+    Renderer.prototype.initialize = function initialize(control, context) {
         this.control = control || this.control;
         this.context = context || this.context;
         this.setFont(this.control.style.font);
@@ -37,7 +37,7 @@ include('/lib/math/fn.js');
         this.control.offsetLeft = this.control.offsetLeft != -1 ? this.control.offsetLeft : this.convertToPixel(this.control.style.left);
         this.control.offsetTop = this.control.offsetTop != -1 ? this.control.offsetTop : this.convertToPixel(this.control.style.top, true);
         if (this.control.style.color != undefined) this.color = this.toColor(this.control.style.color);
-        await this.setBackground();
+        this.setBackground();
     };
 
     Renderer.prototype.setWidth = function setWidth(value, isInner) {
@@ -111,7 +111,7 @@ include('/lib/math/fn.js');
         this.padding[1] = py;
     };
 
-    Renderer.prototype.setBackground = async function setBackground() {
+    Renderer.prototype.setBackground = function setBackground() {
         this.bgRepeatX = false;
         this.bgRepeatY = false;
         var bgColor = this.control.style['background-color'];
@@ -119,8 +119,12 @@ include('/lib/math/fn.js');
             this.backgroundColor = bgColor.toLowerCase() != 'transparent' ? this.backgroundColor = this.toColor(this.control.style['background-color']) : null;
         }
         if (this.control.style['background-image'] != 'none') {
-            var res = await load(this.control.style['background-image']);
-            this.backgroundImage = !res.error ? res.node : null;
+            //var res = await load(this.control.style['background-image']);
+            load(this.control.style['background-image']).then(
+                res => {
+                    this.backgroundImage = !res.error ? res.node : null;
+                    this.control.render();
+                });
         }
         if (this.control.style['background-repeat']) {
             this.bgRepeatX = this.control.style['background-repeat'].indexOf('repeat-x') != -1;

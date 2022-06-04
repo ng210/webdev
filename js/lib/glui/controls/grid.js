@@ -142,8 +142,8 @@ include('renderer2d.js');
         return template;
     };
     Grid.prototype.createRenderer = mode => mode == glui.Render2d ? new GridRenderer2d() : 'GridRenderer3d';
-    Grid.prototype.setRenderer = async function(mode, context) {
-        await Grid.base.setRenderer.call(this, mode, context);
+    Grid.prototype.setRenderer = function(mode, context) {
+        Grid.base.setRenderer.call(this, mode, context);
         this.unitX = this.renderer.convertToPixel(this.template['unit-x']);
         this.unitY = this.renderer.convertToPixel(this.template['unit-y'], true);
         // set scale

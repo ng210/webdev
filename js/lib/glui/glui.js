@@ -22,6 +22,7 @@
         controlCount: 0,
         isRunning: false,
         lastMouseUpTime: 0,
+        promises: [],
 
         markedForRendering: {},
         modalDialogs: [],
@@ -52,8 +53,8 @@
             }            
             return control;
         },
-        create: async function create(id, tmpl, parent, context) {
-            var ctrl = await glui.Control.create(id, tmpl, parent || this.screen, context);
+        create: function create(id, tmpl, parent, context) {
+            var ctrl = glui.Control.create(id, tmpl, parent || this.screen, context);
             ctrl.addHandlers();
             this.controlCount++;
             return ctrl;
@@ -148,7 +149,12 @@
             height = height || this.canvas.height;
             this.renderingContext2d.clearRect(left, top, width, height);
         },
-        repaint: function repaint() {
+        checkPendings: async function checkPendings() {
+            await Promise.all(this.promises);
+            this.promises.length = 0;
+        },
+        repaint: async function repaint() {
+            await this.checkPendings();
             this.markedForRendering = {};
             this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
             this.screen.renderer.render();
@@ -326,6 +332,10 @@
                     glui.focusedControl = control;
                 }
             }
+        },
+        waitFor: function waitFor(control, p, onFulfilled) {
+            this.promises.push(p);
+            p.then( res => onFulfilled.call(control, res));
         },
         lastClicked: null,
         focusedControl: null,

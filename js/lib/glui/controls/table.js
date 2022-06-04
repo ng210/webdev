@@ -43,7 +43,7 @@ include('container.js');
 		}
 		
 	};
-	Row.prototype.add = async function add(ctrl, name) {
+	Row.prototype.add = function add(ctrl, name) {
 		ctrl.id = this.id + '#' + ctrl.id;
 		Row.base.add.call(this, ctrl);
 		this.cells[this.cellCount] = ctrl;
@@ -300,9 +300,9 @@ include('container.js');
         return handlers;
 	};
 	Table.prototype.createRenderer = mode => mode == glui.Render2d ? new TableRenderer2d() : 'TableRenderer3d';
-	Table.prototype.setRenderer = async function setRenderer(mode, context) {
-		await Table.base.setRenderer.call(this, mode, context);
-		await this.update();
+	Table.prototype.setRenderer = function setRenderer(mode, context) {
+		Table.base.setRenderer.call(this, mode, context);
+		this.update();
 	};
 	Table.prototype.getBoundingBox = function getBoundingBox() {
 		if (this.height == 0) {
@@ -331,7 +331,7 @@ include('container.js');
 		}
 		return Table.base.getBoundingBox.call(this);
     };
-	Table.prototype.update = async function update() {
+	Table.prototype.update = function update() {
 		// titlebar
 		if (this.titlebar) {
 			this.titlebar.setVisible(!!this.title);
@@ -340,7 +340,7 @@ include('container.js');
 
 		this.isDirty = false;
 	};
-	Table.prototype.insertColumnAt = async function insertColumnAt(key, ix) {
+	Table.prototype.insertColumnAt = function insertColumnAt(key, ix) {
 		var rt = this.rowTemplate;
 		var reference = rt && rt[key] && rt[key].column ? rt[key].column : null;
 		var name = Table.resolveReference(reference, key);
@@ -356,23 +356,21 @@ include('container.js');
 
 		this.columns[ix] = this.columns[name] = new Column(name, key, this);
 		// update rows
-		var p = [];
 		var template = this.rowTemplate && this.rowTemplate[key] ? this.rowTemplate[key] : this.cellTemplate;
 		for (var ri=0; ri<this.rowCount; ri++) {
 			var row = this.rows[this.rowKeys[ri]];
-			var ctrl = await glui.create(key, template, row);
+			var ctrl = glui.create(key, template, row);
 			this.columns[name].add(ctrl, ri);
 		}
-		await Promise.all(p);
 
 		this.columnCount++;
 		return this.columns[name];
 	};
-	Table.prototype.insertRowAt = async function insertRowAt(name, ix) {
+	Table.prototype.insertRowAt = function insertRowAt(name, ix) {
 		if (ix != undefined) this.rowKeys.splice(ix, 0, name);
 		else this.rowKeys.push(name);
 		var row = this.rows[name] = new Row(name, {style:{width:'100%'}}, this);
-		await row.setRenderer(glui.mode, this.renderer.context);
+		row.setRenderer(glui.mode, this.renderer.context);
 		row.index = ix;
 		for (var i=ix+1; i<this.rowKeys.length; i++) this.rows[this.rowKeys[i]].index++;
 		// update columns
@@ -382,22 +380,22 @@ include('container.js');
 			var name = column.name;
 			var template = this.rowTemplate && this.rowTemplate[column.key] ? this.rowTemplate[column.key] : this.cellTemplate;
 			template.style = mergeObjects(this.cellTemplate.style, template.style);
-			var ctrl = await glui.create(name, template, row);
+			var ctrl = glui.create(name, template, row);
 			//await row.add(ctrl, name);
 			column.add(ctrl, ix);
 			height = Math.max(height, ctrl.height);
 		}
 		row.height = height;
 		this.rowCount++;
-		await this.add(row);
+		this.add(row);
 		return this.rows[name];
 	};
-	Table.prototype.removeColumnAt = async function removeColumnAt(ix) {
+	Table.prototype.removeColumnAt = function removeColumnAt(ix) {
 		console.log('remove column at ' + ix);
 		this.columnCount--;
 		throw new Error('Not Implemented!')
 	};
-	Table.prototype.removeRowAt = async function removeRowAt(ix) {
+	Table.prototype.removeRowAt = function removeRowAt(ix) {
 		console.log('remove row at ' + ix);
 		this.rowCount--;
 		var row = this.rows[this.rowKeys[ix]];
@@ -473,11 +471,10 @@ include('container.js');
 		}
 		return columnKeys;
 	};
-	Table.prototype.build = async function build() {
-		var p = [];
+	Table.prototype.build = function build() {
 		// titlebar
 		if (this.title && !this.titlebar) {
-			this.titlebar = await glui.create(`${this.id}#title`, { 'type': 'Label', 'style': this.style.title/*, 'z-index': this.zIndex + 1*/ }, this);
+			this.titlebar = glui.create(`${this.id}#title`, { 'type': 'Label', 'style': this.style.title/*, 'z-index': this.zIndex + 1*/ }, this);
 			this.titlebar.setValue(this.title);
 		}
 		var cc = parseInt(this.template.cols);
@@ -526,7 +523,7 @@ include('container.js');
 		// update columns
 		if (this.columnCount < cc) {
 			for (var i=this.columnCount; i<ck.length; i++) {
-				await this.insertColumnAt(ck[i], i);
+				this.insertColumnAt(ck[i], i);
 			}
 		} else if (this.columnCount > ck.length) {
 			// remove columns
@@ -540,12 +537,12 @@ include('container.js');
 		if (this.showHeader) {
 			if (this.header == null) {
 				this.header = new Row('header', {style:{width: '100%', height:this.template.style.header.height}}, this);
-				await this.header.setRenderer(this.renderer.mode, this.renderer.context);
+				this.header.setRenderer(this.renderer.mode, this.renderer.context);
 			}
 			for (var i=0; i<ck.length; i++) {
 				var name = this.columns[i].name;
 				if (!this.header.cells[i]) {
-					await glui.create(name, { 'type':'Label', 'style': this.template.style.header }, this.header);
+					glui.create(name, { 'type':'Label', 'style': this.template.style.header }, this.header);
 				}
 				this.header.cells[i].setValue(name);
 			}
@@ -559,7 +556,7 @@ include('container.js');
 		if (this.rowCount < rc) {
 			// add rows
 			for (var i=this.rowCount; i<rk.length; i++) {
-				p.push(this.insertRowAt(rk[i], i));
+				this.insertRowAt(rk[i], i);
 			}
 		} else if (this.rowCount > rk.length) {
 			// remove rows
@@ -569,7 +566,7 @@ include('container.js');
 			}
 		}
 
-		await Promise.all(p);
+		//await Promise.all(p);
 		if (this.dataSource) {
 			this.dataBind();
 		}

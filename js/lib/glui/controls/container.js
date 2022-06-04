@@ -47,7 +47,7 @@ include('renderer2d.js');
         tmpl.items = [];
         return tmpl;
     };
-    Container.prototype.add = async function add(ctrl) {
+    Container.prototype.add = function add(ctrl) {
         // if (ctrl.parent != this) {
         //     if (ctrl.parent) ctrl.parent.remove(ctrl);
         var zIndex = parseInt(ctrl.template.style['z-index']);
@@ -62,7 +62,7 @@ include('renderer2d.js');
         }
 
         if (this.renderer) {
-            await ctrl.setRenderer(this.renderer.mode, this.renderer.context);
+            ctrl.setRenderer(this.renderer.mode, this.renderer.context);
         }
         return ctrl;
     };
@@ -105,13 +105,16 @@ include('renderer2d.js');
         }
 	};
     Container.prototype.createRenderer = mode => mode == glui.Render2d ? new ContainerRenderer2d() : 'ContainerRenderer3d';
-    Container.prototype.setRenderer = async function setRenderer(mode, context) {
-        await Container.base.setRenderer.call(this, mode, context);
-        var arr = [];
+    Container.prototype.setRenderer = function setRenderer(mode, context) {
+        Container.base.setRenderer.call(this, mode, context);
+        // var arr = [];
+        // for (var i=0; i<this.items.length; i++) {
+        //     arr.push(await this.items[i].setRenderer(mode, context));
+        // }
+        // await Promise.all(arr);
         for (var i=0; i<this.items.length; i++) {
-            arr.push(await this.items[i].setRenderer(mode, context));
+            this.items[i].setRenderer(mode, context);
         }
-        await Promise.all(arr);
     };
     Container.prototype.getControlAt = function getControlAt(cx, cy, recursive) {
         var res = Container.base.getControlAt.call(this, cx, cy);

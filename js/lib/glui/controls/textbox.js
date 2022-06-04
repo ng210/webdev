@@ -517,8 +517,8 @@ include('label.js');
         this.render();
     };
     Textbox.prototype.createRenderer = mode => mode == glui.Render2d ? new TextboxRenderer2d() : 'TextboxRenderer3d';
-    Textbox.prototype.setRenderer = async function(mode, context) {
-        await Textbox.base.setRenderer.call(this, mode, context);
+    Textbox.prototype.setRenderer = function(mode, context) {
+        Textbox.base.setRenderer.call(this, mode, context);
         this.setValue(this.value);
         this.setLook();
         // if (this.look == Textbox.Look.Knob) {

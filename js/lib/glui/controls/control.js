@@ -146,13 +146,14 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         return this.template;
 	};
     Control.prototype.dataBind = function dataBind(source, field) {
-        source = source || this.dataSource;
-        if (source) {
-            this.dataSource = source instanceof DataLink ? source : new DataLink(source);
-            this.dataField = field !== undefined ? field : this.dataField;
-            if (this.dataField) {
-                this.dataSource.add(this.dataField);
+        if (source !== undefined && field !== undefined) {
+            if (this.dataSource != null) {
+                delete this.dataSource;
+                this.dataSource = null;
             }
+            this.dataSource = source instanceof DataLink ? source : new DataLink(source);
+            this.dataField = field;
+            this.dataSource.addField(this.dataField, null);
         }
         return this.dataSource;
     };
@@ -187,12 +188,14 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         return this.style.visible && 0 <= x && x < rect[2] && 0 <= y && y < rect[3] ? this : null;
     };    
     Control.prototype.size = function(width, height, isInner) {
-        if (width == null) width = /*this.width ||*/ this.style.width;
-        if (height == null) height = /*this.height ||*/ this.style.height;
-        if (width) this.renderer.setWidth(width, isInner);
-        if (height == undefined) height = width;
-        if (height) this.renderer.setHeight(height, isInner);
-        this.render();
+        if (this.renderer) {
+            if (width == null) width = /*this.width ||*/ this.style.width;
+            if (height == null) height = /*this.height ||*/ this.style.height;
+            if (width) this.renderer.setWidth(width, isInner);
+            if (height == undefined) height = width;
+            if (height) this.renderer.setHeight(height, isInner);
+            this.render();
+        }
     };
     Control.prototype.move = function move(dx, dy, order) {
         this.offsetLeft = dx;
@@ -336,12 +339,12 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
     };
     //#endregion
 
-    Control.prototype.setRenderer = async function setRenderer(mode, context) {
+    Control.prototype.setRenderer = function setRenderer(mode, context) {
         if (mode == glui.Render2d) {
             if (this.renderer2d == null) {
                 this.renderer2d = this.createRenderer(mode);
                 this.renderer = this.renderer2d;
-                await this.renderer2d.initialize(this, context);
+                this.renderer2d.initialize(this, context);
             } else {
                 this.renderer = this.renderer2d;
             };
@@ -349,7 +352,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
             if (this.renderer3d == null) {
                 this.renderer3d = this.createRenderer(mode);
                 this.renderer = this.renderer3d;
-                await this.renderer3d.initialize(this, context);
+                this.renderer3d.initialize(this, context);
             } else {
                 this.renderer = this.renderer3d;
             }
@@ -396,31 +399,31 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
     };
 
     //#region Static methods
-    Control.create = async function create(id, template, parent, context) {
+    Control.create = function create(id, template, parent, context) {
         var type = template.type;
         if (typeof glui[type] === 'function') {
             parent = parent && parent instanceof glui.Container ? parent : glui.screen;
             var ctrl = Reflect.construct(glui[type], [id, template, parent, context]);
             if (ctrl instanceof glui.Control) {
                 if (!ctrl.renderer && parent.renderer) {
-                    await ctrl.setRenderer(parent.renderer.mode, parent.renderer.context);
+                    ctrl.setRenderer(parent.renderer.mode, parent.renderer.context);
                 }
                 if (ctrl instanceof glui.Container) {
                     //var p = [];
                     for (var i in ctrl.template.items) {
                         if (ctrl.template.items.hasOwnProperty(i)) {
-                            await glui.create(i, ctrl.template.items[i], ctrl);
+                            glui.create(i, ctrl.template.items[i], ctrl);
                         }
                     }
                     //await Promise.all(p);
             
                 } else if (ctrl instanceof glui.Image) {
-                    await ctrl.load();
+                    ctrl.load();
                 }
                 // if (!ctrl.renderer && parent.renderer) {
                 //     await ctrl.setRenderer(parent.renderer.mode, parent.renderer.context);
                 // }
-                await parent.add(ctrl);
+                parent.add(ctrl);
                 return ctrl;
             }
         }

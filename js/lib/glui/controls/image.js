@@ -30,14 +30,16 @@ include('renderer2d.js');
         this.source = template.source;
         return template;
     };
-    Image.prototype.load = async function load(source) {
+    Image.prototype.load = function load(source) {
         source = source || this.source;
         if (this.image == null || this.image.src != source) {
-            var res = await window.load(source);
-            if (res.error) {
-                throw new Error(res.error);
-            }
-            this.image = res.node;
+            glui.waitFor(this, window.load(source), 
+            function(res) {
+                if (res.error) {
+                    throw new Error(res.error);
+                }
+                this.image = res.node;
+            });
         }
     };
     Image.prototype.dataBind = function dataBind(source, field) {

@@ -23,8 +23,8 @@ include('renderer2d.js');
         return template;
     };
     Envelope.prototype.createRenderer = mode => mode == glui.Render2d ? new EnvelopeRenderer2d() : 'EnvelopeRenderer3d';
-    Envelope.prototype.setRenderer = async function(mode, context) {
-        await Envelope.base.setRenderer.call(this, mode, context);
+    Envelope.prototype.setRenderer = function(mode, context) {
+        Envelope.base.setRenderer.call(this, mode, context);
     };
 
     publish(Envelope, 'Envelope', glui);
