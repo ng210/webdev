@@ -11,6 +11,7 @@ const documentPath = process.argv[2] || tokens.join(path.sep);
 console.log(`documentPath=${documentPath}`);
 
 const webAccess = {};
+const links = {};
 
 function readWebAccessFile(dir) {
     var allow = false;
@@ -63,15 +64,44 @@ function checkWebAccess(resPath) {
     return isGranted;
 }
 
+function readLinks(resPath) {
+    var linkedPath = null;
+    var dir = path.dirname(resPath);
+    if (links[dir] === undefined) {
+        links[dir] = false;
+        var linksPath = path.resolve(dir, "links.json");
+        if (fs.existsSync(linksPath)) {
+            if (DEBUG) console.debug(`read links file '${linksPath}'`);
+            links[dir] = {};
+            var file = fs.readFileSync(linksPath, { encoding: 'utf-8' });
+            var arr = JSON.parse(file);
+            for (var ai in arr) {
+                var fileName = path.basename(arr[ai]);
+                links[dir][fileName.toLocaleLowerCase()] = arr[ai];
+            }
+        }
+    }
+
+    if (links[dir]) {
+        var fileName = path.basename(resPath).toLocaleLowerCase();
+        if (fs.existsSync(links[dir][fileName])) {
+            linkedPath = links[dir][fileName];
+        }
+    }
+
+    return linkedPath;
+}
+
 app.get('/*', function(req, resp) {
     var resPath = path.normalize(path.join(documentPath, req.path));
     if (DEBUG) console.debug(`Access '${resPath}'`);
     try {
-        if (fs.statSync(resPath).isDirectory()) resPath += 'index.html';
-        if (fs.existsSync(resPath) && checkWebAccess(resPath)) {
-            resp.sendFile(resPath);
-        } else {
-            throw new Error('File not found!');
+        var linkedPath = readLinks(resPath);
+        if (!linkedPath && fs.statSync(resPath).isDirectory()) resPath += 'index.html';
+        if (checkWebAccess(resPath)) {
+            if (linkedPath) resp.sendFile(linkedPath);
+            else if (fs.existsSync(resPath)) resp.sendFile(resPath);
+            else throw new Error('File not found!');
         }
     } catch (err) {
         resp.status(404).sendFile(`${__dirname}/404.html`);
