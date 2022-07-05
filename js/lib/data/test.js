@@ -1087,14 +1087,14 @@ print_tree(table.indices.getAt(0).data);
     }
 
     var tests = () => [
-        // test_dictionary,
-        // test_Stream,
-        // test_DataSeries,
-        // test_DataSeriesCompare,
+        test_dictionary,
+        test_Stream,
+        test_DataSeries,
+        test_DataSeriesCompare,
         test_DataLink,
-        // test_Graph,
-        // test_BTree,
-        // test_Map,
+        test_Graph,
+        test_BTree,
+        test_Map,
         // test_datatable
     ];
 

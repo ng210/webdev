@@ -37,25 +37,29 @@
 
     DataLink.prototype.addField = function addField(field, setter) {
         var key = field.toString();
-        if (this.obj[key] !== undefined && !Object.keys(this).includes(key)) {
-            Object.defineProperty(this, key, {
-                enumerable: true,
-                configurable: false,
-                get: function () {
-                    return this.obj[key];
-                },
-                set: function(value) {
-                    var result = this.callHandlers(key, value);
-                    return result;
+        if (this.obj[key] !== undefined) {
+            if (!Object.keys(this).includes(key)) {
+                Object.defineProperty(this, key, {
+                    enumerable: true,
+                    configurable: false,
+                    get: function () {
+                        return this.obj[key];
+                    },
+                    set: function(value) {
+                        var result = this.callHandlers(key, value);
+                        return result;
+                    }
+                });
+    
+                if (setter !== null) {
+                    setter = setter || {};
+                    this.addHandler(key, setter, true);
                 }
-            });
-
-            if (setter !== null) {
-                setter = setter || {};
-                this.addHandler(key, setter, true);
+            } else {
+                console.warn(`Object already has field '${field}'!`);
             }
         } else {
-            console.warn(`Object already has field '${field}'!`);
+            console.warn(`Object is invalid!`);
         }
     };
 
