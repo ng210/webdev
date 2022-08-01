@@ -168,9 +168,9 @@
 
     M44.projection = function projection(width, height, depth, r44, o) {
         // 2/w,   0,   0,   0,
-        //   0,-2/h,   0,   0,
+        //   0, 2/h,   0,   0,
         //   0,   0, 2/d,   0,
-        //  -1,   1,   0,   1
+        //  -1,  -1,   0,   1
         o = o || 0;
         r44 = M44.identity(r44, o);
         r44[o+0] = 2/width;

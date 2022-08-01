@@ -1,9 +1,13 @@
 (function() {
 	var Fn = {
+		'linear': x => x,
 		'smoothstep': x => x*(3*x-2*x*x),
+		'exp': x => Math.exp(x),
+		'log': x => Math.log(x * (Math.E - 1.0) + 1.0),
+
 		'quantize': (x, s) => 2*Math.round(0.5*(x+1)*s)/s-1,
 		'lerp': (x1, x2, f) => (1-f)*x1 + f*x2,
-		'clamp': (x, min, max) => (x > min) ? ((x < max) ? x : max) : min,
+		'clamp': (x, min, max) => (x > min) ? ((x < max) ? x : max) : min
 	};
 
 	Fn.Filter = function(coeffs) {
