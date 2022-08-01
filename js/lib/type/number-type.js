@@ -45,7 +45,10 @@ include('/lib/type/type.js');
     };
     NumberType.prototype.random = function random(min, max) {
         return Math.random()*(max - min) + min;
-    }
+    };
+    NumberType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+        return this.createValue(0, tracking, isPrimitive);
+    };
     //#endregion
 
     //#region IntType
@@ -78,19 +81,20 @@ include('/lib/type/type.js');
         }
         return isValid;
     };
-    IntType.prototype.createValue = function createValue(value) {
-        var v = new Number(this.createPrimitiveValue(value));
-        this.setType(v);
+    IntType.prototype.createValue = function createValue(value, tracking, isPrimitive) {
+        var v = value == undefined ? Math.round(this.random(this.min, this.max)) : value + 0;
+        if (!isPrimitive) {
+            v = new Number(v);
+            this.setType(v);
+        }
         return v;
     };
-    IntType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
-        return value == undefined ? Math.round(this.random(this.min, this.max)) : value;
-    };
-    IntType.prototype.createDefaultValue = function createDefaultValue() {
-        var v = new Number(0);
-        this.setType(v);
-        return v;
-    };
+    // IntType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
+    //     return value == undefined ? Math.round(this.random(this.min, this.max)) : value + 0;
+    // };
+    // IntType.prototype.createDefaultValue = function createDefaultValue(isPrimitive) {
+    //     return this.createValue(0, null, isPrimitive);
+    // };
     //#endregion
 
     //#region FloatType
@@ -99,20 +103,23 @@ include('/lib/type/type.js');
     }
     extend(NumberType, FloatType);
 
-    FloatType.prototype.createValue = function createValue(value) {
-        var v = new Number(this.createPrimitiveValue(value));
-        this.setType(v);
+    FloatType.prototype.createValue = function createValue(value, tracking, isPrimitive) {
+        var v = value == undefined ? this.random(this.min, this.max) : value + 0.0;
+        if (!isPrimitive) {
+            v = new Number(v);
+            this.setType(v);
+        }
         return v;
     };
-    FloatType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
-        return value == undefined ? this.random(this.min, this.max) : value
-    };
+    // FloatType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
+    //     return value == undefined ? this.random(this.min, this.max) : value + 0.0;
+    // };
 
-    FloatType.prototype.createDefaultValue = function createDefaultValue() {
-        var v = new Number(0.0);
-        this.setType(v);
-        return v;
-    };
+    // FloatType.prototype.createDefaultValue = function createDefaultValue() {
+    //     var v = new Number(0.0);
+    //     this.setType(v);
+    //     return v;
+    // };
     //#endregion
 
     publish(NumberType, 'NumberType');

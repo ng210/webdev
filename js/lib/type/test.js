@@ -4,6 +4,7 @@ var testData = {};
 
 function createTypes() {
     var types = {};
+    types.type = new TypeType('type');
     types.bool = new BoolType('bool');
     types.int = new IntType('int');
     types.uint8 = new IntType('uint8', types.int, { 'min': 0, 'max': 255 });
@@ -50,6 +51,7 @@ function test_types() {
     header('Test types');
     var types = createTypes();
     test('Should create valid types', ctx => {
+        ctx.assert(types.type.name, '=', 'type');
         ctx.assert(types.bool.name, '=', 'bool');
         ctx.assert(types.int.name, '=', 'int');
         ctx.assert(types.uint8.name, '=', 'uint8'); ctx.assert(types.uint8.min, '=', 0); ctx.assert(types.uint8.max, '=', 255);
@@ -402,6 +404,11 @@ function test_schema() {
     var type = null;
     schema.addDefaultTypes();
 
+    test('Should test Type type', ctx => {
+        type = schema.types.get('type');
+        ctx.assert(type.parse('"bool"'), ':=', schema.types.get('bool'));
+    });
+
     //#region String10
     schema.buildType({ name:'String10', type:"string", length:10 });
     test('Should have String10 type', ctx => {
@@ -485,8 +492,6 @@ function test_schema() {
         ctx.assert(type, '!null');
         ctx.assert(type.baseType.name, '=', 'object');
         ctx.assert(type.attributes.size, '=', '4');
-        ctx.assert(Object.keys(schema.missingTypes), ':=', ['Person']);
-        schema.checkMissingTypes();
     });
 
     var grandpa = { id:3, name:'Grandpa', color:'green' };
@@ -513,7 +518,7 @@ function test_schema() {
     test(`Should accept object:${JSON.stringify(map)}`, ctx => ctx.assert(validate_type(type, map), 'empty'));
 
     map = { a:'1', 2:2, 3:'3' };
-    test(`Should reject object:${JSON.stringify(map)}`, ctx => ctx.assert(validate_type(type, map).length, '=', 2));
+    test(`Should reject object:${JSON.stringify(map)}`, ctx => ctx.assert(validate_type(type, map).length, '=', 3));
     //#endregion
 
     //#region MyObject
@@ -554,7 +559,7 @@ function test_schema() {
         { 'id': 'a', 'text': 'Hello #1!', map: {1:'one', '2a':'two', 3:'three'} },
         { 'id': 2, 'text': 123 }
     ];
-    test('Should reject object list', ctx => ctx.assert(validate_type(type, objList2).length, '=', 4));
+    test('Should reject object list', ctx => ctx.assert(validate_type(type, objList2).length, '=', 5));
     //#endregion
 
     //#region MySuperObject
@@ -568,8 +573,6 @@ function test_schema() {
         type = schema.types.get('MySuperObject');
         ctx.assert(type, '!null');
         ctx.assert(type.baseType.name, '=', 'MyObject');
-        ctx.assert(Object.keys(schema.missingTypes), ':=', ['MySuperObject']);
-        schema.checkMissingTypes();
     });
     var superObject = {
         id: 1,
@@ -596,33 +599,36 @@ function test_schema() {
     });
     //#endregion
 
-    schema.buildType({ name:'MyDataTypes', type:Schema.Types.LIST, elemType:'type'});
+    schema.buildType({ name:'MyDataTypes', type:schema.types.get('list'), elemType:'type'});
     test('Should accept run-time types', ctx => {
         var rtTypes = [
-            { "name":"String256", "type":"string", "length":256 },
-            { "name":"Byte", "type":"int", "min":0,"max":255 },
-            { "name":"Method", "attributes": [
-                    { "name":"name", "type":"String256" },
-                    { "name":"arguments", "type":"AttributeList" },
-                    { "name":"return", "type":"type" }
-                ]
+            { 'name':'String256', 'type':'string', 'length':256 },
+            { 'name':'Byte', 'type':'int', 'min':0,'max':255 },
+            { 'name':'Method', 'attributes': {
+                    'name': { 'type':'String256' },
+                    'arguments': { 'type':'attributeList' },
+                    'return': { 'type':'type' }
+                }
             },
-            { "name":"Class",
-                "attributes": [
-                    { "name":"name", "type":"String256" },
-                    { "name":"extends", "type":"String256" },
-                    { "name":"properties", "type":"AttributeList" },
-                    { "name":"methods", "type":{ "type":"list", "elemType":"Method" } }
-                ]
+            { 'name':'Class',
+                'attributes': {
+                    'name': { 'type':'String256' },
+                    'extends': { 'type':'String256' },
+                    'properties': { 'type':'attributeList' },
+                    'methods': { 'type':{ 'type':'list', 'elemType':'Method' } }
+                }
             }
         ];
-        var type = schema.types.MyDataTypes;
-        var errors = type.validate(rtTypes);
-        if (!schema.types.String256 || schema.types.String256.basicType != schema.types.string) errors.push(new Error('String256 is not defined!'));
-        if (!schema.types.Byte || schema.types.Byte.basicType != schema.types.int) errors.push(new Error('Byte is not defined!'));
-        if (!schema.types.Class || schema.types.Class.basicType != schema.types.object) errors.push(new Error('Class is not defined!'));
-        if (errors.length > 0) message_errors(errors);
-        ctx.assert(errors.length, '=', 0);
+
+        var type = schema.types.get('MyDataTypes');
+        var results = [];
+        type.validate(rtTypes, results);
+
+        if (schema.types.get('String256') == null) results.push(new ValidationResult(path || [], ['String256 is not defined!']));
+        if (schema.types.get('Byte') == null) results.push(new ValidationResult(path || [], ['Byte is not defined!']));
+        if (schema.types.get('Class') == null) results.push(new ValidationResult(path || [], ['Class is not defined!']));
+        if (results.length > 0) message_errors(results);
+        ctx.assert(results, 'empty');
 
         var myClass = {
             "name":"MyFirstClass",
@@ -634,35 +640,39 @@ function test_schema() {
                 { "name":"Print", "arguments":[], "return":"Byte" }
             ]
         };
-        type = schema.types.Class;
-        errors = type.validate(myClass);
-        if (errors.length > 0) message_errors(errors);
-        ctx.assert(errors.length, '=', 0);
+        type = schema.types.get('Class');
+        results.length = 0;
+        type.validate(myClass, results);
+        if (results.length > 0) message_errors(results);
+        ctx.assert(results, 'empty');
     });
     test('Should handle late type definitions', ctx => {
-        var mySchema = new Schema([
-            {
-                "name":"Code",
-                "attributes": [
-                    { "name":"types", "type":"TypeList" },
-                    { "name":"methods", "type":{ "type":"list", "elemType":"Method" } },
-                    { "name":"master", "type":"type" }
-                ]
-            },
-            {
-                "name": "Method",
-                "attributes": [
-                    { "name":"name", "type":"string100" },
-                    { "name":"id", "type":"int100" },
-                    { "name":"arguments", "type":"AttributeList" },
-                    { "name":"returns", "type":"Types" }
-                ]
-            },
-            { "name":"string100", "type":"string", "length":100 },
-            { "name":"int100", "type":"int", "min":0, "max":100 }
+        var mySchema = new Schema();
+        mySchema.addDefaultTypes();
+        mySchema.addTypes([
+            mySchema.getOrBuildType({
+                'name':'Code',
+                'attributes': {
+                    'types':    { 'type':'typeList' },
+                    'methods':  { 'type':{ 'type':'list', 'elemType':'Method' } },
+                    'master':   { 'type':'type' }
+                }
+            }),
+            mySchema.getOrBuildType({
+                'name': 'Method',
+                'attributes': {
+                    'name':     { 'type':'string100' },
+                    'id':       { 'type':'int100' },
+                    'arguments':{ 'type':'attributeList' },
+                    'returns':  { 'type':'type' }
+                }
+            }),
+            mySchema.getOrBuildType({ 'name':'string100', 'type':'string', 'length':100 }),
+            mySchema.getOrBuildType({ 'name':'int100', 'type':'int', 'min':0, 'max':100 })
         ]);
-        ctx.assert(mySchema.types.Code, '!null');
-        ctx.assert(mySchema.types.Code.attributes.methods.type.elemType, '=', mySchema.types.Method);
+        mySchema.checkMissingTypes();
+        ctx.assert(mySchema.types.get('Code'), '!null');
+        ctx.assert(mySchema.types.get('Code').attributes.get('methods').type.elemType, '=', mySchema.types.get('Method'));
         var code = {
             "master":{ "name":"Master", "type":"i100" },
             "methods": [
@@ -694,7 +704,7 @@ function test_schema() {
             ]
         };
         var errors = [];
-        mySchema.validate(mySchema.types.Code, code, errors);
+        mySchema.validate(mySchema.types.get('Code'), code, errors);
         if (errors.length > 0) message_errors(errors);
         ctx.assert(errors, 'empty');
     });
@@ -835,6 +845,7 @@ function test_build_schema() {
 }
 
 async function test_complex_schema() {
+    header('Test complex schema');
     var res = await load('./test/test-schema.json');
     if (!res.error) {
         var schema = null;
@@ -899,14 +910,62 @@ async function test_complex_schema() {
     }
 }
 
+async function test_mergeObjects() {
+    header('Test merge objects');
+
+    var schema = new Schema();
+    schema.addDefaultTypes();
+    var personType = schema.buildType({
+        'name':'Person',
+        'attributes':{
+            'id':{ 'type':'string' },
+            'name':{ 'type':'string' },
+            'age':{ 'type':'int' },
+            'role':{ 'type':'string' }
+        },
+        'ref':'id'
+    });
+
+    var companyType = schema.buildType({
+        'name':'Company',
+        'attributes':{
+            'id':{ 'type':'string' },
+            'name':{ 'type':'string' },
+            'director':{ 'type':'ref Person' },
+            'employees':{ 'type':{ 'type':'list', 'elemType':'ref Person' }}
+        }
+    });
+
+    var dummy = personType.createValue({'id':'p1', 'name':'Dummy', 'age':14, 'role':'dummy'});
+    var joe = personType.createValue({'name':'Joe', 'age':24});
+    var jane = personType.createValue({'id':'p2', 'name':'Jane', 'age':32, 'role':'manager'});
+    schema.addInstance(joe);
+    schema.addInstance(jane);
+    var acme = companyType.createValue({'name':'Acme company', 'id':'c1', 'director':'p2', 'employees': ['p1', 'p2'] });
+    test('Should merge 2 objects of same type', ctx => {
+        schema.mergeObjects(dummy, joe);
+        message(JSON.stringify(joe));
+        var expected = { 'id':'p1', 'name':'Joe', 'age':24, 'role':'dummy' };
+        ctx.assert(joe, ':=', expected);
+    });
+    test('Should merge 2 objects of different types', ctx => {
+        schema.mergeObjects(joe, acme, mergeObjects.OVERWRITE);
+        message(JSON.stringify(acme));
+        var expected = { 'id':'p1', 'name':'Joe', 'director':'p2', 'employees': ['p1', 'p2'] };
+        ctx.assert(acme, ':=', expected);
+    });
+}
+
 var tests = () => [
     test_types,
     test_complex_type,
     test_type_enum,
     test_compare,
+    test_schema,
     test_create_schema,
     test_build_schema,
-    test_complex_schema
+    test_complex_schema,
+    test_mergeObjects
 ];
 
 publish(tests, 'Type tests');

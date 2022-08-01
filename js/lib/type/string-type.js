@@ -27,31 +27,48 @@ include('/lib/type/type.js');
         }
         return isValid;
     };
-    StringType.prototype.createValue = function createValue(value) {
-        var v = this.createPrimitiveValue(value);
-        this.setType(v);
-        return v;
-    };
-    StringType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
-        var v = '';
-        if (value === undefined) {
-            var length = this.length || 20;
-            var arr = [];
-            var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVXYZWabcdefghijklmnopqrstuvxyzw_";
-            for (var i=0; i<length; i++) {
-                arr.push(chars[Math.floor(chars.length*Math.random())]);
+    StringType.prototype.createValue = function createValue(value, tracking, isPrimitive) {
+        if (value !== null) {
+            if (value === undefined) {
+                var length = this.length || 20;
+                var arr = [];
+                var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVXYZWabcdefghijklmnopqrstuvxyzw_";
+                for (var i=0; i<length; i++) {
+                    arr.push(chars[Math.floor(chars.length*Math.random())]);
+                }
+                value = arr.join('');
+                
+            } else {
+                value = value + '';
             }
-            v = new String(arr.join(''));
-            
-        } else {
-            v = new String(value);
-        }        
-        return v;
+        }
+        if (!isPrimitive) {
+            value = new String(value);
+            this.setType(value);
+        }
+        return value;
     };
-    StringType.prototype.createDefaultValue = function createDefaultValue() {
-        var v = new String('');
-        this.setType(v);
-        return v;
+    // StringType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
+    //     var v = '';
+    //     if (value === null) v = null;
+    //     else {
+    //         if (value === undefined) {
+    //             var length = this.length || 20;
+    //             var arr = [];
+    //             var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVXYZWabcdefghijklmnopqrstuvxyzw_";
+    //             for (var i=0; i<length; i++) {
+    //                 arr.push(chars[Math.floor(chars.length*Math.random())]);
+    //             }
+    //             v = arr.join('');
+                
+    //         } else {
+    //             v = value + '';
+    //         }
+    //     }
+    //     return v;
+    // };
+    StringType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+        return this.createValue('', tracking, isPrimitive);
     };
     StringType.prototype.compare = function compare(a, b) {
         //return a.localeCompare(b);

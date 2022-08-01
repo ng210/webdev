@@ -25,20 +25,20 @@ include('/lib/type/validation-result.js');
             value: this
         });
     }
-    Type.prototype.validate = function validate(value, results, path) {
+    Type.prototype.validate = function validate(value, results, path, isStrict) {
         var isValid = true;
         if (this.baseType != null) {
-            isValid = this.baseType.validate.call(this, value, results, path);
+            isValid = this.baseType.validate.call(this, value, results, path, isStrict);
         }
         return isValid;
     };
-    Type.prototype.createValue = function createValue(value) {
+    Type.prototype.createValue = function createValue(value, tracking, isPrimitive) {
         throw new Error('Not implemented!');
     };
-    Type.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
-        throw new Error('Not implemented!');
+    Type.prototype.createPrimitiveValue = function createPrimitiveValue(value, tracking) {
+        return this.createValue(value, tracking, true);
     };
-    Type.prototype.createDefaultValue = function createDefaultValue() {
+    Type.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
         throw new Error('Not implemented!');
     };
     Type.prototype.compare = function compare(a, b) {

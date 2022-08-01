@@ -15,9 +15,9 @@ include('/lib/type/type.js');
         var isValid = true;
         var messages = [];
         if (typeof value === 'object') value = value.valueOf();
+        var s2 = JSON.stringify(value)
         var ix = this.values.findIndex(x => {
             var s1 = JSON.stringify(x);
-            var s2 = JSON.stringify(value)
             return s1 == s2;
         });
         if (ix == -1) {
@@ -29,17 +29,23 @@ include('/lib/type/type.js');
         }
         return isValid;
     };
-    EnumType.prototype.createValue = function createValue(value) {
-        var v0 = this.createPrimitiveValue(value);
-        var result = typeof v0 !== 'object' ? Reflect.construct(v0.constructor, [v0]) : v0;
-        this.setType(result);
-        return result;
+    EnumType.prototype.createValue = function createValue(value, tracking, isPrimitive) {
+        if (value == undefined) {
+            value = this.values[Math.floor(Math.random()*this.values.length)];
+        }
+        if (!isPrimitive) {
+            if (typeof value !== 'object') {
+                value = Reflect.construct(value.constructor, [value]);
+            }
+            this.setType(value);
+        }
+        return value;
     };
-    EnumType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
-        return value == undefined ? this.values[Math.floor(Math.random()*this.values.length)] : value;
-    };
-    EnumType.prototype.createDefaultValue = function createDefaultValue() {
-        return this.createValue(this.values[0]);
+    // EnumType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
+    //     return this.createValue(value, null, true);
+    // };
+    EnumType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+        return this.createValue(this.values[0], tracking, isPrimitive);
     };
 
     publish(EnumType, 'EnumType');

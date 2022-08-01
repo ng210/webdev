@@ -42,43 +42,36 @@ include('/lib/type/type.js');
         return isValid;
     };
 
-    ListType.prototype.createValue = function createValue(list, tracking) {
+    ListType.prototype.createValue = function createValue(list, tracking, isPrimitive) {
+        var createValue = isPrimitive ? this.elemType.createPrimitiveValue : this.elemType.createValue;
         var v = [];
         tracking = tracking || {};
         if (this.addTracking(tracking)) {
             if (list != undefined) {
                 for (var i=0; i<list.length; i++) {
-                    v.push(this.elemType.createValue(list[i], tracking));
+                    v.push(createValue.call(this.elemType, list[i], tracking, isPrimitive));
                 }
             } else {
                 for (var i=0; i<5; i++) {
-                    v.push(this.elemType.createValue(null, tracking));
+                    v.push(createValue.call(this.elemType, null, tracking, isPrimitive));
                 }
             }
             this.removeTracking(tracking);
         }
-        this.setType(v);
+        if (!isPrimitive) this.setType(v);
         return v;
     };
     ListType.prototype.createPrimitiveValue = function createPrimitiveValue(list, tracking) {
-        var v = [];
-        tracking = tracking || {};
-        if (this.addTracking(tracking)) {
-            if (list != undefined) {
-                for (var i=0; i<list.length; i++) {
-                    v.push(this.elemType.createPrimitiveValue(list[i], tracking));
-                }
-            } else {
-                for (var i=0; i<5; i++) {
-                    v.push(this.elemType.createPrimitiveValue(null, tracking));
-                }
-            }
-            this.removeTracking(tracking);
+        return this.createValue(list, tracking, true);
+    };
+    ListType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+        var v = null;
+        if (typeof this.ctor === 'function') {
+            v = Reflect.construct(this.ctor, []);
+        } else {
+            v = this.createValue([], tracking, isPrimitive); 
         }
         return v;
-    };
-    ListType.prototype.createDefaultValue = function createDefaultValue() {
-        return this.createValue([]);
     };
     ListType.prototype.build = function build(definition, schema, path) {
         var type = ListType.base.build.call(this, definition, schema, path);
@@ -90,6 +83,33 @@ include('/lib/type/type.js');
         }
         return type;
     };
+    ListType.prototype.merge = function merge(source, target, flags) {
+        for (var i=0; i<source.length; i++) {
+            var v = source[i];
+            var results = [];
+            var type = v.__type__;
+            if (!type && this.schema) {
+                type = this.schema.types.get(v.type);
+            }
+            if (!type) type = this.elemType;
+            type.validate(v, results);
+            if (results.length == 0) {
+                if (flags & self.mergeObjects.OVERWRITE) {
+                    if (typeof this.elemType.merge === 'function') {
+                        if (target[i] == undefined) target[i] = type.createDefaultValue(null, true);
+                        type.merge(v, target[i], flags);
+                    } else {
+                        target[i] = v;
+                    }
+                } else {
+                    target.push(v)
+                }
+            } else {
+                console.warn(`Invalid elem at ${i}, skipped!`);
+            }
+        }
+    };
+
 
     publish(ListType, 'ListType');
 })();

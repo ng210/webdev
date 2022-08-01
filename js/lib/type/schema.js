@@ -3,13 +3,17 @@ include('/lib/data/dictionary.js');
 (function() {
     function Schema() {
         this.types = new Dictionary();
+        this.typeList = [];
         this.instances = new Dictionary();
         this.missingTypes = {};
-        this.addType(new TypeType('type', null, { 'values': this.types }));
+        //this.addType(new TypeType('type', null, { 'values': this.types }));
     }
     Schema.prototype.addType = function addType(type) {
-        this.types.set(type.name, type);
-        type.schema = this;
+        if (!this.types.has(type.name)) {
+            this.types.set(type.name, type);
+            this.typeList.push(type);
+            type.schema = this;
+        }        
     };
     Schema.prototype.addTypes = function addTypes(types) {
         for (var i=0; i<types.length; i++) {
@@ -41,7 +45,8 @@ include('/lib/data/dictionary.js');
     };
     Schema.prototype.addDefaultTypes = function addDefaultTypes() {
         this.addTypes(Schema.defaultTypes);
-        this.types.get('type').values = this.types;
+        this.types.get('type').values = this.typeList;
+        this.types.get('typeName').values = this.types._keys;
     };
     Schema.prototype.buildType = function buildType(typeDef, path) {
         var baseType = this.getOrBuildType(typeDef.type || 'object', path);
@@ -132,8 +137,7 @@ include('/lib/data/dictionary.js');
                 this.addDefaultTypes();
             }
             if (input.imports) {
-                var imports = await this.importTypes(input.imports);
-                //definition.push(...imports);
+                await this.importTypes(input.imports);
             }
         }
         if (Array.isArray(definition)) {
@@ -151,17 +155,35 @@ include('/lib/data/dictionary.js');
         }
         this.missingTypes[typeName].push([setter, path]);
     };    
-    Schema.prototype.validate = function validate(obj, type) {
+    Schema.prototype.validate = function validate(obj, type, isStrict) {
         var results = [];
         var typeName = type instanceof Type ? type.name : type;
         var type = this.types.get(typeName);
         if (type) {
-            type.validate(obj, results);
+            type.validate(obj, results, null, isStrict);
             this.checkMissingTypes(results);
         } else {
             results.push(`Input type '${typeName}' is not defined!`);
         }
         return results;
+    };
+    // mergeObjects(source, target, flags)
+    // mergeObjects(source, target, type, flags)
+    Schema.prototype.mergeObjects = function mergeObjects(source, target, type, flags) {
+        if (type != undefined && !(type instanceof Type)) {
+            flags = type;
+            type = null;
+        }
+        type = type || target.__type__;
+        if (type == undefined) {
+            throw new Error('Could not determin target type!');
+        }
+        // merge objects, lists and maps
+        if (typeof type.merge === 'function') {
+            type.merge(source, target, flags);
+        } else {
+            throw new Error('Target type cannot be merged!');
+        }
     };
 
     Schema.defaultTypes = (function() {
@@ -175,24 +197,50 @@ include('/lib/data/dictionary.js');
             'enum': new EnumType('enum'),
             'map': new MapType('map'),
             'object': new ObjectType('object'),
-            'type': new TypeType('type', null, { 'values': null })
+            'type': new TypeType('type'),
+            'void': new VoidType('void')
         };
         types.push(...Object.values(basicTypes));
-    
         var listTypes = [
             new ListType('boolList',    basicTypes.list, { 'elemType': basicTypes.bool }),
             new ListType('intList',     basicTypes.list, { 'elemType': basicTypes.int }),
             new ListType('floatList',   basicTypes.list, { 'elemType': basicTypes.float }),
             new ListType('stringList',  basicTypes.list, { 'elemType': basicTypes.string }),
             new ListType('objectList',  basicTypes.list, { 'elemType': basicTypes.object }),
-            new ListType('typeList',    basicTypes.list, { 'elemType': basicTypes.type })
+            new ListType('typeList',    basicTypes.list, { 'elemType': basicTypes.type }),
+            new ListType('voidList',    basicTypes.list, { 'elemType': basicTypes.void })
         ];
         types.push(...listTypes);
-    
+        var arrayTypes = [
+            new ListType('bool2',    basicTypes.list, { 'elemType': basicTypes.bool, 'length':2 }),
+            new ListType('int2',     basicTypes.list, { 'elemType': basicTypes.int, 'length':2 }),
+            new ListType('float2',   basicTypes.list, { 'elemType': basicTypes.float, 'length':2 }),
+            new ListType('string2',  basicTypes.list, { 'elemType': basicTypes.string, 'length':2 }),
+            new ListType('object2',  basicTypes.list, { 'elemType': basicTypes.object, 'length':2 }),
+            new ListType('type2',    basicTypes.list, { 'elemType': basicTypes.type, 'length':2 }),
+            new ListType('void2',    basicTypes.list, { 'elemType': basicTypes.void, 'length':2 }),
+            new ListType('bool3',    basicTypes.list, { 'elemType': basicTypes.bool, 'length':3 }),
+            new ListType('int3',     basicTypes.list, { 'elemType': basicTypes.int, 'length':3 }),
+            new ListType('float3',   basicTypes.list, { 'elemType': basicTypes.float, 'length':3 }),
+            new ListType('string3',  basicTypes.list, { 'elemType': basicTypes.string, 'length':3 }),
+            new ListType('object3',  basicTypes.list, { 'elemType': basicTypes.object, 'length':3 }),
+            new ListType('type3',    basicTypes.list, { 'elemType': basicTypes.type, 'length':3 }),
+            new ListType('void3',    basicTypes.list, { 'elemType': basicTypes.void, 'length':3 }),
+            new ListType('bool4',    basicTypes.list, { 'elemType': basicTypes.bool, 'length':4 }),
+            new ListType('int4',     basicTypes.list, { 'elemType': basicTypes.int, 'length':4 }),
+            new ListType('float4',   basicTypes.list, { 'elemType': basicTypes.float, 'length':4 }),
+            new ListType('string4',  basicTypes.list, { 'elemType': basicTypes.string, 'length':4 }),
+            new ListType('object4',  basicTypes.list, { 'elemType': basicTypes.object, 'length':4 }),
+            new ListType('type4',    basicTypes.list, { 'elemType': basicTypes.type, 'length':4 }),
+            new ListType('void4',    basicTypes.list, { 'elemType': basicTypes.void, 'length':4 })
+
+        ];
+        types.push(...arrayTypes);
         var derivedTypes = [
             new IntType('uint8',    basicTypes.int, { 'min': 0, 'max': 255 }),
             new IntType('uint16',   basicTypes.int, { 'min': 0, 'max': 65535 }),
-            new IntType('uint32',   basicTypes.int, { 'min': 0, 'max': 4294967296 })
+            new IntType('uint32',   basicTypes.int, { 'min': 0, 'max': 4294967296 }),
+            new MapType('KeyValue', basicTypes.map, { 'keyType':basicTypes.string, 'valueType':basicTypes.int })
         ];
         types.push(...derivedTypes);
         var attributeType = new ObjectType('attribute', basicTypes.object, {
@@ -211,10 +259,12 @@ include('/lib/data/dictionary.js');
                 'returnValue': { 'type': basicTypes.type, 'isRequired':false }
             }
         });
+        var typeNameType = new EnumType('typeName');
         var schemanticTypes = [
             attributeType,
             new ListType('attributeList', basicTypes.list, { 'elemType': attributeType }),
-            functionType
+            functionType,
+            typeNameType
         ];
         types.push(...schemanticTypes);
         return types;

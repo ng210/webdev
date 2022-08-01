@@ -8,3 +8,4 @@ include('/lib/type/object-type.js');
 include('/lib/type/string-type.js');
 include('/lib/type/type-type.js');
 include('/lib/type/ref-type.js');
+include('/lib/type/void-type.js');

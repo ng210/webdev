@@ -20,18 +20,19 @@ include('/lib/type/type.js');
         return isValid;
     };
 
-    BoolType.prototype.createValue = function createValue(value) {
-        var v = new Boolean(this.createPrimitiveValue(value));
-        this.setType(v);
+    BoolType.prototype.createValue = function createValue(value, tracking, isPrimitive) {
+        var v = value == undefined ? Math.random() < 0.5 : !!value;
+        if (!isPrimitive) {
+            v = new Boolean(v);
+            this.setType(v);
+        }
         return v;
     };
-    BoolType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
-        return value == undefined ? Math.random() < 0.5 : value;
-    };
-    BoolType.prototype.createDefaultValue = function createDefaultValue() {
-        var v = new Boolean(false);
-        this.setType(v);
-        return v;
+    // BoolType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
+    //     return this.createValue(value, null, true);
+    // };
+    BoolType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+        return this.createValue(false, tracking, isPrimitive);
     };
     BoolType.prototype.compare = function compare(a, b) {
         var i = a ? 1 : 0;

@@ -2,7 +2,7 @@ include('/lib/type/type.js');
 (function() {
     function TypeType(name, type, args) {
         TypeType.base.constructor.call(this, name, type, args);
-        this.values = {};
+        this.values = null;
         if (args) {
             if (args.values) {
                 this.values = args.values;
@@ -11,21 +11,22 @@ include('/lib/type/type.js');
     }
     extend(Type, TypeType);
 
-    TypeType.prototype.createValue = function createValue(value, tracking) {
+    TypeType.prototype.createValue = function createValue(value, tracking, isPrimitive) {
         var type = null;
         if (value) {
-            type = typeof value === 'string' ? this.values.get(value) : value;
-        } else {
-            var ix = Math.floor(Math.random() * this.values.size);
+            type = this.schema.typeList.find(t => typeof value === 'string' ? t.name == value : t == value);
+        }
+        if (type == null) {
+            var ix = Math.floor(Math.random() * this.schema.typeList.length);
             type = this.values.getAt(ix);
         }
-        return type;
+        return clone(type);
     };
-    TypeType.prototype.createPrimitiveValue = function createPrimitiveValue(obj, tracking) {
-        return obj ? this.createValue(obj, tracking) : this.createDefaultValue(tracking);
-    };
-    TypeType.prototype.createDefaultValue = function createDefaultValue(tracking) {
-        return this.values.getAt(0);
+    // TypeType.prototype.createPrimitiveValue = function createPrimitiveValue(obj, tracking) {
+    //     return obj ? this.createValue(obj, tracking) : this.createDefaultValue(tracking);
+    // };
+    TypeType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+        return clone(this.schema.typeList[0]);
     };
     TypeType.prototype.parse = function parse(term) {
         return term != '' ? TypeType.base.parse.call(this, term) : false;

@@ -60,7 +60,7 @@ include('/lib/data/dictionary.js');
         }
         return !result;
     };
-    ObjectType.prototype.validate = function validate(value, results, path) {
+    ObjectType.prototype.validate = function validate(value, results, path, isStrict) {
         path = path || [];
         var isValid = true;
         var errors = [];
@@ -78,8 +78,9 @@ include('/lib/data/dictionary.js');
             results
         );
 
-        errors.push(...keys.map( v => `Type '${this.name}' does not define attribute '${v}'!`));
-        // errors.push(`Type '${this.name}' does not define attribute '${i}'!`);
+        if (isStrict) {
+            errors.push(...keys.map( v => `Type '${this.name}' does not define attribute '${v}'!`));
+        }
 
         if (errors.length > 0) {
             results.push(new ValidationResult(path, errors));
@@ -90,62 +91,64 @@ include('/lib/data/dictionary.js');
         }
         return isValid;
     };
-    ObjectType.prototype.createValue = function createValue(obj, tracking) {
+    ObjectType.prototype.createValue = function createValue(obj, tracking, isPrimitive) {
         var v = {};
         var results = [];
         tracking = tracking || {};
         if (this.addTracking(tracking)) {
             if (obj) {
-                this.checkAttributes(
-                    (key, at) => {
-                        if (obj[key] != undefined) {
-                            v[key] = at.type.createValue(obj[key]);
-                        }
-                    },
-                    results
-                );
+                this.attributes.iterate( (key, value) => {
+                    if (obj[key] !== undefined) {
+                        v[key] = value.type.createValue(obj[key], tracking, isPrimitive);
+                    }
+                });
             } else {
-                this.checkAttributes( (key, at) => { v[key] = at.type.createValue(undefined, tracking); }, results);
+                this.attributes.iterate( (key, value) => { v[key] = value.type.createValue(null, tracking, isPrimitive); });
             }
-            this.removeTracking(tracking);
         }
-        this.setType(v);
+        if (!isPrimitive) this.setType(v);
         return v;
     };
-    ObjectType.prototype.createPrimitiveValue = function createPrimitiveValue(obj, tracking) {
-        var v = {};
-        var results = [];
-        tracking = tracking || {};
-        if (this.addTracking(tracking)) {
-            if (obj) {
-                this.checkAttributes(
-                    (key, at) => {
-                        if (obj[key] != undefined) {
-                            v[key] = at.type.createPrimitiveValue(obj[key]);
-                        }
-                    },
-                    results
-                );
-            } else {
-                this.checkAttributes( (key, at) => {
-                    v[key] = at.type.createPrimitiveValue(undefined, tracking);
-                }, results);
-            }
-            this.removeTracking(tracking);
+    // ObjectType.prototype.createPrimitiveValue = function createPrimitiveValue(obj, tracking) {
+    //     var v = {};
+    //     var results = [];
+    //     tracking = tracking || {};
+    //     if (this.addTracking(tracking)) {
+    //         if (obj) {
+    //             this.checkAttributes(
+    //                 (key, at) => {
+    //                     if (obj[key] !== undefined) {
+    //                         v[key] = at.type.createPrimitiveValue(obj[key]);
+    //                     }
+    //                 },
+    //                 results
+    //             );
+    //         } else {
+    //             this.checkAttributes( (key, at) => {
+    //                 v[key] = at.type.createPrimitiveValue(undefined, tracking);
+    //             }, results);
+    //         }
+    //         this.removeTracking(tracking);
+    //     }
+    //     return v;
+    // };
+    ObjectType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+        var v = null;
+        if (typeof this.ctor === 'function') {
+            v = Reflect.construct(this.ctor, []);
+        } else {
+            v = {};
+            this.attributes.iterate( (key, value) => {
+                v[key] = value.type.createDefaultValue(tracking, isPrimitive);
+            });
         }
-        return v;
-    };
-    ObjectType.prototype.createDefaultValue = function createDefaultValue(tracking) {
-        var v = {};
-        this.attributes.iterate( (key, value) => {
-            v[key] = value.type.createDefaultValue(tracking);
-        });
-        this.setType(v);
+        if (!isPrimitive) this.setType(v);
         return v;
     };
     ObjectType.prototype.build = function build(definition, schema, path) {
         path = path || [];
         var type = ObjectType.base.build.call(this, definition, schema, path);
+        schema.addType(type);
         type.attributes.iterate( (name, value) => {
             if (!(value.type instanceof Type)) {
                 var attributeType = schema.getOrBuildType(value.type);
@@ -158,6 +161,28 @@ include('/lib/data/dictionary.js');
         });
         return type;
     };
+    ObjectType.prototype.merge = function merge(source, target, flags) {
+        var type = source.__type__;
+        if (!type && this.schema) {
+            type = this.schema.types.get(source.type);
+        }
+        if (!type) {
+            type = this;
+        }
 
+        type.attributes.iterate((k, v) => {
+            if (source[k] != undefined && (target[k] == undefined || (flags & self.mergeObjects.OVERWRITE))) {
+                if (typeof v.type.merge === 'function') {
+                    if (target[k] == undefined) {
+debugger
+                        target[k] = v.type.createDefaultValue(null, true);
+                    }
+                    v.type.merge(source[k], target[k], flags);
+                } else {
+                    target[k] = source[k];
+                }
+            }
+        });
+    };
     publish(ObjectType, 'ObjectType');
 })();

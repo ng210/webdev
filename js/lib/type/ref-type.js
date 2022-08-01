@@ -2,7 +2,9 @@ include('/lib/type/type.js');
 (function() {
     function RefType(name, type, args) {
         RefType.base.constructor.call(this, name, type, args);
-        this.isNumeric = type.getAttribute(type.ref)[1].type.isNumeric;
+        if (type.ref) {
+            this.isNumeric = type.getAttribute(type.ref)[1].type.isNumeric;
+        }
     }
     extend(Type, RefType);
 
@@ -24,24 +26,24 @@ include('/lib/type/type.js');
         return isValid;
     };
 
-    RefType.prototype.createValue = function createValue(value, tracking) {
+    RefType.prototype.createValue = function createValue(value, tracking, isPrimitive) {
         var ref = value;
         if (value === undefined) {
-            var v = this.baseType.createValue(value, tracking);
+            var v = this.baseType.createValue(value, tracking, isPrimitive);
             ref = v[this.baseType.ref];
         }
         return ref;
     };
-    RefType.prototype.createPrimitiveValue = function createPrimitiveValue(value, tracking) {
-        var ref = value;
-        if (value === undefined) {
-            var v = this.baseType.createPrimitiveValue(value, tracking);
-            ref = v[this.baseType.ref];
-        }
-        return ref;
-    };
-    RefType.prototype.createDefaultValue = function createDefaultValue(tracking) {
-        var v = this.baseType.createDefaultValue(tracking);
+    // RefType.prototype.createPrimitiveValue = function createPrimitiveValue(value, tracking) {
+    //     var ref = value;
+    //     if (value === undefined) {
+    //         var v = this.baseType.createPrimitiveValue(value, tracking);
+    //         ref = v[this.baseType.ref];
+    //     }
+    //     return ref;
+    // };
+    RefType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+        var v = this.baseType.createDefaultValue(tracking, isPrimitive);
         return v[this.baseType.ref];
     };
 
