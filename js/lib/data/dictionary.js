@@ -74,6 +74,11 @@
 		}
 		return result;
 	};
+	Dictionary.clone = function clone(d) {
+		var res = new Dictionary();
+		d.iterate( (k, v) => res.add(k, v));
+		return res;
+	};
 
 	Dictionary.fromObject = function fromObject(obj, includeAll) {
 		var dict = new Dictionary();
