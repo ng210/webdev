@@ -93,6 +93,18 @@ include('/lib/base/html.js');
 		}
 		Object.defineProperty(obj, property, desc);
 	};
+	Dbg.prst = function prst(limit) {
+		limit = limit || 100;
+		var e = new Error();
+		var lines = e.stack.split('\n');
+		limit += 2;
+		for (var i=2; i<limit && i<lines.length; i++) {
+			var m = lines[i].match(/^\s+at\s([^\s]+).+$/);
+			var line = m[1].replace(/[<>]/g, '');
+			Dbg.pr(`${line}; `);
+		}
+		Dbg.prln('');
+	};
 
 	publish(Dbg, 'Dbg');
 })();

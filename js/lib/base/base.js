@@ -435,7 +435,7 @@ self.Url = function Url(url, currentPath) {
             this.host = url.host;
             this.port = url.port;
             this.path = url.path;
-            this.query = mergeObjects(url.query);
+            this.query = clone(url.query);
             this.fragment = url.fragment;
             this.fileNamePos = url.fileNamePos;
         } else if (typeof url === 'string') {
@@ -833,8 +833,8 @@ self.deepCompare = function deepCompare(a, b, checkType, path, cache, lvl) {
                     } else {
                         if (typeof a.deepCompare === 'function') result = a.deepCompare(b);
                         else {
-                            var keysA = Object.keys(a);
-                            var keysB = Object.keys(b);
+                            var keysA = Object.keys(a); keysA.sort();
+                            var keysB = Object.keys(b); keysB.sort();
                             if (keysA.length != keysB.length) result = `Key count mismatch: ${keysA.length} and ${keysB.length}`;
                             else {
                                 for (var i=0; i<keysA.length; i++) {
@@ -913,92 +913,100 @@ self.lock = function lock(token, action) {
 self.clone = function clone(obj) {
     var c = obj;
     if (obj != null && typeof obj === 'object') {
-        switch (obj.constructor) {
-            case Boolean: c = new Boolean(obj); break;
-            case Number: c = new Number(obj); break;
-            case String:c = new String(obj); break;
-            case Array: c = Array.from(obj); break;
-            case Date: c = new Date(obj); break;
-            default:
-                c = Reflect.construct(obj.constructor, []);
-                for (var i in obj) {
-                    if (obj.hasOwnProperty(i) && typeof i !== 'function') {
-                        c[i] = clone(obj[i]);
+        if (typeof obj.constructor.clone === 'function') {
+            c = obj.constructor.clone(obj);
+        } else {
+            switch (obj.constructor) {
+                case Boolean: c = new Boolean(obj); break;
+                case Number: c = new Number(obj); break;
+                case String:c = new String(obj); break;
+                case Array: c = Array.from(obj); break;
+                case Date: c = new Date(obj); break;
+                default:
+                    c = Reflect.construct(obj.constructor, []);
+                    for (var i in obj) {
+                        if (obj.hasOwnProperty(i) && typeof i !== 'function') {
+                            c[i] = clone(obj[i]);
+                        }
                     }
-                }
-                break;
+                    break;
+            }
         }
     }
     return c;
-}
-self.mergeObjects = function mergeObjects(src, dst, sourceOnly) {
-    if (src == undefined || src == null) {
-        src = {};
+};
+
+// flags
+// - common: non-common properties are not copied
+// - overwrite: common properties are overwritten from source
+// - new: create a new object instead of modifying destinatin
+self.mergeObjects = function mergeObjects(src, dst, flags) {
+    var isSrc = src != undefined && src != null;
+    var isDst = dst != undefined && dst != null;
+    var res = null;
+    flags = flags || 0;
+    var isNew = (flags & self.mergeObjects.NEW) != 0;
+    var isOverwrite = (flags & self.mergeObjects.OVERWRITE) != 0;
+    var isExtend = (flags & self.mergeObjects.COMMON) == 0;
+
+    if (!isSrc && isDst) {
+        return isNew ? clone(dst) : dst;
+    } else if (!isSrc && !isDst) {
+        return null;
+    } else if (isSrc && !isDst) {
+        return  isNew ? clone(src) : src;
     }
-    var res = {};
-    var isArraySource = Array.isArray(src);
-    var isArrayDestination = Array.isArray(dst);
-    if (isArraySource && isArrayDestination) {
-        res = [];
-        for (var i=0; i<src.length; i++) res[i] = mergeObjects(src[i], dst[i]);
-        for (var i=src.length; i<dst.length; i++) res[i] = mergeObjects(dst[i]);
-    } else if (isArraySource && !isArrayDestination) {
-        if (dst == undefined) {
-            res = [];
-            for (var i=0; i<src.length; i++) res[i] = mergeObjects(src[i]);
-        } else {
-            res = mergeObjects(dst);
+
+    var isSrc = Array.isArray(src) || typeof src === 'object';
+    var isDst = Array.isArray(dst) || typeof dst === 'object';
+
+    if (isSrc && isDst) {
+        var srcAttribs = Object.keys(src);
+        var dstAttribs = Object.keys(dst);
+
+        res = isNew ? Reflect.construct(dst.constructor, []) : dst;
+
+        for (var i=0; i<dstAttribs.length; i++) {
+            var attr = dstAttribs[i];
+            var isCommon = srcAttribs.includes(attr);
+            var value = dst[attr];
+            var attr2 = attr;
+            if (isCommon) {
+                if (isOverwrite) {
+                    value = mergeObjects(src[attr], dst[attr], mergeObjects.OVERWRITE | mergeObjects.NEW);
+                } else if (isExtend) {
+                    var attr2 = Array.isArray(res) ? res.length : attr + '2';
+                    value = clone(src[attr]);
+                    //res[attr2] = clone(src[attr]);
+                }
+            } else if (isNew) value = clone(value);
+
+            //res[attr2] = Array.isArray(value) || typeof value === 'object' ? mergeObjects(value);
+            res[attr2] = value;
+            //if (isNew) res[attr] = clone(dst[attr]);
         }
-    } else if (!isArraySource && isArrayDestination) {
-        res = mergeObjects(d);
+
+        if (isExtend) {
+            for (var i=0; i<srcAttribs.length; i++) {
+                var attr = srcAttribs[i];
+                var isCommon = dstAttribs.includes(attr);
+                if (!isCommon) {
+                    Array.isArray(res) ? res.push(clone(src[attr])) : res[attr] = clone(src[attr]);
+                }
+            }
+        }
+    } else if (!isSrc && !isDst) {
+        res = isOverwrite ? src : dst;
     } else {
-        var isObjectSource = src != null && typeof src === 'object';
-        var isObjectDestination = dst != null && typeof dst === 'object';
-        if (!isObjectSource && !isObjectDestination) {
-            res = dst != undefined ? dst : src;
-        } else {
-            var srcKeys = Object.keys(src);
-            if (dst == undefined || dst == null) {
-                dst = {};
-            }
-            var dstKeys = Object.keys(dst);
-            // add src
-            for (var i=0; i<srcKeys.length; i++) {
-                var key = srcKeys[i];
-                var s = src[key];
-                var d = dst[key];
-                if (d != undefined) {
-                    var ix = dstKeys.findIndex(x => x == key);
-                    dstKeys.splice(ix, 1);
-                }
-                isObjectSource = s != null && typeof s === 'object';
-                isObjectDestination = d != null && typeof d === 'object';
-                if (isObjectSource && isObjectDestination) {
-                    res[key] = mergeObjects(s, d);
-                } else if (isObjectSource && !isObjectDestination) {
-                    res[key] = d != undefined ? d : mergeObjects(s, null);
-                } else if (!isObjectSource && isObjectDestination) {
-                    res[key] = mergeObjects(d, null);
-                } else {
-                    res[key] = d != undefined ? d : s;
-                }
-            }
-            if (!sourceOnly) {
-                // add dst
-                for (var i=0; i<dstKeys.length; i++) {
-                    var key = dstKeys[i];
-                    var d = dst[key];
-                    if (typeof d === 'object') {
-                        res[key] = mergeObjects(d, null);
-                    } else {
-                        res[key] = d;
-                    }
-                }
-            }
-        }
+        throw new Error('Type mismatch!');
     }
+
     return res;
 };
+self.mergeObjects.COMMON = 1;
+self.mergeObjects.OVERWRITE = 2;
+self.mergeObjects.NEW = 4;
+
 self.getCommonParent = function getCommonParent(obj1, obj2, parentAttributeName) {
     var p1 = obj1;
     var p2 = obj2;

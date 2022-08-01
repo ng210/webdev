@@ -206,20 +206,178 @@ include('/lib/base/html.js');
 
     function test_mergeObjects() {
         message('Test mergeObjects', 1);
-        var person = {
-            "id": 12,
-            "name": "James",
-        };
-        var itemList = {
-            "id": 113,
-            "items": [
-                { "name": "knife", "value": 10 },
-                { "name": "bottle", "value": 5 }            
-            ]
-        };
+
+        var arr1 = [1, 3, 5];
+        var arr2 = [2, 4, 6];
+
+        var person1 = {'name': 'Charlie', 'role':'employee', 'age': 43 };
+        var person2 = {'id':12, 'name':'Karcsi', '0':0};
+        var person3 = {'id':10, 'name':'Carl', '1':1};
+
+        message('Missing arguments', 1);
+        test('Source missing returns destination', ctx => {
+            var merged = mergeObjects(null, arr1)
+            ctx.assert(merged, '=', arr1);
+        });
+        test('Source missing clones destination', ctx => {
+            var merged = mergeObjects(null, arr1, mergeObjects.NEW)
+            ctx.assert(merged, '!=', arr1);
+            ctx.assert(merged, ':=', arr1);
+        });
+        test('Destination missing returns source', ctx => {
+            var merged = mergeObjects(arr1, null)
+            ctx.assert(merged, '=', arr1);
+        });
+        test('Destination missing clones source', ctx => {
+            var merged = mergeObjects(arr1, null, mergeObjects.NEW)
+            ctx.assert(merged, '!=', arr1);
+            ctx.assert(merged, ':=', arr1);
+        });
+        test('Both missing returns null', ctx => {
+            var merged = mergeObjects();
+            ctx.assert(merged, 'null');
+        });
+
+        message('Simple data', 1);
+        //#region simple data, extend, !overwite, !new
+        message('extend, !overwite, !new', 1);
+        test('should merge 2 arrays', ctx => {
+            var merged = mergeObjects(arr1, clone(arr2));
+            ctx.assert(merged, ':=', [2,4,6,1,3,5]);
+        });
 
         test('should merge 2 objects', ctx => {
-            var merged = mergeObjects(itemList, person);
+            var merged = mergeObjects(person1, clone(person2));
+            ctx.assert(merged, ':=', {'id':12, 'name':'Karcsi', '0':0, 'name2':'Charlie', 'role':'employee', 'age': 43 });
+        });
+
+        test('should merge array and object', ctx => {
+            var merged = mergeObjects(arr1, clone(person2));
+            ctx.assert(merged, ':=', {'id':12, 'name':'Karcsi', '0':0, '02':1, '1':3, '2':5 });
+        });
+        //#endregion
+
+        //#region simple data, !extend, !overwite, !new
+        TestConfig.indent--;
+        message('!extend, !overwite, !new', 1);
+        test('should merge 2 arrays', ctx => {
+            var merged = mergeObjects(arr1, clone(arr2), mergeObjects.COMMON);
+            ctx.assert(merged, ':=', arr2);
+        });
+
+        test('should merge 2 objects', ctx => {
+            var merged = mergeObjects(person1, clone(person2), mergeObjects.COMMON);
+            ctx.assert(merged, ':=', person2);
+        });
+
+        test('should merge array and object', ctx => {
+            var merged = mergeObjects(arr1, clone(person2), mergeObjects.COMMON);
+            ctx.assert(merged, ':=', person2);
+        });
+        //#endregion
+
+        //#region simple data, !extend, overwite, !new
+        TestConfig.indent--;
+        message('!extend, overwite, !new', 1);
+        test('should merge 2 arrays', ctx => {
+            var merged = mergeObjects(arr1, clone(arr2), mergeObjects.COMMON | mergeObjects.OVERWRITE);
+            ctx.assert(merged, ':=', arr1);
+        });
+
+        test('should merge 2 objects', ctx => {
+            var merged = mergeObjects(person1, clone(person2), mergeObjects.COMMON | mergeObjects.OVERWRITE);
+            ctx.assert(merged, ':=', { 'id':12, 'name':'Charlie', '0':0 });
+        });
+
+        test('should merge array and object', ctx => {
+            var merged = mergeObjects(arr1, clone(person2), mergeObjects.COMMON | mergeObjects.OVERWRITE);
+            ctx.assert(merged, ':=', {'id':12, 'name':'Karcsi', '0':1});
+        });
+        //#endregion
+
+        //#region simple data, !extend, overwite, new
+        TestConfig.indent--;
+        message('!extend, overwite, new', 1);
+        test('should merge 2 arrays', ctx => {
+            var merged = mergeObjects(arr1, clone(arr2), mergeObjects.COMMON | mergeObjects.OVERWRITE | mergeObjects.NEW);
+            ctx.assert(merged, '!=', arr2);
+            ctx.assert(merged, ':=', arr1);
+        });
+
+        test('should merge 2 objects', ctx => {
+            var merged = mergeObjects(person1, clone(person2), mergeObjects.COMMON | mergeObjects.OVERWRITE | mergeObjects.NEW);
+            ctx.assert(merged, '!=', person2);
+            ctx.assert(merged, ':=', { 'id':12, 'name':'Charlie', '0':0 });
+        });
+
+        test('should merge array and object', ctx => {
+            var merged = mergeObjects(arr1, clone(person2), mergeObjects.COMMON | mergeObjects.OVERWRITE | mergeObjects.NEW);
+            ctx.assert(merged, '!=', person2);
+            ctx.assert(merged, ':=', { 'id':12, 'name':'Karcsi', '0':1 });
+        });
+        //#endregion
+
+        //#region simple data, !extend, !overwite, new - cloning
+        TestConfig.indent--;
+        message('!extend, !overwite, new', 1);
+        test('should clone array', ctx => {
+            var merged = mergeObjects(arr1, clone(arr2), mergeObjects.COMMON | mergeObjects.NEW);
+            ctx.assert(merged, '!=', arr2);
+            ctx.assert(merged, ':=', arr2);
+        });
+
+        test('should clone object', ctx => {
+            var merged = mergeObjects(person1, clone(person2), mergeObjects.COMMON | mergeObjects.NEW);
+            ctx.assert(merged, '!=', person2);
+            ctx.assert(merged, ':=', person2);
+        });
+        //#endregion
+
+        TestConfig.indent--;
+        TestConfig.indent--;
+        message('Complex data', 1);
+        arr1 = [person1, person2];
+        arr2 = [person2, person3];
+        var func = function() { return 1; };
+        person1.items = ['alma', func, [1,2,3]];
+        person2.items = ['barack', func, ['a', 'b']];
+        person3.items = ['citrom', null];
+        //#region simple data, extend, !overwite, !new
+        message('extend, !overwite, !new', 1);
+        test('should merge 2 arrays', ctx => {
+            var merged = mergeObjects(arr1, clone(arr2));
+            ctx.assert(merged, ':=', [person2, person3, person1, person2]);
+        });
+
+        test('should merge 2 objects', ctx => {
+            var merged = mergeObjects(person1, clone(person2));
+            var expected = { 'id':12, 'name':'Karcsi', '0':0, 'items':['barack', func, ['a', 'b']], 'name2':'Charlie', 'items2':['alma', func, [1,2,3]], 'role': 'employee', 'age':43 };
+            ctx.assert(merged, ':=', expected);
+        });
+
+        test('should merge array and object', ctx => {
+            var merged = mergeObjects(arr1, clone(person2));
+            ctx.assert(merged, '!=', person2);
+            ctx.assert(merged, ':=', { '0':0, '1':person2, 'id':12, 'name':'Karcsi', 'items':person2.items, '02':person1 });
+        });
+        //#endregion
+
+        return;
+
+        test('should merge 2 objects (simple)', ctx => {
+            var merged = mergeObjects({'role':'employee', 'age': 43 }, clone({'id':12, 'name':'Karcsi'}));
+            ctx.assert(merged, ':=', {'id':12, 'name':'Karcsi', 'role':'employee', 'age': 43 });
+        });
+
+        test('should merge array and object (simple)', ctx => {
+            var merged = mergeObjects([1,3,5], clone({'id':12, 'name':'Karcsi'}));
+            ctx.assert(merged, ':=', {'id':12, 'name':'Karcsi', '0': 1, '1':3, '2':5 });
+        });
+
+        return;
+
+        test('should merge 2 objects', ctx => {
+            var merged = mergeObjects(itemList, clone(person));
             var expected = {
                 "id": 12,
                 "name": "James",
@@ -487,11 +645,11 @@ include('/lib/base/html.js');
     }
 
     var tests = () => [
-        test_hash,
-        test_deepComapre,
+        // test_hash,
+        // test_deepComapre,
         // test_getObjectAt,
         // test_clone,
-        // test_mergeObjects,
+        test_mergeObjects,
         // test_getSetObjectAt,
         // test_load,
         // test_binSearch,
