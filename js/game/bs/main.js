@@ -64,6 +64,8 @@ Game.prototype.init = async function init() {
     // ge.getInstance('sm1').addForces([
     //     { 'type':'point', 'center': new V3(this.center), 'amount': new V3(10.0) }
     // ]);
+
+    var dummy = this.addBall(new V3(2560.0, 862.0, 0.0), new V3(0.0));
     ge.prerender();
 };
 
@@ -145,7 +147,6 @@ Game.prototype.handleInputs = function handleInputs() {
         this.selectedBall = a;
         a.isActive = !a.isActive;
     }
-
     var mpos = this.mouseHandler.position;
     if (mpos.x > this.borders[0] && mpos.x < this.borders[2] && mpos.y > this.borders[1] && mpos.y < this.borders[3]) {
         // place ball
@@ -163,7 +164,7 @@ Game.prototype.handleInputs = function handleInputs() {
                     case 1: // sizing
                         var d = this.selectedBall.current.position.diff(mpos);
                         if (d.len < 0.1) {
-                            var s = this.selectedBall.sprite.scale.x;
+                            var s = this.selectedBall.sprite.getScale().x;
                             if (s < 0.8) {
                                 this.setBallSize(this.selectedBall, s + 0.002);
                             }
@@ -230,6 +231,7 @@ Game.prototype.update = function update(dt) {
 //#region Ball management
 Game.prototype.setBall = function setBall(ball, p, v) {
     var spr = ball.sprite;
+    spr.visible = true;
     spr.setFrame(this.spriteFrame);
     var s = rand(0.3, 0.5);
     var color = new V3([rand(0.5, 1.0), rand(0.5, 1.0), rand(0.5, 1.0)]);

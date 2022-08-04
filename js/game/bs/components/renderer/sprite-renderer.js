@@ -11,7 +11,7 @@ include('./renderer.js');
     };
 
     SpriteRenderer.prototype.resize = function resize() {
-        this.sprMgr.resize(this.engine.resolution);
+        this.sprMgr.resize(this.engine.resolution[0], this.engine.resolution[1]);
     };
 
     SpriteRenderer.prototype.prerender = function prerender() {
@@ -24,8 +24,7 @@ include('./renderer.js');
     };
 
     SpriteRenderer.prototype.update = function update(obj, args) {
-        obj.sprite.position.set(obj.current.position);
-        obj.sprite.isDirty = obj.isDirty;
+        obj.sprite.setPosition(obj.current.position);
         this.sprMgr.updateSprite(obj.sprite);
     };
 

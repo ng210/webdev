@@ -14,7 +14,7 @@ include('/lib/math/segment.js');
         if (this.program) {
             M44.projection(gl.canvas.width, gl.canvas.height, 1, this.projection);
             //M44.identity(this.projection);
-            this.program.uniforms.u_projection.value = this.projection;
+            //this.program.uniforms.u_projection.value = this.projection;
         }
     };
 
