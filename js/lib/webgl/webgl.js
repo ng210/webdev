@@ -281,7 +281,7 @@
 		var attributes = this.extractVariables(shaders[gl.VERTEX_SHADER]);
 		var vsUniforms = this.extractVariables(shaders[gl.VERTEX_SHADER], true);
 		var fsUniforms = this.extractVariables(shaders[gl.FRAGMENT_SHADER], true);
-		var uniforms = mergeObjects(vsUniforms, fsUniforms);
+		var uniforms = mergeObjects(vsUniforms, fsUniforms, mergeObjects.NEW);
         for (var ak in attributes) {
 			var attrib = attributes[ak];
 			attrib.ref = gl.getAttribLocation(this.prg, ak);

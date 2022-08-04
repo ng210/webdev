@@ -1,5 +1,5 @@
 include('/lib/player/player-lib.js');
-include('/lib/player/iadapter-ext.js');
+include('/lib/player/player-ext.js');
 include('/lib/webgl/sprite/sprite-manager.js');
 
 (function() {

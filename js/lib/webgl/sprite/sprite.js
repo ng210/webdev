@@ -3,32 +3,30 @@ include('/lib/math/v2.js');
 include('/lib/math/v3.js');
 include('/lib/math/v4.js');
 include('/lib/math/m44.js');
-//include('/lib/player/player-lib.js');
+include('/lib/math/fn.js');
 
 (function() {
     function Controller(v) {
+        this.time = 0;
         this.value = v;
-        this.delta = 0;
-        this.target = v;
+        this.start = v;
+        this.dt = 0;        // delta time of change
+        this.dv = 0;        // delta value of change
         this.isActive = false;
+        this.transform = Sprite.Transform.basic;
     }
     Controller.prototype.update = function update(dt) {
-        if (this.value != this.target) {
-            var dv = this.delta * dt;
-            this.value += dv;
-            if (dv < 0) {
-                if (this.value < this.target) {
-                    this.value = this.target;
-                    this.isActive = false;
-                }
+        var isDirty = this.isActive;
+        if (this.time < 1 && dt != 0) {
+            this.time += dt/this.dt;
+            if (this.time >= 1) {
+                this.value = this.start + this.dv;
+                this.isActive = false;
             } else {
-                if (this.value > this.target) {
-                    this.value = this.target;
-                    this.isActive = false;
-                }
+                this.value = this.start + this.transform();
             }
         }
-        return this.isActive;
+        return isDirty;
     }
 
     function Sprite(sprMgr) {
@@ -107,7 +105,7 @@ include('/lib/math/m44.js');
         this.controllers[Sprite.Fields.cr].value = c[0];
         this.controllers[Sprite.Fields.cg].value = c[1];
         this.controllers[Sprite.Fields.cb].value = c[2];
-        this.controllers[Sprite.Fields.ca].value = c[3];
+        this.controllers[Sprite.Fields.ca].value = c[3] == undefined ? 1.0 : c[3];
         //this.color.set(c);
         this.isDirty = true;
     };
@@ -132,10 +130,19 @@ include('/lib/math/m44.js');
             }            
         }
     };
-    Sprite.prototype.setDelta = function setDelta(ci, dt, dv) {
+    Sprite.prototype.setDelta = function setDelta(ci, dt, dv, transform) {
         var c = this.controllers[ci];
-        c.delta = dv/dt;
-        c.target = c.value + dv;
+        c.time = 0
+        c.dt = dt;
+        c.dv = dv;
+        c.start = c.value;
+        c.transform = typeof transform === 'function' ? transform : Sprite.Transform.basic;
+        c.isActive = true;
+    };
+    Sprite.prototype.reset = function reset(ci, v) {
+        var c = this.controllers[ci];
+        c.time = 0;
+        c.value = v;
         c.isActive = true;
     };
 
@@ -171,6 +178,11 @@ include('/lib/math/m44.js');
         'cg':   7,
         'cb':   8,
         'ca':   9
+    };
+
+    Sprite.Transform = {
+        'basic': function() { return this.dv * Fn.linear(this.time); },
+        'smooth': function() { return this.dv * Fn.smoothstep(this.time); }
     };
 
     publish(Sprite, 'Sprite', webGL);

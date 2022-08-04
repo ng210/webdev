@@ -1,5 +1,4 @@
 include('/lib/glui/glui-lib.js');
-include('/lib/player/player-ext.js');
 include('./sprite-adapter-ext.js');
 
 (function() {
@@ -208,15 +207,40 @@ include('./sprite-adapter-ext.js');
     async function test_renderSprites() {
         header('Render sprites');
         var sprMgr = await setup(null, 20);
+        var scale = 2;
         var unit = (gl.canvas.width - 20)/sprMgr.map.frames.length;
-        var y = (gl.canvas.height - sprMgr.map.frames[0][3])/2;
+        var y = (gl.canvas.height - scale*sprMgr.map.frames[0][3])/2;
+        for (var i=0; i<sprMgr.map.frames.length; i++) {
+            var spr = sprMgr.addSprite();
+            spr.setFrame(i);
+            var x = unit/2 + i*unit;
+            spr.setPosition([x, y, 0]);
+            spr.setRotationZ(0);
+            spr.setScale([scale, scale]);
+            spr.setColor([1,1,1,1]);
+            spr.show(true);
+        }
+        sprMgr.update();
+        sprMgr.render();
+        await button('Next');
+        tearDown(sprMgr);
+    }
+
+    async function test_renderSprites_LoRes() {
+        header('Render sprites lores');
+        var sprMgr = await setup(null, 20);
+        var scale = 2;
+        sprMgr.resize(800, 600);
+        var unit = (gl.canvas.width - 20)/sprMgr.map.frames.length;
+        var y = (gl.canvas.height - scale*sprMgr.map.frames[0][3])/2;
         for (var i=0; i<sprMgr.map.frames.length; i++) {
             var spr = sprMgr.addSprite();
             spr.show(true);
             spr.setFrame(i);
-            spr.setPosition([unit/2 + i*unit, y, 0]);
+            var x = unit/2 + i*unit;
+            spr.setPosition([x, y, 0]);
             spr.setRotationZ(0);
-            spr.setScale([4.0, 4.0]);
+            spr.setScale([scale, scale]);
             spr.setColor([1,1,1,1]);
         }
         sprMgr.update();
@@ -224,7 +248,7 @@ include('./sprite-adapter-ext.js');
         await button('Next');
         tearDown(sprMgr);
     }
-    
+
     async function test_transformSprites() {
         header('Transform sprites');
         var sprMgr = await setup('./res/test.spr.json', 20);
@@ -241,8 +265,7 @@ include('./sprite-adapter-ext.js');
         sprMgr.render();
 
         var transforms = [ frame => sprMgr.translate(new V3(0.25*Math.sin(0.02*frame), 0.2*Math.sin(0.1 + 0.05*frame), 0)) ];
-
-        glui.initialize();
+        await glui.initialize();
         var fpsDisplay = new FpsDisplay();
         await fpsDisplay.initialize();
         var playback = new Playback();
@@ -427,6 +450,7 @@ include('./sprite-adapter-ext.js');
         test_spriteManager,
         test_createSprite,
         test_renderSprites,
+        test_renderSprites_LoRes,
         test_transformSprites,
         test_animateSprites1,
         test_animateSprites2,

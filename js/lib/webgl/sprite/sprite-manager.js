@@ -17,9 +17,9 @@ include('sprite.js');
         this.program = null;
         this.spriteAttributeBuffer = null;
         this.spriteAttributeData = null;
-        this.projectionMatrix = null;
+        this.projectionMatrix = M44.identity();
         this.viewMatrix = M44.identity();
-        this.projectionView = null;
+        this.projectionView = M44.identity();
         this.matrixChanged = false;
 
         this.fps = 0;
@@ -49,10 +49,9 @@ include('sprite.js');
         }
         await this.createMap(mapUrl, errors);
         if (errors.length > 0) throw new Error(`Could not load resources: ${errors.join()}`);
-        // create shaders and program
-        this.projectionMatrix = M44.projection(gl.canvas.width, gl.canvas.height, 1);
-        this.projectionView = this.projectionMatrix.mul(this.viewMatrix);
+        this.resize(gl.canvas.clientWidth, gl.canvas.clientHeight);
 
+        // create shaders and program
         var bufferId = webGL.buffers.length;
         this.program = webGL.createProgram(shaders, {
             a_position: { buffer:bufferId },
@@ -72,10 +71,9 @@ include('sprite.js');
     SpriteManager.prototype.resize = function resize(width, height) {
         if (width) gl.canvas.width = width || window.innerWidth;
         if (height) gl.canvas.height = height || window.innerHeight;
-        if (this.program) {
-            M44.projection(gl.canvas.width, gl.canvas.height, 1, this.projection);
-            this.program.uniforms.u_projectionView.value = this.projection;
-        }
+        M44.projection(gl.canvas.width, gl.canvas.height, 1, this.projectionMatrix);
+        this.projectionMatrix.mul(this.viewMatrix, this.projectionView);
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     };
 
     SpriteManager.prototype.destroy = async function destroy() {
@@ -97,7 +95,7 @@ include('sprite.js');
         var res = await load(url);
         if (res.error) errors.push(res.error.message);
         else {
-            var map = mergeObjects(res.data);
+            var map = clone(res.data);
             res = await load(map.image, res.resolvedUrl.getPath());
             if (res.error) errors.push(res.error.message);
             else {
@@ -293,7 +291,7 @@ include('sprite.js');
                 canvas.style.top = '0px';
         
             }
-            gl = canvas.getContext('webgl');
+            gl = canvas.getContext('webgl2');
             if (gl == null) throw new Error('webGL not supported!');
         }
     };
