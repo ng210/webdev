@@ -10,7 +10,7 @@ include('/lib/type/type.js');
             if (!isNaN(args.min)) this.min = args.min;
             if (!isNaN(args.max)) this.max = args.max;
         }
-
+        if (this.default == null) this.default = 0;
     }
     extend(Type, NumberType);
 
@@ -21,6 +21,7 @@ include('/lib/type/type.js');
         return r;
     };
     NumberType.prototype.validate = function validate(value, results, path) {
+        results = results || [];
         var isValid = true;
         var v = value + 0;
         var messages = [];
@@ -46,9 +47,9 @@ include('/lib/type/type.js');
     NumberType.prototype.random = function random(min, max) {
         return Math.random()*(max - min) + min;
     };
-    NumberType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
-        return this.createValue(0, tracking, isPrimitive);
-    };
+    // NumberType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+    //     return this.createValue(0, tracking, isPrimitive);
+    // };
     //#endregion
 
     //#region IntType

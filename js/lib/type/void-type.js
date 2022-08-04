@@ -15,9 +15,9 @@ include('/lib/type/type.js');
     // VoidType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
     //     return this.createValue(value);
     // };
-    VoidType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
-        return this.createValue(null, tracking, isPrimitive);
-    };
+    // VoidType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+    //     return this.createValue(null, tracking, isPrimitive);
+    // };
 
     publish(VoidType, 'VoidType');
 })();

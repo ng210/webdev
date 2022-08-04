@@ -12,11 +12,18 @@ include('/lib/type/type.js');
             if (args.valueType) {
                 this.valueType = args.valueType;
             }
+            if (this.default == null) {
+                var key = this.keyType.default;
+                var value = this.valueType.default;
+                this.default = {};
+                this.default[key] = value;
+            }
         }
     }
     extend(Type, MapType);
 
     MapType.prototype.validate = function validate(map, results, path) {
+        results = results || [];
         path = path || [];
         var isValid = true;
         if (typeof map !== 'object') {
@@ -43,7 +50,7 @@ include('/lib/type/type.js');
     };
 
     MapType.prototype.createValue = function createValue(map, tracking, isPrimitive) {
-        var value = isPrimitive ? {} : new Map();
+        var value = {};
         tracking = tracking || {};
         if (this.addTracking(tracking, this.keyType) && this.addTracking(tracking, this.valueType)) {
             if (map == null) {
@@ -51,13 +58,13 @@ include('/lib/type/type.js');
                     var key = null;
                     do {
                         key = this.keyType.createValue(null, tracking, isPrimitive);
-                    } while (value.has(key.valueOf()));
-                    value.set(key, this.valueType.createValue(null, tracking));
+                    } while (value[key.valueOf()] !== undefined);
+                    value[key] = this.valueType.createValue(null, tracking);
                 }
             } else {
                 for (var key in map) {
                     var v = map.constructor == Map ? map.get(key) : map[key];
-                    value.set(this.keyType.createValue(key, tracking, isPrimitive), this.valueType.createValue(v, tracking, isPrimitive));
+                    value[this.keyType.createValue(key, tracking, isPrimitive)] = this.valueType.createValue(v, tracking, isPrimitive);
                 }
             }
             this.removeTracking(tracking, this.keyType);
@@ -66,19 +73,19 @@ include('/lib/type/type.js');
         if (!isPrimitive) this.setType(value);
         return value;
     };
-    MapType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
-        var map = {};
-        tracking = tracking || {};
-        if (this.updateTracking(tracking, this.keyType) && this.updateTracking(tracking, this.valueType)) {
-            var key = this.keyType.createDefaultValue(tracking, isPrimitive);
-            var value = this.valueType.createDefaultValue(tracking, isPrimitive);
-            map[key] = value;
-            this.removeTracking(tracking, this.keyType);
-            this.removeTracking(tracking, this.valueType);
-        }
-        this.setType(map);
-        return map;
-    };
+    // MapType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+    //     var map = {};
+    //     tracking = tracking || {};
+    //     if (this.updateTracking(tracking, this.keyType) && this.updateTracking(tracking, this.valueType)) {
+    //         var key = this.keyType.createDefaultValue(tracking, isPrimitive);
+    //         var value = this.valueType.createDefaultValue(tracking, isPrimitive);
+    //         map[key] = value;
+    //         this.removeTracking(tracking, this.keyType);
+    //         this.removeTracking(tracking, this.valueType);
+    //     }
+    //     this.setType(map);
+    //     return map;
+    // };
     MapType.prototype.build = function build(definition, schema, path) {
         var type = MapType.base.build.call(this, definition, schema, path);
         var keyType = schema.getOrBuildType(type.keyType);

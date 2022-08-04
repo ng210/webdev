@@ -1,21 +1,25 @@
 include('/lib/type/type.js');
 (function() {    
     function EnumType(name, type, args) {
-        EnumType.base.constructor.call(this, name, type, args);
         this.values = [];
         if (args) {
             if (args.values) {
                 this.values = args.values;
+                if (this.default == null) {
+                    this.default = this.values[0];
+                }
             }
         }
+        EnumType.base.constructor.call(this, name, type, args);
     }
     extend(Type, EnumType);
 
     EnumType.prototype.validate = function validate(value, results, path) {
+        results = results || [];
         var isValid = true;
         var messages = [];
         if (typeof value === 'object') value = value.valueOf();
-        var s2 = JSON.stringify(value)
+        var s2 = JSON.stringify(value);
         var ix = this.values.findIndex(x => {
             var s1 = JSON.stringify(x);
             return s1 == s2;
@@ -44,9 +48,9 @@ include('/lib/type/type.js');
     // EnumType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
     //     return this.createValue(value, null, true);
     // };
-    EnumType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
-        return this.createValue(this.values[0], tracking, isPrimitive);
-    };
+    // EnumType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+    //     return this.createValue(this.values[0], tracking, isPrimitive);
+    // };
 
     publish(EnumType, 'EnumType');
 })();

@@ -8,6 +8,10 @@ include('/lib/type/type.js');
                 this.values = args.values;
             }
         }
+
+        if (this.default == null && this.schema) {
+            this.default = clone(this.schema.types.get('object'));
+        }
     }
     extend(Type, TypeType);
 
@@ -18,16 +22,16 @@ include('/lib/type/type.js');
         }
         if (type == null) {
             var ix = Math.floor(Math.random() * this.schema.typeList.length);
-            type = this.values.getAt(ix);
+            type = this.values[ix];
         }
         return clone(type);
     };
     // TypeType.prototype.createPrimitiveValue = function createPrimitiveValue(obj, tracking) {
     //     return obj ? this.createValue(obj, tracking) : this.createDefaultValue(tracking);
     // };
-    TypeType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
-        return clone(this.schema.typeList[0]);
-    };
+    // TypeType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+    //     return clone(this.schema.typeList[0]);
+    // };
     TypeType.prototype.parse = function parse(term) {
         return term != '' ? TypeType.base.parse.call(this, term) : false;
     };

@@ -16,16 +16,12 @@ function createTypes() {
     types.enum = new EnumType('enum', null, { 'values': testData.enumValues });
     testData.list = [1,2,3,4,5];
     types.list = new ListType('list', null, { 'elemType':types.int, 'length': 5 });
-    testData.map = new Map().set(0, 'red').set(1, 'green').set(2, 'blue');
+    testData.map = { 0: 'red', 1: 'green', 2: 'blue' };
     types.map = new MapType('map', null, { 'keyType':types.int, 'valueType':types.string });
     types.person = new ObjectType('person', null, {
         'attributes': {
-            'name':{
-                'type':types.string, 'isRequired':false
-            },
-            'id': {
-                'type':types.uint8
-            }
+            'name':{ 'type':types.string, 'isRequired':false, 'default':'Person' },
+            'id': { 'type':types.uint8, 'default':-1 }
         }
     });
     testData.person1 = types.person.createValue({
@@ -82,9 +78,10 @@ function test_types() {
         ctx.assert(types.persons.parse(JSON.stringify(testData.persons[0])), ':=', testData.persons[0]);
         ctx.assert(types.list.parse('[1,2,3,4,5]'), ':=', testData.list);
         ctx.assert(types.map.parse('{"0":"red","1":"green","2":"blue"}'), ':=', testData.map);
-        var person2 = { 'id':2 };
         ctx.assert(types.person.parse(JSON.stringify(testData.person1)), ':=', testData.person1);
-        ctx.assert(types.person.parse(JSON.stringify(person2)), ':=', person2);
+        var person2 = { 'id':2, 'name':'Joe' };
+        var person2a = types.person.parse(JSON.stringify(person2));
+        ctx.assert(person2a, ':=', person2);
     });
 
     test('Should parse values with error', ctx => {
@@ -547,7 +544,7 @@ function test_schema() {
         type = schema.types.get('MyObjectList');
         ctx.assert(type, '!null');
         ctx.assert(type.baseType.name, '=', 'list');
-        ctx.assert(type.elemType.name, '=', 'MyObject');
+        ctx.assert(type.elemType, '=', schema.types.get('MyObject'));
     });
 
     var objList1 = [
@@ -650,7 +647,7 @@ function test_schema() {
         var mySchema = new Schema();
         mySchema.addDefaultTypes();
         mySchema.addTypes([
-            mySchema.getOrBuildType({
+            mySchema.buildType({
                 'name':'Code',
                 'attributes': {
                     'types':    { 'type':'typeList' },
@@ -658,7 +655,7 @@ function test_schema() {
                     'master':   { 'type':'type' }
                 }
             }),
-            mySchema.getOrBuildType({
+            mySchema.buildType({
                 'name': 'Method',
                 'attributes': {
                     'name':     { 'type':'string100' },
@@ -667,9 +664,10 @@ function test_schema() {
                     'returns':  { 'type':'type' }
                 }
             }),
-            mySchema.getOrBuildType({ 'name':'string100', 'type':'string', 'length':100 }),
-            mySchema.getOrBuildType({ 'name':'int100', 'type':'int', 'min':0, 'max':100 })
+            mySchema.buildType({ 'name':'string100', 'type':'string', 'length':100 }),
+            mySchema.buildType({ 'name':'int100', 'type':'int', 'min':0, 'max':100 })
         ]);
+debugger
         mySchema.checkMissingTypes();
         ctx.assert(mySchema.types.get('Code'), '!null');
         ctx.assert(mySchema.types.get('Code').attributes.get('methods').type.elemType, '=', mySchema.types.get('Method'));
@@ -949,23 +947,25 @@ async function test_mergeObjects() {
         ctx.assert(joe, ':=', expected);
     });
     test('Should merge 2 objects of different types', ctx => {
+        message(JSON.stringify(joe));
+        message(JSON.stringify(acme));
         schema.mergeObjects(joe, acme, mergeObjects.OVERWRITE);
         message(JSON.stringify(acme));
-        var expected = { 'id':'p1', 'name':'Joe', 'director':'p2', 'employees': ['p1', 'p2'] };
+        var expected = { 'id':'p1', 'name':'Joe', 'director':'p2', 'employees': ['p1', 'p2'], 'age':24, 'role':'dummy' };
         ctx.assert(acme, ':=', expected);
     });
 }
 
 var tests = () => [
-    test_types,
-    test_complex_type,
-    test_type_enum,
-    test_compare,
+    // test_types,
+    // test_complex_type,
+    // test_type_enum,
+    // test_compare,
     test_schema,
-    test_create_schema,
-    test_build_schema,
-    test_complex_schema,
-    test_mergeObjects
+    // test_create_schema,
+    // test_build_schema,
+    // test_complex_schema,
+    // test_mergeObjects
 ];
 
 publish(tests, 'Type tests');

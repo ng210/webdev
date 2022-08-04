@@ -5,7 +5,14 @@ include('/lib/type/validation-result.js');
         this.baseType = type;
         this.isNumeric = false;
         this.isPrimitive = true;
-        this.schema = args && args.schema ? args.schema : null;
+        this.default = null;
+        this.schema = null;
+        if (args) {
+            this.schema = args.schema;
+            if (this.validate(args.default)) {
+                this.default = args.default;
+            }
+        }
     }
     Object.defineProperties(Type.prototype, {
         "basicType": {
@@ -39,7 +46,7 @@ include('/lib/type/validation-result.js');
         return this.createValue(value, tracking, true);
     };
     Type.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
-        throw new Error('Not implemented!');
+        return this.createValue(this.default, tracking, isPrimitive);
     };
     Type.prototype.compare = function compare(a, b) {
         return JSON.serialize(a).localeCompare(JSON.serialize(b));

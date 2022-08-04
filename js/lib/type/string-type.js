@@ -6,10 +6,12 @@ include('/lib/type/type.js');
         if (args) {
             if (args.length) this.length = args.length;
         }
+        if (this.default == null) this.default = '';
     }
     extend(Type, StringType);
 
     StringType.prototype.validate = function validate(value, results, path) {
+        results = results || [];
         var isValid = true;
         var messages = [];
         var v = value && value.valueOf();
@@ -28,20 +30,19 @@ include('/lib/type/type.js');
         return isValid;
     };
     StringType.prototype.createValue = function createValue(value, tracking, isPrimitive) {
-        if (value !== null) {
-            if (value === undefined) {
-                var length = this.length || 20;
-                var arr = [];
-                var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVXYZWabcdefghijklmnopqrstuvxyzw_";
-                for (var i=0; i<length; i++) {
-                    arr.push(chars[Math.floor(chars.length*Math.random())]);
-                }
-                value = arr.join('');
-                
-            } else {
-                value = value + '';
+        if (value === null || value === undefined) {
+            var length = this.length || 20;
+            var arr = [];
+            var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVXYZWabcdefghijklmnopqrstuvxyzw_";
+            for (var i=0; i<length; i++) {
+                arr.push(chars[Math.floor(chars.length*Math.random())]);
             }
+            value = arr.join('');
+            
+        } else {
+            value = value + '';
         }
+
         if (!isPrimitive) {
             value = new String(value);
             this.setType(value);
@@ -67,9 +68,9 @@ include('/lib/type/type.js');
     //     }
     //     return v;
     // };
-    StringType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
-        return this.createValue('', tracking, isPrimitive);
-    };
+    // StringType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+    //     return this.createValue('', tracking, isPrimitive);
+    // };
     StringType.prototype.compare = function compare(a, b) {
         //return a.localeCompare(b);
         var result = 0;

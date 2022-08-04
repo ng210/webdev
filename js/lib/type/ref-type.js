@@ -9,6 +9,7 @@ include('/lib/type/type.js');
     extend(Type, RefType);
 
     RefType.prototype.validate = function validate(value, results, path) {
+        results = results || [];
         var isValid = false;
         var messages = [];
         if (this.schema) {
@@ -42,10 +43,10 @@ include('/lib/type/type.js');
     //     }
     //     return ref;
     // };
-    RefType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
-        var v = this.baseType.createDefaultValue(tracking, isPrimitive);
-        return v[this.baseType.ref];
-    };
+    // RefType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+    //     var v = this.baseType.createDefaultValue(tracking, isPrimitive);
+    //     return v[this.baseType.ref];
+    // };
 
     publish(RefType, 'RefType');
 })();

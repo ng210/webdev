@@ -13,14 +13,18 @@ include('/lib/type/type.js');
                 this.length = args.length;
             }
         }
+        if (this.default == null && this.elemType) {
+            this.default = this.elemType.default;
+        }
     }
     extend(Type, ListType);
 
     ListType.prototype.validate = function validate(values, results, path) {
         path = path || [];
+        results = results || [];
         var isValid = true;
         var errors = [];
-        if (typeof values.values === 'function') {
+        if (values != null && typeof values.values === 'function') {
             var it = values.values();
             var item = null;
             var count = 0;
@@ -43,36 +47,38 @@ include('/lib/type/type.js');
     };
 
     ListType.prototype.createValue = function createValue(list, tracking, isPrimitive) {
-        var createValue = isPrimitive ? this.elemType.createPrimitiveValue : this.elemType.createValue;
-        var v = [];
-        tracking = tracking || {};
-        if (this.addTracking(tracking)) {
-            if (list != undefined) {
-                for (var i=0; i<list.length; i++) {
-                    v.push(createValue.call(this.elemType, list[i], tracking, isPrimitive));
+        if (this.elemType instanceof Type) {
+            var createValue = isPrimitive ? this.elemType.createPrimitiveValue : this.elemType.createValue;
+            var v = [];
+            tracking = tracking || {};
+            if (this.addTracking(tracking)) {
+                if (list != undefined) {
+                    for (var i=0; i<list.length; i++) {
+                        v.push(createValue.call(this.elemType, list[i], tracking, isPrimitive));
+                    }
+                } else {
+                    for (var i=0; i<5; i++) {
+                        v.push(createValue.call(this.elemType, null, tracking, isPrimitive));
+                    }
                 }
-            } else {
-                for (var i=0; i<5; i++) {
-                    v.push(createValue.call(this.elemType, null, tracking, isPrimitive));
-                }
+                this.removeTracking(tracking);
             }
-            this.removeTracking(tracking);
-        }
-        if (!isPrimitive) this.setType(v);
-        return v;
-    };
-    ListType.prototype.createPrimitiveValue = function createPrimitiveValue(list, tracking) {
-        return this.createValue(list, tracking, true);
-    };
-    ListType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
-        var v = null;
-        if (typeof this.ctor === 'function') {
-            v = Reflect.construct(this.ctor, []);
-        } else {
-            v = this.createValue([], tracking, isPrimitive); 
+            if (!isPrimitive) this.setType(v);
         }
         return v;
     };
+    // ListType.prototype.createPrimitiveValue = function createPrimitiveValue(list, tracking) {
+    //     return this.createValue(list, tracking, true);
+    // };
+    // ListType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+    //     var v = null;
+    //     if (typeof this.ctor === 'function') {
+    //         v = Reflect.construct(this.ctor, []);
+    //     } else {
+    //         v = this.createValue([], tracking, isPrimitive); 
+    //     }
+    //     return v;
+    // };
     ListType.prototype.build = function build(definition, schema, path) {
         var type = ListType.base.build.call(this, definition, schema, path);
         var elemType = schema.getOrBuildType(type.elemType);
@@ -80,6 +86,7 @@ include('/lib/type/type.js');
             type.elemType = elemType;
         } else {
             schema.addMissingType(type.elemType, t => type.elemType = t, [...path, 'elemType']);
+            schema.addMissingType(type.elemType, t => type.createDefaultValue(), [...path]);
         }
         return type;
     };
@@ -87,16 +94,19 @@ include('/lib/type/type.js');
         for (var i=0; i<source.length; i++) {
             var v = source[i];
             var results = [];
-            var type = v.__type__;
-            if (!type && this.schema) {
-                type = this.schema.types.get(v.type);
-            }
-            if (!type) type = this.elemType;
+            var type = v.__type__ || this.elemType; // schema.types.get('object');
+//             if (!type && this.schema) {
+// debugger
+//                 type = this.schema.types.get(v.type);
+//             }
+//            if (!type) type = this.elemType;
             type.validate(v, results);
             if (results.length == 0) {
                 if (flags & self.mergeObjects.OVERWRITE) {
                     if (typeof this.elemType.merge === 'function') {
-                        if (target[i] == undefined) target[i] = type.createDefaultValue(null, true);
+                        if (target[i] == undefined) {
+                            target[i] = type.createDefaultValue(null, true);
+                        }
                         type.merge(v, target[i], flags);
                     } else {
                         target[i] = v;

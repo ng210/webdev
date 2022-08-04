@@ -201,13 +201,14 @@ include('/lib/data/dictionary.js');
             'void': new VoidType('void')
         };
         types.push(...Object.values(basicTypes));
+        var typeList = new ListType('typeList',    basicTypes.list, { 'elemType': basicTypes.type });
         var listTypes = [
             new ListType('boolList',    basicTypes.list, { 'elemType': basicTypes.bool }),
             new ListType('intList',     basicTypes.list, { 'elemType': basicTypes.int }),
             new ListType('floatList',   basicTypes.list, { 'elemType': basicTypes.float }),
             new ListType('stringList',  basicTypes.list, { 'elemType': basicTypes.string }),
             new ListType('objectList',  basicTypes.list, { 'elemType': basicTypes.object }),
-            new ListType('typeList',    basicTypes.list, { 'elemType': basicTypes.type }),
+            typeList,
             new ListType('voidList',    basicTypes.list, { 'elemType': basicTypes.void })
         ];
         types.push(...listTypes);
@@ -246,18 +247,21 @@ include('/lib/data/dictionary.js');
         var attributeType = new ObjectType('attribute', basicTypes.object, {
             'ref':'name',
             'attributes': {
+                'default': { 'type': basicTypes.void, 'isRequired':false },
                 'name': { 'type': basicTypes.string, 'isRequired':true },
                 'type': { 'type': basicTypes.type, 'isRequired':true },
                 'required': { 'type': basicTypes.bool, 'isRequired':false }
-            }
+            },
+            'schema': this
         });
         var functionType = new ObjectType('function', basicTypes.object, {
             'ref':'name',
             'attributes': {
                 'name': { 'type': basicTypes.string, 'isRequired':true },
-                'arguments': { 'type': listTypes.typeList, 'isRequired':false },
+                'arguments': { 'type': typeList, 'isRequired':false },
                 'returnValue': { 'type': basicTypes.type, 'isRequired':false }
-            }
+            },
+            'schema': this
         });
         var typeNameType = new EnumType('typeName');
         var schemanticTypes = [

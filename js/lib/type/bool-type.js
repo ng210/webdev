@@ -2,6 +2,7 @@ include('/lib/type/type.js');
 (function() {
     function BoolType(name, type, args) {
         BoolType.base.constructor.call(this, name, type, args);
+        if (this.default == null) this.default = false;
     }
     extend(Type, BoolType);
 
@@ -31,9 +32,9 @@ include('/lib/type/type.js');
     // BoolType.prototype.createPrimitiveValue = function createPrimitiveValue(value) {
     //     return this.createValue(value, null, true);
     // };
-    BoolType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
-        return this.createValue(false, tracking, isPrimitive);
-    };
+    // BoolType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
+    //     return this.createValue(false, tracking, isPrimitive);
+    // };
     BoolType.prototype.compare = function compare(a, b) {
         var i = a ? 1 : 0;
         var j = b ? 1 : 0;

@@ -18,10 +18,22 @@ include('/lib/data/dictionary.js');
         if (args) {
             if (args.attributes) {
                 for (var i in args.attributes) {
-                    this.addAttribute(i, args.attributes[i].type, args.attributes[i].isRequired);
+                    this.addAttribute(i, args.attributes[i]);
                 }
             }
             if (args.ref && this.attributes.has(args.ref)) this.ref = args.ref;
+        }
+        if (this.default == null) {
+            var v = null;
+            if (typeof this.ctor === 'function') {
+                v = Reflect.construct(this.ctor, []);
+            } else {
+                v = {};
+                this.attributes.iterate( (key, value) => {
+                    v[key] = value.type.default;
+                });
+            }
+            this.default = v;
         }
     }
     extend(Type, ObjectType);
@@ -53,33 +65,42 @@ include('/lib/data/dictionary.js');
     ObjectType.prototype.hasAttribute = function hasAttribute(name) {
         return this.checkAttributes(attrName => attrName == name);
     };
-    ObjectType.prototype.addAttribute = function addAttribute(name, type, isRequired) {
+    ObjectType.prototype.addAttribute = function addAttribute(name, args) {
         var result = this.hasAttribute(name);
         if (!result) {
-            this.attributes.set(name, { 'name': name, 'type': type, 'isRequired': isRequired == undefined ? true : isRequired });
+            this.attributes.set(name, {
+                'default': args.default,
+                'name': name,
+                'type': args.type,
+                'isRequired': args.isRequired == undefined ? true : Boolean(args.isRequired)
+            });
         }
         return !result;
     };
     ObjectType.prototype.validate = function validate(value, results, path, isStrict) {
+        results = results || [];
         path = path || [];
         var isValid = true;
         var errors = [];
-        var keys = Object.keys(value);
-        this.checkAttributes(
-            (key, at) => {
-                if (value[key] != undefined) {
-                    isValid = at.type.validate(value[key], results, [...path, key]) && isValid;
-                    var ix = keys.findIndex(x => x == key);
-                    keys.splice(ix, 1);
-                } else if (at.isRequired) {
-                    errors.push(`Required attribute '${key}' is missing!`);
-                }
-            },
-            results
-        );
-
-        if (isStrict) {
-            errors.push(...keys.map( v => `Type '${this.name}' does not define attribute '${v}'!`));
+        if (value != null && typeof value === 'object') {
+            var keys = Object.keys(value);
+            this.checkAttributes(
+                (key, at) => {
+                    if (value[key] != undefined) {
+                        isValid = at.type.validate(value[key], results, [...path, key]) && isValid;
+                        var ix = keys.findIndex(x => x == key);
+                        keys.splice(ix, 1);
+                    } else if (at.isRequired) {
+                        errors.push(`Required attribute '${key}' is missing!`);
+                    }
+                },
+                results
+            );
+            if (isStrict) {
+                errors.push(...keys.map( v => `Type '${this.name}' does not define attribute '${v}'!`));
+            }
+        } else {
+            errors.push('Value is null or not object!');
         }
 
         if (errors.length > 0) {
@@ -93,14 +114,18 @@ include('/lib/data/dictionary.js');
     };
     ObjectType.prototype.createValue = function createValue(obj, tracking, isPrimitive) {
         var v = {};
-        var results = [];
         tracking = tracking || {};
         if (this.addTracking(tracking)) {
             if (obj) {
                 this.attributes.iterate( (key, value) => {
+                    v[key] = value.default;
                     if (obj[key] !== undefined) {
                         v[key] = value.type.createValue(obj[key], tracking, isPrimitive);
-                    }
+                     }
+                     if (v[key] === undefined) {
+debugger
+                        v[key] = value.type.createDefaultValue(tracking, isPrimitive);
+                     } 
                 });
             } else {
                 this.attributes.iterate( (key, value) => { v[key] = value.type.createValue(null, tracking, isPrimitive); });
@@ -132,19 +157,7 @@ include('/lib/data/dictionary.js');
     //     }
     //     return v;
     // };
-    ObjectType.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
-        var v = null;
-        if (typeof this.ctor === 'function') {
-            v = Reflect.construct(this.ctor, []);
-        } else {
-            v = {};
-            this.attributes.iterate( (key, value) => {
-                v[key] = value.type.createDefaultValue(tracking, isPrimitive);
-            });
-        }
-        if (!isPrimitive) this.setType(v);
-        return v;
-    };
+
     ObjectType.prototype.build = function build(definition, schema, path) {
         path = path || [];
         var type = ObjectType.base.build.call(this, definition, schema, path);
@@ -154,27 +167,30 @@ include('/lib/data/dictionary.js');
                 var attributeType = schema.getOrBuildType(value.type);
                 if (attributeType) {
                     value.type = attributeType;
+                    if (value.default == undefined) value.default = attributeType.default;
                 } else {
                     schema.addMissingType(value.type, t => value.type = t, [...path, name]);
                 }
             }
         });
+        // update default
+        type.default = type.createDefaultValue(null, true);
         return type;
     };
     ObjectType.prototype.merge = function merge(source, target, flags) {
-        var type = source.__type__;
-        if (!type && this.schema) {
-            type = this.schema.types.get(source.type);
-        }
-        if (!type) {
-            type = this;
-        }
+        var type = source.__type__ || this;
+//         if (!type && this.schema) {
+// debugger
+//             type = this.schema.types.get(source.type);
+//         }
+//         if (!type) {
+//             type = this;
+//         }
 
         type.attributes.iterate((k, v) => {
-            if (source[k] != undefined && (target[k] == undefined || (flags & self.mergeObjects.OVERWRITE))) {
+            if (source[k] != undefined && (target[k] == undefined || target[k] == '' || (flags & self.mergeObjects.OVERWRITE))) {
                 if (typeof v.type.merge === 'function') {
                     if (target[k] == undefined) {
-debugger
                         target[k] = v.type.createDefaultValue(null, true);
                     }
                     v.type.merge(source[k], target[k], flags);
