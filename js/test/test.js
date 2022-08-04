@@ -15,20 +15,20 @@ var TestConfig = {
     isSilent: false,
 
     assertion_operators: {
-            "=": { "term": "equal", "action": (a, b) => equals(a,b) },
-            "~": { "term": "match", "action": (a, b) => approx(a, b) },
-            "!=": { "term": "not be", "action": (a, b) => a != b },
-            "<": { "term": "be less", "action": (a, b) => a < b },
-            ">": { "term": "be greater", "action": (a, b) => a > b },
-            "<=": { "term": "be less or equal", "action": (a, b) => a <= b },
-            ">=": { "term": "be greater or equal", "action": (a, b) => a >= b },
-            ":=": { "term": "match", "action": (a, b) => deepCompare(a, b, false) },
-        "empty": { "term": "be empty", "action": a => isEmpty(a) },
-        "!empty": { "term": "have an element", "action": a => !isEmpty(a) },
-        "true":   { "term": "be true", "action": a => a == true },
-        "false":  { "term": "be false", "action": a => a == false },
-        "null":   { "term": "be null", "action": a => a == null },
-        "!null":  { "term": "be not null", "action": a => a != null }
+            '=': { 'term': 'equal', 'action': (a, b) => equals(a,b) },
+            '~': { 'term': 'match', 'action': (a, b) => approx(a, b) },
+            '!=': { 'term': 'not be', 'action': (a, b) => a != b },
+            '<': { 'term': 'be less', 'action': (a, b) => a < b },
+            '>': { 'term': 'be greater', 'action': (a, b) => a > b },
+            '<=': { 'term': 'be less or equal', 'action': (a, b) => a <= b },
+            '>=': { 'term': 'be greater or equal', 'action': (a, b) => a >= b },
+            ':=': { 'term': 'match', 'action': (a, b) => deepCompare(a, b, false) },
+        'empty': { 'term': 'be empty', 'action': a => isEmpty(a) },
+        '!empty': { 'term': 'have an element', 'action': a => !isEmpty(a) },
+        'true':   { 'term': 'be true', 'action': a => a == true },
+        'false':  { 'term': 'be false', 'action': a => a == false },
+        'null':   { 'term': 'be null', 'action': a => a == null },
+        '!null':  { 'term': 'be not null', 'action': a => a != null }
     }
 };
 

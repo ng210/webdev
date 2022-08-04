@@ -97,11 +97,15 @@ app.get('/*', function(req, resp) {
     if (DEBUG) console.debug(`Access '${resPath}'`);
     try {
         var linkedPath = readLinks(resPath);
-        if (!linkedPath && fs.statSync(resPath).isDirectory()) resPath += 'index.html';
+        if (!linkedPath && fs.statSync(resPath).isDirectory()) {
+            resPath = path.resolve(resPath, 'index.html');
+        }
         if (checkWebAccess(resPath)) {
             if (linkedPath) resp.sendFile(linkedPath);
             else if (fs.existsSync(resPath)) resp.sendFile(resPath);
             else throw new Error('File not found!');
+        } else {
+            throw new Error('Not found!');
         }
     } catch (err) {
         resp.status(404).sendFile(`${__dirname}/404.html`);
