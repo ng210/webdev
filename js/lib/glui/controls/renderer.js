@@ -13,6 +13,7 @@ include('/lib/math/fn.js');
         this.backgroundImage = null;
         this.spacing = [0, 0];
         this.padding = [0, 0];
+        this.lastFrame = -1;
     }
     // Renderer.prototype.accumulate = function accumulate(property, isVertical) {
     //     var node = this.control;
@@ -116,7 +117,7 @@ include('/lib/math/fn.js');
         this.bgRepeatY = false;
         var bgColor = this.control.style['background-color'];
         if (bgColor != undefined) {
-            this.backgroundColor = bgColor.toLowerCase() != 'transparent' ? this.backgroundColor = this.toColor(this.control.style['background-color']) : null;
+            this.backgroundColor = bgColor.toLowerCase() != 'transparent' ? this.toColor(this.control.style['background-color']) : null;
         }
         if (this.control.style['background-image'] != 'none') {
             //var res = await load(this.control.style['background-image']);
@@ -135,7 +136,7 @@ include('/lib/math/fn.js');
             }
         }
     };
-    
+
     Renderer.prototype.getAlignment = function getAlignment(align) {
         var tokens = align.split(' ');
         var alignment = 0;
@@ -169,18 +170,19 @@ if (!parent.renderer) debugger;
         return [this.convertToPixel('6em'), this.convertToPixel('2em', true)];
     };
     Renderer.prototype.toColor = function toColor(cssColor) {
-        var color = null;
+        var input = glui.Colors[cssColor.toLowerCase()] || cssColor;
+        var output = null;
         var re = null;
-        if (cssColor.startsWith('rgb')) {
+        if (input.startsWith('rgb')) {
             re = /rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/;
-        } else if (cssColor.startsWith('#')) {
+        } else if (input.startsWith('#')) {
             re = /#(\w\w)(\w\w)(\w\w)/;
         }
         if (re) {
-            var m = cssColor.match(re);
-            color = [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
+            var m = input.match(re);
+            output = [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
         }
-        return color;
+        return output;
     };
     Renderer.prototype.calculateColor = function calculateColor(color, factor) {
         if (color) {
@@ -203,6 +205,7 @@ if (!parent.renderer) debugger;
         return [r, g, b];
     };
     Renderer.prototype.toCssColor = function toCssColor(color) {
+if (!color) debugger
         return `rgb(${color[0]},${color[1]},${color[2]})`;
     };
     Renderer.prototype.render = function render(ctx) {

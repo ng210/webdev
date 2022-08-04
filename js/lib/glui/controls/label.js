@@ -2,6 +2,7 @@ include('value-control.js');
 include('renderer2d.js');
 
 (function() {
+    //#region LabelRenderer2d 
     function LabelRenderer2d() {
         LabelRenderer2d.base.constructor.call(this);
     }
@@ -46,20 +47,30 @@ include('renderer2d.js');
             this.drawText(lines[i], boxes[i][0], boxes[i][1], boxes[i][2], this.color);
         }
     };
+    //#endregion
 
-
+    //#region Label
     function Label(id, template, parent, context) {
         Label.base.constructor.call(this, id, template, parent, context);
         //this.renderer3d = new LabelRenderer3d()
     }
     extend(glui.ValueControl, Label);
 
-    Label.prototype.getTemplate = function getTemplate() {
-        var template = Label.base.getTemplate.call(this);
-        template.type = 'Label';
-        return template;
-    };
+    // Label.prototype.getTemplate = function getTemplate() {
+    //     var template = Label.base.getTemplate.call(this);
+    //     template.type = 'Label';
+    //     return template;
+    // };
     Label.prototype.createRenderer = mode => mode == glui.Render2d ? new LabelRenderer2d() : 'LabelRenderer3d';
+
+    glui.schema.buildType({
+        'name':'Label',
+        'attributes': {
+            'style': { 'type': 'ControlStyle', 'isRequired':false }
+        },
+        'type':'ValueControl'
+    });
+    //#endregion
 
     publish(Label, 'Label', glui);
     publish(LabelRenderer2d, 'LabelRenderer2d', glui);

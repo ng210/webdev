@@ -15,6 +15,16 @@ include('renderer2d.js');
         }
     };
 
+    ContainerRenderer2d.prototype.getBestSizeInPixel = function getBestSizeInPixel(isInner) {
+        var w = 0, h = 0;
+        for (var i=0; i<this.control.items.length; i++) {
+            var item = this.control.items[i];
+            w = Math.max(w, item.offsetLeft + item.width);
+            h = Math.max(h, item.offsetTop + item.height);
+        }
+        return [w, h];
+    };
+
     function Container(id, template, parent, context) {
         this.items = [];
         Container.base.constructor.call(this, id, template, parent, context);
@@ -46,6 +56,16 @@ include('renderer2d.js');
         tmpl.style.border = 'none';
         tmpl.items = [];
         return tmpl;
+    };
+    Container.prototype.applyTemplate = function(tmpl) {
+        if (tmpl) {
+debugger
+            for (var i=0; i<tmpl.items.length; i++) {
+                var objType = glui.schema.types.get(tmpl.items[i].type);
+                objType.setType(tmpl.items[i]);
+            }
+        }
+        return Container.base.applyTemplate.call(this, tmpl);
     };
     Container.prototype.add = function add(ctrl) {
         // if (ctrl.parent != this) {
@@ -84,7 +104,14 @@ include('renderer2d.js');
                 break;
             }
         }
+        return removed;
     };
+    // Container.prototype.render = function render() {
+    //     glui.markForRendering(this);
+    //     // for (var i=0; i<this.items.length; i++) {
+    //     //     glui.markForRendering(this.items[i]);
+    //     // }
+    // };
     Container.prototype.setVisible = function setVisible(visible) {
         Container.base.setVisible.call(this, visible);
         for (var i=0; i<this.items.length; i++) {
@@ -100,8 +127,13 @@ include('renderer2d.js');
 	Container.prototype.dataBind = function(source, field) {
         Container.base.dataBind.call(this, source, field);
         var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
+        var i = 0, j = 0;
+        var keys = Object.keys(dataSource);
         for (var i=0; i<this.items.length; i++) {
-            this.items[i].dataBind(dataSource[i]);
+            if (!this.items[i].noBinding) {
+                this.items[i].dataBind(dataSource, this.items[i].dataField || keys[j].toString());
+                j++;
+            }
         }
 	};
     Container.prototype.createRenderer = mode => mode == glui.Render2d ? new ContainerRenderer2d() : 'ContainerRenderer3d';
@@ -159,6 +191,15 @@ include('renderer2d.js');
 //debug_(`Container.onmouseout: ${this.id} => ${e.control.id}`, 0);
         if (!e.control || !e.control.isDescendant(this)) this.dehighlight();
     };
+
+    glui.schema.buildType({
+        'name':'Container',
+        'attributes': {
+            'items': { 'type': { 'type':'list', 'elemType':'Control' }, 'isRequired':false },
+            'style': { 'type': 'ControlStyle', 'isRequired':false }
+        },
+        'type':'Control'
+    });
 
     publish(Container, 'Container', glui);
     publish(ContainerRenderer2d, 'ContainerRenderer2d', glui);

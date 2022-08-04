@@ -68,8 +68,8 @@ include('/lib/glui/controls/dialog.js');
     };
 
     GenericDialog.prototype.applyTemplate = function applyTemplate(tmpl) {
-        var template = GenericDialog.base.applyTemplate.call(this, mergeObjects(GenericDialog.template, tmpl));
-        return template;
+        var template = mergeObjects(tmpl, GenericDialog.template, mergeObjects.COMMON | mergeObjects.OVERWRITE | mergeObjects.NEW);
+        return GenericDialog.base.applyTemplate.call(this, template);
     };
 
     GenericDialog.prototype.init = async function init() {

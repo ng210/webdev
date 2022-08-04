@@ -2,6 +2,7 @@ include('control.js');
 include('renderer2d.js');
 
 (function() {
+    //#region GridRenderer2d
     function GridRenderer2d(control, context) {
         GridRenderer2d.base.constructor.call(this, control, context);
     }
@@ -19,7 +20,7 @@ include('renderer2d.js');
         var stepY = ctrl.stepY;
         var stepY2 = ctrl.stepY2;
 
-        // draw grid
+        //#region draw grid
         ctx.globalAlpha = 1.0;
         var c1 = this.toCssColor(this.calculateColor(this.backgroundColor, 1.5));
         var c2 = this.toCssColor(this.calculateColor(this.backgroundColor, 2.25));
@@ -44,27 +45,31 @@ include('renderer2d.js');
                 ctx.stroke();
             }
         }
+        //#endregion
 
         // draw cursor
-        ctx.globalAlpha = 0.6;
+        ctx.globalAlpha = 0.4;
         ctx.beginPath();
-        ctx.strokeStyle = this.toCssColor(this.calculateColor(this.backgroundColor, 2.0));;
+        var c3 = [255-this.backgroundColor[0], 255-this.backgroundColor[1], 255-this.backgroundColor[2]];
+        ctx.strokeStyle = this.toCssColor(c3);  //this.calculateColor(c3, 2.0));
         ctx.moveTo(ctrl.cursor[0], 0); ctx.lineTo(ctrl.cursor[0], height);
         ctx.moveTo(0, ctrl.cursor[1]); ctx.lineTo(width, ctrl.cursor[1]);
         ctx.stroke();
 
         if (ctrl.points.length) {
             // draw lines
-            ctx.globalAlpha = 0.5;
-            var color =this.toCssColor(this.color);
-            ctx.strokeStyle = color;
-            var p = ctrl.points[0];
-            ctx.moveTo(x0 + stepX*p.x, height + y0 - stepY*p.y);
-            for (var i=1; i<ctrl.points.length; i++) {
-                var p = ctrl.convertToXY(ctrl.points[i]);
-                ctx.lineTo(x0+p.x, height + y0 - p.y);
+            if (ctrl.curveMode == Grid.curveModes.LINE) {
+                ctx.globalAlpha = 0.5;
+                var color =this.toCssColor(this.color);
+                ctx.strokeStyle = color;
+                var p = ctrl.points[0];
+                ctx.moveTo(x0 + stepX*p.x, height + y0 - stepY*p.y);
+                for (var i=1; i<ctrl.points.length; i++) {
+                    var p = ctrl.convertToXY(ctrl.points[i]);
+                    ctx.lineTo(x0+p.x, height + y0 - p.y);
+                }
+                ctx.stroke();
             }
-            ctx.stroke();
 
             // draw points
             ctx.globalAlpha = 0.8;
@@ -79,7 +84,9 @@ include('renderer2d.js');
             }
         }
     };
+    //#endregion
 
+    //#region Grid
     function Grid(id, template, parent, context) {
         this.cursor = [0, 0];
         this.points = [];
@@ -90,6 +97,11 @@ include('renderer2d.js');
         this.scaleY = 0;
         this.scaleRangeX = [0, 0];
         this.scaleRangeY = [0, 0];
+        this.unitX = 1;
+        this.unitY = 1;
+        this.insertMode = Grid.interactionModes.FREE;
+        this.dragMode = Grid.interactionModes.FREE;
+        this.curveMode = Grid.curveModes.LINE;
 
         this.convertFromXY = function convertFromXY(x, y) { return { x: x/this.stepX, y: y/this.stepY }; };
         this.convertToXY = function convertToXY(p) { return { x: p.x*this.stepX, y: p.y*this.stepY }; };
@@ -100,19 +112,22 @@ include('renderer2d.js');
     Grid.prototype.getTemplate = function getTemplate() {
         var template = Grid.base.getTemplate.call(this);
         template['unit-x'] = '10px';
-        template['unit-x'] = '10px';
+        template['unit-y'] = '10px';
         template['scale-x'] = 1;
         template['scale-y'] = 1;
         template['scale-x-min'] = 0.25;
         template['scale-x-max'] = 4.0;
         template['scale-y-min'] = 0.25;
         template['scale-y-max'] = 4.0;
-        template['insert-mode'] = Grid.interactionModes.FREE.toString();
-        template['drag-mode'] = Grid.interactionModes.FREE.toString();
-        template['curve-mode'] = Grid.curveModes.LINE.toString();
+        template['insert-mode'] = Grid.interactionModes.FREE;
+        template['drag-mode'] = Grid.interactionModes.FREE;
+        template['curve-mode'] = Grid.curveModes.LINE;
         return template;
     };
     Grid.prototype.applyTemplate = function applyTemplate(tmpl) {
+        if (tmpl['insert-mode']) tmpl['insert-mode'] = tmpl['insert-mode'].toUpperCase();
+        if (tmpl['drag-mode']) tmpl['drag-mode'] = tmpl['drag-mode'].toUpperCase();
+        if (tmpl['curve-mode']) tmpl['curve-mode'] = tmpl['curve-mode'].toUpperCase();
         var template = Grid.base.applyTemplate.call(this, tmpl);
         this.scaleX = parseFloat(template['scale-x']);
         this.scaleY = parseFloat(template['scale-y']);
@@ -120,21 +135,20 @@ include('renderer2d.js');
         this.scaleRangeX[1] = template['scale-x-max'];
         this.scaleRangeY[0] = template['scale-y-min'];
         this.scaleRangeY[1] = template['scale-y-max'];
-
         this.insertMode = 0;
         var tokens = template['insert-mode'].split(' ');
         for (var i=0; i<tokens.length; i++) {
-            var v = Grid.interactionModes[tokens[i].toUpperCase()];
+            var v = Grid.interactionModes[tokens[i]];
             if (v != undefined) this.insertMode |= v;
         }
         this.dragMode = 0;
         tokens = template['drag-mode'].split(' ');
         for (var i=0; i<tokens.length; i++) {
-            var v = Grid.interactionModes[tokens[i].toUpperCase()];
+            var v = Grid.interactionModes[tokens[i]];
             if (v != undefined) this.dragMode |= v;
         }
 
-        this.curveMode = Grid.curveModes[template['curve-mode'].toUpperCase()] || Grid.curveModes.NONE;
+        this.curveMode = Grid.curveModes[template['curve-mode']];
 
         if (this.dataSource && this.dataField) {
             this.dataBind();
@@ -273,7 +287,7 @@ include('renderer2d.js');
             y: this.height - (cy - this.scrollTop) - bw
         };
     };
-
+    //#region Event handlers
     Grid.prototype.onmousemove = function onmousemove(e) {
         var xy = this.transformXY(e.controlX, e.controlY);
         this.cursor[0] = e.controlX;
@@ -357,6 +371,7 @@ include('renderer2d.js');
         // update cursor, trigger rendering like on mouse move
         this.onmousemove(e);
     };
+    //#endregion
 
     Grid.interactionModes = {
         'NONE': 0,
@@ -368,6 +383,28 @@ include('renderer2d.js');
         'NONE': 0,
         'LINE': 1
     };
+    glui.schema.addType(new EnumType('GridInteractions', null, { 'values':Object.keys(Grid.interactionModes) }));
+    glui.schema.addType(new EnumType('GridCurveModes', null, { 'values':Object.keys(Grid.curveModes) }));
+    Grid.getTypeDescriptor = () => {
+        return {
+            'name':'Grid',
+            'type':'Control',
+            'attributes': {
+                'scale-x':       { 'type':'int', 'isRequired':false },
+                'scale-y':       { 'type':'int', 'isRequired':false },
+                'scale-range-x':  { 'type':'float2', 'isRequired':false },
+                'scale-range-y':  { 'type':'float2', 'isRequired':false },
+                'unit-x':        { 'type':'int', 'isRequired':false },
+                'unit-y':        { 'type':'int', 'isRequired':false },
+                'insert-mode':   { 'type':'GridInteractions', 'isRequired':false },
+                'drag-mode':     { 'type':'GridInteractions', 'isRequired':false },
+                'curve-mode':    { 'type':'GridCurveModes', 'isRequired':false }        
+            }
+        };
+    };
+    //#endregion
+
+    glui.addType(Grid);
 
     publish(Grid, 'Grid', glui);
     publish(GridRenderer2d, 'GridRenderer2d', glui);

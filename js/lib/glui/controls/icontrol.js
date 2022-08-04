@@ -28,6 +28,9 @@ include('/lib/glui/glui.js');
     IControl.prototype.createRenderer = function createRenderer(mode) {
         throw new Error('Not implemented!');
     };
+    IControl.getTypeDescriptor = function getTypeDescriptor() {
+        throw new Error('Not implemented!');
+    };
 
     publish(IControl, 'IControl', glui);
 })();

@@ -5,12 +5,20 @@ include('control.js');
     function ValueControl(id, template, parent, context) {
 		this.isBlank = true;
 		this.value = '';
+		this.isNumeric = false;
+		this.dataType = null;
+		this.min = 0;
+		this.max = 100;
+		this.step = 1;
+		this.isNormalized = false;
+		this.decimalDigits = 2;
+		
 		this.dataLink = new DataLink(this);
 		this.dataLink.addField('value');
 		// enforce updating control size
 		this.dataLink.addHandler('value', {
 			'target':this,
-			'fn':() => glui.Control.prototype.size.call(this, null, null, true),
+			'fn':() => glui.Control.prototype.size.call(this, null, null, false),
 			'args':this
 		});
 		ValueControl.base.constructor.call(this, id, template, parent, context);
@@ -34,7 +42,7 @@ include('control.js');
 		template.default = '';
         template['data-type'] = glui.ValueControl.DataTypes.None;
 		template['decimal-digits'] = 0;
-        template['digits'] = 0;
+        //template['digits'] = 0;
         template['true-value'] = 1;
 		template['false-value'] = 0;
         // from-source
@@ -97,7 +105,7 @@ include('control.js');
 			this.addValidation('value', x => x >= this.min, 'Value is less than minimum!', x => this.min);
 			this.addValidation('value', x => x <= this.max, 'Value is greater than maximum!', x => this.max);
 		}
-		this.scale = 1.0;
+		//this.scale = 1.0;
 		if (template.value != null) {
 			var value = this.isNumeric ? Number(template.value) : template.value;
 			this.setValue(value);
@@ -113,6 +121,7 @@ include('control.js');
 		var toValue = v => v;
 		var toSource = v => v;
 		this.dataLink.addHandler('value', { 'args':toValue }, true);
+if (!this.dataSource.addHandler) debugger
 		this.dataSource.addHandler(this.dataField, { 'args':toSource }, true);
 		// if (this.dataType == glui.ValueControl.DataTypes.Bool) {
 		// 	this.value = value ? this.template['true-value'] : this.template['false-value'];
@@ -290,6 +299,22 @@ include('control.js');
 		String: 'string',
 		Bool:	'bool'
     };
+
+    glui.schema.buildType({
+        'name':'ValueControl',
+        'attributes': {
+			'dataType':		{ 'type':'type', 'isRequired':false },
+			'decimalDigits':{ 'type':'int', 'isRequired':false },
+			'isNormalized': { 'type':'bool', 'isRequired':false },
+			'isNumeric':	{ 'type':'bool', 'isRequired':false },
+			'min':			{ 'type':'float', 'isRequired':false },
+			'max':			{ 'type':'float', 'isRequired':false },
+			'step':			{ 'type':'float', 'isRequired':false },
+            'style': { 'type': 'ControlStyle', 'isRequired':false },
+			'value':		{ 'type':'void', 'isRequired':false }
+        },
+        'type':'Control'
+    });
 
     publish(ValueControl, 'ValueControl', glui);
 })();

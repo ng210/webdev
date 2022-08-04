@@ -2,6 +2,7 @@ include('control.js');
 include('renderer2d.js');
 
 (function() {
+    //#region ImageRenderer2d
     function ImageRenderer2d(control, context) {
         ImageRenderer2d.base.constructor.call(this, control, context);
     }
@@ -10,8 +11,9 @@ include('renderer2d.js');
     ImageRenderer2d.prototype.renderControl = function renderControl() {
         this.drawImage(this.control.image, 0, 0);
     };
+    //#endregion
 
-
+    //#region Image
     function Image(id, template, parent, context) {
         Image.base.constructor.call(this, id, template, parent, context);
         this.image = null;
@@ -55,6 +57,25 @@ include('renderer2d.js');
         return this.dataSource;
     };
     Image.prototype.createRenderer = mode => mode == glui.Render2d ? new ImageRenderer2d() : 'ImageRenderer3d';
+
+    glui.schema.buildType({
+        'name':'LabImageel',
+        'attributes': {
+            'source': { 'type':'string', 'default':'/res/blank.png' },
+            'style': { 'type': 'ControlStyle', 'isRequired':false }
+        },
+        'type':'Control'
+    });
+    Image.getTypeDescriptor = () => {
+        return {
+            'name':'Image',
+            'type':'Control',
+            'attributes': {
+                'source': { 'type':'string' }
+            }
+        };
+    };
+    //#endregion
 
     publish(Image, 'Image', glui);
     publish(ImageRenderer2d, 'ImageRenderer2d', glui);

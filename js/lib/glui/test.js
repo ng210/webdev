@@ -1,5 +1,6 @@
 include('glui-lib.js');
 include('/lib/data/dataseries.js');
+include('/lib/data/graph.js');
 
 (function() {
 
@@ -19,13 +20,13 @@ include('/lib/data/dataseries.js');
         'background-color': '#a0a0b0'
     };
     var tableStyle = {
-        'font': 'Arial 20',
-        'width':'14em',
+        'font': 'Arial 12',
+        'width':'24em',
         'align':'center middle',
         'border':'#308060 3px outset',
         'color': '#184030',
         'background-color': '#308060',
-        'cell': {
+        'cell-template': {
             'font': 'Arial 14',
             'align':'center middle',
             'border':'#90b0c0 1px inset',
@@ -33,15 +34,15 @@ include('/lib/data/dataseries.js');
             'background-color': '#90b0c0',
             'width': '4em'
         },
-        'title': {
+        'title-style': {
             'font': 'Arial 16',
             'border':'#60a080 1px inset',
             'color': '#204060',
             'background-color': '#80c0a0',
             'height': '1.5em'
         },
-        'header': {
-            'font': 'Arial 12',
+        'header-style': {
+            'font': 'Arial 14',
             'height':'2.0em',
             'align':'center middle',
             'border':'#60a080 2px outset',
@@ -66,7 +67,6 @@ include('/lib/data/dataseries.js');
         'spacing': '2px 1px',
         'padding': '2px 2px'
     };
-
     var menuItemTemplate = {
         'type': 'Label',
         'layout': 'vertical',
@@ -80,17 +80,17 @@ include('/lib/data/dataseries.js');
     };
 
     var controls = [
-        {   'type': 'Label',
-            'style': {
-                'font': 'Arial 14',
-                'width':'auto', 'height':'2.1em',
-                'align':'center middle',
-                'border':'#406080 1px inset',
-                'background-color': '#c0e0ff',
-                'background-image': 'none'
-            },
-            'value': 'label'
-        },
+        // {   'type': 'Label',
+        //     'style': {
+        //         'font': 'Arial 14',
+        //         'width':'auto', 'height':'2.1em',
+        //         'align':'center middle',
+        //         'border':'#406080 1px inset',
+        //         'background-color': '#c0e0ff',
+        //         'background-image': 'none'
+        //     },
+        //     'value': 'label'
+        // },
         {   'type': 'Label',
             'style': {
                 'font': 'Arial 14',
@@ -111,95 +111,95 @@ include('/lib/data/dataseries.js');
             'data-field': 'label2'
         },
 
-        {   'type': 'Textbox',
-            'style': style,
-            'look': 'textbox',
-            'decimal-digits': 3,
-            'value': 'textbox'
-        },
-        {   'type': 'Textbox',
-            'style': style,
-            'look': 'textbox',
-            'decimal-digits': 3,
-            'data-source': 'data',
-            'data-field': 'textbox1'
-        },
-        {   'type': 'Textbox',
-            'style': style,
-            'look': 'potmeter',
-            'data-type': 'int',
-            'decimal-digits': 1,
-            'data-source': 'data',
-            'data-field': 'textbox2'
-        },
+        // {   'type': 'Textbox',
+        //     'style': style,
+        //     'look': 'textbox',
+        //     'decimal-digits': 3,
+        //     'value': 'textbox'
+        // },
+        // {   'type': 'Textbox',
+        //     'style': style,
+        //     'look': 'textbox',
+        //     'decimal-digits': 3,
+        //     'data-source': 'data',
+        //     'data-field': 'textbox1'
+        // },
+        // {   'type': 'Textbox',
+        //     'style': style,
+        //     'look': 'potmeter',
+        //     'data-type': 'int',
+        //     'decimal-digits': 1,
+        //     'data-source': 'data',
+        //     'data-field': 'textbox2'
+        // },
 
-        {   'type': 'Button',
-            'style': buttonStyle,
-            'data-source': 'data',
-            'data-field': 'button'
-        },
+        // {   'type': 'Button',
+        //     'style': buttonStyle,
+        //     'data-source': 'data',
+        //     'data-field': 'button'
+        // },
 
-        {   'type': 'Image',
-            'style': {
-                'width':'128px', 'height':'96px',
-                'border':'#805020 2px inset',
-                'background-color': '#102040'
-            },
-            'source': '/lib/glui/res/test.png'
-        },
+        // {   'type': 'Image',
+        //     'style': {
+        //         'width':'128px', 'height':'96px',
+        //         'border':'#805020 2px inset',
+        //         'background-color': '#102040'
+        //     },
+        //     'source': '/lib/glui/res/test.png'
+        // },
 
-        {   'type': 'Grid',
-            'style': {
-                'color': '#ffd080',
-                'background-color': '#102040',
-                'width': '640px', 'height': '400px',
-                'border': '#102040 2px inset'
-            },
-            'unit-x': 10,
-            'unit-y': 8,
-            'scroll-x-min': 20,
-            'scroll-x-max': 40,
-            'scroll-y-min': 32,
-            'scroll-y-max': 32,
-            'data-source': 'data',
-            'data-field': 'grid',
-            'insert-mode': 'x-bound',
-            'drag-mode': 'free',
-            'curve-mode': 'line',
-            'scale-x': 2.0,
-            'scale-y': 2.0
-        },
+        // {   'type': 'Grid',
+        //     'style': {
+        //         'color': '#ffd080',
+        //         'background-color': '#104080',
+        //         'width': '640px', 'height': '400px',
+        //         'border': '#102040 2px inset'
+        //     },
+        //     'unit-x': 10,
+        //     'unit-y': 8,
+        //     'scroll-x-min': 20,
+        //     'scroll-x-max': 40,
+        //     'scroll-y-min': 32,
+        //     'scroll-y-max': 32,
+        //     'data-source': 'data',
+        //     'data-field': 'grid',
+        //     'insert-mode': 'x-bound',
+        //     'drag-mode': 'free',
+        //     'curve-mode': 'line',
+        //     'scale-x': 2.0,
+        //     'scale-y': 2.0
+        // },
 
-        {   'type': 'Textbox',
-            'style': {
-                'font': 'Arial 10',
-                'align':'center middle',
-                'width': '24px',
-                'border':'#204080 1px outset',
-                'background-color': '#204080',
-                'color': '#80a0f0'
-            },
-            //'image': 'glui/res/knob.png',
-            //'data-type': 'int',
-            //'decimal-digits': 1,
-            'look': 'knob',
-            'min': 0, 'max': 255, 'value': 10
-        },
-        {   'type': 'Textbox',
-            'style': {
-                'font': 'Arial 10',
-                'align':'center middle',
-                'width': '40px',
-                'border':'#204080 1px outset',
-                'background-color': '#204080',
-                'color': '#80a0f0'
-            },
-            //'image': 'glui/res/knob.png',
-            //'data-type': 'int',
-            //'decimal-digits': 1,
-            'look': 'knob',
-            'min': 0, 'max': 255, 'value': 200
-        },
+        // {   'type': 'Textbox',
+        //     'style': {
+        //         'font': 'Arial 10',
+        //         'align':'center middle',
+        //         'width': '24px',
+        //         'border':'#204080 1px outset',
+        //         'background-color': '#204080',
+        //         'color': '#80a0f0'
+        //     },
+        //     //'image': 'glui/res/knob.png',
+        //     //'data-type': 'int',
+        //     //'decimal-digits': 1,
+        //     'look': 'knob',
+        //     'min': 0, 'max': 255, 'value': 10
+        // },
+        // {   'type': 'Textbox',
+        //     'style': {
+        //         'font': 'Arial 10',
+        //         'align':'center middle',
+        //         'width': '40px',
+        //         'border':'#204080 1px outset',
+        //         'background-color': '#204080',
+        //         'color': '#80a0f0'
+        //     },
+        //     //'image': 'glui/res/knob.png',
+        //     //'data-type': 'int',
+        //     //'decimal-digits': 1,
+        //     'look': 'knob',
+        //     'min': 0, 'max': 255, 'value': 200
+        // },
 
         // {   'type': 'GraphView',
         //     'style': {
@@ -229,8 +229,7 @@ include('/lib/data/dataseries.js');
         //         'type': 'arc',
         //         'arc-max': '180'
         //     }
-        // }
-
+        // },
         // {
         //     'type': 'Combobox',
         //     'style': comboboxStyle,
@@ -361,7 +360,7 @@ include('/lib/data/dataseries.js');
             Dbg.prln(`Screen size is ${glui.width}x${glui.height}`);
         } else {
             await glui.setRenderingMode(glui.Render2d);
-            glui.repaint();
+            //glui.repaint();
         }
     }
 
@@ -373,6 +372,7 @@ include('/lib/data/dataseries.js');
         var top = glui.screen.renderer.convertToPixel('3em', true), left = 10;
         var width = 0;
         for (var i=0; i<controls.length; i++) {
+            message(controls[i].type);
             var ctrl = glui.create(`${controls[i].type}${i}`, controls[i], null, App);
             if (ctrl instanceof glui.Table) {
                 ctrl.build();
@@ -419,38 +419,45 @@ include('/lib/data/dataseries.js');
     }
 
     async function test_clipping() {
-        message('Test clipping', 1);
+        header('Test clipping');
         await setup();
         var tmpl1 = {
             'type': 'Table',
             'style': {
-                'font': 'Arial 20',
-                'width':'14em', 'height':'4em',
+                'font': 'Arial 24',
+                'width':'20em', 'height':'auto',
                 'align':'center middle',
-                'border':'#308060 4px outset',
-                'color': '#184030',
-                'background-color': '#308060'
+                'border':'#808080 4px outset',
+                'color': '#000000',
+                'background-color': '#e0e0e0'
             },
             'cell-template': {
-                'font': 'Arial 4',
-                'width':'8em', 'height':'1.2em',
-                'align':'center middle',
-                'border':'#308060 1px inset',
-                'color': '#184030'
+                'type':'Label',
+                'style': {
+                    'font': 'Arial 14',
+                    'width':'100%', 'height':'1.5em',
+                    'align':'center middle',
+                    'border':'#e0e0e0 4px outset',
+                    'color': '#808080',
+                    'spacing': '4px'
+                }
             },
             'cols': 3, 'rows': 5,
+            'mode': glui.Table.modes.BOARD,
             'data-source': 'data',
             'data-field': 'list'
         };
+
         var cnt = await glui.create('cnt1', tmpl1, null, App); await cnt.build();
         cnt.render();
         glui.animate();
         await button('Next');
-        glui.screen.remove(cnt);
+        teardown();
+        //glui.screen.remove(cnt);
     }
 
     async function test_construct() {
-        message('Test construct', 1);
+        header('Test construct');
         await setup();
         await createControls();
         for (var i=0; i<glui.screen.items.length; i++) {
@@ -467,13 +474,21 @@ include('/lib/data/dataseries.js');
                     }
                 }
             });
+            test(`Should validate ${control.type} successfully`, ctx => {
+                var res = glui.schema.validate(control, glui.schema.types.get(control.constructor.name));
+                for (var i=0; i<res.length; i++) {
+                    message(`${res[i].field}: ${res[i].messages}`);
+                }
+                ctx.assert(res, 'empty');
+            });
         }
+        glui.animate();
         await button('Next');
         teardown();
     }
 
     async function test_render() {
-        message('Test rendering', 1);
+        header('Test rendering');
         await setup();
         createControls();
         await glui.repaint();
@@ -495,7 +510,7 @@ include('/lib/data/dataseries.js');
     }
 
     async function test_align() {
-        message('Test align', 1);
+        header('Test align');
         await setup();
         var hAlign = ['left', 'center', 'right'];
         var vAlign = ['top', 'middle', 'bottom'];
@@ -531,7 +546,7 @@ include('/lib/data/dataseries.js');
     }
 
     async function test_container() {
-        message('Test container', 1);
+        header('Test container');
         await setup();    
         var containerTemplate = {
             'type': 'Container',
@@ -543,22 +558,21 @@ include('/lib/data/dataseries.js');
                 'z-index': 0
             },
             'title': 'Default',
-            'items': {
-                'Text': {
+            'items': [ {
                     'type': 'Textbox',
                     'style': {
                         'left': '1em', 'top': '1em',
                         'width':'10em', 'height':'2em',
                         'border':'#c0c0e0 1px inset',
                         'color': '#e0e0f0',
-                        'background-color': '#102040'
+                        'background-color': '#102080'
                     },
                     'look': 'textbox',
                     'decimal-digits': 3,
                     'data-source': 'data',
                     'data-field': 'textbox1'
                 },
-                'Image': {
+                {
                     'type': 'Image',
                     'style': {
                         'left': '1em', 'top': '4em',
@@ -567,7 +581,7 @@ include('/lib/data/dataseries.js');
                     },
                     'source': '/lib/glui/res/test.png'
                 }
-            }
+            ]
         };
         var container = await glui.create('container1', containerTemplate, null, App);
         test('Container has a Textbox and an Image item', ctx => {
@@ -585,16 +599,17 @@ include('/lib/data/dataseries.js');
                 'border':'#401000 2px solid'
             },
             'title': 'Default',
-            'items': {
-                'Label': {
-                    'type': 'Label',
-                    'value': 'Hello',
-                    'style': {
-                        'left': '16px', 'top': '2px', 'align': 'center middle',
-                        'width':'34px', 'height':'1.6em'
+            'items': [ {
+                'type': 'Label',
+                'value': 'Hello',
+                'style': {
+                    'left': '16px', 'top': '2px', 'align': 'center middle',
+                    'width':'34px', 'height':'1.6em'
+                    // 'color': '#e0e0f0',
+                    // 'background-color': '#102080'
                     }
                 },
-                'Image': {
+                {
                     'type': 'Image',
                     'style': {
                         'left': '0em', 'top': '2em',
@@ -603,7 +618,7 @@ include('/lib/data/dataseries.js');
                     },
                     'source': 'res/test.png'
                 }
-            }
+            ]
         };
         var cnt = await glui.create('cnt', tmpl, container, null);
         container.render();
@@ -614,15 +629,18 @@ include('/lib/data/dataseries.js');
     }
 
     async function test_table() {
-        message('Test table', 1);
+        header('Test table');
         await setup();
 
+        //#region Table #1
         var tableTemplate1 = {
             'type': 'Table',
-            'style': tableStyle,
-            'title': 'Default'
+            'title':'Default',
+            'show-header':false,
+            'title-style':	{ 'color':'black' },
+            'style': tableStyle
         };
-        var table1 = await glui.create('table1', tableTemplate1, null, App); await table1.build();
+        var table1 = glui.create('table1', tableTemplate1, null, App); table1.build();
         table1.addHandler('mouseout', table1, e => {debug_('table1.onmouseout', 0); return false;});
         test('Default table should have 2 colums and 2 rows', ctx => {
             ctx.assert(table1.rowCount, '=', 2);
@@ -642,27 +660,31 @@ include('/lib/data/dataseries.js');
         table1.getCell(1, 1).setValue('3');
         table1.move(60, 60);
         table1.render();
+        //#endregion
 
+        //#region Table #2
         var tableTemplate2 = {
             'type': 'Table',
             'style': tableStyle,
             'title': '3x4',
             'cols': 3,
             'rows': 4,
+            'show-header':false,
+            'title-style':	{ 'align':'center middle', 'color':'black' },
             'cell-template': {
                 'type': 'Textbox',
                 'data-type': 'string',
                 'style': {
-                    'font': 'Arial 10',
-                    'width':'2em', 'height':'2.2em',
+                    'font': 'Arial 12',
+                    'height':'2.2em',
                     'align':'left middle',
-                    'border':'#406080 1px inset',
+                    'border':'#106080 1px inset',
                     'background-color': '#f0f0cf',
                     'background-image': 'none'
                 }
             }
         };
-        var table2 = await glui.create('table2', tableTemplate2, null, App); await table2.build();
+        var table2 = glui.create('table2', tableTemplate2, null, App); table2.build();
         test('3x4 table should have 3 colums and 4 rows', ctx => {
             ctx.assert(table2.rowCount, '=', 4);
             ctx.assert(table2.columnCount, '=', 3);
@@ -679,14 +701,35 @@ include('/lib/data/dataseries.js');
         });
         table2.move(240, 60);
         table2.render();
+        //#endregion
 
+        //#region Table #3
         var tableTemplate3 = {
             'type': 'Table',
-            'style': tableStyle,
             'title': 'Data-source (table)',
             'data-source': 'data',
             'data-field': 'table',
-            'header': true
+            'show-header': true,
+            'style': {
+                'align':'center middle',
+                'font': 'Arial 16',
+                'width': '20em',
+                'color':'black',
+                'border':'#c0e0ff 1px outset',
+                'background-color': '#c0e0ff'
+            },
+            'cell-template': {
+                'type': 'Label',
+                'data-type': 'string',
+                'style': {
+                    'font': 'Arial 12',
+                    'height':'1.2em',
+                    'align':'left middle',
+                    'background-image': 'none'
+                }
+            },
+            'title-style':	{ 'align':'center middle', 'font': 'Arial 16 bold', 'height': '2em', 'color':'black' },
+            'header-style':	{ 'align':'center middle', 'font': 'Arial 14 bold', 'height': '1.2em', 'color':'black' }
         };
         var table3 = await glui.create('table3', tableTemplate3, null, App); await table3.build();
         test('Table built from datasource should have 2 columns and ' + data.table.length + ' rows', ctx => {
@@ -704,24 +747,45 @@ include('/lib/data/dataseries.js');
         });
         table3.move(420, 60);
         table3.render();
+        //#endregion
 
+        //#region Table #4
         var tableTemplate4 = {
             'type': 'Table',
-            'style': {},
             'title': 'Data-source (board)',
             'cols': 3,
             'data-source': 'data',
-            'data-field': 'list'
-        };
+            'data-field': 'list',
+            'mode': glui.Table.modes.BOARD,
 
-        tableTemplate4.style = mergeObjects(tableStyle);
-        tableTemplate4.style.height = '';
-        var table4 = await glui.create('table4', tableTemplate4, null, App); await table4.build();
-        test('Table built from datasource should have 2 columns and ' + data.table.length + ' rows', ctx => {
-            ctx.assert(table4.columnCount, '=', 3);
-            ctx.assert(table4.rowCount, '=', Math.ceil(Object.keys(data.list).length/table4.columnCount));
-            ctx.assert(table4.rowKeys, ':=', [0, 1, 2, 3]);
-            ctx.assert(table4.columnKeys, ':=', ['0', '1', '2']);
+            'style': {
+                'align':'center middle',
+                'font': 'Arial 12',
+                'width': '28em',
+                'color':'black',
+                'border':'#c0e0ff 1px outset',
+                'background-color': '#c0e0ff'
+            },
+            'cell-template': {
+                'type': 'Label',
+                'data-type': 'string',
+                'style': {
+                    'height':'1.5em',
+                    'align':'center middle',
+                    'background-image': 'none'
+                }
+            },
+            'title-style':	{ 'align':'center middle', 'font': 'Arial 14 bold', 'height': '2em', 'color':'blue' }
+        };
+        var table4 = glui.create('table4', tableTemplate4, null, App); table4.build();
+        var cols = tableTemplate4.cols;
+        var rows = Math.ceil(data.table.length/cols);
+
+        test('Table built from datasource should have ' + cols + ' columns and ' + rows + ' rows', ctx => {
+            ctx.assert(table4.columnCount, '=', cols);
+            ctx.assert(table4.rowCount, '=', rows);
+            ctx.assert(table4.rowKeys, ':=', new Array(rows).fill(0).map((v,i) => i));
+            ctx.assert(table4.columnKeys, ':=', new Array(cols).fill(0).map((v,i) => i.toString()));
             for (var ri=0; ri<table4.rowCount; ri++) {
                 ctx.assert(table4.rows[ri].constructor.name, '=', 'Row');
                 for (var ci=0; ci<table4.columnCount; ci++) {
@@ -730,8 +794,9 @@ include('/lib/data/dataseries.js');
                 }
             }
         });
-        table4.move(600, 60);
+        table4.move(620, 60);
         table4.render();
+        //#endregion
 
         // var table5 = await glui.create('table5', dialogTemplate.items[0], null, App);
         // table5.size('14em', '5em');
@@ -746,7 +811,7 @@ include('/lib/data/dataseries.js');
     }
 
     async function test_menu() {
-        message('Test menu', 1);
+        header('Test menu');
 
         await setup();
         // #region menu created manually
@@ -811,19 +876,110 @@ include('/lib/data/dataseries.js');
     }
 
     async function test_dialog() {
+        header('Test dialogs');
         await setup();
         glui.animate();
+        
+        // generic dialog
+        var dlg = glui.create('dlg01', {
+            'type':'Dialog',
+            'title': 'Generic Dialog...',
+            'style': {
+                'font': 'Arial 20',
+                'width':'12em', 'height':'8em',
+                //'padding':'1.0em',
+                'align':'left middle',
+                'border':'#204080 2px inset',
+                'background-color': '#4080ff',
+                'background-image': 'none'
+            },
+            'title-style': {
+                'font': 'Arial 16',
+                'color': '#c0e0ff',
+                'background-color': '#2040c0',
+                'border':'#2040c0 1px outset'
+            },
+            'items': [
+                {   'type': 'Label',
+                    'style': {
+                        //'font': 'Arial 18',
+                        'width':'5em', 'height':'1.5em',
+                        'align':'center middle',
+                        'border':'#406080 1px outset',
+                        'background-color': '#c0e0ff',
+                        'background-image': 'none'
+                    },
+                    'value': 'Count'
+                },
+                {   'type': 'Textbox',
+                    'style': {
+                        //'font': 'Arial 12',
+                        'width':'6em', 'height':'1.5em',
+                        'align':'right middle',
+                        'border':'#406080 1px inset',
+                        'background-color': '#c0e0ff',
+                        'background-image': 'none'
+                    },
+                    'look': 'potmeter',
+                    'data-type': 'int',
+                    'decimal-digits': 1,
+                    'data-source': 'data',
+                    'data-field': 'textbox2'
+                },
+                {   'type': 'Button',
+                    'style': {
+                        'font': 'Arial 12',
+                        'width':'6em', 'height':'2em',
+                        'align':'center middle',
+                        'border':'#808090 2px',
+                        'background-color': '#a0a0b0'
+                    },
+                    'value': 'Ok'
+                }
+            ],
+            'init': function() {
+                this.move(100, 100);
+                //var lbl = this.items[0];
+                //lbl.move('0em', '0em');
+                var tb = this.items[1];
+                tb.move('7em', '0em');
+                var bt = this.items[2];
+                bt.move('4em', '3.5em');
+            }
+        }, null, App);
+        await dlg.open();
 
-        var selected = await glui.OpenSaveDialog({'title': 'Open image...', 'filters': ['*.png', '*.jpg'], 'init': function() { this.move(100, 100);} });
-        Dbg.prln('Selected image: ' + selected);
+        // var openSaveDialog = glui.create('OpenDialog', {
+        //     'title': 'Open image...',
+        //     'filters': {
+        //         'images': '*.png;*.jpg',
+        //         'all files': '*.*'
+        //     },
+        //     'init': function() {
+        //             this.move(100, 100);
+        //         }
+        //     }, null, App
+        // );
+        // selected.bindData([
+        //     { 'name':'image01.png', 'size':12678 },
+        //     { 'name':'image02.jpg', 'size':8754 },
+        //     { 'name':'image03.gif', 'size':24895 },
+        //     { 'name':'image04.png', 'size':27856 },
+        //     { 'name':'image01.txt', 'size':17452 },
+        //     { 'name':'notes.txt', 'size':2456 }
+        // ]);
+        // var selected = await openSaveDialog.open();
+        // Dbg.prln('Selected image: ' + selected);
+
+        // await glui.checkPendings();
+        // glui.render();
 
         await button('Next');
-
         teardown();
     }
 
     async function test_grid() {
-        message('Test grid', 1);
+        header('Test grid');
         await setup();
 
         var tmpl = controls.find( x => x.type == 'Grid');
@@ -837,7 +993,7 @@ include('/lib/data/dataseries.js');
     }
 
     // function test_valueControls() {
-    //     message('Test value-controls', 1);
+    //     header('Test value-controls');
     //     var i = 1;
     //     for (var i=0; i<controls.length; i++) {
     //         var type = controls[i];
@@ -872,15 +1028,15 @@ include('/lib/data/dataseries.js');
     // }
 
     var tests = () => [
-        test_clipping,
+        // test_clipping,
         test_construct,
-        test_align,
-        test_container,
-        test_table,
-        test_menu,
-        test_dialog,
-        test_render,
-        test_grid
+        // test_align,
+        // test_container,
+        // test_table,
+        // test_menu,
+        // test_render,
+        // test_grid,
+        // test_dialog
     ];
     publish(tests, 'glUi tests');
 })();

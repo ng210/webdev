@@ -1,6 +1,7 @@
 include('label.js');
 
 (function() {
+    //#region TextboxRenderer2d 
     function TextboxRenderer2d() {
         TextboxRenderer2d.base.constructor.call(this);
         this.cursorColor = this.color;
@@ -123,7 +124,7 @@ include('label.js');
             this.control.height = res;
         }
         return res;
-    };    
+    };
 
     TextboxRenderer2d.prototype.animateCursor = function animateCursor() {
         this.cursorVisible = !this.cursorVisible;
@@ -147,9 +148,12 @@ include('label.js');
         var cx = x - this.control.left;
         var cy = y - this.control.top;
     };
+    //#endregion
 
+    //#region Textbox
     function Textbox(id, template, parent, context) {
         this.lines = [];
+        this.isMultiline = false;
         Textbox.base.constructor.call(this, id, template, parent, context);
         this.cursorPos = [0, 0];
         this.isFocused = false;
@@ -163,7 +167,7 @@ include('label.js');
         template.look = Textbox.Look.Textbox;
         template['multi-line'] = true;
         template.image = null;
-        template.label = false;
+        template.label = '';
         return template;
     };
 
@@ -556,6 +560,22 @@ include('label.js');
         Potmeter: 'potmeter',
         Knob: 'knob'
     };
+
+    glui.schema.addType(new EnumType('TextboxLook', null, { 'values':Object.values(Textbox.Look) }));
+    Textbox.getTypeDescriptor = () => {
+        return {
+            'name':'Textbox',
+            'type':'Label',
+            'attributes': {
+                'label': { 'type':'string', 'isRequired':false },
+                'isMultiline': { 'type':'bool', 'isRequired':false },
+                'look': { 'type':'TextboxLook', 'isRequired':false }
+            }
+        };
+    };
+    //#endregion
+
+    glui.addType(Textbox);
 
     publish(Textbox, 'Textbox', glui);
     publish(TextboxRenderer2d, 'TextboxRenderer2d', glui);

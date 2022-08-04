@@ -67,8 +67,8 @@ include('/lib/glui/controls/dialog.js');
                 'title': '',    //Data-source (table)',
                 'header': true,
                 'rows': 10,
-                'data-source': 'data',
-                'data-field': 'res-list',
+                // 'data-source': 'data',
+                // 'data-field': 'res-list',
                 'row-template': {
                     'name': { 'type': 'Label', 'data-type': 'string', 'style': { 'width':'60%' } },
                     'size': { 'type': 'Label', 'data-type': 'int', 'style': { 'width':'40%' } }

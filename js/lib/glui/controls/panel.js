@@ -28,8 +28,8 @@ include('container.js');
         for (var i in this.template.layout) {
             var elem = this.template.layout[i];
             if (elem.type) {
-                var template = mergeObjects(this.template['item-template'], elem);
-                template.style = mergeObjects(this.style, template.style);
+                var template = mergeObjects(this.template['item-template'], elem, mergeObjects.COMMON | mergeObjects.OVERWRITE);
+                template.style = mergeObjects(this.style, template.style, mergeObjects.COMMON | mergeObjects.OVERWRITE);
                 var item = await glui.create(i, template, this);
                 if (source && source[item.id]) {
                     item.dataBind(source[item.id], 'value');
@@ -37,16 +37,16 @@ include('container.js');
             } else if (elem.group) {
                 var grp = this.template.groups[elem.group];
                 if (grp) {
-                    var template = mergeObjects(this.template['group-template'], grp);
-                    var itemTemplate = mergeObjects(this.template['item-template'], grp['item-template'])
-                    template = mergeObjects(template, elem);
+                    var template = mergeObjects(this.template['group-template'], grp, mergeObjects.COMMON | mergeObjects.OVERWRITE | mergeObjects.NEW);
+                    var itemTemplate = mergeObjects(this.template['item-template'], grp['item-template'], mergeObjects.COMMON | mergeObjects.OVERWRITE | mergeObjects.NEW)
+                    template = mergeObjects(elem, template, mergeObjects.COMMON | mergeObjects.OVERWRITE);
                     var items = template.items;
                     delete template.items;
                     template.type = 'Container';
                     var container = await glui.create(i, template, this);
                     var groupSource = i != 'self' ? groupSource = source[container.id] : source;
                     for (var j in items) {
-                        template = mergeObjects(itemTemplate, items[j]);
+                        template = mergeObjects(items[j], itemTemplate, mergeObjects.COMMON | mergeObjects.OVERWRITE | mergeObjects.NEW);
                         var item = await glui.create(j, template, container);
                         if (groupSource && groupSource[item.id]) {
                             item.dataBind(groupSource[item.id], 'value');

@@ -11,6 +11,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         this.context = context || this.parent;
         this.path = null;
         this.template = null;
+        this.type = glui.schema.types.get(this.constructor.name);   // default type
         this.style = {};
         this.renderer = null;
         this.renderer2d = null;
@@ -39,6 +40,11 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         this.width = -1;
         this.height = -1;
 
+        this.dataSource = null;
+        this.dataField = '';
+        this.noBinding = false;
+
+        glui.schema.types.get(this.constructor.name).setType(this);
         this.applyTemplate(template);
     }
     extend(glui.IControl, Control);
@@ -91,25 +97,44 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         this.style.visible = visible;
     };
     Control.prototype.getTemplate = function getTemplate() {
-        var template = {
-            'type': 'control',
-            'label': false,
-            'disabled': false,
-            'data-source': '',
-            'data-field': null,
-            'scroll-x-min': 0,
-            'scroll-x-max': 1,
-            'scroll-y-min': 0,
-            'scroll-y-max': 1,
-            // styling
-            'style': Control.getStyleTemplate()
-        };
-        return template;
+        var type = glui.schema.types.get(this.constructor.name);
+        return type.default;
+        // return type.createPrimitiveValue( {
+        //     'data-field': '',
+        //     'data-source': null,
+        //     'disabled': false,
+        //     'id': 'ctrl',
+        //     'label': false,
+        //     'no-binding': false,
+        //     'scroll-x-min': 0,
+        //     'scroll-x-max': 1,
+        //     'scroll-y-min': 0,
+        //     'scroll-y-max': 1,
+        //     'style': Control.getStyleTemplate(),
+        //     'type': type.name
+        // });
     };
     Control.prototype.applyTemplate = function(tmpl) {
-        var defaultTemplate = this.getTemplate();
-        this.template = mergeObjects(defaultTemplate, tmpl);
-        if (this.template.id) this.id = this.template.id;
+        this.template = this.getTemplate();
+        this.style = this.template.style;
+        var styleType = this.type.attributes.get('style').type;
+        if (this.parent && this.parent.style) {
+            // merge parent style into default
+            glui.schema.mergeObjects(this.parent.style, this.style, styleType, self.mergeObjects.OVERWRITE);
+        }
+
+        if (tmpl) {
+            var type = glui.schema.types.get(this.constructor.name);
+            var res = glui.schema.validate(tmpl, type);
+            if (res.length > 0) {
+                Dbg.prln(res.join('\n'));
+            }
+            mergeObjects(tmpl, this.template, self.mergeObjects.OVERWRITE);
+        }
+        
+        if (this.id == undefined) {
+            this.id = this.template.id;
+        }
         this.path = this.parent && this.parent != glui.screen ? `${this.parent.path}.${this.id}` : this.id;
         this.type = this.template.type;
         this.disabled = this.template.disabled;
@@ -136,9 +161,10 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
             this.dataSource = source;
         }
         this.dataField = this.template['data-field'];
-        this.zIndex = parseInt(this.template.style) || 0;
-        this.style = mergeObjects(this.template.style, null);
-        this.label = null;
+        this.noBinding = this.template['no-binding'];
+console.log('no-binding:', this.noBinding)
+        this.zIndex = parseInt(this.template.style['z-index']) || 0;
+        //this.label = null; ???
         this.scrollRangeX[1] = this.template['scroll-x-min'];
         this.scrollRangeX[0] = this.template['scroll-x-max'];
         this.scrollRangeY[0] = this.template['scroll-y-min'];
@@ -146,14 +172,16 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         return this.template;
 	};
     Control.prototype.dataBind = function dataBind(source, field) {
-        if (source !== undefined && field !== undefined) {
+        if (!this.noBinding && source !== undefined) {
             if (this.dataSource != null) {
                 delete this.dataSource;
                 this.dataSource = null;
             }
             this.dataSource = source instanceof DataLink ? source : new DataLink(source);
-            this.dataField = field;
-            this.dataSource.addField(this.dataField, null);
+            if (field !== undefined) {
+                this.dataField = field;
+                this.dataSource.addField(this.dataField, null);
+            }            
         }
         return this.dataSource;
     };
@@ -194,12 +222,13 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
             if (width) this.renderer.setWidth(width, isInner);
             if (height == undefined) height = width;
             if (height) this.renderer.setHeight(height, isInner);
-            this.render();
+            
+            this.parent ? this.parent.render() : this.render();
         }
     };
     Control.prototype.move = function move(dx, dy, order) {
-        this.offsetLeft = dx;
-        this.offsetTop = dy;
+        if (dx != null) this.offsetLeft = dx;
+        if (dy != null) this.offsetTop = dy;
         if (order && Array.isArray(this.parent.items)) {
             var parent = null;
             var isFirst = true;
@@ -218,7 +247,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
                 isFirst ? parent.items.push(this) : parent.items.unshift(this);
             }
         }
-        this.render();
+        this.parent ? this.parent.render() : this.render();
     };
     Control.prototype.render = function render() {
         // mark control to render in the next requestAnimationFrame
@@ -233,7 +262,6 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
             var node = this;
             //while (node.parent) node = node.parent;
             node.render();
-
             this.isHighlighted = true;
         }
     };
@@ -410,9 +438,9 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
                 }
                 if (ctrl instanceof glui.Container) {
                     //var p = [];
-                    for (var i in ctrl.template.items) {
+                    for (var i=0; i<ctrl.template.items.length; i++) {
                         if (ctrl.template.items.hasOwnProperty(i)) {
-                            glui.create(i, ctrl.template.items[i], ctrl);
+                            glui.create(ctrl.template.items[i].id || i, ctrl.template.items[i], ctrl);
                         }
                     }
                     //await Promise.all(p);
@@ -458,22 +486,62 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         return control;
     };
     Control.getStyleTemplate = function getStyleTemplate() {
-        return {
-            'left': 0,
-            'top': 0,
-            'width': 'auto',
-            'height': 'auto',
-            'z-index': NaN,
-            'background-color': '#e0e0e0',
-            'background-image': 'none',
-            'color': '#000000',
-            'font': 'Arial 12 normal',
-            'align': 'center middle',
-            'border': '#c0c0c0 1px solid',
-            'visible': true
-        };
+        return glui.schema.types.get('ControlStyle').default;
+        // return {
+        //     'align': 'center middle',
+        //     'background-color': 'transparent',
+        //     'background-image': 'none',
+        //     'border': 'silver 2px solid',
+        //     'color': 'black',
+        //     'font': 'Arial 12 normal',
+        //     'left': '0',
+        //     'height': 'auto',
+        //     'top': '0',
+        //     'visible': true,
+        //     'width': 'auto',
+        //     'z-index': 0
+        // };
     };
+    //glui.schema.types.get('ControlStyle').ctor = Control.getStyleTemplate;
+
+    glui.schema.buildType({
+        'name':'Control',
+        'ref':'id',
+        'attributes': {
+            'data-field':   { 'type': 'string', 'isRequired':false, 'default': '' },
+            'data-source':  { 'type': 'void', 'isRequired':false, 'default': null },
+            'disabled':     { 'type': 'bool', 'isRequired':false, 'default': false },
+            'id':           { 'type': 'string', 'isRequired':false, 'default':'ctrl' },
+            // 'label':        { 'type': 'string', 'isRequired':false, 'default':'lbl' },
+            'no-binding':   { 'type': 'bool', 'isRequired':false, 'default': false },
+            'scroll-x-min': { 'type': 'int', 'isRequired':false, 'default': 0 },
+            'scroll-x-max': { 'type': 'int', 'isRequired':false, 'default': 0 },
+            'scroll-y-min': { 'type': 'int', 'isRequired':false, 'default': 0 },
+            'scroll-y-max': { 'type': 'int', 'isRequired':false, 'default': 0 },
+            'style':        {
+                'type': {
+                    'name':'ControlStyle',
+                    'attributes': {
+                        'align':            { 'type':'string', 'isRequired':false, 'default':'center middle' },
+                        'background-color': { 'type':'string', 'isRequired':false, 'default':'transparent' },
+                        'background-image': { 'type':'string', 'isRequired':false, 'default':'none' },
+                        'border':           { 'type':'string', 'isRequired':false, 'default':'silver 2px solid' },
+                        'color':            { 'type':'string', 'isRequired':false, 'default':'black' },
+                        'font':             { 'type':'string', 'isRequired':false, 'default':'Arial 12 normal' },
+                        'height':           { 'type':'string', 'isRequired':false, 'default':'0' },
+                        'left':             { 'type':'string', 'isRequired':false, 'default':'0' },
+                        'top':              { 'type':'string', 'isRequired':false, 'default':'0' },
+                        'visible':          { 'type':'bool',   'isRequired':false, 'default':false },
+                        'width':            { 'type':'string', 'isRequired':false, 'default':'0' },
+                        'z-index':          { 'type':'int',    'isRequired':false, 'default':0 }
+                    }
+                },
+                'isRequired':false },
+            'type':         { 'type': 'typeName' }
+        }
+    });
     //#endregion
+console.log(glui.schema.types.get('Control').attributes.get('no-binding'))
 
     Control.order = {
         'TOP': 1,
@@ -481,5 +549,4 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
     };
 
     publish(Control, 'Control', glui);
-
 })();

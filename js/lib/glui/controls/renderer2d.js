@@ -62,7 +62,7 @@ include('renderer.js');
         ctx.fillStyle = this.toCssColor(color);
         ctx.fillText(text, x, y, w);
     };
-    Renderer2d.prototype.getTextBoundingBoxes = function getBoundingBoxes(lines) {
+    Renderer2d.prototype.getTextBoundingBoxes = function getTextBoundingBoxes(lines) {
         var boxes = [];
         var cx = 2*(this.border.width + this.padding[0]);
         var cy = 2*(this.border.width + this.padding[1]);

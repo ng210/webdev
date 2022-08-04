@@ -2,6 +2,7 @@ include('value-control.js');
 include('label.js');
 
 (function() {
+    //#region ButtonRenderer2d
     function ButtonRenderer2d(control, context) {
         ButtonRenderer2d.base.constructor.call(this, control, context);
     }
@@ -31,15 +32,29 @@ include('label.js');
         this.control.renderer.border.style = this.control.state ? 'inset' : 'outset';
         ButtonRenderer2d.base.render.call(this);
     };
+    //#endregion
 
+    //#region Button
     function Button(id, template, parent, context) {
         Button.base.constructor.call(this, id, template, parent, context);
+        this.command = null;
         this.state = false;
         //this.renderer3d = new ButtonRenderer3d()
     }
     extend(glui.Label, Button);
 
     Button.prototype.createRenderer = mode => mode == glui.Render2d ? new ButtonRenderer2d() : 'ButtonRenderer3d';
+
+    Button.prototype.getTemplate = function getTemplate() {
+        var template = Button.base.getTemplate.call(this);
+        template.command = 'command';
+        return template;
+    };
+    Button.prototype.applyTemplate = function applyTemplate(tmpl) {
+        var template = Button.base.applyTemplate.call(this, tmpl);
+        this.command = template.command;
+        return template;
+    };
 
     Button.prototype.getHandlers = function getHandlers() {
         var handlers = Button.base.getHandlers();
@@ -64,6 +79,19 @@ include('label.js');
         this.state = false;
         this.render();
     };
+
+    Button.getTypeDescriptor = () => {
+        return {
+            'name':'Button',
+            'type':'Label',
+            'attributes': {
+                'command': { 'type':'string', 'isRequired':false }
+            }
+        };
+    };
+    //#endregion
+
+    glui.addType(Button);
 
     publish(Button, 'Button', glui);
 })();

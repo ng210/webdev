@@ -52,7 +52,7 @@ include('renderer2d.js');
         this.isReadonly = !!this.template.readonly;
         this.keyField = this.template['key-field'];
         this.valueList = getObjectAt(this.template['values']);
-        var template = mergeObjects(this.template);
+        var template = clone(this.template);
         delete template['data-source'];
         delete template['data-field'];
         delete template.style.height;

@@ -28,9 +28,9 @@
  *   adapter: define an adapter with name and a dbref for preparation
  *     adapter "<string adapter-name>", <REF prepare-block>
  *   sequence: define a named sequence of commands for a given adapter
- *     sequence "<string sequence-name>", "string <adapter-name>" { list<FRAME> }
+ *     sequence "<string sequence-name>", "string <adapter-name>", { list<FRAME> }
  *   datablock: define or import a named data-block
-  *    datablock "<string datablock-name>" list<VALUE>
+ *     datablock "<string datablock-name>", { list<VALUE> }
  *     datablock "<string datablock-name>" import "<string url>"
  * 
  * 2. Example
@@ -39,8 +39,8 @@
  *  set CHN1 1
  * 
  *  // data blocks
- *  datablock "Master" b01, SpriteManager.Device.SPRITE
- *  datablock "PrepareSprite" b10, "sprites.json"
+ *  datablock "Master", { b01, SpriteManager.Device.SPRITE }
+ *  datablock "PrepareSprite", { b10, "sprites.json" }
  * 
  *  // list of adapters: type, prepare datablock ref
  *  adapter "Player", 0

@@ -2,6 +2,7 @@ include('container.js');
 
 (function() {
 
+    //#region MenuRenderer2d
     function MenuRenderer2d(control, context) {
         MenuRenderer2d.base.constructor.call(this, control, context);
     }
@@ -11,8 +12,9 @@ include('container.js');
     //     debugger
     //     MenuRenderer2d.base.renderControl.call(this);
     // };
+    //#endregion
 
-
+    //#region Menu
     function Menu(id, template, parent, context) {
         Menu.base.constructor.call(this, id, template, parent, context);
         this.submenus = [];
@@ -31,6 +33,7 @@ include('container.js');
         return template;
     };
     Menu.prototype.applyTemplate = function applyTemplate(tmpl) {
+        if (tmpl && tmpl.layout) tmpl.layout = tmpl.layout.toUpperCase();
         var template = Menu.base.applyTemplate.call(this, tmpl);
         if (!tmpl.style || !tmpl.style.width) delete this.style.width;
         if (!tmpl.style || !tmpl.style.height) delete this.style.height;
@@ -45,16 +48,17 @@ include('container.js');
                 }
             }
         }
-        this.itemTemplate = this.template['item-template'] = mergeObjects({
-            'type':'Label',
-            'style': {
-                'font': this.style.font,
-                'color': this.style.color,
-                'align': 'center middle',
-                'border': 'none',
-                'background-color': this.style['background-color']
-            }
-        }, tmpl['item-template']);
+        this.itemTemplate = this.template['item-template'] = mergeObjects(
+            tmpl['item-template'], {
+                'type':'Label',
+                'style': {
+                    'font': this.style.font,
+                    'color': this.style.color,
+                    'align': 'center middle',
+                    'border': 'none',
+                    'background-color': this.style['background-color']
+                }
+            }, mergeObjects.COMMON | mergeObjects.OVERWRITE);
 
         if (!tmpl.style || !tmpl.style['background-color']) delete this.style['background-color'];
         if (!tmpl.style || !tmpl.style['background-color']) delete this.style['background-color'];
@@ -154,7 +158,7 @@ include('container.js');
                         'key': data[i].key,
                         'layout': this.template['item-template'].layout,
                         'item-template': this.itemTemplate,
-                        'style': mergeObjects(this.style),
+                        'style': clone(this.style),
                         'data-source': item.items,
                         'data-field': ''
                     };
@@ -265,6 +269,32 @@ include('container.js');
         HORIZONTAL: 0,
         VERTICAL: 1
     };
+
+    Menu.getStyleType = () => {
+        return {
+            'name':'MenuStyleType',
+            'type':'ControlStyle',
+            'attributes': {
+                'spacing': { 'type':'string', 'isRequired':false }
+            }
+        };
+    };
+    glui.schema.addType(new EnumType('MenuLayout', null, { 'values':Object.keys(Menu.layout) }));
+    Menu.getTypeDescriptor = () => {
+        return {
+            'name':'Menu',
+            'type':'Container',
+            'attributes': {
+                'label': { 'type':'string', 'isRequired':false },
+                'layout': { 'type':'MenuLayout', 'isRequired':false },
+                'item-template': glui.Label.getType(),
+                'style': { 'type':Menu.getStyleType(), 'isRequired':false }
+            }
+        };
+    };
+    //#endregion
+
+    glui.addType(Menu);
 
     publish(Menu, 'Menu', glui);
     publish(MenuRenderer2d, 'MenuRenderer2d', glui);
