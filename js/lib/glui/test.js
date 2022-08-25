@@ -80,17 +80,17 @@ include('/lib/data/graph.js');
     };
 
     var controls = [
-        // {   'type': 'Label',
-        //     'style': {
-        //         'font': 'Arial 14',
-        //         'width':'auto', 'height':'2.1em',
-        //         'align':'center middle',
-        //         'border':'#406080 1px inset',
-        //         'background-color': '#c0e0ff',
-        //         'background-image': 'none'
-        //     },
-        //     'value': 'label'
-        // },
+        {   'type': 'Label',
+            'style': {
+                'font': 'Arial 14',
+                'width':'auto', 'height':'2.1em',
+                'align':'center middle',
+                'border':'#406080 1px inset',
+                'background-color': '#c0e0ff',
+                'background-image': 'none'
+            },
+            'value': 'label'
+        },
         {   'type': 'Label',
             'style': {
                 'font': 'Arial 14',
@@ -111,42 +111,42 @@ include('/lib/data/graph.js');
             'data-field': 'label2'
         },
 
-        // {   'type': 'Textbox',
-        //     'style': style,
-        //     'look': 'textbox',
-        //     'decimal-digits': 3,
-        //     'value': 'textbox'
-        // },
-        // {   'type': 'Textbox',
-        //     'style': style,
-        //     'look': 'textbox',
-        //     'decimal-digits': 3,
-        //     'data-source': 'data',
-        //     'data-field': 'textbox1'
-        // },
-        // {   'type': 'Textbox',
-        //     'style': style,
-        //     'look': 'potmeter',
-        //     'data-type': 'int',
-        //     'decimal-digits': 1,
-        //     'data-source': 'data',
-        //     'data-field': 'textbox2'
-        // },
+        {   'type': 'Textbox',
+            'style': style,
+            'look': 'textbox',
+            'decimal-digits': 3,
+            'value': 'textbox'
+        },
+        {   'type': 'Textbox',
+            'style': style,
+            'look': 'textbox',
+            'decimal-digits': 3,
+            'data-source': 'data',
+            'data-field': 'textbox1'
+        },
+        {   'type': 'Textbox',
+            'style': style,
+            'look': 'potmeter',
+            'data-type': 'int',
+            'decimal-digits': 1,
+            'data-source': 'data',
+            'data-field': 'textbox2'
+        },
 
-        // {   'type': 'Button',
-        //     'style': buttonStyle,
-        //     'data-source': 'data',
-        //     'data-field': 'button'
-        // },
+        {   'type': 'Button',
+            'style': buttonStyle,
+            'data-source': 'data',
+            'data-field': 'button'
+        },
 
-        // {   'type': 'Image',
-        //     'style': {
-        //         'width':'128px', 'height':'96px',
-        //         'border':'#805020 2px inset',
-        //         'background-color': '#102040'
-        //     },
-        //     'source': '/lib/glui/res/test.png'
-        // },
+        {   'type': 'Image',
+            'style': {
+                'width':'128px', 'height':'96px',
+                'border':'#805020 2px inset',
+                'background-color': '#102040'
+            },
+            'source': '/lib/glui/res/test.png'
+        },
 
         // {   'type': 'Grid',
         //     'style': {
@@ -170,36 +170,36 @@ include('/lib/data/graph.js');
         //     'scale-y': 2.0
         // },
 
-        // {   'type': 'Textbox',
-        //     'style': {
-        //         'font': 'Arial 10',
-        //         'align':'center middle',
-        //         'width': '24px',
-        //         'border':'#204080 1px outset',
-        //         'background-color': '#204080',
-        //         'color': '#80a0f0'
-        //     },
-        //     //'image': 'glui/res/knob.png',
-        //     //'data-type': 'int',
-        //     //'decimal-digits': 1,
-        //     'look': 'knob',
-        //     'min': 0, 'max': 255, 'value': 10
-        // },
-        // {   'type': 'Textbox',
-        //     'style': {
-        //         'font': 'Arial 10',
-        //         'align':'center middle',
-        //         'width': '40px',
-        //         'border':'#204080 1px outset',
-        //         'background-color': '#204080',
-        //         'color': '#80a0f0'
-        //     },
-        //     //'image': 'glui/res/knob.png',
-        //     //'data-type': 'int',
-        //     //'decimal-digits': 1,
-        //     'look': 'knob',
-        //     'min': 0, 'max': 255, 'value': 200
-        // },
+        {   'type': 'Textbox',
+            'style': {
+                'font': 'Arial 10',
+                'align':'center middle',
+                'width': '24px',
+                'border':'#204080 1px outset',
+                'background-color': '#204080',
+                'color': '#80a0f0'
+            },
+            //'image': 'glui/res/knob.png',
+            //'data-type': 'int',
+            //'decimal-digits': 1,
+            'look': 'knob',
+            'min': 0, 'max': 255, 'value': 10
+        },
+        {   'type': 'Textbox',
+            'style': {
+                'font': 'Arial 10',
+                'align':'center middle',
+                'width': '40px',
+                'border':'#204080 1px outset',
+                'background-color': '#204080',
+                'color': '#80a0f0'
+            },
+            //'image': 'glui/res/knob.png',
+            //'data-type': 'int',
+            //'decimal-digits': 1,
+            'look': 'knob',
+            'min': 0, 'max': 255, 'value': 200
+        },
 
         // {   'type': 'GraphView',
         //     'style': {
@@ -1028,8 +1028,8 @@ include('/lib/data/graph.js');
     // }
 
     var tests = () => [
-        // test_clipping,
-        test_construct,
+        test_clipping,
+        // test_construct,
         // test_align,
         // test_container,
         // test_table,

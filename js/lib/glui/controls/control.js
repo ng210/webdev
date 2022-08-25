@@ -120,7 +120,8 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         var styleType = this.type.attributes.get('style').type;
         if (this.parent && this.parent.style) {
             // merge parent style into default
-            glui.schema.mergeObjects(this.parent.style, this.style, styleType, self.mergeObjects.OVERWRITE);
+            //glui.schema.mergeObjects(this.parent.style, this.style, styleType, self.mergeObjects.OVERWRITE);
+            styleType.merge(this.parent.style, this.style, self.mergeObjects.OVERWRITE);
         }
 
         if (tmpl) {
@@ -129,7 +130,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
             if (res.length > 0) {
                 Dbg.prln(res.join('\n'));
             }
-            mergeObjects(tmpl, this.template, self.mergeObjects.OVERWRITE);
+            this.type.merge(tmpl, this.template, self.mergeObjects.OVERWRITE);
         }
         
         if (this.id == undefined) {
@@ -528,20 +529,19 @@ console.log('no-binding:', this.noBinding)
                         'border':           { 'type':'string', 'isRequired':false, 'default':'silver 2px solid' },
                         'color':            { 'type':'string', 'isRequired':false, 'default':'black' },
                         'font':             { 'type':'string', 'isRequired':false, 'default':'Arial 12 normal' },
-                        'height':           { 'type':'string', 'isRequired':false, 'default':'0' },
+                        'height':           { 'type':'string', 'isRequired':false, 'default':'auto' },
                         'left':             { 'type':'string', 'isRequired':false, 'default':'0' },
                         'top':              { 'type':'string', 'isRequired':false, 'default':'0' },
-                        'visible':          { 'type':'bool',   'isRequired':false, 'default':false },
-                        'width':            { 'type':'string', 'isRequired':false, 'default':'0' },
+                        'visible':          { 'type':'bool',   'isRequired':false, 'default':true },
+                        'width':            { 'type':'string', 'isRequired':false, 'default':'auto' },
                         'z-index':          { 'type':'int',    'isRequired':false, 'default':0 }
                     }
                 },
                 'isRequired':false },
-            'type':         { 'type': 'typeName' }
+            'type': { 'type': 'typeName' }
         }
     });
     //#endregion
-console.log(glui.schema.types.get('Control').attributes.get('no-binding'))
 
     Control.order = {
         'TOP': 1,

@@ -80,18 +80,14 @@ include('label.js');
         this.render();
     };
 
-    Button.getTypeDescriptor = () => {
-        return {
-            'name':'Button',
-            'type':'Label',
-            'attributes': {
-                'command': { 'type':'string', 'isRequired':false }
-            }
-        };
-    };
     //#endregion
-
-    glui.addType(Button);
-
+    glui.schema.buildType({
+        'name':'Button',
+        'type':'Label',
+        'attributes': {
+            'command': { 'type':'string', 'isRequired':false }
+        }
+    });
+    
     publish(Button, 'Button', glui);
 })();

@@ -562,20 +562,17 @@ include('label.js');
     };
 
     glui.schema.addType(new EnumType('TextboxLook', null, { 'values':Object.values(Textbox.Look) }));
-    Textbox.getTypeDescriptor = () => {
-        return {
-            'name':'Textbox',
-            'type':'Label',
-            'attributes': {
-                'label': { 'type':'string', 'isRequired':false },
-                'isMultiline': { 'type':'bool', 'isRequired':false },
-                'look': { 'type':'TextboxLook', 'isRequired':false }
-            }
-        };
-    };
-    //#endregion
 
-    glui.addType(Textbox);
+    glui.schema.buildType({
+        'name':'Textbox',
+        'attributes': {
+            'label': { 'type':'string', 'isRequired':false },
+            'isMultiline': { 'type':'bool', 'isRequired':false },
+            'look': { 'type':'TextboxLook', 'isRequired':false }
+        },
+        'type':'ValueControl'
+    });
+    //#endregion
 
     publish(Textbox, 'Textbox', glui);
     publish(TextboxRenderer2d, 'TextboxRenderer2d', glui);

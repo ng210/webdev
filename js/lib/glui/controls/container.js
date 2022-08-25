@@ -58,8 +58,7 @@ include('renderer2d.js');
         return tmpl;
     };
     Container.prototype.applyTemplate = function(tmpl) {
-        if (tmpl) {
-debugger
+        if (tmpl && tmpl.items) {
             for (var i=0; i<tmpl.items.length; i++) {
                 var objType = glui.schema.types.get(tmpl.items[i].type);
                 objType.setType(tmpl.items[i]);

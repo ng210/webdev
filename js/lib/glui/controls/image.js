@@ -59,22 +59,13 @@ include('renderer2d.js');
     Image.prototype.createRenderer = mode => mode == glui.Render2d ? new ImageRenderer2d() : 'ImageRenderer3d';
 
     glui.schema.buildType({
-        'name':'LabImageel',
+        'name':'Image',
         'attributes': {
             'source': { 'type':'string', 'default':'/res/blank.png' },
             'style': { 'type': 'ControlStyle', 'isRequired':false }
         },
         'type':'Control'
     });
-    Image.getTypeDescriptor = () => {
-        return {
-            'name':'Image',
-            'type':'Control',
-            'attributes': {
-                'source': { 'type':'string' }
-            }
-        };
-    };
     //#endregion
 
     publish(Image, 'Image', glui);
