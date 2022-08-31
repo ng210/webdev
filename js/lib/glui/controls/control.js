@@ -98,7 +98,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
     };
     Control.prototype.getTemplate = function getTemplate() {
         var type = glui.schema.types.get(this.constructor.name);
-        return type.default;
+        return type.createPrimitiveValue(type.default);
         // return type.createPrimitiveValue( {
         //     'data-field': '',
         //     'data-source': null,
@@ -116,23 +116,20 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
     };
     Control.prototype.applyTemplate = function(tmpl) {
         this.template = this.getTemplate();
-        this.style = this.template.style;
         var styleType = this.type.attributes.get('style').type;
         if (this.parent && this.parent.style) {
             // merge parent style into default
-            //glui.schema.mergeObjects(this.parent.style, this.style, styleType, self.mergeObjects.OVERWRITE);
             styleType.merge(this.parent.style, this.style, self.mergeObjects.OVERWRITE);
         }
-
         if (tmpl) {
-            var type = glui.schema.types.get(this.constructor.name);
-            var res = glui.schema.validate(tmpl, type);
+            var res = glui.schema.validate(tmpl, this.type);
             if (res.length > 0) {
                 Dbg.prln(res.join('\n'));
             }
             this.type.merge(tmpl, this.template, self.mergeObjects.OVERWRITE);
         }
-        
+        styleType.merge(this.template.style, this.style, self.mergeObjects.OVERWRITE);
+
         if (this.id == undefined) {
             this.id = this.template.id;
         }
@@ -163,8 +160,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         }
         this.dataField = this.template['data-field'];
         this.noBinding = this.template['no-binding'];
-console.log('no-binding:', this.noBinding)
-        this.zIndex = parseInt(this.template.style['z-index']) || 0;
+        this.zIndex = parseInt(this.style['z-index']) || 0;
         //this.label = null; ???
         this.scrollRangeX[1] = this.template['scroll-x-min'];
         this.scrollRangeX[0] = this.template['scroll-x-max'];
@@ -223,7 +219,6 @@ console.log('no-binding:', this.noBinding)
             if (width) this.renderer.setWidth(width, isInner);
             if (height == undefined) height = width;
             if (height) this.renderer.setHeight(height, isInner);
-            
             this.parent ? this.parent.render() : this.render();
         }
     };
@@ -505,7 +500,7 @@ console.log('no-binding:', this.noBinding)
     };
     //glui.schema.types.get('ControlStyle').ctor = Control.getStyleTemplate;
 
-    glui.schema.buildType({
+    glui.buildType({
         'name':'Control',
         'ref':'id',
         'attributes': {
@@ -515,10 +510,10 @@ console.log('no-binding:', this.noBinding)
             'id':           { 'type': 'string', 'isRequired':false, 'default':'ctrl' },
             // 'label':        { 'type': 'string', 'isRequired':false, 'default':'lbl' },
             'no-binding':   { 'type': 'bool', 'isRequired':false, 'default': false },
-            'scroll-x-min': { 'type': 'int', 'isRequired':false, 'default': 0 },
-            'scroll-x-max': { 'type': 'int', 'isRequired':false, 'default': 0 },
-            'scroll-y-min': { 'type': 'int', 'isRequired':false, 'default': 0 },
-            'scroll-y-max': { 'type': 'int', 'isRequired':false, 'default': 0 },
+            'scroll-x-min': { 'type':  'int', 'isRequired':false, 'default': 0 },
+            'scroll-x-max': { 'type':  'int', 'isRequired':false, 'default': 0 },
+            'scroll-y-min': { 'type':  'int', 'isRequired':false, 'default': 0 },
+            'scroll-y-max': { 'type':  'int', 'isRequired':false, 'default': 0 },
             'style':        {
                 'type': {
                     'name':'ControlStyle',

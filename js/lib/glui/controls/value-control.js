@@ -300,20 +300,20 @@ if (!this.dataSource.addHandler) debugger
 		Bool:	'bool'
     };
 
-    glui.schema.buildType({
+    glui.buildType({
         'name':'ValueControl',
+        'type':'Control',
         'attributes': {
-			'dataType':		{ 'type':'type', 'isRequired':false },
-			'decimalDigits':{ 'type':'int', 'isRequired':false },
-			'isNormalized': { 'type':'bool', 'isRequired':false },
-			'isNumeric':	{ 'type':'bool', 'isRequired':false },
-			'min':			{ 'type':'float', 'isRequired':false },
-			'max':			{ 'type':'float', 'isRequired':false },
-			'step':			{ 'type':'float', 'isRequired':false },
-            'style': { 'type': 'ControlStyle', 'isRequired':false },
+			'dataType':		{ 'type':'type', 'isRequired':false, 'default':'string' },
+			'decimalDigits':{ 'type':'int', 'isRequired':false, 'default':2 },
+			'isNormalized': { 'type':'bool', 'isRequired':false, 'default':true },
+			'isNumeric':	{ 'type':'bool', 'isRequired':false, 'default':true },
+			'min':			{ 'type':'float', 'isRequired':false, 'default':0 },
+			'max':			{ 'type':'float', 'isRequired':false, 'default':1.0 },
+			'step':			{ 'type':'float', 'isRequired':false, 'default':0.1 },
+            'style': 		{ 'type':'ControlStyle', 'isRequired':false },
 			'value':		{ 'type':'void', 'isRequired':false }
-        },
-        'type':'Control'
+        }
     });
 
     publish(ValueControl, 'ValueControl', glui);

@@ -7,15 +7,15 @@ include('controls/textbox.js');
 include('controls/button.js');
 include('controls/image.js');
 include('controls/table.js');
-// include('controls/grid.js');
-// include('controls/dialog.js');
+include('controls/grid.js');
+include('controls/dialog.js');
 // include('controls/panel.js');
 // include('controls/graph-view.js');
 
 //include('glui/controls/envelope.js');
 //include('glui/controls/combobox.js');
 
-// include('controls/menu.js');
+include('controls/menu.js');
 
 // dialogs
 // include('dialogs/open-save.js');

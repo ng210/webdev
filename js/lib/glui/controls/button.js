@@ -81,7 +81,7 @@ include('label.js');
     };
 
     //#endregion
-    glui.schema.buildType({
+    glui.buildType({
         'name':'Button',
         'type':'Label',
         'attributes': {

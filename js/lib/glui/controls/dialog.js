@@ -51,14 +51,27 @@ include('container.js');
         var titlebar = clone(glui.Dialog.Template.titlebar);
         var body = clone(glui.Dialog.Template.body);
         this.template.items = [titlebar, body];
-        var styleType = glui.schema.types.get(Dialog.Template.titlebar.type).attributes.get('style').type;
-debugger
-        glui.schema.mergeObjects(this.template['title-style'], titlebar.style, styleType, self.mergeObjects.OVERWRITE);
-        titlebar.style.width = glui.Dialog.Template.titlebar.style.width;
-        titlebar.style.height = glui.Dialog.Template.titlebar.style.height;
-        styleType = glui.schema.types.get(Dialog.Template.body.type).attributes.get('style').type;
-        glui.schema.mergeObjects(this.template['body-style'], body.style, styleType, self.mergeObjects.OVERWRITE);
-        body.items = tmpl.items;
+        glui.schema.types.get(titlebar.type).setType(titlebar);
+        glui.schema.types.get(body.type).setType(body);
+
+        var styleType = glui.schema.types.get('DialogItemStyle');
+        // apply titlebar-style on titlebar and its items
+        styleType.merge(this.style, titlebar.style, self.mergeObjects.OVERWRITE);
+        styleType.merge(this.template['title-style'], titlebar.style, self.mergeObjects.OVERWRITE);
+        for (var i=0; i<titlebar.items.length; i++) {
+            var item = titlebar.items[i];
+            styleType.merge(titlebar.style, item.style, self.mergeObjects.OVERWRITE);
+        }
+
+        // apply body-style on body and its items
+        styleType.merge(this.style, body.style, self.mergeObjects.OVERWRITE);
+        styleType.merge(this.template['body-style'], body.style, self.mergeObjects.OVERWRITE);
+        for (var i=0; i<tmpl.items.length; i++) {
+            var item = clone(tmpl.items[i]);
+            styleType.merge(body.style, item.style);
+            item.dialog = this;
+            body.items.push(item);
+        }
         this.oninit = typeof this.template.init === 'function' ? this.template.init : null;
         return this.template;
     };
@@ -223,12 +236,11 @@ debugger
             'type': 'Container',
             'style': {
                 'left': '0', 'top': '0',
-                'width': '100%', 'height': '1.4em',
-                'background-color': 'transparent', 'color': 'black',
+                'width': '100%', 'height': '1.6em',
+                'background-color': 'silver',
+                'color': 'black',
                 'border': 'silver 1px outset',
-                'font': 'Arial 12',
-                'width':'100%', 'height': '1.2em',
-                'color': '#0080ff'
+                'font': 'Arial 12'
             },
             'items': [
                 {
@@ -248,7 +260,7 @@ debugger
                     'style': {
                         'align': 'right middle',
                         'left': '0', 'top': '0',
-                        'width': 'auto', 'height': '1.4em',
+                        'width': 'auto', 'height': 'auto',
                         'border': 'none'
                     },
                     'items': [
@@ -257,14 +269,14 @@ debugger
                             'type': 'Button',
                             // 'value': 'x',
                             'style': {
-                                'width':'2em', 'height':'2em',
+                                'width':'2.4em', 'height':'auto',
                                 'border':'#808090 2px',
                                 'background-color': '#a0a0b0',
                                 'background-image': 'res/icon_close.png'
                             },
                             'command': 'close'
                         }
-                    ]                            
+                    ]
                 }
             ]
         },
@@ -276,34 +288,37 @@ debugger
                 'width': '100%', 'height': '100%',
                 'padding': '0px',
                 //'border': 'gray 1px inset',
-                'background-color': 'transparent', //'color': 'black',
-                'font': 'Arial 18'
+                'background-color': 'transparent', 'color': 'white',
+                'font': 'Arial 12'
             },
-            'items': null
+            'items': []
         }
     };
+    glui.schema.addType(new ObjectType('DialogItemStyle', null,
+    {
+        'attributes': {
+            'background-color': { 'type':'string', 'isRequired':false, 'default':'transparent' },
+            'background-image': { 'type':'string', 'isRequired':false, 'default':'none' },
+            'border':           { 'type':'string', 'isRequired':false, 'default':'silver 2px solid' },
+            'color':            { 'type':'string', 'isRequired':false, 'default':'black' },
+            'font':             { 'type':'string', 'isRequired':false, 'default':'Arial 12 normal' }
+        }
+    }));
 
-    Dialog.getStyleType = () => {
-        return {
-            'name':'DialogStyle',
-			'type':'ControlStyle'
-        };
-    };
-    Dialog.getTypeDescriptor = () => {
-        return {
+	//#endregion
+
+	glui.buildType(
+        {
             'name':'Dialog',
 			'type':'Container',
             'attributes': {
-				'title': { 'type':'string', 'isRequired':false },
+				'title': { 'type':'string', 'isRequired':false, 'default':'Dialog' },
                 'title-style': { 'type':'ControlStyle', 'isRequired':false },
                 'body-style': { 'type':'ControlStyle', 'isRequired':false },
                 'init':  { 'type':'void', 'isRequired':false }
             }
-        };
-    };
-	//#endregion
-
-	glui.addType(Dialog);
+        }
+    );
 
     publish(Dialog, 'Dialog', glui);
     publish(DialogRenderer2d, 'DialogRenderer2d', glui);

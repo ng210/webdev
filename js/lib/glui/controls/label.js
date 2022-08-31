@@ -63,12 +63,12 @@ include('renderer2d.js');
     // };
     Label.prototype.createRenderer = mode => mode == glui.Render2d ? new LabelRenderer2d() : 'LabelRenderer3d';
 
-    glui.schema.buildType({
+    glui.buildType({
         'name':'Label',
+        'type':'ValueControl',
         'attributes': {
             'style': { 'type': 'ControlStyle', 'isRequired':false }
-        },
-        'type':'ValueControl'
+        }
     });
     //#endregion
 

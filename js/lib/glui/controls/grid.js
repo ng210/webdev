@@ -385,26 +385,23 @@ include('renderer2d.js');
     };
     glui.schema.addType(new EnumType('GridInteractions', null, { 'values':Object.keys(Grid.interactionModes) }));
     glui.schema.addType(new EnumType('GridCurveModes', null, { 'values':Object.keys(Grid.curveModes) }));
-    Grid.getTypeDescriptor = () => {
-        return {
-            'name':'Grid',
-            'type':'Control',
-            'attributes': {
-                'scale-x':       { 'type':'int', 'isRequired':false },
-                'scale-y':       { 'type':'int', 'isRequired':false },
-                'scale-range-x':  { 'type':'float2', 'isRequired':false },
-                'scale-range-y':  { 'type':'float2', 'isRequired':false },
-                'unit-x':        { 'type':'int', 'isRequired':false },
-                'unit-y':        { 'type':'int', 'isRequired':false },
-                'insert-mode':   { 'type':'GridInteractions', 'isRequired':false },
-                'drag-mode':     { 'type':'GridInteractions', 'isRequired':false },
-                'curve-mode':    { 'type':'GridCurveModes', 'isRequired':false }        
-            }
-        };
-    };
     //#endregion
 
-    glui.addType(Grid);
+    glui.buildType({
+        'name':'Grid',
+        'type':'Control',
+        'attributes': {
+            'scale-x':          { 'type':'int', 'isRequired':false, 'default':1 },
+            'scale-y':          { 'type':'int', 'isRequired':false, 'default':1 },
+            'scale-range-x':    { 'type':'float2', 'isRequired':false, 'default':[0.25, 4.0] },
+            'scale-range-y':    { 'type':'float2', 'isRequired':false, 'default':[0.25, 4.0] },
+            'unit-x':           { 'type':'int', 'isRequired':false, 'default':10 },
+            'unit-y':           { 'type':'int', 'isRequired':false, 'default':10 },
+            'insert-mode':      { 'type':'GridInteractions', 'isRequired':false, 'default':Grid.interactionModes.FREE },
+            'drag-mode':        { 'type':'GridInteractions', 'isRequired':false, 'default':Grid.interactionModes.FREE },
+            'curve-mode':       { 'type':'GridCurveModes', 'isRequired':false, 'default':Grid.curveModes.LINE }        
+        }
+    });
 
     publish(Grid, 'Grid', glui);
     publish(GridRenderer2d, 'GridRenderer2d', glui);

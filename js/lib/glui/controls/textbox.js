@@ -560,17 +560,16 @@ include('label.js');
         Potmeter: 'potmeter',
         Knob: 'knob'
     };
-
     glui.schema.addType(new EnumType('TextboxLook', null, { 'values':Object.values(Textbox.Look) }));
 
-    glui.schema.buildType({
+    glui.buildType({
         'name':'Textbox',
+        'type':'ValueControl',
         'attributes': {
             'label': { 'type':'string', 'isRequired':false },
-            'isMultiline': { 'type':'bool', 'isRequired':false },
-            'look': { 'type':'TextboxLook', 'isRequired':false }
-        },
-        'type':'ValueControl'
+            'isMultiline': { 'type':'bool', 'isRequired':false, 'default':false },
+            'look': { 'type':'TextboxLook', 'isRequired':false, 'default':Textbox.Look.Textbox }
+        }
     });
     //#endregion
 

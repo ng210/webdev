@@ -5,7 +5,7 @@ include('/lib/data/graph.js');
 (function() {
 
     var style = {
-        'font': 'Arial 12',
+        'font': 'Arial 10',
         'width':'10em', 'height':'1.5em',
         'align':'right middle',
         'border':'#406080 1px inset',
@@ -148,27 +148,27 @@ include('/lib/data/graph.js');
             'source': '/lib/glui/res/test.png'
         },
 
-        // {   'type': 'Grid',
-        //     'style': {
-        //         'color': '#ffd080',
-        //         'background-color': '#104080',
-        //         'width': '640px', 'height': '400px',
-        //         'border': '#102040 2px inset'
-        //     },
-        //     'unit-x': 10,
-        //     'unit-y': 8,
-        //     'scroll-x-min': 20,
-        //     'scroll-x-max': 40,
-        //     'scroll-y-min': 32,
-        //     'scroll-y-max': 32,
-        //     'data-source': 'data',
-        //     'data-field': 'grid',
-        //     'insert-mode': 'x-bound',
-        //     'drag-mode': 'free',
-        //     'curve-mode': 'line',
-        //     'scale-x': 2.0,
-        //     'scale-y': 2.0
-        // },
+        {   'type': 'Grid',
+            'style': {
+                'color': '#ffd080',
+                'background-color': '#104080',
+                'width': '640px', 'height': '400px',
+                'border': '#102040 2px inset'
+            },
+            'unit-x': 10,
+            'unit-y': 8,
+            'scroll-x-min': 20,
+            'scroll-x-max': 40,
+            'scroll-y-min': 32,
+            'scroll-y-max': 32,
+            'data-source': 'data',
+            'data-field': 'grid',
+            'insert-mode': 'x-bound',
+            'drag-mode': 'free',
+            'curve-mode': 'line',
+            'scale-x': 2.0,
+            'scale-y': 2.0
+        },
 
         {   'type': 'Textbox',
             'style': {
@@ -437,12 +437,12 @@ include('/lib/data/graph.js');
                     'font': 'Arial 14',
                     'width':'100%', 'height':'1.5em',
                     'align':'center middle',
-                    'border':'#e0e0e0 4px outset',
+                    'border':'#e0e0e0 2px outset',
                     'color': '#808080',
                     'spacing': '4px'
                 }
             },
-            'cols': 3, 'rows': 5,
+            'cols': 2, 'rows': 3,
             'mode': glui.Table.modes.BOARD,
             'data-source': 'data',
             'data-field': 'list'
@@ -757,7 +757,6 @@ include('/lib/data/graph.js');
             'data-source': 'data',
             'data-field': 'list',
             'mode': glui.Table.modes.BOARD,
-
             'style': {
                 'align':'center middle',
                 'font': 'Arial 12',
@@ -780,7 +779,6 @@ include('/lib/data/graph.js');
         var table4 = glui.create('table4', tableTemplate4, null, App); table4.build();
         var cols = tableTemplate4.cols;
         var rows = Math.ceil(data.table.length/cols);
-
         test('Table built from datasource should have ' + cols + ' columns and ' + rows + ' rows', ctx => {
             ctx.assert(table4.columnCount, '=', cols);
             ctx.assert(table4.rowCount, '=', rows);
@@ -885,66 +883,72 @@ include('/lib/data/graph.js');
             'type':'Dialog',
             'title': 'Generic Dialog...',
             'style': {
-                'font': 'Arial 20',
-                'width':'12em', 'height':'8em',
+                'font': 'Arial 16',
+                'width':'14em', 'height':'6.4em',
                 //'padding':'1.0em',
                 'align':'left middle',
-                'border':'#204080 2px inset',
+                'border':'#204080 1px inset',
                 'background-color': '#4080ff',
-                'background-image': 'none'
+                'background-image': 'none',
+                'color':'white'
             },
             'title-style': {
-                'font': 'Arial 16',
-                'color': '#c0e0ff',
+                'font': 'Arial 14',
+                'color': '#00e0ff',
                 'background-color': '#2040c0',
                 'border':'#2040c0 1px outset'
             },
             'items': [
                 {   'type': 'Label',
                     'style': {
-                        //'font': 'Arial 18',
-                        'width':'5em', 'height':'1.5em',
+                        'left':'0.5em', 'top':'0.5em',
+                        'width':'6.4em', 'height':'1.6em',
                         'align':'center middle',
-                        'border':'#406080 1px outset',
-                        'background-color': '#c0e0ff',
+                        'border':'#908070 1px outset',
+                        'background-color': '#908070',
                         'background-image': 'none'
                     },
                     'value': 'Count'
                 },
                 {   'type': 'Textbox',
                     'style': {
-                        //'font': 'Arial 12',
-                        'width':'6em', 'height':'1.5em',
+                        'left':'7.2em', 'top':'0.5em',
+                        'width':'6em', 'height':'1.6em',
                         'align':'right middle',
-                        'border':'#406080 1px inset',
-                        'background-color': '#c0e0ff',
+                        'border':'#008000 1px inset',
+                        'background-color': '#008000',
                         'background-image': 'none'
                     },
-                    'look': 'potmeter',
+                    'look': 'textbox',
                     'data-type': 'int',
                     'decimal-digits': 1,
                     'data-source': 'data',
                     'data-field': 'textbox2'
                 },
                 {   'type': 'Button',
+                    'id': 'Ok',
                     'style': {
-                        'font': 'Arial 12',
+                        'left':'4em', 'top':'2.4em',
                         'width':'6em', 'height':'2em',
                         'align':'center middle',
-                        'border':'#808090 2px',
-                        'background-color': '#a0a0b0'
+                        'border':'#6080e0 2px',
+                        'background-color': '#6080e0'
                     },
                     'value': 'Ok'
                 }
             ],
             'init': function() {
                 this.move(100, 100);
-                //var lbl = this.items[0];
-                //lbl.move('0em', '0em');
-                var tb = this.items[1];
-                tb.move('7em', '0em');
+                // //var lbl = this.items[0];
+                // //lbl.move('0em', '0em');
+                // var tb = this.items[1];
+                // tb.move('7em', '0em');
                 var bt = this.items[2];
-                bt.move('4em', '3.5em');
+                bt.addHandler('click', this, function(e, ctrl) {
+                    Dbg.prln('Close it!');
+                    this.close();
+                    return true;
+                });
             }
         }, null, App);
         await dlg.open();
@@ -990,6 +994,7 @@ include('/lib/data/graph.js');
         glui.animate();
 
         await button('Next');
+        teardown();
     }
 
     // function test_valueControls() {
@@ -1028,15 +1033,15 @@ include('/lib/data/graph.js');
     // }
 
     var tests = () => [
-        test_clipping,
+        // test_clipping,
         // test_construct,
         // test_align,
         // test_container,
-        // test_table,
+        test_table,
         // test_menu,
         // test_render,
         // test_grid,
-        // test_dialog
+        test_dialog
     ];
     publish(tests, 'glUi tests');
 })();

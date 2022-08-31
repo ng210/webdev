@@ -1,4 +1,5 @@
 include('container.js');
+include('label.js');
 
 (function() {
 
@@ -270,31 +271,28 @@ include('container.js');
         VERTICAL: 1
     };
 
-    Menu.getStyleType = () => {
-        return {
-            'name':'MenuStyleType',
-            'type':'ControlStyle',
-            'attributes': {
-                'spacing': { 'type':'string', 'isRequired':false }
-            }
-        };
-    };
     glui.schema.addType(new EnumType('MenuLayout', null, { 'values':Object.keys(Menu.layout) }));
-    Menu.getTypeDescriptor = () => {
-        return {
-            'name':'Menu',
-            'type':'Container',
-            'attributes': {
-                'label': { 'type':'string', 'isRequired':false },
-                'layout': { 'type':'MenuLayout', 'isRequired':false },
-                'item-template': glui.Label.getType(),
-                'style': { 'type':Menu.getStyleType(), 'isRequired':false }
+    glui.buildType({
+        'name':'Menu',
+        'type':'Container',
+        'attributes': {
+            'label':    { 'type':'string', 'isRequired':false },
+            'layout':   { 'type':'MenuLayout', 'isRequired':false, 'default':Menu.layout.HORIZONTAL },
+            'item-template': {'type':'Control', 'isRequired':false, 'default':glui.Label.prototype.getTemplate() },
+            'style':    {
+                'type': {
+                    'name':'MenuStyleType',
+                    'type':'ControlStyle',
+                    'attributes': {
+                        'spacing': { 'type':'string', 'isRequired':false, 'default':'1px' }
+                    }
+                },
+                'isRequired':false
             }
-        };
-    };
-    //#endregion
+        }
+    });
 
-    glui.addType(Menu);
+    //#endregion
 
     publish(Menu, 'Menu', glui);
     publish(MenuRenderer2d, 'MenuRenderer2d', glui);

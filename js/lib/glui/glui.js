@@ -52,11 +52,16 @@ include('/lib/type/schema.js');
         this.schema.addDefaultTypes();
     }
 
-    // Glui.prototype.addType = function addType(ctor) {
-    //     var typeDescriptor = ctor.getTypeDescriptor();
-    //     this.schema.buildType(typeDescriptor).ctor = ctor;
-    //     this[typeDescriptor.name] = ctor;
-    // };
+    Glui.prototype.buildType = function buildType(def) {
+        if (!def.attributes) {
+            def.attributes = {};
+        }
+        if (!def.attributes.type) {
+            def.attributes.type = { 'type': 'typeName' };
+        }
+        def.attributes.type.default = def.name;
+        glui.schema.buildType(def);
+    };
 
     Glui.prototype.getType = function getType(tagName) {
         var type = null;

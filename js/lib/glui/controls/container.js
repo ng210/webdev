@@ -69,7 +69,7 @@ include('renderer2d.js');
     Container.prototype.add = function add(ctrl) {
         // if (ctrl.parent != this) {
         //     if (ctrl.parent) ctrl.parent.remove(ctrl);
-        var zIndex = parseInt(ctrl.template.style['z-index']);
+        var zIndex = parseInt(ctrl.style['z-index']);
         if (isNaN(zIndex)) {
             ctrl.zIndex = this.zIndex + 100;
         }
@@ -191,13 +191,13 @@ include('renderer2d.js');
         if (!e.control || !e.control.isDescendant(this)) this.dehighlight();
     };
 
-    glui.schema.buildType({
+    glui.buildType({
         'name':'Container',
+        'type':'Control',
         'attributes': {
-            'items': { 'type': { 'type':'list', 'elemType':'Control' }, 'isRequired':false },
+            'items': { 'type': { 'type':'list', 'elemType':'Control' }, 'isRequired':false, 'default': [] },
             'style': { 'type': 'ControlStyle', 'isRequired':false }
-        },
-        'type':'Control'
+        }
     });
 
     publish(Container, 'Container', glui);
