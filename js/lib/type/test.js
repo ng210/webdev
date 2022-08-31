@@ -478,11 +478,12 @@ function test_schema() {
     //#endregion
 
     //#region Person
+debugger
     schema.buildType({ name:'Person', attributes: {
         "id": { type:{ name:'Int1000', type:'int', min:1, max:1000 } },
         "name": { type:'string' },
         "parent": { type:'Person', 'isRequired': false },
-        "color": { type: 'EnumColors' }
+        "color": { type:'EnumColors' }
     }});
     test('Should have Person type', ctx => {
         type = schema.types.get('Person');

@@ -17,12 +17,16 @@ include('/lib/type/type.js');
 
     TypeType.prototype.createValue = function createValue(value, tracking, isPrimitive) {
         var type = null;
-        if (value) {
-            type = this.schema.typeList.find(t => typeof value === 'string' ? t.name == value : t == value);
-        }
-        if (type == null) {
-            var ix = Math.floor(Math.random() * this.schema.typeList.length);
-            type = this.values[ix];
+        if (this.schema) {
+            if (value != undefined) {
+                type = this.schema.typeList.find(t => typeof value === 'string' ? t.name == value : t.name == value.name);
+            }
+            if (type == null) {
+                var ix = Math.floor(Math.random() * this.schema.typeList.length);
+                type = this.values[ix];
+            }
+        } else {
+            type = this;
         }
         return clone(type);
     };

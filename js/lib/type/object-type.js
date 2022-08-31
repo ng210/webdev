@@ -23,14 +23,19 @@ include('/lib/data/dictionary.js');
             }
             if (args.ref && this.attributes.has(args.ref)) this.ref = args.ref;
         }
-        if (this.default == null) {
+        if (this._default == null) {
             var v = null;
             if (typeof this.ctor === 'function') {
                 v = Reflect.construct(this.ctor, []);
             } else {
                 v = {};
                 this.attributes.iterate( (key, value) => {
-                    v[key] = value.type.default;
+                    v[key] = value.default;
+                    if (v[key] == undefined) {
+                        var attr = type.attributes.get(key); 
+                        if (attr && attr.default != undefined) v[key] = attr.default;
+                    }
+                    if (v[key] == undefined) v[key] = value.type.default;
                 });
             }
             this.default = v;
@@ -115,54 +120,38 @@ include('/lib/data/dictionary.js');
     ObjectType.prototype.createValue = function createValue(obj, tracking, isPrimitive) {
         var v = {};
         tracking = tracking || {};
+        var schema = this.schema;
         if (this.addTracking(tracking)) {
             if (obj) {
                 this.attributes.iterate( (key, value) => {
-                    v[key] = value.default;
-                    if (obj[key] !== undefined) {
-                        v[key] = value.type.createValue(obj[key], tracking, isPrimitive);
-                     }
-                     if (v[key] === undefined) {
-debugger
-                        v[key] = value.type.createDefaultValue(tracking, isPrimitive);
-                     } 
+                    var def = obj[key];
+                    if (def === undefined) def = value.default;
+                    if (value.type instanceof Type) {
+                        v[key] = value.type.createValue(def, tracking, isPrimitive);
+                    } else {
+                        schema.addMissingType(value.type, t => v[key] = t.createValue(def, tracking, isPrimitive), [key]);
+                    }
+                 }
                 });
             } else {
-                this.attributes.iterate( (key, value) => { v[key] = value.type.createValue(null, tracking, isPrimitive); });
+                this.attributes.iterate( (key, value) => {
+                    if (value.type instanceof Type) {
+                        v[key] = value.type.createValue(null, tracking, isPrimitive);
+                    } else {
+                        schema.addMissingType(value.type, t => v[key] = t.createValue(null, tracking, isPrimitive), [key]);
+                    }
+                });
             }
         }
         if (!isPrimitive) this.setType(v);
         return v;
     };
-    // ObjectType.prototype.createPrimitiveValue = function createPrimitiveValue(obj, tracking) {
-    //     var v = {};
-    //     var results = [];
-    //     tracking = tracking || {};
-    //     if (this.addTracking(tracking)) {
-    //         if (obj) {
-    //             this.checkAttributes(
-    //                 (key, at) => {
-    //                     if (obj[key] !== undefined) {
-    //                         v[key] = at.type.createPrimitiveValue(obj[key]);
-    //                     }
-    //                 },
-    //                 results
-    //             );
-    //         } else {
-    //             this.checkAttributes( (key, at) => {
-    //                 v[key] = at.type.createPrimitiveValue(undefined, tracking);
-    //             }, results);
-    //         }
-    //         this.removeTracking(tracking);
-    //     }
-    //     return v;
-    // };
-
     ObjectType.prototype.build = function build(definition, schema, path) {
         path = path || [];
         var type = ObjectType.base.build.call(this, definition, schema, path);
         schema.addType(type);
         type.attributes.iterate( (name, value) => {
+            // check for any missing attribute types
             if (!(value.type instanceof Type)) {
                 var attributeType = schema.getOrBuildType(value.type);
                 if (attributeType) {
@@ -179,14 +168,6 @@ debugger
     };
     ObjectType.prototype.merge = function merge(source, target, flags) {
         var type = source.__type__ || this;
-//         if (!type && this.schema) {
-// debugger
-//             type = this.schema.types.get(source.type);
-//         }
-//         if (!type) {
-//             type = this;
-//         }
-
         type.attributes.iterate((k, v) => {
             if (source[k] != undefined && (target[k] == undefined || target[k] == '' || (flags & self.mergeObjects.OVERWRITE))) {
                 if (typeof v.type.merge === 'function') {

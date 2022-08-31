@@ -5,22 +5,27 @@ include('/lib/type/validation-result.js');
         this.baseType = type;
         this.isNumeric = false;
         this.isPrimitive = true;
-        this.default = null;
+        this._default = null;
+        if (type && type._default) this._default = type._default;
         this.schema = null;
         if (args) {
             this.schema = args.schema;
             if (this.validate(args.default)) {
-                this.default = args.default;
+                this._default = args.default;
             }
         }
     }
     Object.defineProperties(Type.prototype, {
-        "basicType": {
+        'basicType': {
             get: function() {
                 var basicType = this;
                 while (basicType.baseType != null) basicType = basicType.baseType;
                 return basicType;
             }
+        },
+        'default': {
+            set: function(v) { this._default = v; },
+            get: function() { return this.isPrimitive ? this._default : this.createPrimitiveValue(this._default); }
         }
     });
 
@@ -46,7 +51,7 @@ include('/lib/type/validation-result.js');
         return this.createValue(value, tracking, true);
     };
     Type.prototype.createDefaultValue = function createDefaultValue(tracking, isPrimitive) {
-        return this.createValue(this.default, tracking, isPrimitive);
+        return this.createValue(this._default, tracking, isPrimitive);
     };
     Type.prototype.compare = function compare(a, b) {
         return JSON.serialize(a).localeCompare(JSON.serialize(b));

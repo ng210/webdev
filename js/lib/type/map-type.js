@@ -12,9 +12,9 @@ include('/lib/type/type.js');
             if (args.valueType) {
                 this.valueType = args.valueType;
             }
-            if (this.default == null) {
-                var key = this.keyType.default;
-                var value = this.valueType.default;
+            if (this._default == null) {
+                var key = this.keyType._default;
+                var value = this.valueType._default;
                 this.default = {};
                 this.default[key] = value;
             }

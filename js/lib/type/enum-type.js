@@ -2,15 +2,13 @@ include('/lib/type/type.js');
 (function() {    
     function EnumType(name, type, args) {
         this.values = [];
-        if (args) {
-            if (args.values) {
-                this.values = args.values;
-                if (this.default == null) {
-                    this.default = this.values[0];
-                }
+        EnumType.base.constructor.call(this, name, type, args);
+        if (args && args.values) {
+            this.values = args.values;
+            if (this.default == null) {
+                this.default = this.values[0];
             }
         }
-        EnumType.base.constructor.call(this, name, type, args);
     }
     extend(Type, EnumType);
 
