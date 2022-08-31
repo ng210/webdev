@@ -131,7 +131,6 @@ include('/lib/data/dictionary.js');
                     } else {
                         schema.addMissingType(value.type, t => v[key] = t.createValue(def, tracking, isPrimitive), [key]);
                     }
-                 }
                 });
             } else {
                 this.attributes.iterate( (key, value) => {
