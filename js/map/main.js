@@ -13,13 +13,14 @@ async function onpageload(e) {
         try {
             webGL.init(null, true);
             await _mapApp.initialize({
-                'size': [80, 60],
+                'size': [32, 20],
                 'service': 'http://localhost:4000/js/map/map-api/'
             });
         } catch (err) {
             Dbg.prln(err);
             console.error(err);
         }
+
         _mapApp.run(0);
     }
 }

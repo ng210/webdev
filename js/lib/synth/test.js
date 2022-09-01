@@ -537,7 +537,7 @@ include('/lib/synth/synth-adapter-ext.js');
         channel.loopCount = 4;
 
         var stream = Ps.Player.createBinaryData(player);
-        stream.toFile('test-data.bin', 'application/octet-stream');
+        //stream.toFile('test-data.bin', 'application/octet-stream');
 
         await run((left, right, bufferSize) => channelBasedFillBuffer(left, right, bufferSize, channel));
     }
@@ -599,7 +599,7 @@ include('/lib/synth/synth-adapter-ext.js');
             ctx.assert(player.datablocks.length, '=', 3);
         });
         var stream = Ps.Player.createBinaryData(player, true);
-        stream.toFile('drums1.bin', 'application/octet-stream');
+        //stream.toFile('drums1.bin', 'application/octet-stream');
 
         await run((left, right, bufferSize) => playerBasedFillBuffer(left, right, bufferSize, player));
     }
@@ -797,17 +797,17 @@ include('/lib/synth/synth-adapter-ext.js');
     // }
 
     var tests = () => [
-        // test_freqTable,
-        // test_control_labels,
-        // test_create_synth,
-        // test_run_env,
-        // test_osc_run,
-        // test_generate_sound_simple,
-        // test_synthAdapter_makeSetCommandForContoller,
-        // test_synthAdapter_prepareContext,
-        // test_synthAdapter_makeCommands,
-        // test_run_channel,
-        // test_complete_player,
+        test_freqTable,
+        test_control_labels,
+        test_create_synth,
+        test_run_env,
+        test_osc_run,
+        test_generate_sound_simple,
+        test_synthAdapter_makeSetCommandForContoller,
+        test_synthAdapter_prepareContext,
+        test_synthAdapter_makeCommands,
+        test_run_channel,
+        test_complete_player,
         test_synthAdapter_importscript,
         // test_synthAdapterToDataSeries/*, test_synthAdapterFromDataSeries, test_synth_Ui_binding, test_synth_fromPreset*/
         // test_synth_ui

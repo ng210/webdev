@@ -18,7 +18,8 @@ include('/lib/webgl/sprite/sprite-manager.js');
         // add cells as sprites
         var scale = new V2(gl.canvas.width/this.viewSize.x, gl.canvas.height/this.viewSize.y);
         var unit = this.tileSize.prod(scale);
-        var pos = new V2(0.5, height-0.5).mul(unit);
+        var pos = new V3(0.5, height-0.5, 0).mul(unit);
+        pos.z = 0;
         for (var j=0; j<height; j++) {
             var x = pos.x;
             for (var i=0; i<width; i++) {
@@ -27,9 +28,15 @@ include('/lib/webgl/sprite/sprite-manager.js');
                     spr.row = j; spr.col = i; spr.lay = k;
                     spr.setFrame(0);
                     spr.setPosition(pos);
-                    spr.setScale(scale.prodC(1.0));
+                    //spr.setScale([0, scale.y]);
                     spr.setRotationZ(0);
                     spr.setColor([1, 1, 1, k]);
+                    //spr.setDelta(webGL.Sprite.Fields.rz, 1000, 2*Math.PI);
+                    if (k)
+                    spr.setDelta(webGL.Sprite.Fields.ca, 2000, 1);
+                    spr.setDelta(webGL.Sprite.Fields.sx, 2000, scale.x, webGL.Sprite.Transform.smooth);
+                    spr.setDelta(webGL.Sprite.Fields.sy, 2000, scale.y, webGL.Sprite.Transform.smooth);
+                    spr.show(true);
                 }
                 pos.x += unit.x;
             }
@@ -44,17 +51,21 @@ include('/lib/webgl/sprite/sprite-manager.js');
         var ix = 0;
         for (var j=0; j<this.size[1]; j++) {
             for (var i=0; i<this.size[0]; i++) {
-                var f = data[ix];
-                this.sprMgr.sprites[ix++].setFrame(f);
-                f = data[ix];
-                this.sprMgr.sprites[ix++].setFrame(f);
-                //this.sprMgr.sprites[ix].setColor(col, col, col, 1.0);
+                for (var k=0; k<2; k++) {
+                    var f = data[ix];
+                    var spr = this.sprMgr.sprites[ix++];
+                    spr.setFrame(f);
+                    //spr.reset(webGL.Sprite.Fields.rz, 0);
+                    spr.reset(webGL.Sprite.Fields.ca, 0);
+                    spr.reset(webGL.Sprite.Fields.sx, 0);
+                    spr.reset(webGL.Sprite.Fields.sy, 0);
+                }
             }
         }
     };
 
-    MapSpriteRenderer.prototype.update = function update() {
-        this.sprMgr.update();
+    MapSpriteRenderer.prototype.update = function update(dt) {
+        this.sprMgr.update(dt);
     };
 
     MapSpriteRenderer.prototype.render = function render() {

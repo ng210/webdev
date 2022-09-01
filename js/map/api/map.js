@@ -10,15 +10,15 @@ include('/lib/math/noise.js');
         this.parameters = {
             'sx': 20,
             'sy': 20,
-            'n':  6,
-            'a0': 0.84,
-            'an': 0.51,
-            'f0': 1.07,
-            'fn': 1.17,
+            'n':  5,
+            'a0': 1.00,
+            'an': 0.44,
+            'f0': 1.00,
+            'fn': 1.98,
 
             'normalize': true,
             'sealevel': 0.1,
-            'levels': 6,
+            'levels': 7,
             'shades': false
         };
 
@@ -87,39 +87,41 @@ include('/lib/math/noise.js');
         for (var y=0; y<this.height; y++) {
             for (var x=0; x<this.width; x++) {
                 var value = data[si1];
-                var value2 = value;
-                var code = 0;
-                var p2 = 128;
-                for (var j=-1; j<2; j++) {
-                    var dy = y + j;
-                    for (var i=-1; i<2; i++) {
-                        var dx = x + i;
-                        if (i != 0 || j != 0) {
-                            var v = -1;
-                            if (dy < 0) dy = 0;
-                            else if (dy >= this.height) dy = this.height-1;
-                            if (dx < 0) dx = 0;
-                            else if (dx >= this.width) dx = this.width-1;
-                            v = data[dx + dy*this.width];
+                this.data[di++] = 0;
+                this.data[di++] = 13*value;
+                // var value2 = value;
+                // var code = 0;
+                // var p2 = 128;
+                // for (var j=-1; j<2; j++) {
+                //     var dy = y + j;
+                //     for (var i=-1; i<2; i++) {
+                //         var dx = x + i;
+                //         if (i != 0 || j != 0) {
+                //             var v = -1;
+                //             if (dy < 0) dy = 0;
+                //             else if (dy >= this.height) dy = this.height-1;
+                //             if (dx < 0) dx = 0;
+                //             else if (dx >= this.width) dx = this.width-1;
+                //             v = data[dx + dy*this.width];
 
-                            if (value != v && value >= v) {
-                                code += p2; value2 = v != -1 ? v : value;
-                            }
-                            p2 >>= 1;
-                        }
-                    }
-                }
-                var tile = -1;
-                for (var k=0; k<Map.masks.length; k++) {
-                    var and = (code & Map.masks[k].and) == Map.masks[k].and;
-                    var nand = (~code & Map.masks[k].nand) == Map.masks[k].nand;
-                    if (and && nand) {
-                        tile = Map.masks[k].code; break;
-                    }                    
-                }
-                if (tile == -1) tile = 0;   //throw new Error('Baka!!!');
-                this.data[di++] = value2*13;
-                this.data[di++] = value*13 + tile;
+                //             if (value != v && value >= v) {
+                //                 code += p2; value2 = v != -1 ? v : value;
+                //             }
+                //             p2 >>= 1;
+                //         }
+                //     }
+                // }
+                // var tile = -1;
+                // for (var k=0; k<Map.masks.length; k++) {
+                //     var and = (code & Map.masks[k].and) == Map.masks[k].and;
+                //     var nand = (~code & Map.masks[k].nand) == Map.masks[k].nand;
+                //     if (and && nand) {
+                //         tile = Map.masks[k].code; break;
+                //     }                    
+                // }
+                // if (tile == -1) tile = 0;   //throw new Error('Baka!!!');
+                // this.data[di++] = value2*13;
+                // this.data[di++] = value*13 + tile;
 //console.log(x,y, value, value2, code, ~code, tile)
                 si1++;
             }

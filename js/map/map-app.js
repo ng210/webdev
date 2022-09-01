@@ -63,18 +63,23 @@ this.createTestData(tileSetUrl);
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         this.renderer.render();
-
     };
 
     var _ts = 0;
     var _frame = 0;
     MapApp.prototype.run = function run(ts) {
+        var app = this;
+        requestAnimationFrame( ts => _ts = ts);
+        requestAnimationFrame( ts => app.loop(ts) );
+    };
+
+    MapApp.prototype.loop = function run(ts) {
         // process inputs
         var dt = ts - _ts;
         this.update(dt, _frame);
         this.render(dt, _frame);
         var app = this;
-        requestAnimationFrame( (ts) => app.run(ts) );
+        requestAnimationFrame( ts => app.loop(ts) );
         _ts = ts;
         _frame++;
     };
