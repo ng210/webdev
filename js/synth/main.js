@@ -12,7 +12,7 @@ function SynthApp() {
     this.schema = null;
 
     this.bpm = 101;
-    this.selectedSequence = 3;
+    this.selectedSequence = 0;
 }
 
 SynthApp.prototype.printMessages = function printMessages(messages) {

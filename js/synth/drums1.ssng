@@ -168,7 +168,7 @@ sequence "masterSeq", "PlayerAdapter", {
         Ps.Assign(5, Mono1, 4,  2)
     },
 
-    frame w:128, { Ps.EOS() }
+    frame w:64, { Ps.EOS() }
 }
 
 sequence "Kick1", "SynthAdapter", {
@@ -307,16 +307,31 @@ sequence "Bass", "SynthAdapter", {
     frame w:6,  { Sy.SetNote(Sy.E2,   0) },
     frame w:2,  { Sy.SetNote(Sy.E1, 140) },
     frame w:4,  { Sy.SetNote(Sy.E1,   0) },
-    frame w:12, { Sy.SetNote(Sy.E1, 100) },
-    frame w:4,  { Sy.SetNote(Sy.E1,   0) },
-    frame w:12, { Sy.SetNote(Sy.E1, 100) },
+    frame w:4,  { Sy.SetNote(Sy.E2,  80) },
+
+    frame w:6,  { Sy.SetNote(Sy.E2,   0) },
+    frame w:2,  { Sy.SetNote(Sy.E1, 140) },
     frame w:4,  { Sy.SetNote(Sy.E1,   0) },
     frame w:4,  { Sy.SetNote(Sy.E0, 120) },
-    frame w:6,  { Sy.SetNote(Sy.E0,   0) },
-    frame w:2,  { Sy.SetNote(Sy.E1, 100) },
-    frame w:4,  { Sy.SetNote(Sy.E1,   0) },
 
-    frame w:4,  { Ps.EOS() }
+    frame w:4,  { Sy.SetNote(Sy.E0,   0) },
+    frame w:4,  { Sy.SetNote(Sy.E1, 140) },
+    frame w:4,  { Sy.SetNote(Sy.E1,   0) },
+    frame w:4,  { Sy.SetNote(Sy.E0, 140) },
+
+    frame w:2,  { Sy.SetNote(Sy.E0,   0) },
+    frame w:6,  { Sy.SetNote(Sy.E1, 140) },
+    frame w:2,  { Sy.SetNote(Sy.E1,   0) },
+    frame w:2,  { Sy.SetNote(Sy.E2, 100) },
+    frame w:2,  { Sy.SetNote(Sy.E2,   0) },
+    frame w:2,  { Ps.EOS() }
+
+//   frame w:4,  { Sy.SetNote(Sy.E0, 120) },
+//   frame w:6,  { Sy.SetNote(Sy.E0,   0) },
+//   frame w:2,  { Sy.SetNote(Sy.E1, 100) },
+//   frame w:4,  { Sy.SetNote(Sy.E1,   0) },
+//
+//   frame w:4,  { Ps.EOS() }
 }
 
 sequence "Mono1", "SynthAdapter", {

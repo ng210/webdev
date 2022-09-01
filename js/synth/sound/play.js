@@ -28,9 +28,7 @@ Play.prototype.load = async function load(url, errors) {
 };
 
 Play.prototype.setBpm = function setBpm(bpm) {
-    for (var i=0; i<this.player.adapters.length; i++) {
-        this.player.adapters[i].adapter.updateRefreshRate(bpm/3.75);
-    }
+    this.player.setRefreshRate(bpm/3.75);
 };
 
 
