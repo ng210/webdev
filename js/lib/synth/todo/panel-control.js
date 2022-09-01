@@ -24,7 +24,7 @@ include('glui/controls/container.js');
         for (var i in this.template.layout) {
             var elem = this.template.layout[i];
             if (elem.type) {
-                var template = mergeObjects(this.template['elem-template'], elem);
+                var template = mergeObjects(this.template['elem-template'], elem, mergeObjects.COMMON | mergeObjects.OVERWRITE | mergeObjects.NEW);
                 var ctrl = await glui.create(i, template, this);
                 if (obj) {
                     ctrl.dataBind(obj.controls[ctrl.id], 'value');
@@ -32,12 +32,12 @@ include('glui/controls/container.js');
             } else if (elem.group) {
                 var grp = this.template.groups[elem.group];
                 if (grp) {
-                    var template = mergeObjects(this.template['group-template'], grp);
-                    template = mergeObjects(template, elem);
+                    var template = mergeObjects(this.template['group-template'], grp, mergeObjects.COMMON | mergeObjects.OVERWRITE | mergeObjects.NEW);
+                    mergeObjects(elem, template);
                     template.type = 'Container';
                     var container = await glui.create(i, template, this);
                     for (var j in grp.controls) {
-                        template = mergeObjects(this.template['elem-template'], grp.controls[j]);
+                        template = mergeObjects(this.template['elem-template'], grp.controls[j], mergeObjects.COMMON | mergeObjects.OVERWRITE | mergeObjects.NEW);
                         ctrl = await glui.create(j, template, container);
                         if (obj) {
                             ctrl.dataBind(obj.controls[container.id][ctrl.id], 'value');
