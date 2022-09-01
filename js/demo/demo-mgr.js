@@ -362,7 +362,7 @@ async function onpageload(e) {
     }
     glui.scale.x = 0.8;
     glui.scale.y = 0.8;
-    glui.initialize(DemoMgr);
+    await glui.initialize(DemoMgr);
     console.log('glui initialize');
     var cvs = glui.canvas;
     cvs.style.backgroundColor = '203040';
