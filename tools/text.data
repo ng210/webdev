@@ -1,0 +1,69 @@
+    // 'H'
+    sg = vec4(-0.8, 0.2, 0, 0.1); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.8, 0.2571, 0.1, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.7, 0.2, 0, 0.1); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    // 'E'
+    sg = vec4(-0.57, 0.3, -0.1, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.67, 0.3, 0, -0.1); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.67, 0.2, 0.1, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.67, 0.2571, 0.0889, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    // 'L'
+    sg = vec4(-0.54, 0.3, 0, -0.1); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.54, 0.2, 0.1, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    // 'L'
+    sg = vec4(-0.41, 0.3, 0, -0.1); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.41, 0.2, 0.1, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    // 'O'
+    sg = vec4(-0.2262, 0.3, 0.0154, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.2108, 0.3, 0.0231, -0.0214); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.1877, 0.2786, 0.0077, -0.0215); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.18, 0.2571, 0, -0.0142); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.18, 0.2429, -0.0077, -0.0215); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.1877, 0.2214, -0.0231, -0.0214); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.2108, 0.2, -0.0384, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.2492, 0.2, -0.0154, 0.0143); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.2646, 0.2143, -0.0154, 0.0214); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.28, 0.2357, 0, 0.0286); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.28, 0.2643, 0.0077, 0.0143); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(-0.2723, 0.2786, 0.0231, 0.0214); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    // ' '
+    // 'W'
+    sg = vec4(-0.02, 0.3, 0.0222, -0.1); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.0022, 0.2, 0.0278, 0.1); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.03, 0.3, 0.0278, -0.1); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.0578, 0.2, 0.0222, 0.1); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    // 'O'
+    sg = vec4(0.1638, 0.3, 0.0154, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.1792, 0.3, 0.0231, -0.0214); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.2023, 0.2786, 0.0077, -0.0215); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.21, 0.2571, 0, -0.0142); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.21, 0.2429, -0.0077, -0.0215); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.2023, 0.2214, -0.0231, -0.0214); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.1792, 0.2, -0.0384, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.1408, 0.2, -0.0154, 0.0143); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.1254, 0.2143, -0.0154, 0.0214); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.11, 0.2357, 0, 0.0286); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.11, 0.2643, 0.0077, 0.0143); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.1177, 0.2786, 0.0231, 0.0214); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    // 'R'
+    sg = vec4(0.24, 0.2, 0, 0.1); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.24, 0.3, 0.0778, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.3178, 0.3, 0.0222, -0.0143); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.34, 0.2857, 0, -0.0286); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.34, 0.2571, -0.0222, -0.0142); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.3178, 0.2429, -0.0556, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.2733, 0.2429, 0.0223, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.2956, 0.2429, 0.0444, -0.0429); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    // 'L'
+    sg = vec4(0.37, 0.3, 0, -0.1); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.37, 0.2, 0.1, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    // 'D'
+    sg = vec4(0.5, 0.2, 0, 0.1); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.5, 0.3, 0.07, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.57, 0.3, 0.03, -0.0286); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.6, 0.2714, 0, -0.0428); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.6, 0.2286, -0.03, -0.0286); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.57, 0.2, -0.05, 0); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    // '!'
+    sg = vec4(0.63, 0.3, 0, -0.0857); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
+    sg = vec4(0.63, 0.2071, 0, -0.0071); hit = max(hit, intersect(ray, sg, iv)); d = min(d, length(p-iv));
