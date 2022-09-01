@@ -3,6 +3,7 @@
 ## 1. Concept
 The repository should fulfil the following requirements:
 - flexible, extendible schema
+- multi-layered, clear structure
 
 
 ## 1. Layers

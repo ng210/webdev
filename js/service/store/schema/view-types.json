@@ -5,6 +5,7 @@
             { "name":"groups", "type":"IntList", "required":false }
         ]
     },
+    {   "name":"UserRef", "type":"ref User" },
 
     {   "name":"Group", "type":"Entity",
         "attributes": [

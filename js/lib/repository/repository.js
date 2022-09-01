@@ -1,6 +1,4 @@
-include('idata-store.js');
-include('ientity-mgr.js');
-include('/lib/type/schema.js');
+// uses /lib/utils/icontainer.js
 include('/lib/utils/syntax.js');
 
 (function() {

@@ -1,15 +1,15 @@
 include('repo-ns.js');
-include('/lib/utils/schema.js');
+include('data-table.js');
+include('/lib/type/schema.js');
 (function() {
-    function IDataStore(schema) {
+    function IDataMgr() {
         this.dataTypes = {};
-        this.schema = schema;
+        this.schema = null;
     }
-    IDataStore.prototype.addType = function addType(definition) {
+    // IDataStore.prototype.addType = function addType(definition) {
         
-    };
-    IDataStore.prototype.addSchema = function addSchema(definition) {
-        
+    // };
+    IDataMgr.prototype.addSchema = function addSchema(definition) {
         if (definition.DataTypes) {
             // get data types
             for (var i=0; i<definition.DataTypes.length; i++) {
@@ -20,21 +20,19 @@ include('/lib/utils/schema.js');
                 this.addType(definition.DataTypes[i]);
             }
         }
-
     };
-    IDataStore.prototype.create = function create(type, data) {
+    IDataMgr.prototype.create = function create(type, data) {
         throw new Error('Not implemented!');
     };
-    IDataStore.prototype.read = function read(type, data) {
+    IDataMgr.prototype.read = function read(type, data) {
         throw new Error('Not implemented!');
     };
-    IDataStore.prototype.update = function update(type, data) {
+    IDataMgr.prototype.update = function update(type, data) {
         throw new Error('Not implemented!');
     };
-    IDataStore.prototype.delete = function delete_(type, data) {
+    IDataMgr.prototype.delete = function delete_(type, data) {
         throw new Error('Not implemented!');
     };
-
-    publish(IDataStore, 'IDataStore', Repository);
+    publish(IDataMgr, 'IDataMgr', Repository);
 })();
 

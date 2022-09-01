@@ -588,7 +588,7 @@ if (ISNODEAPP) {
         // initialize API and schema
         var api = null;
         await Api.initialize();
-        var schemaInfo = mergeObjects(Api.schemaInfo);
+        var schemaInfo = clone(Api.schemaInfo);
         schemaInfo.schema = await Schema.load(Api.schemaInfo.schema);
         var res = await load(apiDefinition);
         if (!res.errors) {
@@ -619,7 +619,7 @@ if (ISNODEAPP) {
         var api = null;
         // initialize API
         await Api.initialize();
-        var schemaInfo = mergeObjects(Api.schemaInfo);
+        var schemaInfo = clone(Api.schemaInfo);
         schemaInfo.schema = await Schema.load(Api.schemaInfo.schema);
         var res = await load({ 'url':apiDefinition, 'responseType':'json'});
         if (!res.error) {
