@@ -8,11 +8,6 @@ include('label.js');
         MenuRenderer2d.base.constructor.call(this, control, context);
     }
     extend(glui.ContainerRenderer2d, MenuRenderer2d);
-
-    // MenuRenderer2d.prototype.renderControl = function renderControl() {
-    //     debugger
-    //     MenuRenderer2d.base.renderControl.call(this);
-    // };
     //#endregion
 
     //#region Menu
@@ -21,7 +16,6 @@ include('label.js');
         this.submenus = [];
         this.submenu = null;
         this.keys = {};
-        this.codes = {};
     }
     extend(glui.Container, Menu);
 
@@ -110,7 +104,8 @@ include('label.js');
         return;
     };
 
-    Menu.prototype.add = async function add(item, code, key) {
+    Menu.prototype.add = async function add(item, command, key) {
+        command = command || item.label;
         var label = null;
         var template = this.itemTemplate;
         if (item instanceof glui.Menu) {
@@ -126,7 +121,7 @@ include('label.js');
             label = item.toString();
         }
         var ctrl = await glui.create(label, template, this);
-        ctrl.code = code;
+        ctrl.command = command;
         if (item instanceof glui.Menu) {
             ctrl.submenu = item;
         }
@@ -142,7 +137,6 @@ include('label.js');
             data =  this.dataField ? this.dataSource[this.dataField] : this.dataSource;
         } else {
             if (data && Array.isArray(data.items)) {
-                this.codes = data.codes;
                 data = data.items;
             }
         }
@@ -165,10 +159,9 @@ include('label.js');
                     template.style.height = this.template.style.height;
                     if (this.parent instanceof glui.Menu) template.label = '►' + template.label;
                     var menu = await glui.create('menu'+data[i].label, template, this);
-                    menu.codes = this.codes;
                     await menu.build();
                 } else {
-                    await this.add(item.label, this.codes[item.code] || item.code, item.key);
+                    await this.add(item.label, item.command, item.key);
                 }
             }
         }

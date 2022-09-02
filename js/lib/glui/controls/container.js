@@ -80,6 +80,10 @@ include('renderer2d.js');
             this.items.push(ctrl);
         }
 
+        // apply container style on item
+        var styleType = glui.schema.types.get(ctrl.type).attributes.get('style').type;
+        styleType.merge(this.style, ctrl.style);
+
         if (this.renderer) {
             ctrl.setRenderer(this.renderer.mode, this.renderer.context);
         }

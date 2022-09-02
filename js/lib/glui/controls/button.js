@@ -19,6 +19,8 @@ include('label.js');
             color1 = this.calculateColor(this.backgroundColor, 1.4);
             color2 = this.calculateColor(this.backgroundColor, 0.6);
         }
+        if (!color1) color1 = this.color;
+        if (!color2) color2 = this.color;
         var value = this.control.getValue();
         var lines = value ? value.split('\\n') : [];
         var boxes = this.getTextBoundingBoxes(lines);

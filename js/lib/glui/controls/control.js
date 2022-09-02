@@ -119,7 +119,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         var styleType = this.type.attributes.get('style').type;
         if (this.parent && this.parent.style) {
             // merge parent style into default
-            styleType.merge(this.parent.style, this.style, self.mergeObjects.OVERWRITE);
+            styleType.merge(this.parent.style, this.template.style, self.mergeObjects.OVERWRITE);
         }
         if (tmpl) {
             var res = glui.schema.validate(tmpl, this.type);
@@ -521,6 +521,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
                         'align':            { 'type':'string', 'isRequired':false, 'default':'center middle' },
                         'background-color': { 'type':'string', 'isRequired':false, 'default':'transparent' },
                         'background-image': { 'type':'string', 'isRequired':false, 'default':'none' },
+                        'background-repeat':{ 'type':'string', 'isRequired':false, 'default':'none' },
                         'border':           { 'type':'string', 'isRequired':false, 'default':'silver 2px solid' },
                         'color':            { 'type':'string', 'isRequired':false, 'default':'black' },
                         'font':             { 'type':'string', 'isRequired':false, 'default':'Arial 12 normal' },

@@ -275,38 +275,31 @@ include('/lib/data/graph.js');
             { 'x':55, 'y':13, 'value': 0.2}
         ],
         'main-menu': {
-            "codes": {
-                "OPEN":      10,
-                "SAVE":      20,
-                "CUT":      100,
-                "COPY":     110,
-                "PASTE":    120
-            },
             "items": [
                 {
                     'label': 'File',
                     'key': 'ALT F',
                     'items': [
                         {
-                            'label': 'Open', 'code': 'OPEN', 'key': 'CTRL O',
+                            'label': 'Open', 'command': 'OPEN', 'key': 'CTRL O',
                             'items': [
-                                { 'label': 'Resource1', 'code': 'RES1' },
-                                { 'label': 'Resource2', 'code': 'RES2' }
+                                { 'label': 'Resource1', 'command': 'RES1' },
+                                { 'label': 'Resource2', 'command': 'RES2' }
                             ]
                         },
-                        { 'label': 'Save', 'code': 'SAVE', 'key': 'CTRL S' }
+                        { 'label': 'Save', 'command': 'SAVE', 'key': 'CTRL S' }
                     ]
                 },
                 {
                     'label': 'Edit',
                     'key': 'ALT E',
                     'items': [
-                        { 'label': 'Cut',   'code': 'CUT',   'key': 'CTRL X' },
-                        { 'label': 'Copy',  'code': 'COPY',  'key': 'CTRL C' },
-                        { 'label': 'Paste', 'code': 'PASTE', 'key': 'CTRL V' }
+                        { 'label': 'Cut',   'command': 'CUT',   'key': 'CTRL X' },
+                        { 'label': 'Copy',  'command': 'COPY',  'key': 'CTRL C' },
+                        { 'label': 'Paste', 'command': 'PASTE', 'key': 'CTRL V' }
                     ]
                 },
-                { 'label': 'Help', 'code': 500, 'key': 'F1' }
+                { 'label': 'Help', 'command': 'HELP', 'key': 'F1' }
             ]
         },
         'res-list': [
@@ -559,7 +552,8 @@ include('/lib/data/graph.js');
                 'z-index': 0
             },
             'title': 'Default',
-            'items': [ {
+            'items': [
+                {
                     'type': 'Textbox',
                     'style': {
                         'left': '1em', 'top': '1em',
@@ -837,7 +831,7 @@ include('/lib/data/graph.js');
         await resMenu.add('Resource1');
         await resMenu.add('Resource2');
         await resMenu.build();
-        await fileMenu.add('Save', 'CTRL S');
+        await fileMenu.add('Save', null, 'CTRL S');
         await fileMenu.build();
         var editMenu = await glui.create('edit', {
             'type': 'Menu',
@@ -846,11 +840,11 @@ include('/lib/data/graph.js');
             'key': 'ALT F',
             'item-template': menuItemTemplate
         }, mainMenu);
-        await editMenu.add('Cut', 'CTRL X');
-        await editMenu.add('Copy', 'CTRL C');
-        await editMenu.add('Paste', 'CTRL V');
+        await editMenu.add('Cut', null, 'CTRL X');
+        await editMenu.add('Copy', null, 'CTRL C');
+        await editMenu.add('Paste', null, 'CTRL V');
         await editMenu.build();
-        await mainMenu.add('Help', 'ALT H');
+        await mainMenu.add('Help', 'HELP', 'ALT H');
         await mainMenu.build();
         mainMenu.move(10, 10);
         mainMenu.render();
@@ -1042,9 +1036,9 @@ include('/lib/data/graph.js');
         // test_clipping,
         // test_construct,
         // test_align,
-        // test_container,
+        test_container,
         // test_table,
-        test_menu,
+        // test_menu,
         // test_render,
         // test_grid,
         // test_dialog
