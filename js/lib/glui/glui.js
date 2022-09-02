@@ -49,6 +49,7 @@ include('/lib/type/schema.js');
         this.dragY = 0;
 
         this.schema = new Schema();
+        this.schema.id = 'glui';
         this.schema.addDefaultTypes();
     }
 

@@ -136,7 +136,8 @@ include('/lib/data/graph.js');
         {   'type': 'Button',
             'style': buttonStyle,
             'data-source': 'data',
-            'data-field': 'button'
+            'data-field': 'button',
+            'command':'Button clicked'
         },
 
         {   'type': 'Image',
@@ -346,7 +347,7 @@ include('/lib/data/graph.js');
             Dbg.prln(`Changed ${ctrl.id}.value: ${e.oldValue} => ${e.value}`);
         },
         oncommand: function oncommand(e, ctrl) {
-            Dbg.prln(e.control.getValue());
+            Dbg.prln('App.oncommand: ' + e.control.getValue());
         },
         isInitialized: false
     };
@@ -855,21 +856,26 @@ include('/lib/data/graph.js');
         mainMenu.render();
         //#endregion
 
+        glui.animate();
+        await button('Next');
+        glui.remove(mainMenu);
+        glui.repaint();
+
         //#region menu created from data
-        // var mainMenu2 = await glui.create('mainMenu2', {
-        //     'type': 'Menu',
-        //     'layout': 'horizontal',
-        //     'style': menuStyle,
-        //     'item-template': menuItemTemplate
-        // }, null, App);
-        // await mainMenu2.build(data['main-menu']);
-        // mainMenu2.move(10, 100);
-        // mainMenu2.render();
+        var mainMenu2 = await glui.create('mainMenu2', {
+            'type': 'Menu',
+            'layout': 'horizontal',
+            'style': menuStyle,
+            'item-template': menuItemTemplate
+        }, null, App);
+        await mainMenu2.build(data['main-menu']);
+        mainMenu2.move(10, 10);
+        mainMenu2.render();
         //#endregion
 
         glui.animate();
-
         await button('Next');
+
         teardown();
     }
 

@@ -36,9 +36,9 @@ include('label.js');
 
     //#region Button
     function Button(id, template, parent, context) {
-        Button.base.constructor.call(this, id, template, parent, context);
         this.command = null;
         this.state = false;
+        Button.base.constructor.call(this, id, template, parent, context);
         //this.renderer3d = new ButtonRenderer3d()
     }
     extend(glui.Label, Button);
@@ -60,7 +60,8 @@ include('label.js');
         var handlers = Button.base.getHandlers();
         handlers.push(
             { name: 'mousedown', topDown: true },
-            { name: 'mouseup', topDown: false }
+            { name: 'mouseup', topDown: false },
+            { name: 'command', topDown: true }
         );
         return handlers;
     };
@@ -77,6 +78,10 @@ include('label.js');
 
     Button.prototype.onmouseup = function onmouseup(e) {
         this.state = false;
+        if (this.command) {
+            e.command = this.command;
+            this.callHandler('command', e);
+        }
         this.render();
     };
 
