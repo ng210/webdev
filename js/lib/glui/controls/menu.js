@@ -91,10 +91,8 @@ include('label.js');
                 glui.setFocus(this.submenu);
             }
         } else if (!(ctrl instanceof Menu) && ctrl.parent == this) {
-            this.callHandler('command', {
-                'type': 'open',
-                'control': ctrl
-            });
+            e.command = ctrl.command || ctrl.id;
+            this.callHandler('command', e);
             var menu = this;
             while (menu.parent.submenu == menu) menu = menu.parent;
             if (menu.submenu) menu.submenu.close();

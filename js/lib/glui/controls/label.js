@@ -67,6 +67,7 @@ include('renderer2d.js');
         'name':'Label',
         'type':'ValueControl',
         'attributes': {
+            'command': { 'type': 'string', 'isRequired':false },
             'style': { 'type': 'ControlStyle', 'isRequired':false }
         }
     });

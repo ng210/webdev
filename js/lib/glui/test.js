@@ -347,7 +347,7 @@ include('/lib/data/graph.js');
             Dbg.prln(`Changed ${ctrl.id}.value: ${e.oldValue} => ${e.value}`);
         },
         oncommand: function oncommand(e, ctrl) {
-            Dbg.prln('App.oncommand: ' + e.control.getValue());
+            Dbg.prln('App.oncommand: ' + e.command);
         },
         isInitialized: false
     };
@@ -1039,15 +1039,15 @@ include('/lib/data/graph.js');
     // }
 
     var tests = () => [
-        test_clipping,
-        test_construct,
-        test_align,
-        test_container,
-        test_table,
+        // test_clipping,
+        // test_construct,
+        // test_align,
+        // test_container,
+        // test_table,
         test_menu,
-        test_render,
-        test_grid,
-        test_dialog
+        // test_render,
+        // test_grid,
+        // test_dialog
     ];
     publish(tests, 'glUi tests');
 })();
