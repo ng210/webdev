@@ -10,10 +10,11 @@ include('/lib/data/dictionary.js');
     }
     Schema.prototype.addType = function addType(type) {
         if (!this.types.has(type.name)) {
+            // todo: check for an identical type
             this.types.set(type.name, type);
             this.typeList.push(type);
             type.schema = this;
-        }        
+        }
     };
     Schema.prototype.addTypes = function addTypes(types) {
         for (var i=0; i<types.length; i++) {
@@ -44,7 +45,7 @@ include('/lib/data/dictionary.js');
         return instance;
     };
     Schema.prototype.addDefaultTypes = function addDefaultTypes() {
-        this.addTypes(Schema.defaultTypes);
+        this.addTypes(Schema.createDefaultTypes());
         this.types.get('type').values = this.typeList;
         this.types.get('typeName').values = this.types._keys;
     };
@@ -54,7 +55,7 @@ include('/lib/data/dictionary.js');
         if (baseType) {
             typeDef.name = typeDef.name || baseType.name + this.types.size;
             type = baseType.build(typeDef, this, path);
-            this.types.set(type.name, type);
+            this.addType(type);
         } else {
             throw new Error(`Could not read or create base type for '${typeDef.name}'!`);
         }
@@ -73,8 +74,8 @@ include('/lib/data/dictionary.js');
                 var refTypeName = 'ref' + m[1];
                 type = this.types.get(refTypeName);
                 if (!type) {
-                    type = new RefType('ref' + m[1], baseType);
-                    this.types.set(refTypeName, type);
+                    type = new RefType(refTypeName, baseType);
+                    this.addType(type);
                 }
                 if (!baseType) {
                     this.addMissingType(m[1], x => type.baseType = x, path);
@@ -186,7 +187,7 @@ include('/lib/data/dictionary.js');
         }
     };
 
-    Schema.defaultTypes = (function() {
+    Schema.createDefaultTypes = function createDefaultTypes() {
         var types = [];
         var basicTypes = {
             'bool': new BoolType('bool'),
@@ -272,7 +273,7 @@ include('/lib/data/dictionary.js');
         ];
         types.push(...schemanticTypes);
         return types;
-    })();
+    };
 
     Schema.build = async function build(definition) {
         var schema = new Schema();
