@@ -1,34 +1,24 @@
 {
-    "codes": {
-        "OPEN":     100,
-        "SAVE":     110,
-        "SAVEAS":   120,
-        "SETTINGS": 130,
-
-        "COPY":     200,
-        "CUT":      210,
-        "PASTE":    220
-    },
     "items": [
         {
             "label": "File",
             "key": "ALT F",
             "items": [
-                { "label": "Open...",       "code": "OPEN", "key": "CTRL O" },
-                { "label": "Save",          "code": "SAVE", "key": "CTRL S" },
-                { "label": "SaveAs...",     "code": "SAVEAS", "key": "CTRL SHIFT S" },
-                { "label": "Settings...",   "code": "SETTINGS", "key": "ALT S" }
+                { "label": "Open...",       "command": "OPEN", "key": "CTRL O" },
+                { "label": "Save",          "command": "SAVE", "key": "CTRL S" },
+                { "label": "Save as...",    "command": "SAVEAS", "key": "CTRL SHIFT S" },
+                { "label": "Settings...",   "command": "SETTINGS", "key": "ALT S" }
             ]
         },
         {
             "label": "Edit",
             "key": "ALT E",
             "items": [
-                { "label": "Cut",   "code": "CUT", "key": "CTRL X" },
-                { "label": "Copy",  "code": "COPY", "key": "CTRL C" },
-                { "label": "Paste", "code": "PASTE", "key": "CTRL V" }
+                { "label": "Cut",   "command": "CUT", "key": "CTRL X" },
+                { "label": "Copy",  "command": "COPY", "key": "CTRL C" },
+                { "label": "Paste", "command": "PASTE", "key": "CTRL V" }
             ]
         },
-        { "label": "Help", "code": 500, "key": "F1" }
+        { "label": "Help", "command": "HELP", "key": "F1" }
     ]
 }

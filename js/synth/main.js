@@ -1,144 +1,90 @@
 include('/lib/base/dbg.js');
-include('./data.js');
-include('./sound.js');
-include('./ui/ui.js')
-include('./play.js')
+include('./data/data.js');
+include('./ui/ui.js');
+include('./play/play.js');
 
 function SynthApp() {
-    this.ui = null;
-    this.sound = null;
-    this.play = null;
-    this.settings = null;
-    this.schema = null;
-
-    this.bpm = 101;
-    this.selectedSequence = 0;
 }
 
-SynthApp.prototype.printMessages = function printMessages(messages) {
-    for (var i=0; i<messages.length; i++) {
-        Dbg.prln(messages[i]);
-    }
-};
-
-//#region loading-saving
-SynthApp.prototype.loadSchema = async function loadSchema() {
-    try {
-        this.schema = await Schema.load('./schema.json');
-    } catch (err) {
-        Dbg.prln(err.message);
-        console.error(err);
-    }
-};
-
-SynthApp.prototype.loadSettings = async function loadSettings() {
-    var res = await load('./settings.json');
-
-    if (res.error) {
-        Dbg.prln(res.error.message);
-        console.error(res.error);
-    } else {
-        var results = this.schema.validate(res.data, 'settings');
-        if (results.length > 0) {
-            this.printErrors(results);
-        } else {
-            this.settings = res.data;
-        }
-    }
-};
-
-SynthApp.prototype.loadSong = async function loadSong(url) {
-    var errors = [];
-    await this.play.load(url, errors);
-
-    if (errors.length > 0) {
-        this.printMessages(errors);
-        // display error dialog
-    } else {
-        // create synth panels
-        this.ui.removeSynthPanels();
-        var synthAdapter = this.play.player.adapters.find(a => a.adapter.getInfo().id == psynth.SynthAdapter.info.id).adapter;
-        var synths = synthAdapter.devices;
-        for (var i=0; i<synths.length; i++) {
-            await this.ui.addSynthPanel(synths[i]);
-        }
-
-        // update sequences info
-        this.ui.sequences.max = this.play.getSequences().length - 1;
-        this.ui.sequences.setValue(0);
-
-        this.ui.resize();
-    }
-};
-//#endregion
-
 SynthApp.prototype.initialize = async function initialize() {
-    await this.loadSchema();
-    await this.loadSettings();
-    if (this.settings) {
-        Dbg.prln('Settings loaded.');
-        var errors = [];
+    try {
+        // initialize data
+        await SynthApp.Data.initialize(this);
+        // initialize play
+        await SynthApp.Play.initialize(this);
+        // initialize ui
+        await SynthApp.Ui.initialize(this);
 
-        this.ui = new Ui();
-        await this.ui.initialize(this, this.settings.ui, errors);
-        this.ui.sequences.dataLink.addHandler('value', this.onselectsequence, this);
-        if (errors.length == 0) Dbg.prln('UI initialized.');
-
-        // this.sound = new Sound(); await this.sound.initialize(this.settings.sound, errors);
-        // if (errors.length == 0) Dbg.prln('Sound initialized.');
-
-        this.play = new Play();
-        await this.play.initialize(this.settings.play, errors);
-        if (errors.length == 0) Dbg.prln('Player initialized.');
-
-        this.printMessages(errors);
-        // load default song
-        await this.loadSong('./drums1.ssng');
-
-        this.play.setBpm(this.bpm);
+        this.createSynth(3);
+        
+    } catch (err) {
+        console.log('Error');
+        var msg = Array.isArray(err.message) ? err.message.join('\n') : err.message;
+        console.log(msg);
+        console.log(err);
     }
+
+    // await this.loadSchema();
+    // await this.loadSettings();
+    // if (this.settings) {
+    //     Dbg.prln('Settings loaded.');
+    //     var errors = [];
+
+    //     this.ui = new Ui();
+    //     await this.ui.initialize(this, this.settings.ui, errors);
+    //     this.ui.sequences.dataLink.addHandler('value', this.onselectsequence, this);
+    //     if (errors.length == 0) Dbg.prln('UI initialized.');
+
+    //     // this.sound = new Sound(); await this.sound.initialize(this.settings.sound, errors);
+    //     // if (errors.length == 0) Dbg.prln('Sound initialized.');
+
+    //     this.play = new Play();
+    //     await this.play.initialize(this.settings.play, errors);
+    //     if (errors.length == 0) Dbg.prln('Player initialized.');
+
+    //     this.printMessages(errors);
+    //     // load default song
+    //     await this.loadSong('./drums1.ssng');
+
+    //     this.play.setBpm(this.bpm);
+    // }
 };
 
-SynthApp.prototype.onselectsequence = function onselectsequence(e, ctrl) {
-debugger
+SynthApp.prototype.createSynth = function createSynth(voices) {
+    var synth = this.play.createSynth(voices);
+    this.ui.createSynthUi(synth);
 };
 
 //#region event handling
-SynthApp.prototype.oncommand = async function oncommand(e, menu) {
-    switch (e.control.code) {
-        case menu.codes.OPEN:
-            var file = await glui.OpenSaveDialog({'title': 'Open image...', 'filters': ['*.png', '*.jpg'], 'init': function() { this.move(100, 100);} });
-            break;
-    }
-};
-
-SynthApp.prototype.onclick = function onclick(e, ctrl) {
-    switch (ctrl.id) {
-        case 'run':
-            if (!sound.isRunning) {
-                ctrl.setValue('׀׀');
-                sound.start();
-            } else {
-                ctrl.setValue('►');
-                sound.stop();
-            }
-            break;
-        case 'rwd':
-            break;
-        case 'fwd':
-            break;
-        case 'stp':
-            break;
+SynthApp.prototype.oncommand = async function oncommand(e) {
+    switch (e.command) {
+        case 'OPEN': this.ui.openDialog('Open'); break;
+        case 'HELP': this.ui.openDialog('Help'); break;
+        default: console.log(`Unhandled command '${e.command}'`); break;
     }
 };
 
 SynthApp.prototype.onchange = function onchange(e, ctrl) {
     switch (ctrl.id) {
         case 'bpm':
-            this.play.setBpm(e.value);
+            console.log('change bpm');
+            break;
+        case 'seq':
+            console.log('change seq');
             break;
     }
 };
+
+SynthApp.prototype.onclick = function onclick(e, ctrl) {
+    switch (ctrl.id) {
+        case 'restart':
+        case 'start':
+        case 'pause':
+        case 'stop':
+            console.log('SynthApp.onclick: ' + ctrl.id)
+            break;
+    }
+}
 //#endregion
 
 
