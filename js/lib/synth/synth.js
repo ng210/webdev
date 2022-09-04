@@ -131,13 +131,13 @@ include('voice.js');
         for (var i=0; i<keys1.length; i++) {
             var key1 = keys1[i];
             var obj = this.controls[key1];
-            if (inherits(obj, psynth.PotBase)) {
+            if (obj instanceof psynth.PotBase) {
                 this.idToControl.push(obj);
             } else {
                 var keys2 = Object.keys(obj);
                 for (var j=0; j<keys2.length; j++) {
                     var key2 = keys2[j];
-                    if (inherits(obj[key2], psynth.PotBase)) {
+                    if (obj[key2] instanceof psynth.PotBase) {
                         this.idToControl.push(obj[key2]);
                     }
                 }
