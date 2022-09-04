@@ -437,5 +437,5 @@ async function onpageload(errors) {
     //testEquals();
     var url = new Url(location.href);
     var testUrl = new Url(`${url.fragment}/test.js`);
-    run_test(testUrl);
+    await run_test(testUrl);
 }

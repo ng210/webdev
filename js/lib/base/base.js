@@ -44,6 +44,18 @@ self.implements = function implements_(obj, iface) {
         obj.prototype[i] = iface.prototype[i];
     }
 };
+self.debug_ = function debug_(txt, lvl) {
+    //if (txt.indexOf('player.') == -1) return;
+    if (DBGLVL >= lvl) {
+        var line = '';
+        if (!DBGTRACE) {
+            var err = new Error();
+            var lines = err.stack.split('\n');
+            line = '(' + lines[2].trim() + ')';
+        }
+        console.log(`${txt} ${line}`);
+    }
+};
 
  //#region AJAX
  self.ajax = {
@@ -169,18 +181,6 @@ self.implements = function implements_(obj, iface) {
 };
 //#endregion
 
-self.debug_ = function debug_(txt, lvl) {
-    //if (txt.indexOf('player.') == -1) return;
-    if (DBGLVL >= lvl) {
-        var line = '';
-        if (!DBGTRACE) {
-            var err = new Error();
-            var lines = err.stack.split('\n');
-            line = '(' + lines[2].trim() + ')';
-        }
-        console.log(`${txt} ${line}`);
-    }
-};
 
 //#region RESOURCE
 self.Resource = function Resource(url) {
@@ -721,6 +721,7 @@ self.save = function save(data, fileName) {
 };
 //#endregion
 
+//#region Array extensions
 Array.prototype.binSearch = function binSearch(item, cmp, min, max) {
     if (this.length == 0) {
         return 0;
@@ -758,6 +759,8 @@ Array.prototype.select = function select(filter) {
 Array.prototype.tail = function tail() {
     return this[this.length - 1];
 };
+//#endregion
+
 self.iterate = function iterate(obj, action) {
     switch (obj.constructor) {
         case Object:
