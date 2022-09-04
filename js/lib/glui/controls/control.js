@@ -98,7 +98,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
     };
     Control.prototype.getTemplate = function getTemplate() {
         var type = glui.schema.types.get(this.constructor.name);
-        return type.createPrimitiveValue(type.default);
+        return type.createDefaultValue(null, true);
         // return type.createPrimitiveValue( {
         //     'data-field': '',
         //     'data-source': null,
@@ -527,6 +527,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
                         'font':             { 'type':'string', 'isRequired':false, 'default':'Arial 12 normal' },
                         'height':           { 'type':'string', 'isRequired':false, 'default':'auto' },
                         'left':             { 'type':'string', 'isRequired':false, 'default':'0' },
+                        'padding':          { 'type':'string', 'isRequired':false, 'default':'0' },
                         'top':              { 'type':'string', 'isRequired':false, 'default':'0' },
                         'visible':          { 'type':'bool',   'isRequired':false, 'default':true },
                         'width':            { 'type':'string', 'isRequired':false, 'default':'auto' },

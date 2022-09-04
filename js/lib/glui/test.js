@@ -578,7 +578,8 @@ include('/lib/data/graph.js');
                 }
             ]
         };
-        var container = await glui.create('container1', containerTemplate, null, App);
+
+        var container = glui.create('container1', containerTemplate, null, App);
         test('Container has a Textbox and an Image item', ctx => {
             ctx.assert(container.items.length, '=', 2);
             ctx.assert(container.items[0].constructor, '=', glui.Textbox);
@@ -594,14 +595,15 @@ include('/lib/data/graph.js');
                 'border':'#401000 2px solid'
             },
             'title': 'Default',
-            'items': [ {
-                'type': 'Label',
-                'value': 'Hello',
-                'style': {
-                    'left': '16px', 'top': '2px', 'align': 'center middle',
-                    'width':'34px', 'height':'1.6em'
-                    // 'color': '#e0e0f0',
-                    // 'background-color': '#102080'
+            'items': [
+                {
+                    'type': 'Label',
+                    'value': 'Hello',
+                    'style': {
+                        'left': '16px', 'top': '2px', 'align': 'center middle',
+                        'width':'34px', 'height':'1.6em',
+                        'color': '#e0e0f0',
+                        'background-color': '#102080'
                     }
                 },
                 {
@@ -1033,15 +1035,15 @@ include('/lib/data/graph.js');
     // }
 
     var tests = () => [
-        // test_clipping,
-        // test_construct,
-        // test_align,
+        test_clipping,
+        test_construct,
+        test_align,
         test_container,
-        // test_table,
-        // test_menu,
-        // test_render,
-        // test_grid,
-        // test_dialog
+        test_table,
+        test_menu,
+        test_render,
+        test_grid,
+        test_dialog
     ];
     publish(tests, 'glUi tests');
 })();

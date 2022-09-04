@@ -171,6 +171,9 @@ if (!this.dataSource.addHandler) debugger
 		if (this.dataSource != null) {
 			// initial read from data source
 			var value = this.dataSource[this.dataField];
+			if (typeof source.min == 'number') this.min = source.min;
+			if (typeof source.max == 'number') this.max = source.max;
+			if (typeof source.step == 'number') this.step = source.step;
 			this.createMapping();
 			// set value before linking to data source
 			this.dataLink.value = value;
@@ -293,7 +296,7 @@ if (!this.dataSource.addHandler) debugger
 	};
 
 	ValueControl.DataTypes = {
-		None:	'',
+		None:	'string',
 		Int:	'int',
 		Float:  'float',
 		String: 'string',
@@ -304,8 +307,8 @@ if (!this.dataSource.addHandler) debugger
         'name':'ValueControl',
         'type':'Control',
         'attributes': {
-			'dataType':		{ 'type':'type', 'isRequired':false, 'default':'string' },
-			'decimalDigits':{ 'type':'int', 'isRequired':false, 'default':2 },
+			'data-type':	{ 'type':{ 'type':'enum', 'values':Object.values(ValueControl.DataTypes) }, 'isRequired':false, 'default':ValueControl.DataTypes.String },
+			'decimal-digits':{ 'type':'int', 'isRequired':false, 'default':2 },
 			'isNormalized': { 'type':'bool', 'isRequired':false, 'default':true },
 			'isNumeric':	{ 'type':'bool', 'isRequired':false, 'default':true },
 			'min':			{ 'type':'float', 'isRequired':false, 'default':0 },

@@ -32,6 +32,14 @@ include('renderer2d.js');
         this.source = template.source;
         return template;
     };
+    Image.prototype.getHandlers = function getHandlers() {
+        var handlers = Image.base.getHandlers();
+        handlers.push(
+            { name: 'mousedown', topDown: true },
+            { name: 'mouseup', topDown: false }
+        );
+        return handlers;
+    };
     Image.prototype.load = function load(source) {
         source = source || this.source;
         if (this.image == null || this.image.src != source) {

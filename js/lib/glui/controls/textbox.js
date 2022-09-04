@@ -12,11 +12,11 @@ include('label.js');
 
     TextboxRenderer2d.PiPer2 = Math.PI/2;
 
-    TextboxRenderer2d.prototype.initialize = async function initialize(control, context) {
+    TextboxRenderer2d.prototype.initialize = function initialize(control, context) {
         this.control = control || this.control;
         this.context = context || this.context;
         this.control.style.backgroundColor = this.control.style.backgroundColor || [255, 255, 255];
-        await TextboxRenderer2d.base.initialize.call(this, control, context);
+        TextboxRenderer2d.base.initialize.call(this, control, context);
     };   
     TextboxRenderer2d.prototype.drawSingleLine = function drawSingleLine() {
         var lines = this.control.getLines();
@@ -553,6 +553,7 @@ include('label.js');
                 this.renderer.renderControl = TextboxRenderer2d.prototype.renderTextbox;
                 break;
         }
+        this.look = look;
     };
 
     Textbox.Look = {
@@ -566,7 +567,7 @@ include('label.js');
         'name':'Textbox',
         'type':'ValueControl',
         'attributes': {
-            'label': { 'type':'string', 'isRequired':false },
+            'label': { 'type':'bool', 'isRequired':false },
             'isMultiline': { 'type':'bool', 'isRequired':false, 'default':false },
             'look': { 'type':'TextboxLook', 'isRequired':false, 'default':Textbox.Look.Textbox }
         }
