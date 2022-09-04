@@ -53,15 +53,7 @@ include('/lib/type/type.js');
         var value = {};
         tracking = tracking || {};
         if (this.addTracking(tracking, this.keyType) && this.addTracking(tracking, this.valueType)) {
-            if (map == null) {
-                for (var i=0; i<5; i++) {
-                    var key = null;
-                    do {
-                        key = this.keyType.createValue(null, tracking, isPrimitive);
-                    } while (value[key.valueOf()] !== undefined);
-                    value[key] = this.valueType.createValue(null, tracking);
-                }
-            } else {
+            if (map != null) {
                 for (var key in map) {
                     var v = map.constructor == Map ? map.get(key) : map[key];
                     value[this.keyType.createValue(key, tracking, isPrimitive)] = this.valueType.createValue(v, tracking, isPrimitive);

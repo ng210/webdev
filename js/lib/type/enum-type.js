@@ -1,5 +1,5 @@
 include('/lib/type/type.js');
-(function() {    
+(function() {
     function EnumType(name, type, args) {
         this.values = [];
         EnumType.base.constructor.call(this, name, type, args);
@@ -33,7 +33,7 @@ include('/lib/type/type.js');
     };
     EnumType.prototype.createValue = function createValue(value, tracking, isPrimitive) {
         if (value == undefined) {
-            value = this.values[Math.floor(Math.random()*this.values.length)];
+            value = this.values[0];
         }
         if (!isPrimitive) {
             if (typeof value !== 'object') {

@@ -30,17 +30,17 @@ include('/lib/type/type.js');
         return isValid;
     };
     StringType.prototype.createValue = function createValue(value, tracking, isPrimitive) {
-        if (value === null || value === undefined) {
-            var length = this.length || 20;
-            var arr = [];
-            var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVXYZWabcdefghijklmnopqrstuvxyzw_";
-            for (var i=0; i<length; i++) {
-                arr.push(chars[Math.floor(chars.length*Math.random())]);
-            }
-            value = arr.join('');
-            
+        if (!value) {
+            value = '';
+            // var length = this.length || 20;
+            // var arr = [];
+            // var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVXYZWabcdefghijklmnopqrstuvxyzw_";
+            // for (var i=0; i<length; i++) {
+            //     arr.push(chars[Math.floor(chars.length*Math.random())]);
+            // }
+            // value = arr.join('');
         } else {
-            value = value + '';
+            value = value.toString();
         }
 
         if (!isPrimitive) {

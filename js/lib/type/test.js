@@ -231,9 +231,9 @@ function test_complex_type() {
     };
     types.entity = new ObjectType('entity', null, {
         'attributes': {
-            'id': { 'type':types.uint8, 'isRequired':true },
+            'id':   { 'type':types.uint8, 'isRequired':true },
             'name': { 'type':types.string8, 'isRequired':true },
-            'state': { 'type':types.normalized, 'isRequired':true }
+            'state':{ 'type':types.normalized, 'isRequired':true }
         }
     });
     types.weapon = new ObjectType('weapon', types.entity, {
@@ -959,10 +959,10 @@ async function test_mergeObjects() {
 
 var tests = () => [
     // test_types,
-    // test_complex_type,
+    test_complex_type,
     // test_type_enum,
     // test_compare,
-    test_schema,
+    // test_schema,
     // test_create_schema,
     // test_build_schema,
     // test_complex_schema,

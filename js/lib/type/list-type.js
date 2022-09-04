@@ -56,10 +56,6 @@ include('/lib/type/type.js');
                     for (var i=0; i<list.length; i++) {
                         v.push(createValue.call(this.elemType, list[i], tracking, isPrimitive));
                     }
-                } else {
-                    for (var i=0; i<5; i++) {
-                        v.push(createValue.call(this.elemType, null, tracking, isPrimitive));
-                    }
                 }
                 this.removeTracking(tracking);
             }
@@ -105,7 +101,7 @@ include('/lib/type/type.js');
                 if (flags & self.mergeObjects.OVERWRITE) {
                     if (typeof this.elemType.merge === 'function') {
                         if (target[i] == undefined) {
-                            target[i] = type.createDefaultValue(null, true);
+                            target[i] = type.createValue(null, null, true);
                         }
                         type.merge(v, target[i], flags);
                     } else {

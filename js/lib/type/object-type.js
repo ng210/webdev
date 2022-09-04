@@ -29,6 +29,7 @@ include('/lib/data/dictionary.js');
                 v = Reflect.construct(this.ctor, []);
             } else {
                 v = {};
+                type = this;
                 this.attributes.iterate( (key, value) => {
                     v[key] = value.default;
                     if (v[key] == undefined) {
@@ -168,10 +169,10 @@ include('/lib/data/dictionary.js');
     ObjectType.prototype.merge = function merge(source, target, flags) {
         var type = source.__type__ || this;
         type.attributes.iterate((k, v) => {
-            if (source[k] != undefined && (target[k] == undefined || target[k] == '' || (flags & self.mergeObjects.OVERWRITE))) {
+            if (source[k] != undefined && source[k] != '' && (target[k] == undefined || target[k] == '' || (flags & self.mergeObjects.OVERWRITE))) {
                 if (typeof v.type.merge === 'function') {
                     if (target[k] == undefined) {
-                        target[k] = v.type.createDefaultValue(null, true);
+                        target[k] = v.type.createValue(null, null, true);
                     }
                     v.type.merge(source[k], target[k], flags);
                 } else {
