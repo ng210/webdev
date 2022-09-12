@@ -478,7 +478,6 @@ function test_schema() {
     //#endregion
 
     //#region Person
-debugger
     schema.buildType({ name:'Person', attributes: {
         "id": { type:{ name:'Int1000', type:'int', min:1, max:1000 } },
         "name": { type:'string' },
@@ -617,7 +616,6 @@ debugger
                 }
             }
         ];
-
         var type = schema.types.get('MyDataTypes');
         var results = [];
         type.validate(rtTypes, results);
@@ -668,7 +666,6 @@ debugger
             mySchema.buildType({ 'name':'string100', 'type':'string', 'length':100 }),
             mySchema.buildType({ 'name':'int100', 'type':'int', 'min':0, 'max':100 })
         ]);
-debugger
         mySchema.checkMissingTypes();
         ctx.assert(mySchema.types.get('Code'), '!null');
         ctx.assert(mySchema.types.get('Code').attributes.get('methods').type.elemType, '=', mySchema.types.get('Method'));
@@ -715,15 +712,13 @@ function test_create_schema() {
     test('Should automatically add a \'type\' type', ctx => ctx.assert(schema.types.has('type'), '!null'));
     schema.addDefaultTypes();
     test('Should add all default types', ctx => {
-        var countOfMissingTypes = 0;
-        for (var i=0; i<Schema.defaultTypes.length; i++) {
-            if (!schema.types.has(Schema.defaultTypes[i].name)) {
-            //if (schema.types.iterate( (k, v) => v == Schema.defaultTypes[i])) {
-                message(Schema.defaultTypes[i].name);
-                countOfMissingTypes++;
+        var defaultTypes = Schema.createDefaultTypes();
+        while (defaultTypes.length != 0) {
+            if (!schema.types.has(defaultTypes.shift().name)) {
+                message(defaultTypes[0].name);                
             }
         }
-        ctx.assert(countOfMissingTypes, '=', 0)
+        ctx.assert(defaultTypes, 'empty');
     });
 
     test('Should containt every added type', ctx => {
@@ -917,10 +912,10 @@ async function test_mergeObjects() {
     var personType = schema.buildType({
         'name':'Person',
         'attributes':{
-            'id':{ 'type':'string' },
-            'name':{ 'type':'string' },
-            'age':{ 'type':'int' },
-            'role':{ 'type':'string' }
+            'id':{ 'type':'string', 'isRequired':false, 'default':'id00' },
+            'name':{ 'type':'string', 'isRequired':false, 'default':'' },
+            'age':{ 'type':'int', 'isRequired':false, 'default':18 },
+            'role':{ 'type':'string', 'isRequired':false, 'default':'employee' }
         },
         'ref':'id'
     });
@@ -930,43 +925,76 @@ async function test_mergeObjects() {
         'attributes':{
             'id':{ 'type':'string' },
             'name':{ 'type':'string' },
-            'director':{ 'type':'ref Person' },
+            'director':{ 'type':'Person' },
             'employees':{ 'type':{ 'type':'list', 'elemType':'ref Person' }}
         }
     });
 
-    var dummy = personType.createValue({'id':'p1', 'name':'Dummy', 'age':14, 'role':'dummy'});
-    var joe = personType.createValue({'name':'Joe', 'age':24});
-    var jane = personType.createValue({'id':'p2', 'name':'Jane', 'age':32, 'role':'manager'});
-    schema.addInstance(joe);
-    schema.addInstance(jane);
-    var acme = companyType.createValue({'name':'Acme company', 'id':'c1', 'director':'p2', 'employees': ['p1', 'p2'] });
-    test('Should merge 2 objects of same type', ctx => {
-        schema.mergeObjects(dummy, joe);
-        message(JSON.stringify(joe));
-        var expected = { 'id':'p1', 'name':'Joe', 'age':24, 'role':'dummy' };
-        ctx.assert(joe, ':=', expected);
+    test('Should not copy any properties', ctx => {
+        var p1 = personType.createValue({'id':'p1', 'name':'John', 'age':28, 'role':'employee'});
+        var p2 = personType.createValue({'id':'p2', 'name':'Jane', 'age':26, 'role':'manager'});
+        var p3 = clone(p2);
+        message(JSON.stringify(p1));
+        message(JSON.stringify(p3));
+        personType.merge(p1, p3);
+        message(JSON.stringify(p3));
+        ctx.assert(p2, ':=', p3);
     });
-    test('Should merge 2 objects of different types', ctx => {
-        message(JSON.stringify(joe));
-        message(JSON.stringify(acme));
-        schema.mergeObjects(joe, acme, mergeObjects.OVERWRITE);
-        message(JSON.stringify(acme));
-        var expected = { 'id':'p1', 'name':'Joe', 'director':'p2', 'employees': ['p1', 'p2'], 'age':24, 'role':'dummy' };
-        ctx.assert(acme, ':=', expected);
+    test('Should copy unmatched properties', ctx => {
+        var p1 = personType.createValue({'id':'p1', 'name':'John', 'age':28, 'role':'employee'});
+        var p2 = personType.createValue({'id':'p2', 'name':'Jane', 'age':26, 'role':'manager'}); delete p2.age;
+        var p3 = personType.createValue({'id':'p2', 'name':'Jane', 'age':28, 'role':'manager'});
+        message(JSON.stringify(p1));
+        message(JSON.stringify(p2));
+        personType.merge(p1, p2);
+        message(JSON.stringify(p2));
+        ctx.assert(p2, ':=', p3);
+    });
+    test('Should add default values', ctx => {
+        var p1 = personType.createValue({'id':'p1', 'name':'John', 'age':28, 'role':'employee'}); delete p1.age;
+        var p2 = personType.createValue({'id':'p2', 'name':'Jane', 'age':26, 'role':'manager'}); delete p2.age;
+        var p3 = personType.createValue({'id':'p2', 'name':'Jane', 'age':personType.attributes.get('age').default, 'role':'manager'});
+        message(JSON.stringify(p1));
+        message(JSON.stringify(p2));
+        personType.merge(p1, p2, self.mergeObjects.DEFAULT);
+        message(JSON.stringify(p2));
+        ctx.assert(p2, ':=', p3);
+    });
+    test('Should add default values with overwrite', ctx => {
+        var p1 = personType.createValue({'id':'p1', 'name':'John', 'age':28, 'role':'employee'}); delete p1.age;
+        var p2 = personType.createValue({'id':'p2', 'name':'Jane', 'age':26, 'role':'manager'}); delete p2.age;
+        var p3 = personType.createValue({'id':'p1', 'name':'John', 'age':personType.attributes.get('age').default, 'role':'employee'});
+        message(JSON.stringify(p1));
+        message(JSON.stringify(p2));
+        personType.merge(p1, p2, self.mergeObjects.DEFAULT | self.mergeObjects.OVERWRITE);
+        message(JSON.stringify(p2));
+        ctx.assert(p2, ':=', p3);
+    });
+    test('Should merge hierarchical type', ctx => {
+        var p1 = personType.createValue({'id':'p1', 'name':'John', 'age':28, 'role':'employee'}); delete p1.age;
+        var p2 = personType.createValue({'id':'p2', 'name':'Jane', 'age':26, 'role':'manager'}); delete p2.age;
+        var p3 = personType.createValue({'id':'p3', 'name':'Jean', 'age':36, 'role':'employee'}); delete p2.age;
+        var co1 = companyType.createValue({'name':'Company1', 'id':'c1', 'director':p1, 'employees': [p1.id, p2.id] });
+        var co2 = companyType.createValue({'name':'Company2', 'id':'c2', 'employees': [p3.id] }); delete co2.director;
+        message(JSON.stringify(co1));
+        message(JSON.stringify(co2));
+        companyType.merge(co1, co2);
+        message(JSON.stringify(co2));
+        var expected = companyType.createValue({'name':'Company2', 'id':'c2', 'director':p1, 'employees': [p3.id] });
+        ctx.assert(co2, ':=', expected);
     });
 }
 
 var tests = () => [
     // test_types,
-    test_complex_type,
+    // test_complex_type,
     // test_type_enum,
     // test_compare,
-    // test_schema,
-    // test_create_schema,
-    // test_build_schema,
-    // test_complex_schema,
-    // test_mergeObjects
+    test_schema,
+    test_create_schema,
+    test_build_schema,
+    test_complex_schema,
+    test_mergeObjects
 ];
 
 publish(tests, 'Type tests');

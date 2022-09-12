@@ -47,21 +47,20 @@ include('/lib/type/type.js');
     };
 
     ListType.prototype.createValue = function createValue(list, tracking, isPrimitive) {
+        var res = [];
         if (this.elemType instanceof Type) {
-            var createValue = isPrimitive ? this.elemType.createPrimitiveValue : this.elemType.createValue;
-            var v = [];
             tracking = tracking || {};
             if (this.addTracking(tracking)) {
                 if (list != undefined) {
                     for (var i=0; i<list.length; i++) {
-                        v.push(createValue.call(this.elemType, list[i], tracking, isPrimitive));
+                        res.push(this.elemType.createValue(list[i], tracking, isPrimitive));
                     }
                 }
                 this.removeTracking(tracking);
             }
-            if (!isPrimitive) this.setType(v);
+            if (!isPrimitive) this.setType(res);
         }
-        return v;
+        return res;
     };
     // ListType.prototype.createPrimitiveValue = function createPrimitiveValue(list, tracking) {
     //     return this.createValue(list, tracking, true);
@@ -87,15 +86,11 @@ include('/lib/type/type.js');
         return type;
     };
     ListType.prototype.merge = function merge(source, target, flags) {
+        if (!Array.isArray(source)) source = [];
         for (var i=0; i<source.length; i++) {
             var v = source[i];
             var results = [];
-            var type = v.__type__ || this.elemType; // schema.types.get('object');
-//             if (!type && this.schema) {
-// debugger
-//                 type = this.schema.types.get(v.type);
-//             }
-//            if (!type) type = this.elemType;
+            var type = v.__type__ || this.elemType;
             type.validate(v, results);
             if (results.length == 0) {
                 if (flags & self.mergeObjects.OVERWRITE) {

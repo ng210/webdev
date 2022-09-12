@@ -28,12 +28,7 @@ include('/lib/type/type.js');
     };
 
     RefType.prototype.createValue = function createValue(value, tracking, isPrimitive) {
-        var ref = value;
-        if (value === undefined) {
-            var v = this.baseType.createValue(value, tracking, isPrimitive);
-            ref = v[this.baseType.ref];
-        }
-        return ref;
+        return value || null;
     };
     // RefType.prototype.createPrimitiveValue = function createPrimitiveValue(value, tracking) {
     //     var ref = value;

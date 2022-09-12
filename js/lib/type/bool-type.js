@@ -22,7 +22,7 @@ include('/lib/type/type.js');
     };
 
     BoolType.prototype.createValue = function createValue(value, tracking, isPrimitive) {
-        var v = value != undefined ?!!value : false;
+        var v = value != undefined ? !!value : false;
         if (!isPrimitive) {
             v = new Boolean(v);
             this.setType(v);

@@ -32,10 +32,6 @@ include('/lib/data/dictionary.js');
                 type = this;
                 this.attributes.iterate( (key, value) => {
                     v[key] = value.default;
-                    if (v[key] == undefined) {
-                        var attr = type.attributes.get(key); 
-                        if (attr && attr.default != undefined) v[key] = attr.default;
-                    }
                     if (v[key] == undefined) v[key] = value.type.default;
                 });
             }
@@ -119,32 +115,22 @@ include('/lib/data/dictionary.js');
         return isValid;
     };
     ObjectType.prototype.createValue = function createValue(obj, tracking, isPrimitive) {
-        var v = {};
+        var res = {};
         tracking = tracking || {};
         var schema = this.schema;
         if (this.addTracking(tracking)) {
-            if (obj) {
-                this.attributes.iterate( (key, value) => {
-                    var def = obj[key];
-                    if (def === undefined) def = value.default;
-                    if (value.type instanceof Type) {
-                        v[key] = value.type.createValue(def, tracking, isPrimitive);
-                    } else {
-                        schema.addMissingType(value.type, t => v[key] = t.createValue(def, tracking, isPrimitive), [key]);
-                    }
-                });
-            } else {
-                this.attributes.iterate( (key, value) => {
-                    if (value.type instanceof Type) {
-                        v[key] = value.type.createValue(null, tracking, isPrimitive);
-                    } else {
-                        schema.addMissingType(value.type, t => v[key] = t.createValue(null, tracking, isPrimitive), [key]);
-                    }
-                });
-            }
+            this.attributes.iterate( (key, value) => {
+                var v;
+                if (obj) v = obj[key];
+                if (value.type instanceof Type) {
+                    res[key] = value.type.createValue(v, tracking, isPrimitive);
+                } else {
+                    schema.addMissingType(value.type, t => res[key] = t.createValue(v, tracking, isPrimitive), [key]);
+                }
+            });
         }
-        if (!isPrimitive) this.setType(v);
-        return v;
+        if (!isPrimitive) this.setType(res);
+        return res;
     };
     ObjectType.prototype.build = function build(definition, schema, path) {
         path = path || [];
@@ -167,16 +153,43 @@ include('/lib/data/dictionary.js');
         return type;
     };
     ObjectType.prototype.merge = function merge(source, target, flags) {
-        var type = source.__type__ || this;
+        var type = this;
+        if (source && source.__type__) type = source.__type__;
         type.attributes.iterate((k, v) => {
-            if (source[k] != undefined && source[k] != '' && (target[k] == undefined || target[k] == '' || (flags & self.mergeObjects.OVERWRITE))) {
-                if (typeof v.type.merge === 'function') {
-                    if (target[k] == undefined) {
-                        target[k] = v.type.createValue(null, null, true);
+            var hasSource = source && source[k] != undefined && source[k] !== '';
+            var hasTarget = target && target[k] != undefined && target[k] !== '';
+            if (hasSource) {
+                // s t o d  r
+                // 1 1 1 x  s  2
+                // 1 1 0 x  t  2
+                if (hasTarget) {
+                    if (flags & self.mergeObjects.OVERWRITE) {
+                        if (typeof v.type.merge === 'function') {
+                            v.type.merge(source[k], target[k], flags);
+                        } else {
+                            target[k] = source[k];
+                        }
                     }
-                    v.type.merge(source[k], target[k], flags);
                 } else {
-                    target[k] = source[k];
+                // s t o d  r
+                // 1 0 x x  s  4
+                    if (typeof v.type.merge === 'function') {
+                        target[k] = v.type.createValue(null, null, true);
+                        v.type.merge(source[k], target[k], flags);
+                    } else {
+                        target[k] = source[k];
+                    }
+                }
+            } else {
+                if (hasTarget) {
+                // s t o d  r
+                // 0 1 x x  t  4
+                    ;
+                } else //if (flags & self.mergeObjects.DEFAULT)
+                {
+                    // s t o d  r
+                    // 0 0 x 1  d
+                    target[k] = v.type.createValue(v.default, null, true);
                 }
             }
         });

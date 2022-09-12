@@ -20,11 +20,9 @@ include('/lib/type/type.js');
         if (this.schema) {
             value = value || 'string';
             var typeName = value instanceof Type ? value.name : value.toString();
-            type = this.schema.typeList.find(t => t.name == typeName);
-        } else {
-            type = this;
+            type = clone(this.schema.typeList.find(t => t.name == typeName));
         }
-        return clone(type);
+        return type;
     };
     // TypeType.prototype.createPrimitiveValue = function createPrimitiveValue(obj, tracking) {
     //     return obj ? this.createValue(obj, tracking) : this.createDefaultValue(tracking);

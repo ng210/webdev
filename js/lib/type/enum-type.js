@@ -35,11 +35,15 @@ include('/lib/type/type.js');
         if (value == undefined) {
             value = this.values[0];
         }
-        if (!isPrimitive) {
-            if (typeof value !== 'object') {
-                value = Reflect.construct(value.constructor, [value]);
+        if (this.values.includes(value)) {
+            if (!isPrimitive) {
+                if (typeof value !== 'object') {
+                    value = Reflect.construct(value.constructor, [value]);
+                }
+                this.setType(value);
             }
-            this.setType(value);
+        } else {
+            value = this.default;
         }
         return value;
     };
