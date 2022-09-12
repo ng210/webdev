@@ -94,10 +94,10 @@ include('control.js');
 	ValueControl.prototype.applyTemplate = function(tmpl) {
         var template = ValueControl.base.applyTemplate.call(this, tmpl);
         this.validations = {};
-		this.defaultValue = template.default || null;
 		this.blankValue = template.blank || '';
 		this.template['data-type'] = template['data-type'];
 		this.checkDataType();
+		this.defaultValue = template.default != undefined ? template.default : this.isNumeric ? 0 : '';
 		this.parse = this.dataType == glui.ValueControl.DataTypes.Float ? parseFloat : parseInt;
 		if (this.isNumeric && this.dataType != glui.ValueControl.DataTypes.Bool) {
 			this.setNumericProperties();
@@ -106,14 +106,18 @@ include('control.js');
 			this.addValidation('value', x => x <= this.max, 'Value is greater than maximum!', x => this.max);
 		}
 		//this.scale = 1.0;
-		if (template.value != null) {
-			var value = this.isNumeric ? Number(template.value) : template.value;
-			this.setValue(value);
+		if (this.dataSource == null) {
+			//var value = this.isNumeric ? 0 : '';
+			if (template.value != null) {
+				value = this.isNumeric ? Number(template.value) : template.value;
+				this.setValue(value);
+			}
+			
 		}
         this.decimalDigits = template['decimal-digits'];
-        if (this.dataSource && this.dataField) {
-            this.dataBind(this.dataSource, this.dataField);
-		}
+        // if (this.dataSource && this.dataField) {
+        //     this.dataBind(this.dataSource, this.dataField);
+		// }
 		this.isNormalized = !!template.normalized;
 		return template;
     };
@@ -121,7 +125,6 @@ include('control.js');
 		var toValue = v => v;
 		var toSource = v => v;
 		this.dataLink.addHandler('value', { 'args':toValue }, true);
-if (!this.dataSource.addHandler) debugger
 		this.dataSource.addHandler(this.dataField, { 'args':toSource }, true);
 		// if (this.dataType == glui.ValueControl.DataTypes.Bool) {
 		// 	this.value = value ? this.template['true-value'] : this.template['false-value'];
@@ -309,13 +312,14 @@ if (!this.dataSource.addHandler) debugger
         'attributes': {
 			'data-type':	{ 'type':{ 'type':'enum', 'values':Object.values(ValueControl.DataTypes) }, 'isRequired':false, 'default':ValueControl.DataTypes.String },
 			'decimal-digits':{ 'type':'int', 'isRequired':false, 'default':2 },
+			'default':		{ 'type':'void', 'isRequired':false, 'default':null },
 			'isNormalized': { 'type':'bool', 'isRequired':false, 'default':true },
 			'isNumeric':	{ 'type':'bool', 'isRequired':false, 'default':true },
 			'min':			{ 'type':'float', 'isRequired':false, 'default':0 },
 			'max':			{ 'type':'float', 'isRequired':false, 'default':1.0 },
 			'step':			{ 'type':'float', 'isRequired':false, 'default':0.1 },
             'style': 		{ 'type':'ControlStyle', 'isRequired':false },
-			'value':		{ 'type':'void', 'isRequired':false }
+			'value':		{ 'type':'void', 'isRequired':false, 'default':null }
         }
     });
 

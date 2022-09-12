@@ -134,7 +134,8 @@ include('label.js');
     };
     Menu.prototype.build = async function build(data) {
         if (this.dataSource) {
-            data =  this.dataField ? this.dataSource[this.dataField] : this.dataSource;
+            var dataSource =  this.dataField ? this.dataSource[this.dataField] : this.dataSource;
+            data = dataSource instanceof DataLink ? dataSource.obj : dataSource;
         } else {
             if (data && Array.isArray(data.items)) {
                 data = data.items;

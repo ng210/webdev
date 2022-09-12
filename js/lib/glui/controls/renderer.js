@@ -169,19 +169,27 @@ if (!parent.renderer) debugger;
     Renderer.prototype.getBestSizeInPixel = function getBestSizeInPixel(isInner) {
         return [this.convertToPixel('6em'), this.convertToPixel('2em', true)];
     };
+    Renderer.prototype.fromCssColor = function fromCssColor(input) {
+        var output = null;
+        if (input && typeof input === 'string') {
+            var re = null;
+            if (input.startsWith('rgb')) {
+                re = /rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/;
+            } else if (input.startsWith('#')) {
+                re = /#(\w\w)(\w\w)(\w\w)/;
+            }
+            if (re) {
+                var m = input.match(re);
+                output = [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
+            }
+        }
+        return output;
+    }
     Renderer.prototype.toColor = function toColor(cssColor) {
         var input = glui.Colors[cssColor.toLowerCase()] || cssColor;
-        var output = null;
-        var re = null;
-        if (input.startsWith('rgb')) {
-            re = /rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/;
-        } else if (input.startsWith('#')) {
-            re = /#(\w\w)(\w\w)(\w\w)/;
-        }
-        if (re) {
-            var m = input.match(re);
-            output = [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
-        }
+        var output = this.fromCssColor(input);
+        // default color is silver
+        if (!output) output = this.fromCssColor(glui.Colors.black);
         return output;
     };
     Renderer.prototype.calculateColor = function calculateColor(color, factor) {
@@ -196,9 +204,18 @@ if (!parent.renderer) debugger;
         } else return null;
     };
     Renderer.prototype.mixColors = function mixColors(color1, color2, factor) {
-        var r = color1[0] * (1 - factor) + color2[0] * factor;
-        var g = color1[1] * (1 - factor) + color2[1] * factor;
-        var b = color1[2] * (1 - factor) + color2[2] * factor;
+        var r = 0, g = 0, b = 0;
+        if (color1 != undefined) {
+            if (color2 != undefined) {
+                r = color1[0] * (1 - factor) + color2[0] * factor;
+                g = color1[1] * (1 - factor) + color2[1] * factor;
+                b = color1[2] * (1 - factor) + color2[2] * factor;
+            } else {
+                r = color1[0];
+                g = color1[1];
+                b = color1[2];
+            }
+        }
         if (r > 255) r = 255;
         if (g > 255) g = 255;
         if (b > 255) b = 255;

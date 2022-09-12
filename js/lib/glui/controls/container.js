@@ -67,8 +67,10 @@ include('renderer2d.js');
         return Container.base.applyTemplate.call(this, tmpl);
     };
     Container.prototype.add = function add(ctrl) {
-        // if (ctrl.parent != this) {
-        //     if (ctrl.parent) ctrl.parent.remove(ctrl);
+        if (ctrl.parent != null && ctrl.parent != this) {
+            ctrl.parent.remove(ctrl);
+            ctrl.parent = this;
+        }
         var zIndex = parseInt(ctrl.style['z-index']);
         if (isNaN(zIndex)) {
             ctrl.zIndex = this.zIndex + 100;
@@ -128,14 +130,15 @@ include('renderer2d.js');
         }
     };
 	Container.prototype.dataBind = function(source, field) {
-        Container.base.dataBind.call(this, source, field);
-        var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
-        var i = 0, j = 0;
-        var keys = Object.keys(dataSource);
-        for (var i=0; i<this.items.length; i++) {
-            if (!this.items[i].noBinding) {
-                this.items[i].dataBind(dataSource, this.items[i].dataField || keys[j].toString());
-                j++;
+        if (Container.base.dataBind.call(this, source, field)) {
+            var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
+            var i = 0, j = 0;
+            var keys = Object.keys(dataSource);
+            for (var i=0; i<this.items.length; i++) {
+                if (!this.items[i].noBinding) {
+                    this.items[i].dataBind(dataSource, this.items[i].dataField || keys[j].toString());
+                    j++;
+                }
             }
         }
 	};
@@ -199,8 +202,7 @@ include('renderer2d.js');
         'name':'Container',
         'type':'Control',
         'attributes': {
-            'items': { 'type': { 'type':'list', 'elemType':'Control' }, 'isRequired':false, 'default': [] },
-            'style': { 'type': 'ControlStyle', 'isRequired':false }
+            'items': { 'type': { 'type':'list', 'elemType':'Control' }, 'isRequired':false, 'default': [] }
         }
     });
 

@@ -150,9 +150,9 @@ include('renderer2d.js');
 
         this.curveMode = Grid.curveModes[template['curve-mode']];
 
-        if (this.dataSource && this.dataField) {
-            this.dataBind();
-		}
+        // if (this.dataSource && this.dataField) {
+        //     this.dataBind();
+		// }
         return template;
     };
     Grid.prototype.createRenderer = mode => mode == glui.Render2d ? new GridRenderer2d() : 'GridRenderer3d';

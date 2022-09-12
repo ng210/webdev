@@ -52,48 +52,6 @@ include('/lib/type/schema.js');
         this.schema.id = 'glui';
         this.schema.addDefaultTypes();
     }
-
-    Glui.prototype.buildType = function buildType(def) {
-        if (!def.attributes) {
-            def.attributes = {};
-        }
-        if (!def.attributes.type) {
-            def.attributes.type = { 'type': 'typeName' };
-        }
-        def.attributes.type.default = def.name;
-        glui.schema.buildType(def);
-    };
-
-    Glui.prototype.getType = function getType(tagName) {
-        var type = null;
-        var name = tagName.toLowerCase().split('gl-')[1];
-        if (name) {
-            var typeName = name.charAt(0).toUpperCase() + name.substr(1);
-            type = glui[typeName] ? glui[typeName] : null;
-        }
-        return type;
-    };
-    Glui.prototype.fromNode = async function fromNode(node, context) {
-        var control = null;
-        var type = this.getType(node.tagName);
-        if (type) {
-            node.id = node.id || 'ctrl' + glui.controlCount;
-            control = await glui.Control.fromNode(node, type, context);
-            if (type == glui.Table) {
-                await control.build();
-            }
-        }            
-        return control;
-    };
-    Glui.prototype.create = function create(id, tmpl, parent, context) {
-        var ctrl = glui.Control.create(id, tmpl, parent || this.screen, context);
-        ctrl.addHandlers();
-        this.controlCount++;
-        return ctrl;
-    };
-    Glui.prototype.remove = function remove(control) {
-        this.screen.remove(control);
-    };
     Glui.prototype.initialize = async function initialize(app, isFullscreen) {
         document.body.style.display = 'block';
         var res = await load('/lib/glui/glui-colors.json');
@@ -121,7 +79,7 @@ include('/lib/type/schema.js');
         this.screen.addHandlers();
         this.focusedControl = this.screen;
         this.controlAtCursor = this.screen;
-        await this.setRenderingMode(glui.Render2d);
+        this.setRenderingMode(glui.Render2d);
         document.addEventListener('keydown', glui.onevent);
         document.addEventListener('keyup', glui.onevent);
         document.addEventListener('mouseup', glui.onevent);
@@ -155,6 +113,68 @@ include('/lib/type/schema.js');
         }
         this.screen.items.length = 0;
     };
+
+    Glui.prototype.buildType = function buildType(def) {
+        if (!def.attributes) {
+            def.attributes = {};
+        }
+        if (!def.attributes.type) {
+            def.attributes.type = { 'type': 'typeName' };
+        }
+        def.attributes.type.default = def.name;
+        glui.schema.buildType(def);
+    };
+    Glui.prototype.getType = function getType(tagName) {
+        var type = null;
+        var name = tagName.toLowerCase().split('gl-')[1];
+        if (name) {
+            var typeName = name.charAt(0).toUpperCase() + name.substr(1);
+            type = glui[typeName] ? glui[typeName] : null;
+        }
+        return type;
+    };
+
+    //#region control handling
+    Glui.prototype.fromNode = async function fromNode(node, context) {
+        var control = null;
+        var type = this.getType(node.tagName);
+        if (type) {
+            node.id = node.id || 'ctrl' + glui.controlCount;
+            control = await glui.Control.fromNode(node, type, context);
+            if (type == glui.Table) {
+                await control.build();
+            }
+        }            
+        return control;
+    };
+    Glui.prototype.create = function create(id, tmpl, parent, context) {
+        var ctrl = glui.Control.create(id, tmpl, parent || this.screen, context);
+        ctrl.addHandlers();
+        this.controlCount++;
+        return ctrl;
+    };
+    Glui.prototype.remove = function remove(control) {
+        this.screen.remove(control);
+    };
+    Glui.prototype.setFocus = function setFocus(control) {
+        if (control != glui.focusedControl) {
+            if (glui.focusedControl) {
+                var ctrl = glui.focusedControl;
+                glui.focusedControl = control;
+                ctrl.callHandler('blur', {
+                    'type': 'blur',
+                    'control': ctrl
+                });
+            }
+            if (control) {
+                control.callHandler('focus',  {
+                    'type': 'focus',
+                    'control': control
+                });
+                glui.focusedControl = control;
+            }
+        }
+    };
     Glui.prototype.buildUI = async function buildUI(context) {
         var nodes = document.body.querySelectorAll('*');
         var p = [];
@@ -166,23 +186,18 @@ include('/lib/type/schema.js');
         }
         await Promise.all(p);
     };
-    Glui.prototype.setRenderingMode = async function setRenderingMode(mode) {
+    //#endregion
+
+    Glui.prototype.setRenderingMode = function setRenderingMode(mode) {
         this.mode = mode || glui.Render2d;
         if (mode == glui.Render2d) {
             this.renderingContext = this.renderingContext2d = this.renderingContext2d || glui.canvas.getContext('2d');
         } else if (mode == glui.Render3d) {
             this.renderingContext = this.renderingContext3d = this.renderingContext3d || glui.canvas.getContext('webgl');
         }
-        await this.screen.setRenderer(mode, this.renderingContext);
+        this.screen.setRenderer(mode, this.renderingContext);
         glui.resize();
         return this.renderingContext;
-    };
-    Glui.prototype.markForRendering = function markForRendering(ctrl) {
-        if (ctrl.parent && ctrl.parent.renderer.lastFrame == -1) {
-            ctrl.parent.render();
-        } else {
-            this.markedForRendering[ctrl.id] = ctrl;
-        }
     };
     Glui.prototype.clearRect = function clearRect(left, top, width, height) {
         left = left || 0;
@@ -191,15 +206,40 @@ include('/lib/type/schema.js');
         height = height || this.canvas.height;
         this.renderingContext2d.clearRect(left, top, width, height);
     };
-    Glui.prototype.checkPendings = async function checkPendings() {
-        await Promise.all(this.promises);
-        this.promises.length = 0;
+    Glui.prototype.getControlAt = function getControlAt(x, y, recursive) {
+        var cx = x*glui.scale.x, cy = y*glui.scale.y;
+        return this.screen.getControlAt(cx, cy, recursive);
     };
-    Glui.prototype.repaint = async function repaint() {
-        await this.checkPendings();
-        this.markedForRendering = {};
-        this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.screen.renderer.render();
+    Glui.prototype.getControlById = function getControlById(id) {
+        return this.screen.getControlById(id);
+    };
+    Glui.prototype.waitFor = function waitFor(control, p, onFulfilled) {
+        this.promises.push(p);
+        p.then( res => onFulfilled.call(control, res));
+    };
+    //#region animation
+    Glui.prototype.addAnimation = function addAnimation(callback, obj, timeout, args) {
+        var animationId = glui.animations.length;
+        glui.animations.push({id:animationId, fn:callback, obj:obj, args: args, timeout:timeout, counter:timeout});
+        callback.call(obj, args);
+        return animationId;
+    };
+    Glui.prototype.removeAnimation = function removeAnimation(animationId) {
+        var ix = glui.animations.findIndex(x => x.id == animationId);
+        glui.animations.splice(ix, 1);
+    };
+    Glui.prototype.resetAnimation = function resetAnimation(animationId) {
+        var anim = glui.animations.find(x => x.id == animationId);
+        anim.counter = anim.timeout;
+    };
+    //#endregion
+    //#region rendering
+    Glui.prototype.markForRendering = function markForRendering(ctrl) {
+        if (ctrl.parent && ctrl.parent.renderer.lastFrame == -1) {
+            ctrl.parent.render();
+        } else {
+            this.markedForRendering[ctrl.id] = ctrl;
+        }
     };
     Glui.prototype.resize = function resize() {
         if (glui.canvas) {
@@ -217,28 +257,17 @@ include('/lib/type/schema.js');
             glui.repaint();
         }
     };
-    Glui.prototype.getControlAt = function getControlAt(x, y, recursive) {
-        var cx = x*glui.scale.x, cy = y*glui.scale.y;
-        return this.screen.getControlAt(cx, cy, recursive);
+    Glui.prototype.repaint = function repaint() {
+        this.markedForRendering = {};
+        this.renderingContext2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.screen.render();
     };
-    Glui.prototype.getControlById = function getControlById(id) {
-        return this.screen.getControlById(id);
+    Glui.prototype.checkPendings = async function checkPendings() {
+        await Promise.all(this.promises);
+        this.promises.length = 0;
     };
-    Glui.prototype.addAnimation = function addAnimation(callback, obj, timeout, args) {
-        var animationId = glui.animations.length;
-        glui.animations.push({id:animationId, fn:callback, obj:obj, args: args, timeout:timeout, counter:timeout});
-        callback.call(obj, args);
-        return animationId;
-    };
-    Glui.prototype.removeAnimation = function removeAnimation(animationId) {
-        var ix = glui.animations.findIndex(x => x.id == animationId);
-        glui.animations.splice(ix, 1);
-    };
-    Glui.prototype.resetAnimation = function resetAnimation(animationId) {
-        var anim = glui.animations.find(x => x.id == animationId);
-        anim.counter = anim.timeout;
-    };
-    Glui.prototype.render = function render() {
+    Glui.prototype.render = async function render() {
+        await this.checkPendings();
         for (var i=0; i<glui.animations.length; i++) {
             var anim = glui.animations[i];
             anim.counter -= 50;
@@ -263,10 +292,10 @@ include('/lib/type/schema.js');
     Glui.prototype.animate = async function animate() {
         glui.isRunning = true;
         if (glui.animateId) cancelAnimationFrame(glui.animateId);
-        await glui.checkPendings();
         glui.render();
         glui.animateId = requestAnimationFrame(glui.animate);
     };
+    //#endregion
     Glui.prototype.onevent = function onevent(e) {
         // get control by coordinates
         var event = e.type;
@@ -357,29 +386,6 @@ include('/lib/type/schema.js');
             e.control = control;
             control.callHandler(e.type, e);
         }
-    };
-    Glui.prototype.setFocus = function setFocus(control) {
-        if (control != glui.focusedControl) {
-            if (glui.focusedControl) {
-                var ctrl = glui.focusedControl;
-                glui.focusedControl = control;
-                ctrl.callHandler('blur', {
-                    'type': 'blur',
-                    'control': control
-                });
-            }
-            if (control) {
-                control.callHandler('focus',  {
-                    'type': 'focus',
-                    'control': control
-                });
-                glui.focusedControl = control;
-            }
-        }
-    };
-    Glui.prototype.waitFor = function waitFor(control, p, onFulfilled) {
-        this.promises.push(p);
-        p.then( res => onFulfilled.call(control, res));
     };
     Glui.prototype.Alignment = {
         LEFT: 1,

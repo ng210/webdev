@@ -19,29 +19,31 @@ include('/lib/data/graph.js');
         'border':'#808090 2px',
         'background-color': '#a0a0b0'
     };
-    var tableStyle = {
-        'font': 'Arial 12',
-        'width':'24em',
-        'align':'center middle',
-        'border':'#308060 3px outset',
-        'color': '#184030',
-        'background-color': '#308060',
-        'cell-template': {
+    var tableStyles = {
+        'table': {
+            'font': 'Arial 12',
+            'width':'24em',
+            'align':'center middle',
+            'border':'#308060 3px outset',
+            'color': '#184030',
+            'background-color': '#308060'
+        },
+        'cell': {
             'font': 'Arial 14',
             'align':'center middle',
-            'border':'#90b0c0 1px inset',
+            'border':'#80b0c0 1px inset',
             'color': '#102040',
-            'background-color': '#90b0c0',
+            'background-color': '#80f0c0',
             'width': '4em'
         },
-        'title-style': {
+        'title': {
             'font': 'Arial 16',
-            'border':'#60a080 1px inset',
+            'border':'#a0ffc0 2px outset',
             'color': '#204060',
-            'background-color': '#80c0a0',
+            'background-color': '#a0ffc0',
             'height': '1.5em'
         },
-        'header-style': {
+        'header': {
             'font': 'Arial 14',
             'height':'2.0em',
             'align':'center middle',
@@ -353,7 +355,7 @@ include('/lib/data/graph.js');
             App.isInitialized = true;
             Dbg.prln(`Screen size is ${glui.width}x${glui.height}`);
         } else {
-            await glui.setRenderingMode(glui.Render2d);
+            glui.setRenderingMode(glui.Render2d);
             //glui.repaint();
         }
     }
@@ -568,9 +570,22 @@ include('/lib/data/graph.js');
                     'data-field': 'textbox1'
                 },
                 {
+                    'type': 'Textbox',
+                    'style': {
+                        'left': '1em', 'top': '3.5em',
+                        'width':'10em', 'height':'2em',
+                        'border':'#c0c0e0 1px inset',
+                        'color': '#e0e0f0'
+                    },
+                    'look': 'textbox',
+                    'decimal-digits': 3,
+                    'data-source': 'data',
+                    'data-field': 'textbox2'
+                },
+                {
                     'type': 'Image',
                     'style': {
-                        'left': '1em', 'top': '4em',
+                        'left': '1em', 'top': '6em',
                         'width':'96px', 'height':'96px',
                         'border':'#c0c0f0 2px solid'
                     },
@@ -580,10 +595,16 @@ include('/lib/data/graph.js');
         };
 
         var container = glui.create('container1', containerTemplate, null, App);
-        test('Container has a Textbox and an Image item', ctx => {
-            ctx.assert(container.items.length, '=', 2);
+        test('Container has 2 Textbox and an Image items', ctx => {
+            ctx.assert(container.items.length, '=', 3);
             ctx.assert(container.items[0].constructor, '=', glui.Textbox);
-            ctx.assert(container.items[1].constructor, '=', glui.Image);
+            ctx.assert(container.items[1].constructor, '=', glui.Textbox);
+            ctx.assert(container.items[2].constructor, '=', glui.Image);
+        });
+
+        test('Container items should keep or take over parent\'s style settings', ctx => {
+            ctx.assert(container.items[0].style['background-color'], '!=', container.style['background-color']);
+            ctx.assert(container.items[1].style['background-color'],  '=', container.style['background-color']);
         });
 
         var tmpl = {
@@ -635,7 +656,7 @@ include('/lib/data/graph.js');
             'title':'Default',
             'show-header':false,
             'title-style':	{ 'color':'black' },
-            'style': tableStyle
+            'style': tableStyles.table
         };
         var table1 = glui.create('table1', tableTemplate1, null, App); table1.build();
         table1.addHandler('mouseout', table1, e => {debug_('table1.onmouseout', 0); return false;});
@@ -662,23 +683,16 @@ include('/lib/data/graph.js');
         //#region Table #2
         var tableTemplate2 = {
             'type': 'Table',
-            'style': tableStyle,
+            'style': tableStyles.table,
             'title': '3x4',
             'cols': 3,
             'rows': 4,
             'show-header':false,
-            'title-style':	{ 'align':'center middle', 'color':'black' },
+            'title-style':	tableStyles.title,
             'cell-template': {
                 'type': 'Textbox',
                 'data-type': 'string',
-                'style': {
-                    'font': 'Arial 12',
-                    'height':'2.2em',
-                    'align':'left middle',
-                    'border':'#106080 1px inset',
-                    'background-color': '#f0f0cf',
-                    'background-image': 'none'
-                }
+                'style': tableStyles.cell
             }
         };
         var table2 = glui.create('table2', tableTemplate2, null, App); table2.build();
@@ -726,7 +740,7 @@ include('/lib/data/graph.js');
                 }
             },
             'title-style':	{ 'align':'center middle', 'font': 'Arial 16 bold', 'height': '2em', 'color':'black' },
-            'header-style':	{ 'align':'center middle', 'font': 'Arial 14 bold', 'height': '1.2em', 'color':'black' }
+            'header-style':	{ 'align':'center middle', 'font': 'Arial 14 bold', 'height': '1.6em', 'color':'darkslategray' }
         };
         var table3 = await glui.create('table3', tableTemplate3, null, App); await table3.build();
         test('Table built from datasource should have 2 columns and ' + data.table.length + ' rows', ctx => {
@@ -793,13 +807,21 @@ include('/lib/data/graph.js');
         table4.render();
         //#endregion
 
-        // var table5 = await glui.create('table5', dialogTemplate.items[0], null, App);
-        // table5.size('14em', '5em');
-        // await table5.build();
-        // table5.move(60,200);
-        // table5.render();
+        // // var table5 = await glui.create('table5', dialogTemplate.items[0], null, App);
+        // // table5.size('14em', '5em');
+        // // await table5.build();
+        // // table5.move(60,200);
+        // // table5.render();
 
         glui.animate();
+
+        await button('Next');
+        var ix = iterate(table3.rows, (k, v) => {
+            return v.cells.name.getValue() == 'Blange';
+        });
+        //var value = table3.rows[ix].cells.name.value;
+        table3.rows[ix].cells.name.setValue('Blanche');
+        test('Entry change in Table3 should be reflected in the data source as well', ctx => ctx.assert(table3.rows[ix].cells.name.getValue(), '=', data.table[ix].name));
 
         await button('Next');
         teardown();
@@ -850,11 +872,11 @@ include('/lib/data/graph.js');
         await mainMenu.build();
         mainMenu.move(10, 10);
         mainMenu.render();
-        //#endregion
-
         glui.animate();
         await button('Next');
         glui.remove(mainMenu);
+        //#endregion
+
         glui.repaint();
 
         //#region menu created from data
@@ -867,10 +889,9 @@ include('/lib/data/graph.js');
         await mainMenu2.build(data['main-menu']);
         mainMenu2.move(10, 10);
         mainMenu2.render();
-        //#endregion
-
         glui.animate();
         await button('Next');
+        //#endregion
 
         teardown();
     }
@@ -913,6 +934,7 @@ include('/lib/data/graph.js');
                     'value': 'Count'
                 },
                 {   'type': 'Textbox',
+                    'id': 'Score',
                     'style': {
                         'left':'7.2em', 'top':'0.5em',
                         'width':'6em', 'height':'1.6em',
@@ -923,7 +945,7 @@ include('/lib/data/graph.js');
                     },
                     'look': 'textbox',
                     'data-type': 'int',
-                    'decimal-digits': 1,
+                    'decimal-digits': 0,
                     'data-source': 'data',
                     'data-field': 'textbox2'
                 },

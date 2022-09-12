@@ -138,7 +138,10 @@ include('container.js');
         // }
         this.body.size(this.innerWidth, this.innerHeight - this.titlebar.height);
     };
-        
+
+    Dialog.prototype.setRenderer = function setRenderer(mode, context) {
+        Dialog.base.setRenderer.call(this, mode, context);
+    };
     // Dialog.prototype.getHandlers = function getHandlers() {
     //     var handlers = Dialog.base.getHandlers();
     //     handlers.push(

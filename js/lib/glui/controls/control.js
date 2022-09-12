@@ -99,20 +99,6 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
     Control.prototype.getTemplate = function getTemplate() {
         var type = glui.schema.types.get(this.constructor.name);
         return type.createDefaultValue(null, true);
-        // return type.createPrimitiveValue( {
-        //     'data-field': '',
-        //     'data-source': null,
-        //     'disabled': false,
-        //     'id': 'ctrl',
-        //     'label': false,
-        //     'no-binding': false,
-        //     'scroll-x-min': 0,
-        //     'scroll-x-max': 1,
-        //     'scroll-y-min': 0,
-        //     'scroll-y-max': 1,
-        //     'style': Control.getStyleTemplate(),
-        //     'type': type.name
-        // });
     };
     Control.prototype.applyTemplate = function(tmpl) {
         this.template = this.getTemplate();
@@ -137,29 +123,28 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         this.type = this.template.type;
         this.disabled = this.template.disabled;
         var source = this.template['data-source'];
+        this.dataField = this.template['data-field'];
+        this.noBinding = this.template['no-binding'];
         if (source && typeof source === 'string') {
             while (true) {
             // move to glui.js <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 if (glui.screen && glui.screen.items) {
                     var ctrl = glui.screen.items.find(x => x.id == source);
                     if (ctrl) {
-                        this.dataSource = ctrl;
+                        source = ctrl;
                         break;
                     }
                 }
                 if (this.context && this.context[source]) {
-                    this.dataSource = this.context[source];
+                    source = this.context[source];
                     break;
                 }
-                this.dataSource = window[source];
+                source = window[source];
                 break;
             }
             // move to glui.js <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        } else {
-            this.dataSource = source;
         }
-        this.dataField = this.template['data-field'];
-        this.noBinding = this.template['no-binding'];
+        this.dataBind(source);
         this.zIndex = parseInt(this.style['z-index']) || 0;
         //this.label = null; ???
         this.scrollRangeX[1] = this.template['scroll-x-min'];
@@ -169,16 +154,19 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         return this.template;
 	};
     Control.prototype.dataBind = function dataBind(source, field) {
-        if (!this.noBinding && source !== undefined) {
-            if (this.dataSource != null) {
-                delete this.dataSource;
-                this.dataSource = null;
+        if (!this.noBinding) {
+            if (source) {
+                if (this.dataSource) {
+                    delete this.dataSource;
+                }
+                this.dataSource = source instanceof DataLink ? source : new DataLink(source);
             }
-            this.dataSource = source instanceof DataLink ? source : new DataLink(source);
-            if (field !== undefined) {
-                this.dataField = field;
-                this.dataSource.addField(this.dataField, null);
-            }            
+            if (this.dataSource) {
+                this.dataField = field || this.dataField;
+                if (this.dataField) {
+                    this.dataSource.addField(this.dataField, null);
+                }
+            }
         }
         return this.dataSource;
     };
@@ -433,14 +421,12 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
                     ctrl.setRenderer(parent.renderer.mode, parent.renderer.context);
                 }
                 if (ctrl instanceof glui.Container) {
-                    //var p = [];
+                    var items = ctrl instanceof glui.Dialog == false ? template.items : ctrl.template.items;
                     for (var i=0; i<ctrl.template.items.length; i++) {
                         if (ctrl.template.items.hasOwnProperty(i)) {
-                            glui.create(ctrl.template.items[i].id || i, ctrl.template.items[i], ctrl);
+                            glui.create(ctrl.template.items[i].id || i, items[i], ctrl);
                         }
                     }
-                    //await Promise.all(p);
-            
                 } else if (ctrl instanceof glui.Image) {
                     ctrl.load();
                 }

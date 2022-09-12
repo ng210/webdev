@@ -1,4 +1,5 @@
 include('container.js');
+include('label.js');
 (function() {
 
 	//#region Row
@@ -201,7 +202,7 @@ include('container.js');
 		}
 
 		// draw header
-		if (table.showHeader) {
+		if (table.showHeader && table.header) {
 			table.header.move(0, top);
 			table.header.renderer.render();
 			top += table.header.height;
@@ -280,18 +281,27 @@ include('container.js');
 		styleType.merge(this.style, this.cellTemplate.style, self.mergeObjects.OVERWRITE);
 		// merge cell-template
 		if (tmpl['cell-template']) {
-			glui.schema.mergeObjects(tmpl['cell-template'], this.cellTemplate, type, self.mergeObjects.OVERWRITE);
+			type.merge(tmpl['cell-template'], this.cellTemplate, self.mergeObjects.OVERWRITE);
 		}
 		if (!tmpl['cell-template'] || !tmpl['cell-template'].width) {
 			this.cellTemplate.style.width = '100%';
 		}
-		glui.schema.mergeObjects(this.cellTemplate.style, this.titleStyle, styleType);
+		// merge title style
+		styleType.merge(this.cellTemplate.style, this.titleStyle, self.mergeObjects.OVERWRITE);
+		if (tmpl['title-style']) {
+			styleType.merge(tmpl['title-style'], this.titleStyle, self.mergeObjects.OVERWRITE);
+		}
 		if (!tmpl['title-style'] || !tmpl['title-style'].font) {
 			var font = this.titleStyle.font.split(' ')
         	font[1] = parseFloat(font[1])*1.2;
         	this.titleStyle.font = font.join(' ');
 		}
-		glui.schema.mergeObjects(this.cellTemplate.style, this.headerStyle, styleType);
+		// merge header style
+		styleType.merge(this.cellTemplate.style, this.headerStyle, self.mergeObjects.OVERWRITE);
+		if (tmpl['header-style']) {
+			styleType.merge(tmpl['header-style'], this.headerStyle, self.mergeObjects.OVERWRITE);
+		}
+		this.headerStyle.width = '100%';
 		return this.template;
 	};
 	// #region Build
@@ -325,7 +335,8 @@ include('container.js');
 		var columnKeys = [];
 		if (columnCount == 0 && this.rowTemplate != null) columnCount = this.rowTemplateCount;
 		if (this.dataSource) {
-			var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
+			var dataSource = this.dataSource instanceof DataLink ? this.dataSource.obj : this.dataSource;
+			if (this.dataField) dataSource = dataSource[this.dataField];
 			rowKeys = Object.keys(dataSource);
 			if (rowCount == 0) {
 				rowCount = rowKeys.length;
@@ -374,7 +385,7 @@ include('container.js');
 		//#region Update header
 		if (this.showHeader) {
 			if (this.header == null) {
-				this.header = new Row('header', {style:this.headerStyle}, this);
+				this.header = new Row('header', { 'style':this.headerStyle }, this);
 				this.header.setRenderer(this.renderer.mode, this.renderer.context);
 			}
 			if (this.header.cellCount < this.columnCount) {
@@ -385,6 +396,7 @@ include('container.js');
 					}
 					this.header.cells[i].setValue(name);
 				}
+				this.header.size();
 			} else {
 				var ix = this.columnCount;
 				while (this.header.cellCount > this.columnCount) {
@@ -602,8 +614,8 @@ if (false) {
 			var column = this.columns[ci];
 			var name = column.name;
 			var template = this.rowTemplate[column.key];
-			var ctrl = glui.create(name, template, row);
-			//await row.add(ctrl, name);
+			var ctrl = glui.create(name, template, null);
+			row.add(ctrl, name);
 			column.add(ctrl, ix);
 			height = Math.max(height, ctrl.height + 2*row.renderer.border.width);
 		}
@@ -625,74 +637,74 @@ if (false) {
 		this.rowKeys.splice(ix, 1);
 		Table.base.remove.call(this, row);
 	};
-	Table.prototype.updateRowInfo = function updateRowInfo() {
-		var rowCount = parseInt(this.template.rows);
-		var rowKeys = null;
-		if (!rowCount) {
-			if (this.dataSource) {
-				var dataSource = this.dataField != null ? this.dataSource[this.dataField] : this.dataSource;
-				rowKeys = Object.keys(dataSource);
-				rowCount = rowKeys.length;
-			} else {
-				rowCount = 2;
-			}
-		}
-		if (rowKeys == null) {
-			rowKeys = [];
-			for (var i=0; i<rowCount; i++) rowKeys.push(i);
-		}
-		return rowKeys;
-	};
-	Table.prototype.updateColumnInfo = function updateColumnInfo(rowKeys) {
-		var columnCount = parseInt(this.template.cols);
-		var columnKeys = null;
-		if (columnCount) {
-			if (this.rowTemplate) {
-				columnKeys = [];
-				var keys = Object.keys(this.rowTemplate);
-				for (var i=0; i<columnCount; i++) {
-					columnKeys.push(i < keys.length ? keys[i] : i);
-				}			
-			} else {
-				if (this.dataSource) {
-					var dataSource = this.dataField != null ? this.dataSource[this.dataField] : this.dataSource;
-					if (dataSource) {
-						columnKeys = [];
-						var keys = Object.keys(dataSource[rowKeys[0]]);
-						for (var i=0; i<columnCount; i++) {
-							columnKeys.push(i < keys.length ? keys[i] : i);
-						}
-					} else {
-						throw new Error('Datasource is invalid!');
-					}
-				} else {
-					columnKeys = [];
-					for (var i=0; i<columnCount; i++) {
-						columnKeys.push(i);
-					}
-				}
-			}
-		} else {
-			if (this.rowTemplate) {
-				columnKeys = Object.keys(this.rowTemplate);
-				columnCount = columnKeys.length;
-			} else {
-				var dataSource = this.dataSource ? (this.dataField != null ? this.dataSource[this.dataField] : this.dataSource) : null;
-				if (dataSource) {
-					rowKeys = Object.keys(dataSource);
-					columnKeys = Object.keys(dataSource[rowKeys[0]]);
-					columnCount = columnKeys.length;
-				} else {
-					columnCount = 2;
-					columnKeys = [];
-					for (var i=0; i<columnCount; i++) {
-						columnKeys.push(i);
-					}			
-				}
-			}
-		}
-		return columnKeys;
-	};
+	// Table.prototype.updateRowInfo = function updateRowInfo() {
+	// 	var rowCount = parseInt(this.template.rows);
+	// 	var rowKeys = null;
+	// 	if (!rowCount) {
+	// 		if (this.dataSource) {
+	// 			var dataSource = this.dataField != null ? this.dataSource[this.dataField] : this.dataSource;
+	// 			rowKeys = Object.keys(dataSource);
+	// 			rowCount = rowKeys.length;
+	// 		} else {
+	// 			rowCount = 2;
+	// 		}
+	// 	}
+	// 	if (rowKeys == null) {
+	// 		rowKeys = [];
+	// 		for (var i=0; i<rowCount; i++) rowKeys.push(i);
+	// 	}
+	// 	return rowKeys;
+	// };
+	// Table.prototype.updateColumnInfo = function updateColumnInfo(rowKeys) {
+	// 	var columnCount = parseInt(this.template.cols);
+	// 	var columnKeys = null;
+	// 	if (columnCount) {
+	// 		if (this.rowTemplate) {
+	// 			columnKeys = [];
+	// 			var keys = Object.keys(this.rowTemplate);
+	// 			for (var i=0; i<columnCount; i++) {
+	// 				columnKeys.push(i < keys.length ? keys[i] : i);
+	// 			}			
+	// 		} else {
+	// 			if (this.dataSource) {
+	// 				var dataSource = this.dataField != null ? this.dataSource[this.dataField] : this.dataSource;
+	// 				if (dataSource) {
+	// 					columnKeys = [];
+	// 					var keys = Object.keys(dataSource[rowKeys[0]]);
+	// 					for (var i=0; i<columnCount; i++) {
+	// 						columnKeys.push(i < keys.length ? keys[i] : i);
+	// 					}
+	// 				} else {
+	// 					throw new Error('Datasource is invalid!');
+	// 				}
+	// 			} else {
+	// 				columnKeys = [];
+	// 				for (var i=0; i<columnCount; i++) {
+	// 					columnKeys.push(i);
+	// 				}
+	// 			}
+	// 		}
+	// 	} else {
+	// 		if (this.rowTemplate) {
+	// 			columnKeys = Object.keys(this.rowTemplate);
+	// 			columnCount = columnKeys.length;
+	// 		} else {
+	// 			var dataSource = this.dataSource ? (this.dataField != null ? this.dataSource[this.dataField] : this.dataSource) : null;
+	// 			if (dataSource) {
+	// 				rowKeys = Object.keys(dataSource);
+	// 				columnKeys = Object.keys(dataSource[rowKeys[0]]);
+	// 				columnCount = columnKeys.length;
+	// 			} else {
+	// 				columnCount = 2;
+	// 				columnKeys = [];
+	// 				for (var i=0; i<columnCount; i++) {
+	// 					columnKeys.push(i);
+	// 				}			
+	// 			}
+	// 		}
+	// 	}
+	// 	return columnKeys;
+	// };
 
     Table.prototype.replace = function replace(item, newItem) {
 		var result = Table.base.replace.call(this, item, newItem);
@@ -796,9 +808,9 @@ if (false) {
 			'mode':			{ 'type':'TableMode', 'isRequired':false, 'default':Table.modes.TABLE },
 			'rows':			{ 'type':'int', 'isRequired':false, 'default':2 },
 			'cols':			{ 'type':'int', 'isRequired':false, 'default':2 },
-			'title-style':	{ 'type':glui.schema.types.get('ControlStyle'), 'isRequired':false, 'default':{} },
+			'title-style':	{ 'type':glui.schema.types.get('ControlStyle'), 'isRequired':false, 'default':glui.Label.prototype.getTemplate() },
 			'header-style':	{ 'type':glui.schema.types.get('ControlStyle'), 'isRequired':false, 'default':{} },
-			'cell-template':{ 'type':glui.schema.types.get('Control'), 'isRequired':false, 'default':{} },
+			'cell-template':{ 'type':glui.schema.types.get('Control'), 'isRequired':false, 'default':glui.Label.prototype.getTemplate() },
 			'row-template':	{ 'type': { 'type':'list', 'elemType': glui.schema.types.get('Control') }, 'isRequired':false, 'default':[] },
 			'style': {
 				'type': {
