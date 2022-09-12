@@ -87,8 +87,8 @@ include('sprite.js');
         webGL.deleteBuffer(this.spriteAttributeBuffer);
         delete this.spriteAttributeData;
 
-        webGL.deleteTexture(this.map.texture);
-        this.program.destroy();
+        if (this.map) webGL.deleteTexture(this.map.texture);
+        if (this.program) this.program.destroy();
     };
 
     SpriteManager.prototype.createMap = async function createMap(url, errors) {

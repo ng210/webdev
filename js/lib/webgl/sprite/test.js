@@ -315,7 +315,7 @@ include('./sprite-adapter-ext.js');
             spr.frameId = Math.floor(3*Math.random());
         }
 
-        glui.initialize();
+        await glui.initialize();
         var fpsDisplay = new FpsDisplay();
         await fpsDisplay.initialize();
         var playback = new Playback();
@@ -366,7 +366,7 @@ include('./sprite-adapter-ext.js');
             spr.reset(sprMgr);
         }
 
-        glui.initialize();
+        await glui.initialize();
         var fpsDisplay = new FpsDisplay();
         await fpsDisplay.initialize();
         var playback = new Playback();
@@ -423,8 +423,8 @@ include('./sprite-adapter-ext.js');
                 }
             }
         });
-        if (results.length == 0) {
-            glui.initialize();
+        if (results != null && results.length == 0) {
+            await glui.initialize();
             var fpsDisplay = new FpsDisplay();
             await fpsDisplay.initialize();
             var playback = new Playback();
