@@ -27,7 +27,7 @@ include('/lib/ge/sound.js');
 				var voiceCount = initData.readUint8();
 				if (voiceCount != 0) {
 					device = new psynth.Synth(sound.sampleRate, voiceCount);
-					device.soundBank = this.player.datablocks[initData.readUint8()];
+					device.setSoundBank(this.player.datablocks[initData.readUint8()]);
 					device.setProgram(0);
 				}
 				break;

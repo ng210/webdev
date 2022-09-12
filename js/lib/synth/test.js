@@ -585,7 +585,7 @@ include('/lib/synth/synth-adapter-ext.js');
         var res = await load('./res/drums1.ssng')
         setBpm(121);
         if (res.error) throw res.error;
-        var player = await Ps.Player.create();
+        var player = Ps.Player.create();
         var results = null;
         Stream.isLittleEndian = true;
         await measure('import script', async function() { results = await player.importScript(res.data) }, 1);

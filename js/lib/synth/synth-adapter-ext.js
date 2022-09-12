@@ -1,4 +1,5 @@
 include('/lib/player/iadapter-ext.js');
+include('/lib/player/player-ext.js');
 include('/lib/synth/synth-adapter.js');
 // include('/lib/data/dataseries.js');
 // include('/lib/data/stream.js');

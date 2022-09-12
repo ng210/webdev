@@ -16,6 +16,7 @@ include('voice.js');
         this.voices = [];
         this.setVoiceCount(voiceCount);
         this.soundBank = null;
+        this.soundBankStream = null;
     }
     Synth.prototype.setVoiceCount = function setVoiceCount(voiceCount) {
         var oldCount = this.voices.length;
@@ -83,14 +84,22 @@ include('voice.js');
             //console.log(buffer[start]);
         }
     };
-    Synth.prototype.setProgram = function setProgram(id) {
-        var sb = this.soundBank;
-        this.isActive = true;
+    Synth.prototype.setSoundBank = function setSoundBank(sb) {
+        this.soundBankStream = sb;
+        this.soundBank = [];
         var count = sb.readUint8(0);
-        if (id < count) {
-            var offset = 1 + 16*id;
-            // this.selectedProgram = sb.readString(offset);
-            offset = sb.readUint16(offset + 14);
+        for (var i=0; i<count; i++) {
+            var name = sb.readString(null, 14);
+            var offset = sb.readUint16();
+            this.soundBank.push( { 'name': name, 'offset':offset } );
+        }
+    };
+    Synth.prototype.setProgram = function setProgram(id) {
+        var sb = this.soundBankStream;
+        this.isActive = true;
+        if (id < this.soundBank.length) {
+            var offset = this.soundBank[id].offset;
+            // this.selectedProgram = this.soundBank[id].name;
             count = sb.readUint8(offset);
             for (var i=0; i<count; i++) {
                 var iid = sb.readUint8();
