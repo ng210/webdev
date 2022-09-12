@@ -83,7 +83,7 @@ include('/lib/type/type.js');
         return isValid;
     };
     IntType.prototype.createValue = function createValue(value, tracking, isPrimitive) {
-        var v = value !== undefined ? Math.trunc(value) : null;
+        var v = value !== undefined ? Math.trunc(value) : 0;
         if (!isPrimitive) {
             v = new Number(v);
             this.setType(v);
@@ -105,7 +105,7 @@ include('/lib/type/type.js');
     extend(NumberType, FloatType);
 
     FloatType.prototype.createValue = function createValue(value, tracking, isPrimitive) {
-        var v = value !== undefined ? value + 0.0 : null;
+        var v = value !== undefined ? value + 0.0 : 0;
         if (!isPrimitive) {
             v = new Number(v);
             this.setType(v);
