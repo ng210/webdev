@@ -742,7 +742,8 @@ include('/lib/data/graph.js');
             'title-style':	{ 'align':'center middle', 'font': 'Arial 16 bold', 'height': '2em', 'color':'black' },
             'header-style':	{ 'align':'center middle', 'font': 'Arial 14 bold', 'height': '1.6em', 'color':'darkslategray' }
         };
-        var table3 = await glui.create('table3', tableTemplate3, null, App); await table3.build();
+
+        var table3 = glui.create('table3', tableTemplate3, null, App); table3.build();
         test('Table built from datasource should have 2 columns and ' + data.table.length + ' rows', ctx => {
             ctx.assert(table3.rowCount, '=', Object.keys(data.table).length);
             ctx.assert(table3.columnCount, '=', 3);
@@ -807,11 +808,39 @@ include('/lib/data/graph.js');
         table4.render();
         //#endregion
 
-        // // var table5 = await glui.create('table5', dialogTemplate.items[0], null, App);
-        // // table5.size('14em', '5em');
-        // // await table5.build();
-        // // table5.move(60,200);
-        // // table5.render();
+        //#region Table #5
+        var tableTemplate5 = {
+            'type': 'Table',
+            'title':'Table (data binding)',
+            'show-header':true,
+            'title-style':	{ 'color':'black' },
+            'style': tableStyles.table,
+            'header-style': tableStyles.header,
+            'cell-template': {
+                'type':'Label',
+                'style': tableStyles.cell
+            },
+            'row-template': {
+                'name': { 'id':'name', 'type':'Label', 'data-field':'name' },
+                'age': { 'id':'age', 'type':'Label', 'data-field':'age' }
+            }
+        };
+        var table5 = glui.create('table5', tableTemplate5, null, App); table5.build();
+        table5.dataBind(data, 'table'); table5.build();
+        test(`Table should have 2 colums and ${data.table.length} rows`, ctx => {
+             ctx.assert(table5.rowCount, '=', data.table.length);
+             ctx.assert(table5.columnCount, '=', 2);
+        //     ctx.assert(table1.rowKeys, ':=', [0,1]);
+        //     ctx.assert(table1.columnKeys, ':=', ['0','1']);
+        //     ctx.assert(table1.rows[0].constructor.name, '=', 'Row');
+        //     ctx.assert(table1.rows[1].constructor.name, '=', 'Row');
+        //     ctx.assert(table1.getCell(0, 0).constructor, '=', glui.Label);
+        //     ctx.assert(table1.getCell(0, 1).constructor, '=', glui.Label);
+        //     ctx.assert(table1.getCell(1, 0).constructor, '=', glui.Label);
+        //     ctx.assert(table1.getCell(1, 1).constructor, '=', glui.Label);
+        });
+        table5.move(828, 60);
+        //#endregion
 
         glui.animate();
 
@@ -1057,15 +1086,15 @@ include('/lib/data/graph.js');
     // }
 
     var tests = () => [
-        test_clipping,
-        test_construct,
-        test_align,
-        test_container,
+        // test_clipping,
+        // test_construct,
+        // test_align,
+        // test_container,
         test_table,
-        test_menu,
-        test_render,
-        test_grid,
-        test_dialog
+        // test_menu,
+        // test_render,
+        // test_grid,
+        // test_dialog
     ];
     publish(tests, 'glUi tests');
 })();

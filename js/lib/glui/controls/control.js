@@ -163,7 +163,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
             }
             if (this.dataSource) {
                 this.dataField = field || this.dataField;
-                if (this.dataField) {
+                if (this.dataField && this.dataSource[this.dataField] == undefined) {
                     this.dataSource.addField(this.dataField, null);
                 }
             }

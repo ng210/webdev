@@ -269,7 +269,6 @@ include('label.js');
 		this.rowTemplateCount = Object.keys(this.template['row-template']).length;
 		this.titleStyle = this.template['title-style'];
 		this.headerStyle = this.template['header-style'];
-
 		// default style
 		var typeName = this.template['cell-template'].type || 'Label';
 		var type = glui.schema.types.get(typeName);
@@ -279,6 +278,7 @@ include('label.js');
 		this.cellTemplate.id = `${this.id}#cell-template`;
 		// merge table style
 		styleType.merge(this.style, this.cellTemplate.style, self.mergeObjects.OVERWRITE);
+		this.cellTemplate.style.left = '0px'; this.cellTemplate.style.top = '0px';
 		// merge cell-template
 		if (tmpl['cell-template']) {
 			type.merge(tmpl['cell-template'], this.cellTemplate, self.mergeObjects.OVERWRITE);
@@ -301,6 +301,19 @@ include('label.js');
 		if (tmpl['header-style']) {
 			styleType.merge(tmpl['header-style'], this.headerStyle, self.mergeObjects.OVERWRITE);
 		}
+		// merge row-template styles
+		for (var i in this.rowTemplate) {
+			if (this.rowTemplate.hasOwnProperty(i)) {
+				var item = this.rowTemplate[i];
+				var styleType = glui.schema.types.get(item.type).attributes.get('style').type;
+				// merge cell-template's style into row-template item's style
+				styleType.merge(this.cellTemplate.style, item.style, self.mergeObjects.OVERWRITE);
+				// merge template's style
+				if (tmpl && tmpl['row-template']) {
+					styleType.merge(tmpl['row-template'][i].style, item.style, self.mergeObjects.OVERWRITE);
+				}
+			}
+		}
 		this.headerStyle.width = '100%';
 		return this.template;
 	};
@@ -312,9 +325,9 @@ include('label.js');
 				var item = this.rowTemplate[i];
 				var styleType = glui.schema.types.get(item.type).attributes.get('style').type;
 				// merge main style into row-template item's style
-				glui.schema.mergeObjects(this.style, item.style, styleType);
+				styleType.merge(this.style, item.style, self.mergeObjects.OVERWRITE);
 				// merge cell-template's style into row-template item's style
-				glui.schema.mergeObjects(this.cellTemplate.style, item.style, styleType);
+				styleType.merge(this.cellTemplate.style, item.style, self.mergeObjects.OVERWRITE);
 				ci++;
 			}
 		}
@@ -333,7 +346,10 @@ include('label.js');
 		var columnCount_ = this.columnCount;
 		var columnCount = this.template.cols;
 		var columnKeys = [];
-		if (columnCount == 0 && this.rowTemplate != null) columnCount = this.rowTemplateCount;
+		if (columnCount == 0 && this.rowTemplate != null) {
+			columnCount = this.rowTemplateCount;
+			columnKeys = Object.keys(this.rowTemplate);
+		}
 		if (this.dataSource) {
 			var dataSource = this.dataSource instanceof DataLink ? this.dataSource.obj : this.dataSource;
 			if (this.dataField) dataSource = dataSource[this.dataField];
@@ -359,6 +375,7 @@ include('label.js');
 		for (var i=rowKeys.length; i<rowCount; i++) rowKeys.push(i);
 		for (var i=columnKeys.length; i<columnCount; i++) columnKeys.push(i);
 		//#endregion
+
 		this.rowTemplateCount = columnCount;
 		this.buildRowTemplate(columnKeys);
 		// titlebar
@@ -368,14 +385,13 @@ include('label.js');
 			this.titlebar.noBinding = true;
 			this.titlebar.setValue(this.title);
 		}
-
 		//#region update columns
 		if (columnCount_ < columnCount) {
 			for (var i=columnCount_; i<columnCount; i++) {
 				this.insertColumnAt(columnKeys[i], i);
 			}
 		} else {
-			var i = columnCount_-1;
+			var i = columnCount_;
 			while (i != columnCount) {
 				this.removeColumnAt(i);
 			}
@@ -414,7 +430,7 @@ include('label.js');
 				this.insertRowAt(rowKeys[i], i);
 			}
 		} else {
-			var i=rowCount_-1;
+			var i=rowCount_;
 			while (i != rowCount) {
 				this.removeRowAt(i);
 			}
@@ -492,8 +508,9 @@ if (false) {
 	//#endregion
 
  	Table.prototype.dataBind = function(source, field) {
+		//var dataSource = source || this.dataSource;
 		if (this.mode == Table.modes.TABLE) {
- 			Table.base.dataBind.call(this, source, field);
+			Table.base.dataBind.call(this, source, field);
 		} else {
 			glui.Control.prototype.dataBind.call(this, source, field);
 			var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
@@ -569,9 +586,9 @@ if (false) {
 		// titlebar
 		if (this.titlebar) {
 			this.titlebar.setVisible(!!this.title);
-			this.titlebar.setValue(!!this.title);
+			this.titlebar.setValue(this.title);
 		}
-
+debugger
 		this.isDirty = false;
 	};
 	Table.prototype.insertColumnAt = function insertColumnAt(key, ix) {
@@ -604,7 +621,11 @@ if (false) {
 	Table.prototype.insertRowAt = function insertRowAt(name, ix) {
 		if (ix != undefined) this.rowKeys.splice(ix, 0, name);
 		else this.rowKeys.push(name);
-		var row = this.rows[name] = new Row(`${this.id}#${name}`, {'data-field':name.toString(), 'style':{'width':'100%'}}, this);
+		var row = this.rows[name] = new Row(`${this.id}#${name}`, {'style':{'width':'100%'}}, this);
+		if (this.dataSource) {
+			var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
+			row.dataBind(dataSource[name.toString()]);
+		}		
 		row.setRenderer(glui.mode, this.renderer.context);
 		row.index = ix;
 		for (var i=ix+1; i<this.rowKeys.length; i++) this.rows[this.rowKeys[i]].index++;
@@ -615,6 +636,9 @@ if (false) {
 			var name = column.name;
 			var template = this.rowTemplate[column.key];
 			var ctrl = glui.create(name, template, null);
+			if (row.dataSource) {
+				ctrl.dataBind(row.dataSource);
+			}
 			row.add(ctrl, name);
 			column.add(ctrl, ix);
 			height = Math.max(height, ctrl.height + 2*row.renderer.border.width);
@@ -811,7 +835,7 @@ if (false) {
 			'title-style':	{ 'type':glui.schema.types.get('ControlStyle'), 'isRequired':false, 'default':glui.Label.prototype.getTemplate() },
 			'header-style':	{ 'type':glui.schema.types.get('ControlStyle'), 'isRequired':false, 'default':{} },
 			'cell-template':{ 'type':glui.schema.types.get('Control'), 'isRequired':false, 'default':glui.Label.prototype.getTemplate() },
-			'row-template':	{ 'type': { 'type':'list', 'elemType': glui.schema.types.get('Control') }, 'isRequired':false, 'default':[] },
+			'row-template':	{ 'type': { 'type':'map', 'keyType':'string', 'valueType':'Control'}, 'isRequired':false, 'default':{} },
 			'style': {
 				'type': {
 					'name':'TableStyle',
