@@ -106,7 +106,7 @@ include('/lib/type/type.js');
                     target.push(v)
                 }
             } else {
-                console.warn(`Invalid elem at ${i}, skipped!`);
+                console.warn(`Invalid elem at ${i} (${results.join('|')}), skipped!`);
             }
         }
     };

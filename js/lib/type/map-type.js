@@ -82,7 +82,35 @@ include('/lib/type/type.js');
         return type;
     };
     MapType.prototype.merge = function merge(source, target, flags) {
-        throw new Error('Not implemented!');
+        for (var k in source) {
+            var hasSource = source && source[k] != undefined && source[k] !== '';
+            var hasTarget = target && target[k] != undefined && target[k] !== '';
+            var type = source[k].__type__ || this.valueType;
+            if (hasSource) {
+                if (hasTarget) {
+                    if (flags & self.mergeObjects.OVERWRITE) {
+                        if (typeof type.merge === 'function') {
+                            type.merge(source[k], target[k], flags);
+                        } else {
+                            target[k] = source[k];
+                        }
+                    }
+                } else {
+                    if (typeof type.merge === 'function') {
+                        target[k] = type.createValue(null, null, true);
+                        type.merge(source[k], target[k], flags);
+                    } else {
+                        target[k] = source[k];
+                    }
+                }
+            } else {
+                if (hasTarget) {
+                    ;
+                } else {
+                    target[k] = type.createValue(type.default, null, true);
+                }
+            }
+        }
     };
     publish(MapType, 'MapType');
 })();
