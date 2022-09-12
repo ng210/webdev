@@ -762,23 +762,26 @@ Array.prototype.tail = function tail() {
 //#endregion
 
 self.iterate = function iterate(obj, action) {
+    var ix = null;
     switch (obj.constructor) {
         case Object:
-            for (var i in obj) {
-                action(i, obj[i]);
+            for (ix in obj) {
+                if (action(ix, obj[ix])) break;
             }
             break;
         case Array:
-            for (var i=0; i<obj.length; i++) {
-                action(i, obj[i]);
+            for (ix = 0; ix<obj.length; ix++) {
+                if (action(ix, obj[ix])) break;
             }
             break;
         case Map:
             for (var [k, v] of obj) {
-                action(k, v);
+                ix = k;
+                if (action(k, v)) break;
             }
             break;
     }
+    return ix;
 };
 self.getHash = function getHash(obj, cache) {
     var hash = [];
@@ -864,7 +867,7 @@ self.deepCompare = function deepCompare(a, b, checkType, path, cache, lvl) {
 };
 
 
-//#region UTILITIES: POLL,LOCK,MERGEOBJECTS,OBJECT-PATH
+//#region UTILITIES: POLL, LOCK, MERGEOBJECTS, OBJECT-PATH
 self.poll = function poll(action, timeout) {
     async function poll_(action, timeout, resolve, args) {
         clearTimeout(action.timer);
@@ -1009,6 +1012,7 @@ self.mergeObjects = function mergeObjects(src, dst, flags) {
 self.mergeObjects.COMMON = 1;
 self.mergeObjects.OVERWRITE = 2;
 self.mergeObjects.NEW = 4;
+self.mergeObjects.DEFAULT = 4;
 
 self.getCommonParent = function getCommonParent(obj1, obj2, parentAttributeName) {
     var p1 = obj1;

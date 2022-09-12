@@ -155,12 +155,16 @@
         return this;
     };
 
-    Stream.prototype.readString = function readString(pos) {
+    Stream.prototype.readString = function readString(pos, length) {
+        if (length == undefined) length = 0;
         this.readPosition = pos != undefined ? pos : this.readPosition;
         var str = [];
         var value = 0;
-        while ((value = this.view.getUint8(this.readPosition++)) != 0) {
-            str.push(String.fromCharCode(value));
+        if (length == 0) {
+            while ((value = this.view.getUint8(this.readPosition++)) != 0) str.push(String.fromCharCode(value));
+        } else {
+            while (length-- > 0 && (value = this.view.getUint8(this.readPosition++)) != 0) str.push(String.fromCharCode(value));
+            this.readPosition += length;
         }
         return str.join('');
     };
