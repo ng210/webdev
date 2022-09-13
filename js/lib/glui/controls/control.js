@@ -6,7 +6,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
 (function() {
 
     function Control(id, template, parent, context) {
-        this.id = id != undefined ? id : 'ctrl';
+        this.id = id;
         this.parent = parent || null;
         this.context = context || this.parent;
         this.path = null;
@@ -116,13 +116,16 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         }
         styleType.merge(this.template.style, this.style, self.mergeObjects.OVERWRITE);
 
-        if (this.id == undefined) {
+        if (!this.id) {
             this.id = this.template.id;
         }
         this.path = this.parent && this.parent != glui.screen ? `${this.parent.path}.${this.id}` : this.id;
         this.type = this.template.type;
         this.disabled = this.template.disabled;
         var source = this.template['data-source'];
+        if (!source && this.parent) {
+            source = this.parent.dataSource;
+        }
         this.dataField = this.template['data-field'];
         this.noBinding = this.template['no-binding'];
         if (source && typeof source === 'string') {
@@ -145,6 +148,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
             // move to glui.js <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         }
         this.dataBind(source);
+        //this.dataSource = source;
         this.zIndex = parseInt(this.style['z-index']) || 0;
         //this.label = null; ???
         this.scrollRangeX[1] = this.template['scroll-x-min'];
@@ -156,14 +160,14 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
     Control.prototype.dataBind = function dataBind(source, field) {
         if (!this.noBinding) {
             if (source) {
-                if (this.dataSource) {
+                if (this.dataSource != null && this.dataSource.obj != source) {
                     delete this.dataSource;
-                }
+                }                
                 this.dataSource = source instanceof DataLink ? source : new DataLink(source);
             }
             if (this.dataSource) {
                 this.dataField = field || this.dataField;
-                if (this.dataField && this.dataSource[this.dataField] == undefined) {
+                if (this.dataField && this.dataSource.obj.hasOwnProperty(this.dataField) && this.dataSource[this.dataField] == undefined) {
                     this.dataSource.addField(this.dataField, null);
                 }
             }
@@ -424,7 +428,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
                     var items = ctrl instanceof glui.Dialog == false ? template.items : ctrl.template.items;
                     for (var i=0; i<ctrl.template.items.length; i++) {
                         if (ctrl.template.items.hasOwnProperty(i)) {
-                            glui.create(ctrl.template.items[i].id || i, items[i], ctrl);
+                            glui.create(ctrl.template.items[i].id || `${ctrl.id}#${i}`, items[i], ctrl);
                         }
                     }
                 } else if (ctrl instanceof glui.Image) {
@@ -493,7 +497,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
             'data-field':   { 'type': 'string', 'isRequired':false, 'default': '' },
             'data-source':  { 'type': 'void', 'isRequired':false, 'default': null },
             'disabled':     { 'type': 'bool', 'isRequired':false, 'default': false },
-            'id':           { 'type': 'string', 'isRequired':false, 'default':'ctrl' },
+            'id':           { 'type': 'string', 'isRequired':false, 'default':'' },
             // 'label':        { 'type': 'string', 'isRequired':false, 'default':'lbl' },
             'no-binding':   { 'type': 'bool', 'isRequired':false, 'default': false },
             'scroll-x-min': { 'type':  'int', 'isRequired':false, 'default': 0 },

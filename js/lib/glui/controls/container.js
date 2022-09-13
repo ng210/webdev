@@ -130,17 +130,20 @@ include('renderer2d.js');
         }
     };
 	Container.prototype.dataBind = function(source, field) {
-        if (Container.base.dataBind.call(this, source, field)) {
-            var dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
-            var i = 0, j = 0;
-            var keys = Object.keys(dataSource);
-            for (var i=0; i<this.items.length; i++) {
-                if (!this.items[i].noBinding) {
-                    this.items[i].dataBind(dataSource, this.items[i].dataField || keys[j].toString());
-                    j++;
+        var dataSource = Container.base.dataBind.call(this, source, field);
+        if (dataSource) {
+            if (this.items.length > 0) {
+                var dataSource = new DataLink(this.dataSource[this.dataField]);
+                var keys = Object.keys(dataSource.obj);
+                var j = 0;
+                for (var i=0; i<this.items.length; i++) {
+                    if (!this.items[i].noBinding) {
+                        this.items[i].dataBind(dataSource, this.items[i].dataField || keys[j++].toString());
+                    }
                 }
             }
         }
+        return dataSource;
 	};
     Container.prototype.createRenderer = mode => mode == glui.Render2d ? new ContainerRenderer2d() : 'ContainerRenderer3d';
     Container.prototype.setRenderer = function setRenderer(mode, context) {

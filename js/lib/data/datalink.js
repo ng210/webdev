@@ -37,7 +37,7 @@
 
     DataLink.prototype.addField = function addField(field, setter) {
         var key = field.toString();
-        if (this.obj[key] !== undefined) {
+        if (Object.keys(this.obj).includes(key)) {
             if (!Object.keys(this).includes(key)) {
                 Object.defineProperty(this, key, {
                     enumerable: true,
@@ -93,7 +93,7 @@
     };
 
     DataLink.addLink2 = function addLink2(dataLink1, key1, dataLink2, key2, xform1, xform2) {
-        if (dataLink1[key1] === undefined) {
+        if (!dataLink1.hasOwnProperty(key1)) {
             // add handler for dataLink1[key1]
             dataLink1.addField(key1, {
                 'fn':DataLink.defaultHandlers.set,
@@ -107,7 +107,7 @@
             'args':xform2 || DataLink.defaultXform
         });
 
-        if (dataLink2[key2] === undefined) {
+        if (!dataLink2.hasOwnProperty(key2)) {
             // add handler for dataLink2[key2]
             dataLink2.addField(key2, {
                 'fn':DataLink.defaultHandlers.set,

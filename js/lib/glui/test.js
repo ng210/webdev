@@ -255,6 +255,7 @@ include('/lib/data/graph.js');
         'textbox1': 'Textbox 1',
         'textbox2': 20,
         'button': 'Button',
+        'img': '/lib/glui/res/test.png',
         'table': [
             { 'name': 'James', 'age': 38, 'rank': 8 },
             { 'name': 'Ivy', 'age': 32, 'rank': 9 },
@@ -566,7 +567,6 @@ include('/lib/data/graph.js');
                     },
                     'look': 'textbox',
                     'decimal-digits': 3,
-                    'data-source': 'data',
                     'data-field': 'textbox1'
                 },
                 {
@@ -579,7 +579,6 @@ include('/lib/data/graph.js');
                     },
                     'look': 'textbox',
                     'decimal-digits': 3,
-                    'data-source': 'data',
                     'data-field': 'textbox2'
                 },
                 {
@@ -589,9 +588,10 @@ include('/lib/data/graph.js');
                         'width':'96px', 'height':'96px',
                         'border':'#c0c0f0 2px solid'
                     },
-                    'source': '/lib/glui/res/test.png'
+                    'data-field': 'img'
                 }
-            ]
+            ],
+            'data-source':'data'
         };
 
         var container = glui.create('container1', containerTemplate, null, App);
@@ -767,7 +767,7 @@ include('/lib/data/graph.js');
             'title': 'Data-source (board)',
             'cols': 3,
             'data-source': 'data',
-            'data-field': 'list',
+            'data-field': 'table',
             'mode': glui.Table.modes.BOARD,
             'style': {
                 'align':'center middle',
@@ -780,6 +780,7 @@ include('/lib/data/graph.js');
             'cell-template': {
                 'type': 'Label',
                 'data-type': 'string',
+                'data-field': 'name',
                 'style': {
                     'height':'1.5em',
                     'align':'center middle',
@@ -1086,15 +1087,15 @@ include('/lib/data/graph.js');
     // }
 
     var tests = () => [
-        // test_clipping,
-        // test_construct,
-        // test_align,
-        // test_container,
+        test_clipping,
+        test_construct,
+        test_align,
+        test_container,
         test_table,
-        // test_menu,
-        // test_render,
-        // test_grid,
-        // test_dialog
+        test_menu,
+        test_render,
+        test_grid,
+        test_dialog
     ];
     publish(tests, 'glUi tests');
 })();

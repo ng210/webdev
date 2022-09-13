@@ -106,13 +106,12 @@ include('control.js');
 			this.addValidation('value', x => x <= this.max, 'Value is greater than maximum!', x => this.max);
 		}
 		//this.scale = 1.0;
-		if (this.dataSource == null) {
+		if (!this.dataSource || !this.dataField) {
 			//var value = this.isNumeric ? 0 : '';
 			if (template.value != null) {
 				value = this.isNumeric ? Number(template.value) : template.value;
 				this.setValue(value);
-			}
-			
+			}			
 		}
         this.decimalDigits = template['decimal-digits'];
         // if (this.dataSource && this.dataField) {
@@ -171,7 +170,8 @@ include('control.js');
 
 	ValueControl.prototype.dataBind = function(source, field) {
 		ValueControl.base.dataBind.call(this, source, field);
-		if (this.dataSource != null) {
+		// a value control needs both, data-source and data-field
+		if (this.dataSource != null && this.dataSource.hasOwnProperty(this.dataField)) {
 			// initial read from data source
 			var value = this.dataSource[this.dataField];
 			if (typeof source.min == 'number') this.min = source.min;
@@ -242,7 +242,7 @@ include('control.js');
 		this.setValue(this.toNormalized(this.getValue()));
     };
 	ValueControl.prototype.getValue = function getValue() {
-		return this.dataSource ? this.dataSource[this.dataField] : this.value;
+		return this.dataSource && this.dataField ? this.dataSource[this.dataField] : this.value;
 	};
     ValueControl.prototype.addValidation = function(field, check, message, fix) {
 		if (this.validations[field] == undefined) this.validations[field] = [];

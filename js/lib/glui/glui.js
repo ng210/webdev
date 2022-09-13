@@ -148,6 +148,7 @@ include('/lib/type/schema.js');
         return control;
     };
     Glui.prototype.create = function create(id, tmpl, parent, context) {
+        if (!tmpl.id) tmpl.id = 'ctrl' + this.controlCount;
         var ctrl = glui.Control.create(id, tmpl, parent || this.screen, context);
         ctrl.addHandlers();
         this.controlCount++;

@@ -29,7 +29,10 @@ include('renderer2d.js');
 
     Image.prototype.applyTemplate = function applyTemplate(tmpl) {
         var template = Image.base.applyTemplate.call(this, tmpl);
-        this.source = template.source;
+        if (tmpl.source) {
+            this.source = tmpl.source;
+        }
+        this.load();
         return template;
     };
     Image.prototype.getHandlers = function getHandlers() {
@@ -59,7 +62,7 @@ include('renderer2d.js');
             if (data instanceof window.Image) {
                 this.image = data;
             } else if (typeof data === 'string') {
-                this.load(image);
+                this.source = data;
             }
         }
         return this.dataSource;
@@ -70,7 +73,7 @@ include('renderer2d.js');
         'name':'Image',
         'type':'Control',
         'attributes': {
-            'source': { 'type':'string', 'default':'/res/blank.png', 'default':'' },
+            'source': { 'type':'string', 'isRequired':false, 'default':'/res/blank.png' },
             'style': { 'type': 'ControlStyle', 'isRequired':false }
         }
     });
