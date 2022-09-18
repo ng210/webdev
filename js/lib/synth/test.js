@@ -601,7 +601,12 @@ include('/lib/synth/synth-adapter-ext.js');
         var stream = Ps.Player.createBinaryData(player, true);
         //stream.toFile('drums1.bin', 'application/octet-stream');
 
-        await run((left, right, bufferSize) => playerBasedFillBuffer(left, right, bufferSize, player));
+        _isStopped = false;
+        await button('Start');
+        sound.start();
+        addButton('Stop', e => _isStopped = true);
+        await poll( () => !player.isActive || _isStopped);
+        sound.stop();
     }
     
     // var App = {

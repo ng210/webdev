@@ -14,9 +14,11 @@ include('voice.js');
         this.createControls();
         // create voices
         this.voices = [];
+        this.voiceCount = voiceCount;
         this.setVoiceCount(voiceCount);
         this.soundBank = null;
         this.soundBankStream = null;
+        this.selectedProgram = '';
     }
     Synth.prototype.setVoiceCount = function setVoiceCount(voiceCount) {
         var oldCount = this.voices.length;
@@ -68,6 +70,7 @@ include('voice.js');
         //throw new Error('voice not found!');
     };
     Synth.prototype.setControl = function(controlId, value) {
+debugger
         this.getControl(controlId).set(value);
         //console.log('setcontrol:', controlId, value);
     };
@@ -98,9 +101,15 @@ include('voice.js');
         var sb = this.soundBankStream;
         this.isActive = true;
         if (id < this.soundBank.length) {
+            // reset controls
+            for (var i=0; i<this.idToControl.length; i++) {
+                var ctrl = this.idToControl[i];
+                ctrl.set(ctrl.min);
+            }
+            
             var offset = this.soundBank[id].offset;
-            // this.selectedProgram = this.soundBank[id].name;
-            count = sb.readUint8(offset);
+            var count = sb.readUint8(offset);
+            this.selectedProgram = this.soundBank[id].name;
             for (var i=0; i<count; i++) {
                 var iid = sb.readUint8();
                 var ctrl = this.getControl(iid);
