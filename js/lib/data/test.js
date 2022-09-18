@@ -439,102 +439,128 @@ print_tree(table.indices.getAt(0).data);
 
     function test_DataLink() {
         header('Test DataLink');
-        var obj1 = {
-            name: 'Joe',
-            age: 32
-        };
-        var obj2 = {
-            name: 'Jane',
-            id: 2,
-            age: 30
-        };
-        var obj3 = {
-            name: 'Ryu',
-            id: 3,
-            age: 26,
-            addName: function addName(name) {
-                return `${this.name}-${name}(${this.id})`;
-            }
-        };
+        var obj1 = { id: 1, name: 'Joe', age: 32 };
+        var obj2 = { id: 2, name: 'Jane', age: 30 };
+        var obj3 = { id: 3, name: 'Ryu', age: 26, addName: function addName(name) { return `${this.name}-${name}(${this.id})`; } };
         var transform = value => `${value.charAt(0).toUpperCase() + value.substr(1)}`;
 
-        test("Should add link to the field 'name' without transform", context => {
-            obj1.name = 'Joe';
-            var dl1 = new DataLink(obj1);
-            dl1.addField('name');
-            dl1.name = 'Charlie';
-            context.assert(obj1.name, '=', 'Charlie');
-        });
-        test("Should add link to the field 'name' with global transform", context => {
-            obj1.name = 'Joe';
-            var dl1 = new DataLink(obj1);
-            dl1.addField('name', {
-                'fn':DataLink.defaultHandlers.set,
-                'args': transform
-            });
-            dl1.name = 'charlie';
-            context.assert(obj1.name, '=', 'Charlie');
-        });
-        test("Should add link to the field 'name' with local transform", context => {
-            obj3.name = 'Ryu';
-            var dl1 = new DataLink(obj3);
-            dl1.addField('name', {
-                'target':obj3,
-                'fn':DataLink.defaultHandlers.set,
-                'args': obj3.addName
-            });
-            dl1.name = 'charlie';
-            context.assert(obj3.name, '=', 'Ryu-charlie(3)');
-        });
-        test("Should add link to the field 'name' with global and local transforms", context => {
-            obj3.name = 'Ryu';
-            var dl1 = new DataLink(obj3);
-            dl1.addField('name', null);
-            dl1.addHandler('name', {
-                'fn': function(k, v, a) {
-                        this.name = this.addName(transform(v));
-                    }
-            });
-            dl1.name = 'charlie';
-            context.assert(obj3.name, '=', 'Ryu-Charlie(3)');
-        });
-        test("Should add link to the field 'name' with link to another field", context => {
-            obj1.name = 'Joe';
-            obj2.name = 'Jane';
-            var dl1 = new DataLink(obj1);
-            dl1.addField('name');
-            dl1.addLink('name', obj2, 'name', transform);
-            dl1.name = 'charlie';
-            context.assert(obj1.name, '=', 'charlie');
-            context.assert(obj2.name, '=', 'Charlie');
-        });
-        test("Should link 2 objects", context => {
-            obj1.name = 'Joe';
-            obj2.name = 'Jane';
-            var dl1 = new DataLink(obj1), dl2 = new DataLink(obj2);
-            DataLink.addLink2(dl1, 'name', dl2, 'name');
+        DataLink(obj1);
+        DataLink.addHandler(obj1, 'name', { 'target':obj2, 'args':transform });
+        DataLink.addHandler(obj1, 'name', { 'target':obj3, 'args':obj3.addName });
+        obj1.name = 'jack';
+        message(obj1.name);
+        test('Should change obj1.name', ctx => ctx.assert(obj1.name, '=', 'jack'));
+        message(obj2.name);
+        test('Should change obj2.name with global transform', ctx => ctx.assert(obj2.name, '=', 'Jack'));
+        message(obj3.name);
+        test('Should change obj3.name with local transform', ctx => ctx.assert(obj3.name, '=', 'Ryu-jack(3)'));
 
-            dl1.name = 'Charlie';
-            context.assert(obj1.name, '=', 'Charlie');
-            context.assert(obj2.name, '=', 'Charlie');
-            dl2.name = 'Joe';
-            context.assert(obj1.name, '=', 'Joe');
-            context.assert(obj2.name, '=', 'Joe');
+        DataLink.link(obj2, 'name', obj3, 'name', obj3.addName);
+        obj3.name = 'Ryu';
+        obj2.name = 'San';
+        message(`${obj2.name} and ${obj3.name}`);
+        test('Should link obj2.name to obj3.name', ctx => {
+            ctx.assert(obj2.name, '=', 'San');
+            ctx.assert(obj3.name, '=', 'Ryu-San(3)');
         });
-        test("Should link 2 objects with transforms", context => {
-            obj1.name = 'Joe';
-            obj3.name = 'Ryu';
-            var dl1 = new DataLink(obj1), dl2 = new DataLink(obj3);
-            DataLink.addLink2(dl1, 'name', dl2, 'name', transform, obj3.addName);
-            message(`dl1.name=${dl1.name}, dl2.name=${dl2.name}`);
-            dl1.name = 'Charlie';
-            context.assert(obj1.name, '=', 'Charlie');
-            context.assert(obj3.name, '=', 'Ryu-Charlie(3)');
-            obj3.name = 'Ryu';
-            dl2.name = 'joe';
-            context.assert(obj1.name, '=', 'Joe');
-            context.assert(obj3.name, '=', 'Ryu-joe(3)');
+        DataLink.removeHandler(obj1, x => x.field == 'name');
+        DataLink.removeHandler(obj2, x => x.field == 'name');
+        DataLink.sync(obj1, 'name', obj2, 'name');
+        DataLink.link(obj2, 'name', obj3, 'name');
+        test('Should sync the names of obj1 and obj2', ctx => {
+            obj1.name = 'Jill';
+            message(`${obj1.name} and ${obj2.name}`);
+            ctx.assert(obj1.name, '=', 'Jill');
+            ctx.assert(obj2.name, '=', 'Jill');
+            obj2.name = 'Joseph';
+            message(`${obj1.name} and ${obj2.name}`);
+            ctx.assert(obj1.name, '=', 'Joseph');
+            ctx.assert(obj2.name, '=', 'Joseph');
         });
+        test('Should propagte the change to obj3.name', ctx => {
+            obj3.name = 'Jack';
+            obj1.name = 'Jill';
+            message(obj3.name);
+            ctx.assert(obj3.name, '=', 'Jill');
+        });
+
+        // test("Should add link to the field 'name' without transform", context => {
+        //     obj1.name = 'Joe';
+        //     var dl1 = new DataLink(obj1);
+        //     dl1.addField('name');
+        //     dl1.name = 'Charlie';
+        //     context.assert(obj1.name, '=', 'Charlie');
+        // });
+        // test("Should add link to the field 'name' with global transform", context => {
+        //     obj1.name = 'Joe';
+        //     var dl1 = new DataLink(obj1);
+        //     dl1.addField('name', {
+        //         'fn':DataLink.defaultHandlers.set,
+        //         'args': transform
+        //     });
+        //     dl1.name = 'charlie';
+        //     context.assert(obj1.name, '=', 'Charlie');
+        // });
+        // test("Should add link to the field 'name' with local transform", context => {
+        //     obj3.name = 'Ryu';
+        //     var dl1 = new DataLink(obj3);
+        //     dl1.addField('name', {
+        //         'target':obj3,
+        //         'fn':DataLink.defaultHandlers.set,
+        //         'args': obj3.addName
+        //     });
+        //     dl1.name = 'charlie';
+        //     context.assert(obj3.name, '=', 'Ryu-charlie(3)');
+        // });
+        // test("Should add link to the field 'name' with global and local transforms", context => {
+        //     obj3.name = 'Ryu';
+        //     var dl1 = new DataLink(obj3);
+        //     dl1.addField('name', null);
+        //     dl1.addHandler('name', {
+        //         'fn': function(k, v, a) {
+        //                 this.name = this.addName(transform(v));
+        //             }
+        //     });
+        //     dl1.name = 'charlie';
+        //     context.assert(obj3.name, '=', 'Ryu-Charlie(3)');
+        // });
+        // test("Should add link to the field 'name' with link to another field", context => {
+        //     obj1.name = 'Joe';
+        //     obj2.name = 'Jane';
+        //     var dl1 = new DataLink(obj1);
+        //     dl1.addField('name');
+        //     dl1.addLink('name', obj2, 'name', transform);
+        //     dl1.name = 'charlie';
+        //     context.assert(obj1.name, '=', 'charlie');
+        //     context.assert(obj2.name, '=', 'Charlie');
+        // });
+        // test("Should link 2 objects", context => {
+        //     obj1.name = 'Joe';
+        //     obj2.name = 'Jane';
+        //     var dl1 = new DataLink(obj1), dl2 = new DataLink(obj2);
+        //     DataLink.addLink2(dl1, 'name', dl2, 'name');
+
+        //     dl1.name = 'Charlie';
+        //     context.assert(obj1.name, '=', 'Charlie');
+        //     context.assert(obj2.name, '=', 'Charlie');
+        //     dl2.name = 'Joe';
+        //     context.assert(obj1.name, '=', 'Joe');
+        //     context.assert(obj2.name, '=', 'Joe');
+        // });
+        // test("Should link 2 objects with transforms", context => {
+        //     obj1.name = 'Joe';
+        //     obj3.name = 'Ryu';
+        //     var dl1 = new DataLink(obj1), dl2 = new DataLink(obj3);
+        //     DataLink.addLink2(dl1, 'name', dl2, 'name', transform, obj3.addName);
+        //     message(`dl1.name=${dl1.name}, dl2.name=${dl2.name}`);
+        //     dl1.name = 'Charlie';
+        //     context.assert(obj1.name, '=', 'Charlie');
+        //     context.assert(obj3.name, '=', 'Ryu-Charlie(3)');
+        //     obj3.name = 'Ryu';
+        //     dl2.name = 'joe';
+        //     context.assert(obj1.name, '=', 'Joe');
+        //     context.assert(obj3.name, '=', 'Ryu-joe(3)');
+        // });
 
     }
 
