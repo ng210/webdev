@@ -3,6 +3,8 @@ include('./data/data.js');
 include('./ui/ui.js');
 include('./play/play.js');
 
+DBGLVL = 0;
+
 function SynthApp() {
 }
 
@@ -15,7 +17,8 @@ SynthApp.prototype.initialize = async function initialize() {
         // initialize ui
         await SynthApp.Ui.initialize(this);
 
-        this.createSynth(3);
+        var result = await this.loadSong('./data/drums1.ssng')
+
         
     } catch (err) {
         console.log('Error');
@@ -50,6 +53,21 @@ SynthApp.prototype.initialize = async function initialize() {
     // }
 };
 
+SynthApp.prototype.loadSong = async function loadSong(url) {
+    var errors = [];
+    await this.play.loadSong(url, errors);
+    // add synths
+    var top = this.ui.controls.height;
+    for (var i=0; i<this.play.synthAdapter.adapter.devices.length; i++) {
+        var dev = this.play.synthAdapter.adapter.devices[i];
+        var synthUi = this.ui.createSynthUi(dev);
+        synthUi.move(0, top);
+        top += synthUi.height;
+    }
+    // set controls
+    return errors;
+};
+
 SynthApp.prototype.createSynth = function createSynth(voices) {
     var synth = this.play.createSynth(voices);
     this.ui.createSynthUi(synth);
@@ -79,9 +97,13 @@ SynthApp.prototype.onclick = function onclick(e, ctrl) {
     switch (ctrl.id) {
         case 'restart':
         case 'start':
+            this.play.start();
         case 'pause':
+            this.play.stop();
+            break;
         case 'stop':
-            console.log('SynthApp.onclick: ' + ctrl.id)
+            this.play.stop();
+            this.play.reset();
             break;
     }
 }

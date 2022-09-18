@@ -1,0 +1,381 @@
+set SAMPLING_RATE w:48000
+
+adapter "SynthAdapter", synthInit
+
+datablock "playerInit", { 6, Ps.Channel, Ps.Channel, Ps.Channel, Ps.Channel, Ps.Channel, Ps.Channel }
+
+datablock "synthInit", { SAMPLING_RATE, 5,
+    Sy.Synth, 1, soundbank,
+    Sy.Synth, 1, soundbank,
+    Sy.Synth, 1, soundbank,
+    Sy.Synth, 1, soundbank,
+    Sy.Synth, 1, soundbank
+}
+datablock "soundbank", {
+    // 6 presets
+        6,
+        "default......", w:97,  //default
+        "synth1.......", w:190, //synth1
+        "bass1........", w:303,
+        "kick.........", w:396,
+        "snare........", w:527,
+        "hihat........", w:658,
+
+    //:default
+        31,
+        Sy.amp,      40,
+        Sy.env1amp, 1.0,    Sy.env2amp, 0.4,    Sy.env3amp, 1.0,
+        Sy.env1dc,  0.0,    Sy.env2dc,  0.3,    Sy.env3dc,  0.0,
+        Sy.env1atk,   0,    Sy.env2atk,   0,    Sy.env3atk,   0,
+        Sy.env1dec,  20,    Sy.env2dec,  20,    Sy.env3dec,   2,
+        Sy.env1sus,  40,    Sy.env2sus,  80,    Sy.env3sus,  10,
+        Sy.env1rel,  20,    Sy.env2rel,  50,    Sy.env3rel,  10,
+
+        Sy.osc1amp, 0.4,        Sy.osc2amp, 0.2,
+        Sy.osc1fre, 0.0,        Sy.osc2fre, 0.02,
+        Sy.osc1tune,  0,        Sy.osc2tune, 12,
+        Sy.osc1wave, Sy.Saw,    Sy.osc2wave, Sy.Saw,
+
+        Sy.flt1cut,  20,
+        Sy.flt1res, 210,
+        Sy.flt1mod, 120,
+        Sy.flt1mode, Sy.LowPass,
+
+    //:synth1
+        35,
+        Sy.amp,     130,
+
+        Sy.lfo1amp, 0.6,    Sy.lfo2amp, 6.0,
+        Sy.lfo1fre, 4.4,    Sy.lfo2fre, 6.0,
+        
+        Sy.env1amp, 1.0,    Sy.env2amp, 0.5,    Sy.env3amp, 1.0,
+        Sy.env1dc,  0.0,    Sy.env2dc,  0.5,    Sy.env3dc,  0.0,
+        Sy.env1atk,   2,    Sy.env2atk,   2,    Sy.env3atk,   6,
+        Sy.env1dec,   3,    Sy.env2dec,  40,    Sy.env3dec,  20,
+        Sy.env1sus,  60,    Sy.env2sus,  40,    Sy.env3sus,  60,
+        Sy.env1rel, 120,    Sy.env2rel,  60,    Sy.env3rel,  60,
+
+        Sy.osc1amp, 0.5,        Sy.osc2amp, 0.4,
+        Sy.osc1fre, 0.0,        Sy.osc2fre, 1.0,
+        Sy.osc1tune,  0,        Sy.osc2tune, 12,
+        Sy.osc1wave, Sy.Pls,    Sy.osc2wave, Sy.Pls,
+        
+        Sy.flt1cut, 100,
+        Sy.flt1res,  80,
+        Sy.flt1mod, 250,
+        Sy.flt1mode, Sy.BandPass,    
+        
+    //:bass1
+        31,
+        Sy.amp,      140,
+
+        Sy.env1amp, 1.0,    Sy.env2amp, 0.05,   Sy.env3amp, 1.0,
+        Sy.env1dc,  0.0,    Sy.env2dc,  0.52,   Sy.env3dc,  0.0,
+        Sy.env1atk,   4,    Sy.env2atk,    0,   Sy.env3atk,   0,
+        Sy.env1dec,  10,    Sy.env2dec,   40,   Sy.env3dec,   4,
+        Sy.env1sus,  80,    Sy.env2sus,  120,   Sy.env3sus,  10,
+        Sy.env1rel,  20,    Sy.env2rel,   60,   Sy.env3rel,  20,
+        
+        Sy.osc1amp, 0.4,        Sy.osc2amp, 0.3,
+        Sy.osc1fre, 0.0,        Sy.osc2fre, 0.6,
+        Sy.osc1tune,  0,        Sy.osc2tune, 12,
+        Sy.osc1wave, Sy.Saw,    Sy.osc2wave, Sy.Pls,
+
+        Sy.flt1cut,   6,
+        Sy.flt1res,  80,
+        Sy.flt1mod, 100,
+        Sy.flt1mode, Sy.LowPass,
+
+    //:kick
+        41,
+        Sy.amp,       120,
+
+        Sy.lfo1amp, 0.0,    Sy.lfo2amp, 0.0,
+        Sy.lfo1fre, 0.0,    Sy.lfo2fre, 35.0,
+
+        Sy.env1amp,    1.0,     Sy.env2amp,    1.0,     Sy.env3amp,    1.0,     Sy.env4amp,  210.0,
+        Sy.env1dc,     0.0,     Sy.env2dc,    80.0,     Sy.env3dc,     0.0,     Sy.env4dc,    20.0,
+        Sy.env1atk,      0,     Sy.env2atk,      0,     Sy.env3atk,      0,     Sy.env4atk,      0,
+        Sy.env1dec,      1,     Sy.env2dec,      0,     Sy.env3dec,      2,     Sy.env4dec,      1,
+        Sy.env1sus,     60,     Sy.env2sus,     80,     Sy.env3sus,      1,     Sy.env4sus,     10,
+        Sy.env1rel,     10,     Sy.env2rel,     10,     Sy.env3rel,      1,     Sy.env4rel,     10,
+        
+        Sy.osc1amp,    0.9,     Sy.osc2amp,    0.01,
+        Sy.osc1fre,    0.0,     Sy.osc2tune,     0,
+        Sy.osc1tune,     0,     Sy.osc2fre, 6120.0,
+        Sy.osc1wave, Sy.Sin,    Sy.osc2wave, Sy.Rnd,
+        
+        Sy.flt1cut,     10,
+        Sy.flt1res,     20,
+        Sy.flt1mod,    120,
+        Sy.flt1mode, Sy.LowPass,
+
+    //:snare
+        41,
+        Sy.amp,        240,
+
+        Sy.lfo1amp,   0.10,     Sy.lfo2amp,   6.00,
+        Sy.lfo1fre,   16.2,     Sy.lfo2fre,   21.3,
+        
+        Sy.env1amp,    1.0,     Sy.env2amp,    0.0,     Sy.env3amp,    1.0,     Sy.env4amp,  140.0,
+        Sy.env1dc,     0.0,     Sy.env2dc,     0.0,     Sy.env3dc,     0.0,     Sy.env4dc,    60.0,
+        Sy.env1atk,      0,     Sy.env2atk,      0,     Sy.env3atk,      0,     Sy.env4atk,      0,
+        Sy.env1dec,      2,     Sy.env2dec,      0,     Sy.env3dec,      2,     Sy.env4dec,      2,
+        Sy.env1sus,     40,     Sy.env2sus,      0,     Sy.env3sus,     40,     Sy.env4sus,     20,
+        Sy.env1rel,      4,     Sy.env2rel,      0,     Sy.env3rel,    100,     Sy.env4rel,     10,
+
+        Sy.osc1amp,    0.5,     Sy.osc2amp,    0.3,
+        Sy.osc1fre,    0.0,     Sy.osc2fre, 9163.0,
+        Sy.osc1tune,     0,     Sy.osc1tune,     0,
+        Sy.osc1wave, Sy.Sin,    Sy.osc2wave, Sy.Rnd,
+
+        Sy.flt1cut,    40,
+        Sy.flt1res,   120,
+        Sy.flt1mod,    80,
+        Sy.flt1mode, Sy.BandPass,
+
+    //:hihat
+        41,
+        Sy.amp,       120,
+
+        Sy.lfo1amp,     0.9,     Sy.lfo2amp, 3200.0,
+        Sy.lfo1fre,  6397.0,     Sy.lfo2fre, 3145.0,
+
+        Sy.env1amp,    1.0,     Sy.env2amp,    0.8,     Sy.env3amp,    2.0,     Sy.env4amp, 4110.0,
+        Sy.env1dc,     0.0,     Sy.env2dc,     0.0,     Sy.env3dc,     0.0,     Sy.env4dc,     0.0,
+        Sy.env1atk,      1,     Sy.env2atk,      0,     Sy.env3atk,      0,     Sy.env4atk,      0,
+        Sy.env1dec,      3,     Sy.env2dec,     40,     Sy.env3dec,     10,     Sy.env4dec,      0,
+        Sy.env1sus,     20,     Sy.env2sus,    120,     Sy.env3sus,    210,     Sy.env4sus,     10,
+        Sy.env1rel,     10,     Sy.env2rel,     80,     Sy.env3rel,    100,     Sy.env4rel,     60,
+        
+        Sy.osc1amp,    0.2,     Sy.osc2amp,     0.5,
+        Sy.osc1fre, 3198.0,     Sy.osc2fre,  9715.0,
+        Sy.osc1tune,     0,     Sy.osc2tune,      0,
+        Sy.osc1wave, Sy.Pls,    Sy.osc2wave, Sy.Rnd,
+
+        Sy.flt1cut,    210,
+        Sy.flt1res,     20,
+        Sy.flt1mod,    140,
+        Sy.flt1mode, Sy.BandPass
+}
+
+sequence "masterSeq", "PlayerAdapter", {
+    frame  w:0, {
+        Ps.Assign(1, Kick2, 0,  4),
+        Ps.Assign(2, Snare, 1,  2),
+        Ps.Assign(3, Hihat, 2,  2),
+        Ps.Assign(4, Bass,  3,  2),
+        Ps.Assign(5, Mono1, 4,  2)
+    },
+
+    frame w:128, { Ps.EOS() }
+}
+
+sequence "Kick1", "SynthAdapter", {
+    frame w:0, { Sy.SetProgram(3),
+                 Sy.SetNote(Sy.C1,  240) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:12, { Sy.SetNote(Sy.C1,   0) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:12, { Sy.SetNote(Sy.C1, 240) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:12, { Sy.SetNote(Sy.C1,   0) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:8, { Sy.SetNote(Sy.C1,  240) },
+    frame w:2, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:2, { Sy.SetNote(Sy.C1,  240) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:12, { Sy.SetNote(Sy.C1,   0) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:12, { Sy.SetNote(Sy.C1, 240) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:12, { Sy.SetNote(Sy.C1,   0) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:4, { Sy.SetNote(Sy.C1,  240) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:4, { Ps.EOS() }
+}
+
+sequence "Kick2", "SynthAdapter", {
+    frame w:0, { Sy.SetProgram(3),
+                 Sy.SetNote(Sy.C1,  240) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:12, { Sy.SetNote(Sy.C1, 240) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:12, { Sy.SetNote(Sy.C1, 240) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:12, { Sy.SetNote(Sy.C1, 240) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:8, { Sy.SetNote(Sy.C1,  240) },
+    frame w:2, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:2, { Sy.SetNote(Sy.C1,  240) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:12, { Sy.SetNote(Sy.C1, 240) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:12, { Sy.SetNote(Sy.C1, 240) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:12, { Sy.SetNote(Sy.C1, 240) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:4, { Sy.SetNote(Sy.C1,  240) },
+    frame w:4, { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:4, { Ps.EOS() }
+}
+
+sequence "Snare", "SynthAdapter", {
+    frame w:0, { Sy.SetProgram(4) },
+    frame w:8, { Sy.SetNote(Sy.D3,  30) },
+    frame w:2, { Sy.SetNote(Sy.D3,   0) },
+    frame w:2, { Sy.SetNote(Sy.C3,  40) },
+    frame w:2, { Sy.SetNote(Sy.C3,   0) },
+
+    frame w:2, { Sy.SetNote(Sy.C3, 240) },
+    frame w:4, { Sy.SetNote(Sy.C3,   0) },
+    frame w:8, { Sy.SetNote(Sy.D3,  40) },
+    frame w:2, { Sy.SetNote(Sy.D3,   0) },
+
+    frame w:2, { Sy.SetNote(Sy.D3,  60) },
+    frame w:3, { Sy.SetNote(Sy.D3,   0) },
+    frame w:2, { Sy.SetNote(Sy.D3,  10) },
+    frame w:1, { Sy.SetNote(Sy.D3,   0) },
+    frame w:2, { Sy.SetNote(Sy.C3,  60) },
+    frame w:3, { Sy.SetNote(Sy.C3,   0) },
+
+    frame w:5, { Sy.SetNote(Sy.C3, 240) },
+    frame w:4, { Sy.SetNote(Sy.C3,   0) },
+    frame w:8, { Sy.SetNote(Sy.D3,  40) },
+    frame w:2, { Sy.SetNote(Sy.D3,   0) },
+
+    frame w:2, { Ps.EOS() }
+}
+
+sequence "Hihat", "SynthAdapter", {
+    frame w:0, { Sy.SetProgram(5),
+                 Sy.SetNote(Sy.C4, 120) },
+    frame w:3, { Sy.SetNote(Sy.C4,   0) },
+    frame w:1, { Sy.SetNote(Sy.C4,  60) },
+    frame w:2, { Sy.SetNote(Sy.C4,   0) },
+    frame w:2, { Sy.SetNote(Sy.C4, 250) },
+    frame w:5, { Sy.SetNote(Sy.C4,   0) },
+
+    frame w:3, { Sy.SetNote(Sy.C4,  80) },
+    frame w:3, { Sy.SetNote(Sy.C4,   0) },
+    frame w:1, { Sy.SetNote(Sy.C4,  40) },
+    frame w:2, { Sy.SetNote(Sy.C4,   0) },
+    frame w:2, { Sy.SetNote(Sy.C4, 250) },
+    frame w:5, { Sy.SetNote(Sy.C4,   0) },
+
+    frame w:3, { Sy.SetNote(Sy.C4, 100) },
+    frame w:3, { Sy.SetNote(Sy.C4,   0) },
+    frame w:1, { Sy.SetNote(Sy.C4,  60) },
+    frame w:2, { Sy.SetNote(Sy.C4,   0) },
+    frame w:2, { Sy.SetNote(Sy.C4, 250) },
+    frame w:5, { Sy.SetNote(Sy.C4,   0) },
+
+    frame w:3, { Sy.SetNote(Sy.C4,  80) },
+    frame w:3, { Sy.SetNote(Sy.C4,   0) },
+    frame w:1, { Sy.SetNote(Sy.C4,  40) },
+    frame w:2, { Sy.SetNote(Sy.C4,   0) },
+    frame w:2, { Sy.SetNote(Sy.C4, 250) },
+    frame w:5, { Sy.SetNote(Sy.C4,   0) },
+
+    frame w:3, { Ps.EOS() }
+}
+
+sequence "Bass", "SynthAdapter", {
+    frame w:0,  { Sy.SetProgram(2),
+                  Sy.SetNote(Sy.E2,  80) },
+    frame w:6,  { Sy.SetNote(Sy.E2,   0) },
+    frame w:2,  { Sy.SetNote(Sy.E1, 140) },
+    frame w:4,  { Sy.SetNote(Sy.E1,   0) },
+    frame w:12, { Sy.SetNote(Sy.E1, 100) },
+    frame w:4,  { Sy.SetNote(Sy.E1,   0) },
+    frame w:12, { Sy.SetNote(Sy.E1, 100) },
+    frame w:4,  { Sy.SetNote(Sy.E1,   0) },
+    frame w:4,  { Sy.SetNote(Sy.E0, 120) },
+    frame w:6,  { Sy.SetNote(Sy.E0,   0) },
+    frame w:2,  { Sy.SetNote(Sy.E1, 100) },
+    frame w:4,  { Sy.SetNote(Sy.E1,   0) },
+
+    frame w:4,  { Ps.EOS() }
+}
+
+sequence "Mono1", "SynthAdapter", {
+    frame w:0,  { Sy.SetProgram(0),
+                  Sy.SetNote(Sy.E3,  100) },
+    frame w:2,  { Sy.SetNote(Sy.E3,    0) },
+    frame w:2,  { Sy.SetNote(Sy.E2,   80) },
+    frame w:2,  { Sy.SetNote(Sy.E2,    0) },
+    frame w:2,  { Sy.SetNote(Sy.E3,  100) },
+    frame w:2,  { Sy.SetNote(Sy.E3,    0) },
+    frame w:2,  { Sy.SetNote(Sy.D3,  100) },
+    frame w:2,  { Sy.SetNote(Sy.D3,    0) },
+
+    frame w:2,  { Sy.SetNote(Sy.G3,  100) },
+    frame w:2,  { Sy.SetNote(Sy.G3,    0) },
+    frame w:2,  { Sy.SetNote(Sy.G2,   80) },
+    frame w:2,  { Sy.SetNote(Sy.G2,    0) },
+    frame w:2,  { Sy.SetNote(Sy.G3,  100) },
+    frame w:2,  { Sy.SetNote(Sy.G3,    0) },
+    frame w:2,  { Sy.SetNote(Sy.A3,  100) },
+    frame w:2,  { Sy.SetNote(Sy.A3,    0) },
+
+    frame w:2,  { Sy.SetNote(Sy.D3,  100) },
+    frame w:2,  { Sy.SetNote(Sy.D3,    0) },
+    frame w:2,  { Sy.SetNote(Sy.D2,   80) },
+    frame w:2,  { Sy.SetNote(Sy.D2,    0) },
+    frame w:2,  { Sy.SetNote(Sy.D3,  100) },
+    frame w:2,  { Sy.SetNote(Sy.D3,    0) },
+    frame w:2,  { Sy.SetNote(Sy.E3,  100) },
+    frame w:2,  { Sy.SetNote(Sy.E3,    0) },
+
+    frame w:2,  { Sy.SetNote(Sy.A3,  100) },
+    frame w:2,  { Sy.SetNote(Sy.A3,    0) },
+    frame w:2,  { Sy.SetNote(Sy.A2,   80) },
+    frame w:2,  { Sy.SetNote(Sy.A2,    0) },
+    frame w:2,  { Sy.SetNote(Sy.A3,  100) },
+    frame w:2,  { Sy.SetNote(Sy.A3,    0) },
+    frame w:2,  { Sy.SetNote(Sy.G3,  100) },
+    frame w:2,  { Sy.SetNote(Sy.G3,    0) },
+
+    frame w:2,  { Ps.EOS() }
+}
+
+sequence "Drums1", "SynthAdapter", {
+    frame w:0,  { Sy.SetProgram(3),
+                  Sy.SetNote(Sy.D1,  200) },
+    frame w:4,  { Sy.SetNote(Sy.D1,    0) },
+
+    frame w:8,  { Sy.SetProgram(4),
+                  Sy.SetNote(Sy.A2,  160) },
+    frame w:1,  { Sy.SetNote(Sy.A2,    0) },
+
+    frame w:3,  { Sy.SetProgram(3),
+                  Sy.SetNote(Sy.C1,  180) },
+    frame w:1,  { Sy.SetNote(Sy.C1,    0) },
+
+    frame w:7, { Sy.SetProgram(4),
+                  Sy.SetNote(Sy.G2,  160) },
+    frame w:1,  { Sy.SetNote(Sy.G2,    0) },
+
+    frame w:7, { Ps.EOS() }
+}

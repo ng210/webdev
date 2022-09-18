@@ -1,5 +1,6 @@
 include('/lib/glui/glui-lib.js');
 //include('/lib/synth/score-control.js');
+include('./synth-control.js');
 
 (function() {
 
@@ -7,10 +8,8 @@ include('/lib/glui/glui-lib.js');
         this.menu = null;
         this.main = null;
         this.controls = null;
-        this.synths = null;
+        this.synthUis = [];
         this.sequences = null;
-
-        this.synthTemplate = null;
 
         this.dialogs = {
             load: null,
@@ -32,8 +31,11 @@ include('/lib/glui/glui-lib.js');
         // preload images
         'synth-png':        './ui/res/images/synth-h-template.png',
         'control-bg':       './ui/res/images/control-bg.png',
-        //'': './res/images/bg.png',
-        'knob-bg-png':      './ui/res/images/knob-bg.png'
+        'knob-bg-png':      './ui/res/images/knob-bg.png',
+        'btn-restart':      './ui/res/images/knob-restart.png',
+        'btn-start':        './ui/res/images/knob-start.png',
+        'btn-pause':        './ui/res/images/knob-pause.png',
+        'btn-stop':         './ui/res/images/knob-stop.png'
     };
 
     Ui.prototype.loadResources = async function loadResources() {
@@ -54,31 +56,11 @@ include('/lib/glui/glui-lib.js');
 
     Ui.prototype.createSynthUi = function createSynthUi(synth) {
         var synthUi = glui.create('Sy', this.resources['synth-template'], this.main, this);
-        //var dataSource = new Datalink(synth);
-        // assign knobs to synth controls
-        for (var i=0; i<synthUi.items.length; i++) {
-            var knob = synthUi.items[i];
-            var controlId = psynth.Synth.controls[knob.id];
-            if (controlId != undefined) {
-                knob.label = true;
-                knob.setLook(glui.Textbox.Look.Knob);
-                knob.style['background-image'] = './ui/res/images/knob-bg.png';
-                knob.style['background-repeat'] = 'repeat-x repeat-y';
-                knob.style['border'] = '#4060f0 0px outset';
-                knob.style['font'] = 'consolas 8 normal';
-                knob.style['width'] = '24px';
-                knob.style['height'] = "14px";
-                knob.style['align'] = 'center middle';
-                knob.style['padding'] = '2px';
-                knob.renderer.initialize();
+        synthUi.dataBind(synth);
+        this.synthUis.push(synthUi);
+        // create soundbank selector
 
-                var controlId = psynth.Synth.controls[knob.id];
-                var control = synth.getControl(controlId);
-                knob.dataBind(control, 'value');
-            }
-        }
-        synthUi.move(0, this.controls.height);
-        //pSynth.Synth.controls
+        return synthUi;
     };
 
     //#region event handlers
@@ -136,73 +118,71 @@ include('/lib/glui/glui-lib.js');
     publish(Ui, 'Ui', SynthApp);
 })();
 
-/*
+//#region old code
+//     var loadErrors = res.select(x => x.error).map(x => x.error);
+//     if (loadErrors.length > 0) {
+//         errors.push(...loadErrors);
+//     } else {
+//         // create main layout
+//         var template = res[0].data;
+//         for (var i=0; i<template.items.length; i++) {
+//             if (template.items[i] == '<Menu>') template.items[i] = res[1].data;
+//             if (template.items[i] == '<Controls>') template.items[i] = res[3].data;
+//         }
+//         this.main = await glui.create('main', template, null, app);
 
-    var loadErrors = res.select(x => x.error).map(x => x.error);
-    if (loadErrors.length > 0) {
-        errors.push(...loadErrors);
-    } else {
-        // create main layout
-        var template = res[0].data;
-        for (var i=0; i<template.items.length; i++) {
-            if (template.items[i] == '<Menu>') template.items[i] = res[1].data;
-            if (template.items[i] == '<Controls>') template.items[i] = res[3].data;
-        }
-        this.main = await glui.create('main', template, null, app);
+//         // add menu
+//         this.menu = this.main.items.find(x => x.id == 'Menu');
+//         await this.menu.build(res[2].data);
+//         // commands = this.menu.codes
 
-        // add menu
-        this.menu = this.main.items.find(x => x.id == 'Menu');
-        await this.menu.build(res[2].data);
-        // commands = this.menu.codes
+//         //#region add controls
+//         this.controls = this.main.items.find(x => x.id == 'ControlPanel');
+//         // this.controls.onclick = app.onclick;
+//         // this.controls.onchange = app.onchange;
+//         await this.controls.build();
+//         //ui.controlPanel.getControlById('tck').dataBind(App.ticks, 'value');
 
-        //#region add controls
-        this.controls = this.main.items.find(x => x.id == 'ControlPanel');
-        // this.controls.onclick = app.onclick;
-        // this.controls.onchange = app.onchange;
-        await this.controls.build();
-        //ui.controlPanel.getControlById('tck').dataBind(App.ticks, 'value');
+//         this.controls.getControlById('bpm').dataBind(app, 'bpm');
+//         this.sequences = this.controls.getControlById('seq');
+//         this.sequences.dataBind(app, 'selectedSequence');
+//         //#endregion
 
-        this.controls.getControlById('bpm').dataBind(app, 'bpm');
-        this.sequences = this.controls.getControlById('seq');
-        this.sequences.dataBind(app, 'selectedSequence');
-        //#endregion
+//         this.synths = this.main.items.find(x => x.id == 'SynthPanel');
+//         this.synthTemplate = res[4].data;
+//     }
 
-        this.synths = this.main.items.find(x => x.id == 'SynthPanel');
-        this.synthTemplate = res[4].data;
-    }
+//     this.resize();
+// };
 
-    this.resize();
-};
+// Ui.prototype.resize = function resize() {
+//     this.main.renderer.initialize();
+//     var top = 0;
 
-Ui.prototype.resize = function resize() {
-    this.main.renderer.initialize();
-    var top = 0;
+//     this.menu.move(0, 0, glui.Control.order.TOP);
+//     top += this.menu.height;
 
-    this.menu.move(0, 0, glui.Control.order.TOP);
-    top += this.menu.height;
+//     // await this.controlPanel.renderer.initialize();
+//     this.controls.move(0, top);
+//     top += this.controls.height;
+//     this.synths.move(0, top);
 
-    // await this.controlPanel.renderer.initialize();
-    this.controls.move(0, top);
-    top += this.controls.height;
-    this.synths.move(0, top);
+//     this.main.render();
+// };
 
-    this.main.render();
-};
+// Ui.prototype.removeSynthPanels = function removeSynthPanels() {
+//     for (var i=0; i<this.synths.items.length; i++) {
+//         this.synths.items[i].destroy();
+//     }
+// };
 
-Ui.prototype.removeSynthPanels = function removeSynthPanels() {
-    for (var i=0; i<this.synths.items.length; i++) {
-        this.synths.items[i].destroy();
-    }
-};
-
-Ui.prototype.addSynthPanel = async function addSynthPanel(synth, app) {
-    // create Synth ui
-    var si = this.synths.items.length;
-    // create and add to synths panel
-    var synthUi = await glui.create('synth' + (si < 10 ? '0'+si : si), this.synthTemplate, this.synths, app);
-    await synthUi.build(synth, 'controls');
-    synthUi.move(0, si * (synthUi.height + 2));
-    //this.synths.size(this.synthTemplate.style.width, this.synths.height + synthUi.height + 2);
-};
-
-*/
+// Ui.prototype.addSynthPanel = async function addSynthPanel(synth, app) {
+//     // create Synth ui
+//     var si = this.synths.items.length;
+//     // create and add to synths panel
+//     var synthUi = await glui.create('synth' + (si < 10 ? '0'+si : si), this.synthTemplate, this.synths, app);
+//     await synthUi.build(synth, 'controls');
+//     synthUi.move(0, si * (synthUi.height + 2));
+//     //this.synths.size(this.synthTemplate.style.width, this.synths.height + synthUi.height + 2);
+// };
+//#endregion

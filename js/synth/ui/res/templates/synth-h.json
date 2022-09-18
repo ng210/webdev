@@ -1,9 +1,9 @@
 {
-    "id": "Controls",
-    "type": "Container",
+    "id": "Synth",
+    "type": "SynthControl",
     "style": {
         "left": "0", "top": "0",
-        "width": "979px", "height": "86px",
+        "width": "1007px", "height": "86px",
         "z-index": 100,
         "border": "none",
         "font": "Arial 12px normal",
@@ -13,9 +13,34 @@
         "color": "#203060"
     },
     "items": [
-        { "id":"voices",    "style": { "left": "106px", "top":"003px", "width":"029px", "height":"16px", "color":"black", "background-image":"./ui/res/images/bg.png" }, "type": "Textbox", "data-type":"int" },
-        { "id":"program",   "style": { "left": "189px", "top":"003px", "width":"128px", "height":"16px", "color":"black", "background-image":"./ui/res/images/bg.png" }, "type": "Textbox", "data-type":"string" },
-
+        { "id":"voices",    "style": { "left": "106px", "top":"003px", "width":"029px", "height":"16px", "color":"black", "background-image":"./ui/res/images/bg1.png" }, "type": "Textbox", "data-type":"int" },
+        { "id":"program",   "style": { "left": "189px", "top":"003px", "width":"128px", "height":"16px", "color":"black", "background-image":"./ui/res/images/bg1.png" }, "type": "Textbox", "data-type":"string" },
+        { "id":"programs",
+            "style": {
+                "font": "Arial 12px normal",
+                "left": "189px", "top":"003px",
+                "z-index": 10,
+                "width":"128px", "height":"8em",
+                "color":"black",
+                "border":"none",
+                "background-color":"#80a0e0", "background-image":"./ui/res/images/bg1.png",
+                "visible":false
+            },
+            "cell-template": {
+                "style": {
+                    "height":"1.2em",
+                    "border":"#a09880 1px inset"
+                },
+                "data-field":"name",
+                "type":"Label"
+            },
+            "title-style": {
+                "height":"1.2em",
+                "border":"#80a0e0 1px outset"
+            },
+            "type": "Table", "show-header":false, "mode":1
+        },
+  
         { "id":"osc1amp",   "style": { "left": "003px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
         { "id":"osc1fre",   "style": { "left": "029px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 0 },
         { "id":"osc1psw",   "style": { "left": "056px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
@@ -54,9 +79,10 @@
         { "id":"flt1mode",  "style": { "left": "786px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
         { "id":"flt1cut",   "style": { "left": "813px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
         { "id":"flt1res",   "style": { "left": "840px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"env3atk",   "style": { "left": "870px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"env3dec",   "style": { "left": "897px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"env3sus",   "style": { "left": "924px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"env3rel",   "style": { "left": "951px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 }
+        { "id":"env3amp",   "style": { "left": "870px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
+        { "id":"env3atk",   "style": { "left": "897px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
+        { "id":"env3dec",   "style": { "left": "924px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
+        { "id":"env3sus",   "style": { "left": "951px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
+        { "id":"env3rel",   "style": { "left": "978px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 }
     ]
 }
