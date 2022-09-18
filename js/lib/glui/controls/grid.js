@@ -150,9 +150,6 @@ include('renderer2d.js');
 
         this.curveMode = Grid.curveModes[template['curve-mode']];
 
-        // if (this.dataSource && this.dataField) {
-        //     this.dataBind();
-		// }
         return template;
     };
     Grid.prototype.createRenderer = mode => mode == glui.Render2d ? new GridRenderer2d() : 'GridRenderer3d';
@@ -176,35 +173,36 @@ include('renderer2d.js');
         return handlers;
     };
     Grid.prototype.dataBind = function dataBind(dataSource, dataField) {
-        Grid.base.dataBind.call(this, dataSource, dataField);
-        // create points
-        //this.points = [];
-        var source = this.dataField ? this.dataSource[this.dataField] : dataSource;
-        if (source && Array.isArray(source)) {
-            for (var i=0; i<source.length;) {
-                var point = { 'x': 0, 'y': 0, 'value': 0 };
-                var entry = source[i++];
-                if (entry) {
-                    if (!Array.isArray(entry)) {
-                        if (typeof entry === 'object') {
-                            entry = Object.values(entry);
-                        } else {
-                            throw new Error('Data source is not valid!');
+        if (Grid.base.dataBind.call(this, dataSource, dataField)) {
+            // create points
+            //this.points = [];
+            var source = this.dataField ? this.dataSource[this.dataField] : dataSource;
+            if (source && Array.isArray(source)) {
+                for (var i=0; i<source.length;) {
+                    var point = { 'x': 0, 'y': 0, 'value': 0 };
+                    var entry = source[i++];
+                    if (entry) {
+                        if (!Array.isArray(entry)) {
+                            if (typeof entry === 'object') {
+                                entry = Object.values(entry);
+                            } else {
+                                throw new Error('Data source is not valid!');
+                            }
                         }
                     }
+                    if (entry.length > 2) {
+                        // - 2 dimensional array of items with x,y,value
+                        point.x = entry[0];
+                        point.y = entry[1];
+                        point.value = entry[2];
+                    } else {
+                        // - 1 dimensional array with x,y,value are serialized or
+                        point.x = entry;
+                        point.y = source[i++];
+                        point.value = source[i++];
+                    }
+                    this.points.push(point);
                 }
-                if (entry.length > 2) {
-                    // - 2 dimensional array of items with x,y,value
-                    point.x = entry[0];
-                    point.y = entry[1];
-                    point.value = entry[2];
-                } else {
-                    // - 1 dimensional array with x,y,value are serialized or
-                    point.x = entry;
-                    point.y = source[i++];
-                    point.value = source[i++];
-                }
-                this.points.push(point);
             }
         }
     };

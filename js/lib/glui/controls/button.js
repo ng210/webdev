@@ -21,8 +21,7 @@ include('label.js');
         }
         if (!color1) color1 = this.color;
         if (!color2) color2 = this.color;
-        var value = this.control.getValue();
-        var lines = value ? value.split('\\n') : [];
+        var lines = this.control.getLines();
         var boxes = this.getTextBoundingBoxes(lines);
         for (var i=0; i<lines.length; i++) {
             this.drawText(lines[i], offs+boxes[i][0]-1, offs+boxes[i][1]-1, boxes[i][2], color1);

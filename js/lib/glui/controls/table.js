@@ -105,7 +105,7 @@ include('label.js');
 			this.parent.selectedRow = this;
 		}
 	};
-	Row.prototype.onblur = function onblur(e) {
+	Row.prototype.onblur = function onblur(e, ctrl) {
 		if (this.parent.mode == Table.modes.TABLE) {
 			this.parent.selectedRow = null;
 		}
@@ -117,9 +117,10 @@ include('label.js');
 	//#endregion
 
 	//#region Column
-	function Column(name, key, parent) {
+	function Column(name, key, parent, index) {
 		this.id = `${parent.id}#col#${key}`;
 		this.name = name;
+		this.index = index;
 		this.key = key;
 		this.parent = parent;
 		this.cells = [];
@@ -303,6 +304,7 @@ include('label.js');
 		if (tmpl['header-style']) {
 			styleType.merge(tmpl['header-style'], this.headerStyle, self.mergeObjects.OVERWRITE);
 		}
+		this.rowStyle = tmpl['row-style'];
 		// merge row-template styles
 		for (var i in this.rowTemplate) {
 			if (this.rowTemplate.hasOwnProperty(i)) {
@@ -356,9 +358,9 @@ include('label.js');
 			columnCount = this.rowTemplateCount;
 			columnKeys = Object.keys(this.rowTemplate);
 		}
-		if (this.dataSource) {
+		var dataSource = this.readDataSource();
+		if (dataSource) {
 			if (this.mode == glui.Table.modes.TABLE) {
-				var dataSource = this.dataField != undefined ? this.dataSource[this.dataField] : this.dataSource.obj;
 				rowKeys = Object.keys(dataSource);
 				rowCount = rowKeys.length;
 				if (Array.isArray(dataSource[rowKeys[0]]) || typeof dataSource[rowKeys[0]] === 'object') {
@@ -366,7 +368,7 @@ include('label.js');
 					if (columnCount == 0) columnCount = columnKeys.length;
 				}
 			} else {
-				this.dataSourceKeys = Object.keys(this.dataSource.obj);
+				this.dataSourceKeys = Object.keys(dataSource);
 				if (columnCount == 0) columnCount = 2;
 				if (rowCount == 0) {
 					rowCount = Math.ceil(this.dataSourceKeys.length / columnCount);
@@ -460,17 +462,20 @@ include('label.js');
 		if (this.mode == Table.modes.TABLE) {
 			Table.base.dataBind.call(this, source, field);
 		} else {
-			field = field || this.dataField;
-			glui.Control.prototype.dataBind.call(this, source[field]);
-			var keys = Object.keys(this.dataSource.obj);
-			var k = 0;
-			for (var i=0; i<this.items.length; i++) {
-				var row = this.items[i];
-				if (row.constructor != Row) continue;
-				for (var j=0; j<row.items.length; j++) {
-					var cell = row.items[j];
-					if (k < keys.length) {
-						cell.dataBind(this.dataSource, keys[k++].toString());
+			if (source) {
+				glui.Control.prototype.dataBind.call(this, source, field);
+				var dataSource = this.readDataSource();
+				// var keys = Object.keys(dataSource);
+				// var k = 0;
+				for (var i=0; i<this.items.length; i++) {
+					var row = this.items[i];
+					if (row.constructor != Row) continue;
+					for (var j=0; j<row.items.length; j++) {
+						var cell = row.items[j];
+						cell.dataBind(dataSource);
+						// if (k < keys.length) {
+						// 	cell.dataBind(dataSource, keys[k++].toString());
+						// }
 					}
 				}
 			}
@@ -547,7 +552,7 @@ include('label.js');
 			ix = this.columnCount;
 		}
 
-		this.columns[ix] = this.columns[name] = new Column(name, key, this);
+		this.columns[ix] = this.columns[name] = new Column(name, key, this, ix);
 		// update rows
 		var template = this.rowTemplate[key];
 		for (var ri=0; ri<this.rowCount; ri++) {
@@ -562,12 +567,13 @@ include('label.js');
 	Table.prototype.insertRowAt = function insertRowAt(name, ix) {
 		if (ix != undefined) this.rowKeys.splice(ix, 0, name);
 		else this.rowKeys.push(name);
-		var row = this.rows[name] = new Row(`${this.id}#${name}`, {'style':{'width':'100%'}}, this);
-		var dataSource = this.dataSource;
-		if (this.dataSource) {
+		var row = this.rows[name] = new Row(`${this.id}#${name}`, {'style':{'width':'100%'}}, this, this.context);
+		var dataSource = this.readDataSource();
+		if (dataSource) {
 			if (this.mode == glui.Table.modes.TABLE) {
-				dataSource = this.dataField ? this.dataSource[this.dataField] : this.dataSource;
 				row.dataBind(dataSource, name.toString());
+			} else {
+				row.dataBind(dataSource);
 			}
 		}
 		row.setRenderer(glui.mode, this.renderer.context);
@@ -580,17 +586,14 @@ include('label.js');
 			var column = this.columns[ci];
 			var name = column.name;
 			var template = this.rowTemplate[column.key];
-			var ctrl = glui.create(name, template, null);
+			var ctrl = glui.create(name, template, null, row.context);
 			var field = null;
-			if (row.dataSource) {
-				if (this.mode == glui.Table.modes.TABLE) {
-					dataSource = row.dataSource[row.dataField];
-				} else {
-					var field = this.dataSourceKeys[di++];
-					if (template['data-field']) {
-						dataSource = row.dataSource.obj[field];
-						field = null;
-					}
+			dataSource = row.readDataSource();
+			if (this.mode == glui.Table.modes.BOARD) {
+				var field = this.dataSourceKeys[di++];
+				if (template['data-field']) {
+					dataSource = dataSource[field];
+					field = null;
 				}
 			}
 			ctrl.dataBind(dataSource, field);
@@ -788,6 +791,7 @@ include('label.js');
 			'rows':			{ 'type':'int', 'isRequired':false, 'default':2 },
 			'cols':			{ 'type':'int', 'isRequired':false, 'default':2 },
 			'title-style':	{ 'type':glui.schema.types.get('ControlStyle'), 'isRequired':false, 'default':glui.Label.prototype.getTemplate() },
+			'row-style':	{ 'type':glui.schema.types.get('ControlStyle'), 'isRequired':false, 'default':glui.Label.prototype.getTemplate() },
 			'header-style':	{ 'type':glui.schema.types.get('ControlStyle'), 'isRequired':false, 'default':{} },
 			'cell-template':{ 'type':glui.schema.types.get('Control'), 'isRequired':false, 'default':glui.Label.prototype.getTemplate() },
 			'row-template':	{ 'type': { 'type':'map', 'keyType':'string', 'valueType':'Control'}, 'isRequired':false, 'default':{} },

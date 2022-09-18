@@ -160,19 +160,21 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
     Control.prototype.dataBind = function dataBind(source, field) {
         if (!this.noBinding) {
             if (source) {
-                if (this.dataSource != null && this.dataSource.obj != source) {
-                    delete this.dataSource;
-                }                
-                this.dataSource = source instanceof DataLink ? source : new DataLink(source);
+                if (this.dataSource && DataLink.is(this.dataSource)) {
+                    DataLink.removeHandler(this.dataSource, h => h.target == this);
+                    DataLink.removeHandler(this, h => h.target == this.dataSource);
+                }
+                this.dataSource = DataLink(source);
             }
             if (this.dataSource) {
                 this.dataField = field || this.dataField;
-                if (this.dataField && this.dataSource.obj.hasOwnProperty(this.dataField) && this.dataSource[this.dataField] == undefined) {
-                    this.dataSource.addField(this.dataField, null);
-                }
+                DataLink.addField(this.dataSource, this.dataField);
             }
         }
         return this.dataSource;
+    };
+    Control.prototype.readDataSource = function readDataSource() {
+        return this.dataField ? this.dataSource[this.dataField] : this.dataSource;
     };
     Control.prototype.getBoundingBox = function getBoundingBox() {
         // this.left = this.renderer.accumulate('offsetLeft');
@@ -184,13 +186,14 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         var rect = this.getBoundingBox();
         if (this != glui.screen) {
             var ctrl = this.parent;
-            while (true) {
-                if (ctrl == glui.screen) break;
-                if (!(ctrl instanceof glui.Menu)) {
-                    rect = Fn.intersectRect(rect, ctrl.getBoundingBox());
-                }
-                if (!rect) break;
+            while (ctrl != glui.screen && rect != null) {
+                rect = Fn.intersectRect(rect, ctrl.getBoundingBox());
                 ctrl = ctrl.parent;
+                // if (ctrl == glui.screen) break;
+                // // if (!(ctrl instanceof glui.Menu)) {
+                // //     rect = Fn.intersectRect(rect, ctrl.getBoundingBox());
+                // // }
+                // if (!rect) break;
             }
         }
         return rect;
@@ -211,7 +214,8 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
             if (width) this.renderer.setWidth(width, isInner);
             if (height == undefined) height = width;
             if (height) this.renderer.setHeight(height, isInner);
-            this.parent ? this.parent.render() : this.render();
+            glui.markRepaint();
+            //this.parent ? this.parent.render() : this.render();
         }
     };
     Control.prototype.move = function move(dx, dy, order) {
@@ -329,7 +333,7 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
             if (handlers) {
                 for (var i=0; i<handlers.length; i++) {
                     var handler = handlers[i];
-                    if (eventName.match(DEBUG_EVENT)) debug_(` - ${handler.obj.id}::${handler.fn.name}`, 0);
+                    if (eventName.match(DEBUG_EVENT)) debug_(` - ${handler.obj.type}::[${handler.obj.id}]::${handler.fn.name}`, 0);
                     var isCancelled = Boolean(await handler.fn.call(handler.obj, event, control));
                     if (isCancelled) return true;
                 }
@@ -431,8 +435,8 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
                             glui.create(ctrl.template.items[i].id || `${ctrl.id}#${i}`, items[i], ctrl);
                         }
                     }
-                } else if (ctrl instanceof glui.Image) {
-                    ctrl.load();
+// } else if (ctrl instanceof glui.Image) {
+//     ctrl.load();
                 }
                 // if (!ctrl.renderer && parent.renderer) {
                 //     await ctrl.setRenderer(parent.renderer.mode, parent.renderer.context);

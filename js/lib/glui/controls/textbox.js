@@ -62,7 +62,8 @@ include('label.js');
         var bgColor = this.backgroundColor || [0, 0, 0];
         var fillColor = this.mixColors(this.color, bgColor, 0.5);
         var bw = this.border.width;
-        var width = (this.control.value - this.control.min)*(this.control.width - 2*bw)/(this.control.max - this.control.min);
+        var value = this.control.getValue();
+        var width = (value - this.control.min)*(this.control.width - 2*bw)/(this.control.max - this.control.min);
         this.drawRect(0, 0, width, this.control.height, fillColor);
         this.drawSingleLine();
     };
@@ -154,6 +155,8 @@ include('label.js');
     function Textbox(id, template, parent, context) {
         this.lines = [];
         this.isMultiline = false;
+        this.look = glui.Textbox.Look.Textbox
+        this.blankValue = '';
         Textbox.base.constructor.call(this, id, template, parent, context);
         this.cursorPos = [0, 0];
         this.isFocused = false;
@@ -177,10 +180,20 @@ include('label.js');
             this.normalize();
         }
         this.label = template.label;
-        this.isMultiline = Boolean(template['multi-line']);
+        this.isMultiline = Boolean(template['multiline']);
         this.look = template.look;
+        this.blankValue = template['blank-value'];
         return template;
     };
+    Textbox.prototype.dataBind = function dataBind(source, field) {
+        var dataSource = Textbox.base.dataBind.call(this, source, field);
+        DataLink.addHandler(this, 'value', {
+            'target':this, 'field':'lines',
+            'fn':Textbox.prototype.valueToLines,
+            'args':null
+        });
+        return dataSource;
+    }
 
     Textbox.prototype.advanceValue = function advanceValue(n) {
         var delta = n*this.step;
@@ -191,30 +204,37 @@ include('label.js');
         if (value != oldValue) {
             this.callHandler('change', {'type':'change','oldValue': oldValue, 'value':value, 'control':this});
         }
-    }
-    Textbox.prototype.setValue = function setValue(value) {
-        var oldValue = Textbox.base.setValue.call(this, value);
-        var v = !this.isNumeric ? this.value.toString() : this.value.toFixed(this.decimalDigits);
-        if (v != undefined && v != null && v != '') {
-            this.lines = v.split('\\n');
+    };
+    Textbox.prototype.valueToLines = function valueToLines(field, value, args, sources) {
+        if (this.isNumeric) {
+            if (typeof value !== 'number') {
+                value = this.defaultValue;
+            }
+            this.lines = [value.toFixed(this.decimalDigits)];
+            if (this.look == Textbox.Look.Knob) {
+                this.renderer.angle = 2*Math.PI*this.toNormalized(value);
+            }
         } else {
-            this.lines = [];
-            v = '';
+            if (value != undefined && value != null && value != '') {
+                this.lines = value.toString().split('\\n');
+            } else {
+                value = this.defaultValue;
+            }
+            if (value == '') {
+                this.lines = this.isFocused ? [''] : [this.blankValue];
+            }
         }
-        if (this.look == Textbox.Look.Knob) {
-            this.renderer.angle = 2*Math.PI*this.toNormalized(v);
-        }
-        return oldValue;
+    };
+    Textbox.prototype.linesToValue = function linesTovalue() {
+        var value = this.lines.join('\n');
+        this.setValue(value);
     };
     Textbox.prototype.isEmpty = function isEmpty() {
-        return this.lines.length == 0;
+        return this.value == null || this.value == '';
     };
     Textbox.prototype.getLines = function getLines() {
-        var lines = this.lines;
-        if (this.isEmpty()) {
-            lines = this.isFocused ? [''] : [this.blankValue];
-        }
-        return lines;
+        //this.lines = Textbox.base.getLines.call(this);
+        return this.lines;
     };
     Textbox.prototype.getHandlers = function getHandlers() {
         var handlers = Textbox.base.getHandlers.call(this);
@@ -230,11 +250,14 @@ include('label.js');
     Textbox.prototype.onfocus = function onfocus() {
         //Textbox.base.onmouseover.call(this);
         // set cursor
+        if (this.isEmpty()) {
+            this.lines = [''];
+        }
         this.cursorAnimation = glui.addAnimation(this.renderer.animateCursor, this.renderer, 1000);
         this.isFocused = true;
     };
-    Textbox.prototype.onblur = function onblur(e) {
-        Textbox.base.onblur.call(this, e);
+    Textbox.prototype.onblur = function onblur(e, ctrl) {
+        Textbox.base.onblur.call(this, e, ctrl);
         // if (glui.Control.atCursor != this) {
         //     e.control = this;
         //     Textbox.base.onmouseout.call(this, e);
@@ -250,12 +273,12 @@ include('label.js');
         var oldValue = this.setValue(value);
         if (this.value === '') {
             if (this.lines.length > 0) this.lines.splice(0, this.lines.length);
+            this.lines = [this.blankValue];
         }
         this.render();
         if (this.value != oldValue) {
             this.callHandler('change', {'type':'change','oldValue': oldValue, 'value':value, 'control':this});
         }
-        //return true;
     };
     Textbox.prototype.ondragging = function ondragging(e) {
         if (this.look == glui.Textbox.Look.Potmeter) {
@@ -568,7 +591,8 @@ include('label.js');
         'type':'ValueControl',
         'attributes': {
             'label': { 'type':'bool', 'isRequired':false },
-            'isMultiline': { 'type':'bool', 'isRequired':false, 'default':false },
+            'blank-value': { 'type':'string', 'isRequired':false },            
+            'multiline': { 'type':'bool', 'isRequired':false, 'default':false },
             'look': { 'type':'TextboxLook', 'isRequired':false, 'default':Textbox.Look.Textbox }
         }
     });

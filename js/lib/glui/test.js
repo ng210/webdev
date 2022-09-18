@@ -29,7 +29,7 @@ include('/lib/data/graph.js');
             'background-color': '#308060'
         },
         'cell': {
-            'font': 'Arial 14',
+            'font': 'Arial 12',
             'align':'center middle',
             'border':'#80b0c0 1px inset',
             'color': '#102040',
@@ -124,7 +124,8 @@ include('/lib/data/graph.js');
             'look': 'textbox',
             'decimal-digits': 3,
             'data-source': 'data',
-            'data-field': 'textbox1'
+            'data-field': 'textbox1',
+            'blank-value': 'blank'
         },
         {   'type': 'Textbox',
             'style': style,
@@ -186,7 +187,8 @@ include('/lib/data/graph.js');
             //'data-type': 'int',
             //'decimal-digits': 1,
             'look': 'knob',
-            'min': 0, 'max': 255, 'value': 10
+            'min': 0, 'max': 255, 'value': 10,
+            'data-type':'int'
         },
         {   'type': 'Textbox',
             'style': {
@@ -201,7 +203,11 @@ include('/lib/data/graph.js');
             //'data-type': 'int',
             //'decimal-digits': 1,
             'look': 'knob',
-            'min': 0, 'max': 255, 'value': 200
+            'label':true,
+            'min': 0, 'max': 255, 'value': 200,
+            'data-type':'int',
+            'data-source':'data',
+            'data-field':'label2'
         },
 
         // {   'type': 'GraphView',
@@ -331,13 +337,13 @@ include('/lib/data/graph.js');
         selection: null,
 
         onclick: function onclick(e, ctrl) {
-            if (ctrl instanceof glui.Button) {
-                switch (ctrl.id) {
-                    default:
-                        Dbg.prln('Click ' + ctrl.id);
-                        break;
-                }
-            }
+            // if (ctrl instanceof glui.Button) {
+            //     switch (ctrl.id) {
+            //         default:
+            //             Dbg.prln('Click ' + ctrl.id);
+            //             break;
+            //     }
+            // }
         },
         onchange: function onchange(e, ctrl) {
             Dbg.prln(`Changed ${ctrl.id}.value: ${e.oldValue} => ${e.value}`);
@@ -415,6 +421,60 @@ include('/lib/data/graph.js');
         //glui.render();
     }
 
+    async function test_databinding() {
+        header('Test textbox');
+        await setup();
+        var top = 80;
+        var ctrls = [
+            controls.find(x => x.look == 'textbox' && x['data-source']),
+            controls.find(x => x.look == 'potmeter' && x['data-source']),
+            controls.find(x => x.look == 'knob' && x['data-source']),
+            controls.find(x => x.type == 'Button' && x['data-source']),
+            controls.find(x => x.type == 'Label' && x['data-source'])
+        ];
+        for (var i=0; i<ctrls.length; i++) {
+            var ctrl = glui.create(ctrls[i].type, ctrls[i], null, App);
+            ctrl.move(40, top); top += ctrl.height + 10;
+            ctrls[i] = ctrl;
+        }
+        glui.animate();
+        await button('Next');
+
+        test('Should update control\'s value', ctx => {
+            for (var i=0; i<ctrls.length; i++) {
+                ctrl = ctrls[i];
+                var value = 1 + ctrl.dataSource[ctrl.dataField];
+                ctrl.dataSource[ctrl.dataField] = value;
+                ctx.assert(value, '=', ctrl.value);
+            }
+        });
+        await button('Next');
+
+        test('Should update bound data', ctx => {
+            for (var i=0; i<ctrls.length; i++) {
+                ctrl = ctrls[i];
+                var value = 2 + ctrl.value;
+                ctrl.value = value;
+                ctx.assert(value, '=', ctrl.dataSource[ctrl.dataField]);
+            }
+        });
+        await button('Next');
+
+        test('Should rebind data', ctx => {
+            var obj = {
+                'v': 12
+            };
+    
+            for (var i=0; i<ctrls.length; i++) {
+                ctrl = ctrls[i];
+                ctrl.dataBind(obj, 'v');
+                ctx.assert(obj.handlers_.v.find(h => h.target == ctrl), '!=', -1);
+            }
+        });
+        await button('Next');
+        teardown();
+    }
+
     async function test_clipping() {
         header('Test clipping');
         await setup();
@@ -439,6 +499,7 @@ include('/lib/data/graph.js');
                     'spacing': '4px'
                 }
             },
+            'title':'Clipping test',
             'cols': 2, 'rows': 3,
             'mode': glui.Table.modes.BOARD,
             'data-source': 'data',
@@ -689,10 +750,18 @@ include('/lib/data/graph.js');
             'rows': 4,
             'show-header':false,
             'title-style':	tableStyles.title,
+            'row-style': {
+                'border':'none'
+            },
             'cell-template': {
                 'type': 'Textbox',
                 'data-type': 'string',
-                'style': tableStyles.cell
+                'style': {
+                    'font': 'Arial 14 normal',
+                    'background-color':'#80c0f0', 'color':'#203040',
+                    'border':'#80c0f0 1px inset',
+                    'height':'1.5em'
+                }
             }
         };
         var table2 = glui.create('table2', tableTemplate2, null, App); table2.build();
@@ -809,39 +878,39 @@ include('/lib/data/graph.js');
         table4.render();
         //#endregion
 
-        //#region Table #5
-        var tableTemplate5 = {
-            'type': 'Table',
-            'title':'Table (data binding)',
-            'show-header':true,
-            'title-style':	{ 'color':'black' },
-            'style': tableStyles.table,
-            'header-style': tableStyles.header,
-            'cell-template': {
-                'type':'Label',
-                'style': tableStyles.cell
-            },
-            'row-template': {
-                'name': { 'id':'name', 'type':'Label', 'data-field':'name' },
-                'age': { 'id':'age', 'type':'Label', 'data-field':'age' }
-            }
-        };
-        var table5 = glui.create('table5', tableTemplate5, null, App); table5.build();
-        table5.dataBind(data, 'table'); table5.build();
-        test(`Table should have 2 colums and ${data.table.length} rows`, ctx => {
-             ctx.assert(table5.rowCount, '=', data.table.length);
-             ctx.assert(table5.columnCount, '=', 2);
-        //     ctx.assert(table1.rowKeys, ':=', [0,1]);
-        //     ctx.assert(table1.columnKeys, ':=', ['0','1']);
-        //     ctx.assert(table1.rows[0].constructor.name, '=', 'Row');
-        //     ctx.assert(table1.rows[1].constructor.name, '=', 'Row');
-        //     ctx.assert(table1.getCell(0, 0).constructor, '=', glui.Label);
-        //     ctx.assert(table1.getCell(0, 1).constructor, '=', glui.Label);
-        //     ctx.assert(table1.getCell(1, 0).constructor, '=', glui.Label);
-        //     ctx.assert(table1.getCell(1, 1).constructor, '=', glui.Label);
-        });
-        table5.move(828, 60);
-        //#endregion
+        // //#region Table #5
+        // var tableTemplate5 = {
+        //     'type': 'Table',
+        //     'title':'Table (data binding)',
+        //     'show-header':true,
+        //     'title-style':	{ 'color':'black' },
+        //     'style': tableStyles.table,
+        //     'header-style': tableStyles.header,
+        //     'cell-template': {
+        //         'type':'Label',
+        //         'style': tableStyles.cell
+        //     },
+        //     'row-template': {
+        //         'name': { 'id':'name', 'type':'Label', 'data-field':'name' },
+        //         'age': { 'id':'age', 'type':'Label', 'data-field':'age' }
+        //     }
+        // };
+        // var table5 = glui.create('table5', tableTemplate5, null, App); table5.build();
+        // table5.dataBind(data, 'table'); table5.build();
+        // test(`Table should have 2 colums and ${data.table.length} rows`, ctx => {
+        //      ctx.assert(table5.rowCount, '=', data.table.length);
+        //      ctx.assert(table5.columnCount, '=', 2);
+        // //     ctx.assert(table1.rowKeys, ':=', [0,1]);
+        // //     ctx.assert(table1.columnKeys, ':=', ['0','1']);
+        // //     ctx.assert(table1.rows[0].constructor.name, '=', 'Row');
+        // //     ctx.assert(table1.rows[1].constructor.name, '=', 'Row');
+        // //     ctx.assert(table1.getCell(0, 0).constructor, '=', glui.Label);
+        // //     ctx.assert(table1.getCell(0, 1).constructor, '=', glui.Label);
+        // //     ctx.assert(table1.getCell(1, 0).constructor, '=', glui.Label);
+        // //     ctx.assert(table1.getCell(1, 1).constructor, '=', glui.Label);
+        // });
+        // table5.move(828, 60);
+        // //#endregion
 
         glui.animate();
 
@@ -874,17 +943,19 @@ include('/lib/data/graph.js');
             'label': 'File',
             'key': 'ALT F',
             'item-template': menuItemTemplate
-        }, mainMenu);
+        });
+        await mainMenu.add(fileMenu);
         var resMenu = await glui.create('resMenu', {
             'type': 'Menu',
             'layout': 'vertical',
             'style': menuStyle,
             'label': 'Open',
             'item-template': menuItemTemplate
-        }, fileMenu);
+        });
         await resMenu.add('Resource1');
         await resMenu.add('Resource2');
         await resMenu.build();
+        await fileMenu.add(resMenu);
         await fileMenu.add('Save', null, 'CTRL S');
         await fileMenu.build();
         var editMenu = await glui.create('edit', {
@@ -893,7 +964,8 @@ include('/lib/data/graph.js');
             'label': 'Edit',
             'key': 'ALT F',
             'item-template': menuItemTemplate
-        }, mainMenu);
+        });
+        await mainMenu.add(editMenu);
         await editMenu.add('Cut', null, 'CTRL X');
         await editMenu.add('Copy', null, 'CTRL C');
         await editMenu.add('Paste', null, 'CTRL V');
@@ -1087,6 +1159,7 @@ include('/lib/data/graph.js');
     // }
 
     var tests = () => [
+        test_databinding,
         test_clipping,
         test_construct,
         test_align,

@@ -27,6 +27,7 @@ include('/lib/type/schema.js');
 
         this.promises = [];
         this.markedForRendering = {};
+        this.isRepaintNeeded = false;
         this.animations = [];
         this.animateId = 0;
 
@@ -242,6 +243,9 @@ include('/lib/type/schema.js');
             this.markedForRendering[ctrl.id] = ctrl;
         }
     };
+    Glui.prototype.markRepaint = function markRepaint() {
+        glui.isRepaintNeeded = true;
+    }
     Glui.prototype.resize = function resize() {
         if (glui.canvas) {
             glui.width = Math.floor(glui.scale.x * glui.canvas.clientWidth);
@@ -276,6 +280,10 @@ include('/lib/type/schema.js');
                 anim.counter += anim.timeout;
                 anim.fn.call(anim.obj, anim.args);
             }
+        }
+        if (glui.isRepaintNeeded) {
+            glui.repaint();
+            glui.isRepaintNeeded = false;
         }
         var marks = Object.values(glui.markedForRendering);
         glui.markedForRendering = {};

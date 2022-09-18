@@ -16,6 +16,7 @@ include('label.js');
         this.submenus = [];
         this.submenu = null;
         this.keys = {};
+        this.parentMenu = null;
     }
     extend(glui.Container, Menu);
 
@@ -79,28 +80,36 @@ include('label.js');
     Menu.prototype.onmouseout = function onmouseout(e, ctrl) {
     };
     Menu.prototype.onclick = function onclick(e, ctrl) {
-        if (ctrl.submenu) {
-            if (this.open(ctrl)) {
-                this.submenu = ctrl.submenu;
-                glui.setFocus(this.submenu);
-            }
+        if (this.open(ctrl)) {
         } else if (!(ctrl instanceof Menu) && ctrl.parent == this) {
-            e.command = ctrl.command || ctrl.id;
+            e.command = ctrl.command || ctrl.id;;
             this.callHandler('command', e);
-            var menu = this;
-            while (menu.parent.submenu == menu) menu = menu.parent;
-            if (menu.submenu) menu.submenu.close();
         }
+
+        // else if (!(ctrl instanceof Menu) && ctrl.parent == this) {
+        //     e.command = ctrl.command || ctrl.id;
+        //     this.callHandler('command', e);
+        //     var menu = this;
+        //     while (menu.parent.submenu == menu) menu = menu.parent;
+        //     if (menu.submenu) menu.submenu.close();
+        // }
     };
-    Menu.prototype.onblur = function onblur(e, ctrl) {
+//     Menu.prototype.onfocus = function onfocus(e, ctrl) {
+// console.log('focus', ctrl.parent?.id, ctrl.id)
+//         Menu.base.onfocus.call(this, e);
+//     };
+
+    Menu.prototype.onblur = function onblur(e) {
         // close the menu
-        // - menu.parent.submenu = menu
-        // - f.parent != menu
-        // - f.parent = menu
-        var f = e.control;
-        if (this.parent.submenu == this && !f.isDescendant(this)) {
-            this.close();
+        var ctrl = e.control;
+        var focused = glui.focusedControl;
+
+        var menu = this.submenu || this;
+        while (menu && menu != focused.parent) {
+            menu.close();
+            menu = menu.parentMenu;
         }
+
         return;
     };
 
@@ -108,9 +117,11 @@ include('label.js');
         command = command || item.label;
         var label = null;
         var template = this.itemTemplate;
-        if (item instanceof glui.Menu) {
+        var isMenu = item instanceof glui.Menu;
+        if (isMenu) {
             item.setVisible(false);
             this.submenus.push(item);
+            item.parentMenu = this;
             label = item.label;
             //template.style = this.style;  //, template.style);
         } else if (item instanceof glui.Control) {
@@ -122,7 +133,7 @@ include('label.js');
         }
         var ctrl = await glui.create(label, template, this);
         ctrl.command = command;
-        if (item instanceof glui.Menu) {
+        if (isMenu) {
             ctrl.submenu = item;
         }
         var width = this.itemTemplate.style.width || this.renderer.getTextBoundingBoxes([label])[0][2];
@@ -133,9 +144,9 @@ include('label.js');
         return ctrl;
     };
     Menu.prototype.build = async function build(data) {
-        if (this.dataSource) {
-            var dataSource =  this.dataField ? this.dataSource[this.dataField] : this.dataSource;
-            data = dataSource instanceof DataLink ? dataSource.obj : dataSource;
+        var dataSource = this.readDataSource();
+        if (dataSource) {
+            data = dataSource;
         } else {
             if (data && Array.isArray(data.items)) {
                 data = data.items;
@@ -158,8 +169,9 @@ include('label.js');
                     };
                     template.style.width = this.template.style.width;
                     template.style.height = this.template.style.height;
-                    if (this.parent instanceof glui.Menu) template.label = '►' + template.label;
-                    var menu = await glui.create('menu'+data[i].label, template, this);
+                    if (this.parentMenu) template.label = template.label + ' ►';
+                    var menu = await glui.create('menu'+data[i].label, template);
+                    this.add(menu);
                     await menu.build();
                 } else {
                     await this.add(item.label, item.command, item.key);
@@ -222,38 +234,51 @@ include('label.js');
         return res;
     };
 
-
     Menu.prototype.open = function open(item) {
         var result = false;
-        var submenu = item.submenu;
-        if (submenu.parent == this) {
-            // todo: check access
-            result = true;
+        if (item.submenu) {
+            var sm = item.submenu;
+            this.submenu = sm;
+            sm.setVisible(true);
             var cx = item.left, cy = item.top;
             if (this.layout == glui.Menu.layout.HORIZONTAL) {
                 cy += item.height;
             } else {
                 cx += item.width;
             }
-            if (cy < 0) cy = 0;
-            else if (cy + submenu.height > glui.height) cy = glui.height - submenu.height;
-            if (cx < 0) cx = 0;
-            else if (cx + submenu.width > glui.width) cx = glui.width - submenu.width;
-            submenu.move(cx - item.left + item.offsetLeft, cy - item.top + item.offsetTop, glui.Control.order.TOP);
-            submenu.setVisible(true);
-            submenu.render();
+            // cx += item.offsetLeft - item.left;
+            // cy += item.offsetTop - item.top;
+            // if (cy < 0) cy = 0;
+            // else if (cy + sm.height > glui.height) cy = glui.height - sm.height;
+            // if (cx < 0) cx = 0;
+            // else if (cx + sm.width > glui.width) cx = glui.width - sm.width;
+            sm.move(cx, cy, glui.Control.order.TOP);
+            //glui.setFocus(sm);
+            sm.render();
+            result = true;
         }
+
+        // var result = false;
+        // var submenu = item.submenu;
+        // if (submenu.parent == this) {
+        //     // todo: check access
+        //     result = true;
+        //     submenu.move(cx - item.left + item.offsetLeft, cy - item.top + item.offsetTop, glui.Control.order.TOP);
+        //     submenu.setVisible(true);
+        //     glui.setFocus(submenu);
+        //     this.submenu = submenu;
+        //     submenu.render();
+        // }
         return result;
     };
     Menu.prototype.close = function close() {
-        this.setVisible(false);
-        this.parent.submenu = null;
-        //glui.setFocus(this.parent);
-        // erase
-        ctrl = this.parent;
-        while (ctrl != glui.screen) {
-            ctrl.render();
-            ctrl = ctrl.parent;
+        if (this.submenu) {
+            this.submenu.close();
+            this.submenu = null;
+        }
+        if (this.parentMenu != null) {
+            this.setVisible(false);
+            //glui.setFocus(this.parent);
         }
         glui.repaint();
     };

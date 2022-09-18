@@ -147,7 +147,8 @@ include('renderer.js');
                 this.context.clip(region);
                 this.renderControl();
                 this.context.restore();
-            }            
+                this.lastFrame = glui.frame;
+            }
         }
     };
 

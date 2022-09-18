@@ -12,19 +12,25 @@ include('control.js');
 		this.step = 1;
 		this.isNormalized = false;
 		this.decimalDigits = 2;
-		
-		this.dataLink = new DataLink(this);
-		this.dataLink.addField('value');
-		// enforce updating control size
-		this.dataLink.addHandler('value', {
-			'target':this,
-			'fn':() => glui.Control.prototype.size.call(this, null, null, false),
-			'args':this
-		});
+		this.createDataLink();
 		ValueControl.base.constructor.call(this, id, template, parent, context);
     }
     extend(glui.Control, ValueControl);
 
+	ValueControl.prototype.createDataLink = function createDataLink() {
+		if (DataLink.is(this)) {
+			DataLink.removeHandler(this, h => h.field == 'value');
+			DataLink.removeHandler(this, h => h.field == '-');
+		} else {
+			DataLink(this);
+		}
+		DataLink.addHandler(this, 'value', {
+			'target':this,
+			'field':'-',
+			'fn':() => glui.Control.prototype.size.call(this, null, null, false),
+			'args':this
+		});
+	};
     ValueControl.prototype.getHandlers = function getHandlers() {
         var handlers = ValueControl.base.getHandlers.call(this);
         handlers.push({ name: 'change', topDown: false });
@@ -107,9 +113,8 @@ include('control.js');
 		}
 		//this.scale = 1.0;
 		if (!this.dataSource || !this.dataField) {
-			//var value = this.isNumeric ? 0 : '';
 			if (template.value != null) {
-				value = this.isNumeric ? Number(template.value) : template.value;
+				var value = this.isNumeric ? Number(template.value) : template.value;
 				this.setValue(value);
 			}			
 		}
@@ -120,89 +125,77 @@ include('control.js');
 		this.isNormalized = !!template.normalized;
 		return template;
     };
-	ValueControl.prototype.createMapping = function() {
-		var toValue = v => v;
-		var toSource = v => v;
-		this.dataLink.addHandler('value', { 'args':toValue }, true);
-		this.dataSource.addHandler(this.dataField, { 'args':toSource }, true);
-		// if (this.dataType == glui.ValueControl.DataTypes.Bool) {
-		// 	this.value = value ? this.template['true-value'] : this.template['false-value'];
-		// } else {
-		// 	if (this.isNumeric) {
-		// 		this.min = typeof this.dataSource.obj.min === 'number' ? this.dataSource.obj.min : this.min;
-		// 		this.max = typeof this.dataSource.obj.max === 'number' ? this.dataSource.obj.max : this.max;
-		// 		this.step = typeof this.dataSource.obj.step === 'number' ? this.dataSource.obj.step : this.step;
+	// ValueControl.prototype.createMapping = function() {
+	// 	var toValue = v => v;
+	// 	var toSource = v => v;
+	// 	this.dataLink.addHandler('value', { 'args':toValue }, true);
+	// 	this.dataSource.addHandler(this.dataField, { 'args':toSource }, true);
+	// 	// if (this.dataType == glui.ValueControl.DataTypes.Bool) {
+	// 	// 	this.value = value ? this.template['true-value'] : this.template['false-value'];
+	// 	// } else {
+	// 	// 	if (this.isNumeric) {
+	// 	// 		this.min = typeof this.dataSource.obj.min === 'number' ? this.dataSource.obj.min : this.min;
+	// 	// 		this.max = typeof this.dataSource.obj.max === 'number' ? this.dataSource.obj.max : this.max;
+	// 	// 		this.step = typeof this.dataSource.obj.step === 'number' ? this.dataSource.obj.step : this.step;
 
-		// 		this.value
-		// 	} else {
+	// 	// 		this.value
+	// 	// 	} else {
 
-		// 	}
-		// 		// calculate xform1() and xform2()
-		// 		// xform1 = 
-		// 		var min = typeof this.dataSource.obj.min === 'number' ? this.dataSource.obj.min : this.min;
-		// 		var max = typeof this.dataSource.obj.max === 'number' ? this.dataSource.obj.max : this.max;
-		// 		var step = typeof this.dataSource.obj.step === 'number' ? this.dataSource.obj.step : this.step;
-		// 		if (this.dataSource.obj.normalized != undefined) {
-		// 			this.isNormalized = this.dataSource.obj.normalized;
-		// 		}
-		// 		var fromDataSource = null;
-		// 		var toDataSource = null;
-		// 		if (this.isNormalized) {
-		// 			step /= (max - min);
-		// 			min = 0.0;
-		// 			max = 1.0;
-		// 			fromDataSource = this.toNormalized;
-		// 			toDataSource = this.fromNormalized;
-		// 		}
-		// 		this.min = min;
-		// 		this.max = max;
-		// 		this.step = step;
-		// 		// this.scale = (max - min)/(this.max - this.min)
-		// 		// // (x-min)/(max-min) = (x'-min')/(max'-min')
-		// 		// // x = (x'-min')(max-min)/(max'-min') + min
-		// 		// this.toSource = x => (x - this.min)*this.scale + min;
-		// 		// this.fromSource = x => (x - min)/this.scale + this.min
-		// 		// this.step = typeof this.dataSource.obj.step === 'number' ? this.fromSource(this.dataSource.obj.step) : this.parse(this.template.step) || this.step;
-		// 		value = this.parse(value);
-		// 	}
-		// }
-	};
+	// 	// 	}
+	// 	// 		// calculate xform1() and xform2()
+	// 	// 		// xform1 = 
+	// 	// 		var min = typeof this.dataSource.obj.min === 'number' ? this.dataSource.obj.min : this.min;
+	// 	// 		var max = typeof this.dataSource.obj.max === 'number' ? this.dataSource.obj.max : this.max;
+	// 	// 		var step = typeof this.dataSource.obj.step === 'number' ? this.dataSource.obj.step : this.step;
+	// 	// 		if (this.dataSource.obj.normalized != undefined) {
+	// 	// 			this.isNormalized = this.dataSource.obj.normalized;
+	// 	// 		}
+	// 	// 		var fromDataSource = null;
+	// 	// 		var toDataSource = null;
+	// 	// 		if (this.isNormalized) {
+	// 	// 			step /= (max - min);
+	// 	// 			min = 0.0;
+	// 	// 			max = 1.0;
+	// 	// 			fromDataSource = this.toNormalized;
+	// 	// 			toDataSource = this.fromNormalized;
+	// 	// 		}
+	// 	// 		this.min = min;
+	// 	// 		this.max = max;
+	// 	// 		this.step = step;
+	// 	// 		// this.scale = (max - min)/(this.max - this.min)
+	// 	// 		// // (x-min)/(max-min) = (x'-min')/(max'-min')
+	// 	// 		// // x = (x'-min')(max-min)/(max'-min') + min
+	// 	// 		// this.toSource = x => (x - this.min)*this.scale + min;
+	// 	// 		// this.fromSource = x => (x - min)/this.scale + this.min
+	// 	// 		// this.step = typeof this.dataSource.obj.step === 'number' ? this.fromSource(this.dataSource.obj.step) : this.parse(this.template.step) || this.step;
+	// 	// 		value = this.parse(value);
+	// 	// 	}
+	// 	// }
+	// };
 
 	ValueControl.prototype.dataBind = function(source, field) {
-		ValueControl.base.dataBind.call(this, source, field);
-		// a value control needs both, data-source and data-field
-		if (this.dataSource != null && this.dataSource.hasOwnProperty(this.dataField)) {
-			// initial read from data source
-			var value = this.dataSource[this.dataField];
-			if (typeof source.min == 'number') this.min = source.min;
-			if (typeof source.max == 'number') this.max = source.max;
-			if (typeof source.step == 'number') this.step = source.step;
-			this.createMapping();
-			// set value before linking to data source
-			this.dataLink.value = value;
-			// create link with data source
-			var toValue = this.dataLink.handlers.value[0].args;
-			var toSource = this.dataSource.handlers[this.dataField][0].args;
-			// this.dataLink.addHandler('value', { 'target':this.dataSource.obj, 'args':toSource });
-			// this.dataSource.addHandler(this.dataField, { 'target':this.dataSource.obj, 'args':toSource });
-			DataLink.addLink2(this.dataLink, 'value', this.dataSource, this.dataField, toValue, toSource);
-			// this.dataLink.addHandler('value', function() {
-			// 	if (this.renderer) {
-			// 		this.renderer.applyFont();
-			// 		this.renderer.setWidth(this.style.width);
-			// 		this.renderer.setHeight(this.style.height);
-			// 	}
-			// }, this);
+		if (ValueControl.base.dataBind.call(this, source, field)) {
+			// a value control needs both, data-source and data-field
+			if (this.dataSource != null && this.dataSource.hasOwnProperty(this.dataField)) {
+				// initial read from data source
+				var value = this.dataSource[this.dataField];
+				if (typeof source.min == 'number') this.min = source.min;
+				if (typeof source.max == 'number') this.max = source.max;
+				if (typeof source.step == 'number') this.step = source.step;
+				var toValue = DataLink.defaultXform;
+				var toSource = DataLink.defaultXform;
+				DataLink.sync(this, 'value', this.dataSource, this.dataField, toSource, toValue);
+				this.setValue(value);
+			}
 		}
         return this.dataSource;
 	};
-	ValueControl.prototype.setValue = function setValue(value) {
+	//#region value handling
+	ValueControl.prototype.checkValue = function checkValue(value) {
         var results = this.validate('value', value);
         if (results.length > 0) {
             value = results[0].value;
 		}
-
-		var oldValue = this.value;
 		this.isBlank = false;
 		if (this.isNumeric) {
 			if (typeof value !== 'number') {
@@ -222,11 +215,18 @@ include('control.js');
 				this.isBlank = true;
 			}
 		}
-		this.dataLink ? this.dataLink.value = value : this.value = value;
-		this.render();
+		return value;
+	};
+	ValueControl.prototype.setValue = function setValue(value) {
+		value = this.checkValue(value);
+		var oldValue = this.value;
+		this.value = value;
 		return oldValue;
 	};
-    ValueControl.prototype.normalize = function normalize() {
+	ValueControl.prototype.getValue = function getValue() {
+		return this.value;
+	};
+	ValueControl.prototype.normalize = function normalize() {
 // debugger
 //         if (this.isNumeric) {
 //             this.min = 0;
@@ -241,13 +241,19 @@ include('control.js');
 //         }
 		this.setValue(this.toNormalized(this.getValue()));
     };
-	ValueControl.prototype.getValue = function getValue() {
-		return this.dataSource && this.dataField ? this.dataSource[this.dataField] : this.value;
-	};
-    ValueControl.prototype.addValidation = function(field, check, message, fix) {
-		if (this.validations[field] == undefined) this.validations[field] = [];
-		this.validations[field].push(new ValueControl.Validation(message || `Validation error for '{field}'`, check, fix));
-	}
+    ValueControl.prototype.toNormalized = function toNormalized(value, oldValue, args) {
+		var range = this.max - this.min;
+		var v = (value - this.min)/range;
+		//args.target[args.field] = v;
+		return v;
+    };
+    ValueControl.prototype.fromNormalized = function fromNormalized(value, oldValue, args) {
+        var range = this.max - this.min;
+		var v = value*range + this.min;
+		//args.target[args.field] = v;
+		return v;
+    };
+	//#endregion
 	ValueControl.prototype.validate = function(field, value) {
 		if (value == undefined) value = this[field];
 		var results = [];
@@ -268,6 +274,10 @@ include('control.js');
 		}
 		return results;
 	};
+	ValueControl.prototype.addValidation = function(field, check, message, fix) {
+		if (this.validations[field] == undefined) this.validations[field] = [];
+		this.validations[field].push(new ValueControl.Validation(message || `Validation error for '{field}'`, check, fix));
+	};
 
 	ValueControl.prototype.validateKey = function validateKey(key) {
 		var result = true;
@@ -278,19 +288,6 @@ include('control.js');
 		 }
 		 return result;
 	};
-
-    ValueControl.prototype.toNormalized = function toNormalized(value, oldValue, args) {
-		var range = this.max - this.min;
-		var v = (value - this.min)/range;
-		//args.target[args.field] = v;
-		return v;
-    };
-    ValueControl.prototype.fromNormalized = function fromNormalized(value, oldValue, args) {
-        var range = this.max - this.min;
-		var v = value*range + this.min;
-		//args.target[args.field] = v;
-		return v;
-    };
 
 	ValueControl.Validation = function(message, check, fix) {	// bool check(field)
 		this.check = check;

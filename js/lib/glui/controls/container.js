@@ -86,7 +86,7 @@ include('renderer2d.js');
         var styleType = glui.schema.types.get(ctrl.type).attributes.get('style').type;
         styleType.merge(this.style, ctrl.style);
 
-        if (this.renderer) {
+        if (this.renderer && (!ctrl.renderer || ctrl.renderer.mode != this.renderer.mode)) {
             ctrl.setRenderer(this.renderer.mode, this.renderer.context);
         }
         return ctrl;
@@ -133,13 +133,18 @@ include('renderer2d.js');
         var dataSource = Container.base.dataBind.call(this, source, field);
         if (dataSource) {
             if (this.items.length > 0) {
-                var dataSource = new DataLink(this.dataSource[this.dataField]);
-                var keys = Object.keys(dataSource.obj);
-                var j = 0;
-                for (var i=0; i<this.items.length; i++) {
-                    if (!this.items[i].noBinding) {
-                        this.items[i].dataBind(dataSource, this.items[i].dataField || keys[j++].toString());
+                var dataSource = this.readDataSource();
+                if (typeof dataSource === 'object') {
+                    DataLink(this.dataSource[this.dataField]);
+                    var keys = Object.keys(dataSource);
+                    var j = 0;
+                    for (var i=0; i<this.items.length; i++) {
+                        if (!this.items[i].noBinding) {
+                            this.items[i].dataBind(dataSource, this.items[i].dataField || keys[j++].toString());
+                        }
                     }
+                } else {
+                    console.warn('Data source must be an object!');
                 }
             }
         }

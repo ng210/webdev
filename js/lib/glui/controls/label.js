@@ -9,7 +9,7 @@ include('renderer2d.js');
     extend(glui.Renderer2d, LabelRenderer2d);
 
     LabelRenderer2d.prototype.getBestSizeInPixel = function getBestSizeInPixel(isInner) {
-        var lines = this.getLines();
+        var lines = this.control.getLines();
         var boxes = this.getTextBoundingBoxes(lines);
         var w = 0, h = this.font.size * boxes.length;
         for (var i=0; i<boxes.length; i++) {
@@ -23,22 +23,8 @@ include('renderer2d.js');
         }
         return [Math.ceil(w), h];
     };
-    LabelRenderer2d.prototype.getLines = function getLines() {
-        var value = this.control.getValue();
-        if (value != undefined) {
-            if (this.control.isNumeric && value != '') {
-                lines = [value.toFixed(this.control.decimalDigits)];
-            } else {
-                lines = value.toString().split('\n');
-            }
-        } else {
-            lines = [];
-        }
-        return lines;
-    };
-
     LabelRenderer2d.prototype.renderControl = function renderControl() {
-        var lines = this.getLines();
+        var lines = this.control.getLines();
         var boxes = this.getTextBoundingBoxes(lines);
         var bgColor = this.backgroundColor || this.color;
         for (var i=0; i<lines.length; i++) {
@@ -62,6 +48,25 @@ include('renderer2d.js');
     //     return template;
     // };
     Label.prototype.createRenderer = mode => mode == glui.Render2d ? new LabelRenderer2d() : 'LabelRenderer3d';
+
+    Label.prototype.getLines = function getLines() {
+        var value = this.getValue();
+        if (value != undefined) {
+            if (this.isNumeric) {
+                if (typeof value === 'number') {
+                    lines = [value.toFixed(this.decimalDigits)];
+                } else {
+                    value = this.defaultValue;
+                }
+            } else {
+                lines = value.toString().split('\n');
+            }
+        } else {
+            lines = [];
+        }
+        return lines;
+    };
+
 
     glui.buildType({
         'name':'Label',
