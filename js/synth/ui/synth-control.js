@@ -61,7 +61,8 @@ include('/lib/glui/controls/container.js');
             }
             this.programs.dataBind(this.dataSource.soundBank);
             this.programs.build();
-            this.program.dataBind(synth, 'selectedProgram');
+            //this.program.dataBind(synth, 'selectedProgram');
+            this.program.dataBind(this.programs.titlebar, 'value');
             this.voices.dataBind(synth, 'voiceCount');
         }
     };
@@ -73,10 +74,12 @@ include('/lib/glui/controls/container.js');
             this.programs.render();
         } else if (ctrl.parent.isDescendant(this.programs)) {
             this.programs.titlebar.setValue(ctrl.getValue());
-            this.program.setValue(ctrl.getValue());
-            var ix = ctrl.parent.index * ctrl.parent.cellCount + ctrl.column.index;
-            this.selectedProgram = ix;
-            this.synth.setProgram(this.selectedProgram);
+            //this.program.setValue(ctrl.getValue());
+            if (Object.hasOwn(ctrl.parent, 'index')) {
+                var ix = ctrl.parent.index * ctrl.parent.cellCount + ctrl.column.index;
+                this.selectedProgram = ix;
+                this.synth.setProgram(this.selectedProgram);
+            }
             this.render();
         }
     };

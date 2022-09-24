@@ -1,13 +1,19 @@
 /* Play subsystem  */
-include('/lib/player/player-ext.js');
+include('/lib/player/player-adapter-ext.js');
 include('/lib/synth/synth-adapter-ext.js');
 include('/lib/data/stream.js');
 
 (function() {
     function Play() {
         this.sampleRate = 48000;
+        this.bpm = 0;
         this.player = Ps.Player.create();
-        this.synthAdapter = null;
+        DataLink.sync(this.player, 'refreshRate', this, 'bpm',
+            v => 3.75*v,
+            function(v) { v /= 3.75; this.setRefreshRate(v); return v; }
+        );
+        this.adapters = {};
+        this.state = {};
     }
 
     Play.prototype.createSynth = function(voiceCount) {
@@ -17,23 +23,30 @@ include('/lib/data/stream.js');
     };
 
     Play.prototype.loadSong = async function loadSong(url, errors) {
+        this.player.reset();
         if (url.endsWith('ssng')) {
             var res = await self.load(url);
             if (!res.error) {
                 Stream.isLittleEndian = true;
-                var results = await this.player.importScript(res.data);
+                var results = await this.player.adapter.importScript(res.data);
                 for (var i=0; i<results.length; i++) errors.push(new Error(results[i]));
             } else {
-                errors.push(res.error);
+                throw res.error;
             }
         } else {
             await this.player.load(url);
         }
-        this.synthAdapter = this.player.adapters.find(x => x.adapter.getInfo().id == psynth.SynthAdapter.getInfo().id);        
-    };
-
-    Play.prototype.setBpm = function setBpm(bpm) {
-        this.player.setRefreshRate(bpm/3.75);
+        // create adapter map and build state
+        this.state = {
+            'adapters': []
+        };
+        for (var i=0; i<this.player.adapters.length; i++) {
+            var adapter = this.player.adapters[i].adapter;
+            this.adapters[adapter.getInfo().name] = adapter;
+            //this.state.adapters[i] = adapter.getState();
+        }
+        this.synthAdapter = this.player.adapters.find(x => x.adapter.getInfo().id == psynth.SynthAdapter.getInfo().id);
+        //iterate(this.synthAdapter.adapter.devices, (ix, sy) => sy.setProgram(0));
     };
 
     Play.prototype.getAdapters = function getAdapters() {
@@ -56,11 +69,23 @@ include('/lib/data/stream.js');
     };
     Play.prototype.reset = function reset() {
         this.player.reset();
+        
+    };
+    Play.prototype.getState = function getState() {
+        this.state = {};
+        this.state.player = this.player.getState();
+    };
+
+    Play.prototype.saveState = function saveState() {
+        for (var i=0; i<this.player.adapters.length; i++) {
+            var adapter = this.player.adapters[i].adapter;
+            this.state.adapters[adapter.getInfo().name] = adapter.getState();
+        }
     };
 
     Play.initialize = async function initialize(app) {
         app.play = new Play();
-        Ps.Player.registerAdapter(Ps.Player);
+        Ps.Player.registerAdapter(Ps.PlayerAdapter);
         Ps.Player.registerAdapter(psynth.SynthAdapter);
     };
 

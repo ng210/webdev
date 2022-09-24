@@ -16,14 +16,17 @@ SynthApp.prototype.initialize = async function initialize() {
         await SynthApp.Play.initialize(this);
         // initialize ui
         await SynthApp.Ui.initialize(this);
+        this.ui.bpm.dataBind(this.play, 'bpm');
 
-        var result = await this.loadSong('./data/drums1.ssng')
-
+        // await this.loadSong('./data/drums1.ssng')
+        await this.loadSong('./data/default.ssng');
+        //await this.loadSong('./groove.ssng');
         
     } catch (err) {
         console.log('Error');
+        // display message box
         var msg = Array.isArray(err.message) ? err.message.join('\n') : err.message;
-        console.log(msg);
+        // console.log(msg);
         console.log(err);
     }
 
@@ -56,15 +59,19 @@ SynthApp.prototype.initialize = async function initialize() {
 SynthApp.prototype.loadSong = async function loadSong(url) {
     var errors = [];
     await this.play.loadSong(url, errors);
-    // add synths
-    var top = this.ui.controls.height;
-    for (var i=0; i<this.play.synthAdapter.adapter.devices.length; i++) {
-        var dev = this.play.synthAdapter.adapter.devices[i];
-        var synthUi = this.ui.createSynthUi(dev);
-        synthUi.move(0, top);
-        top += synthUi.height;
+    if (errors.length == 0) {
+        // add synths
+        var top = this.ui.controls.height;
+        for (var i=0; i<this.play.synthAdapter.adapter.devices.length; i++) {
+            var dev = this.play.synthAdapter.adapter.devices[i];
+            var synthUi = this.ui.createSynthUi(dev);
+            synthUi.move(0, top);
+            top += synthUi.height;
+        }
+        // set bpm
+        
+        // set sequences
     }
-    // set controls
     return errors;
 };
 
@@ -77,7 +84,7 @@ SynthApp.prototype.createSynth = function createSynth(voices) {
 SynthApp.prototype.oncommand = async function oncommand(e) {
     switch (e.command) {
         case 'OPEN': this.ui.openDialog('Open'); break;
-        case 'HELP': this.ui.openDialog('Help'); break;
+        case 'HELP': this.ui.openDialog('dlg-help'); break;
         default: console.log(`Unhandled command '${e.command}'`); break;
     }
 };
@@ -85,7 +92,6 @@ SynthApp.prototype.oncommand = async function oncommand(e) {
 SynthApp.prototype.onchange = function onchange(e, ctrl) {
     switch (ctrl.id) {
         case 'bpm':
-            console.log('change bpm');
             break;
         case 'seq':
             console.log('change seq');
@@ -96,8 +102,11 @@ SynthApp.prototype.onchange = function onchange(e, ctrl) {
 SynthApp.prototype.onclick = function onclick(e, ctrl) {
     switch (ctrl.id) {
         case 'restart':
+            this.play.stop();
+            this.play.reset();
         case 'start':
             this.play.start();
+            break;
         case 'pause':
             this.play.stop();
             break;

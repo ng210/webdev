@@ -1,0 +1,58 @@
+{
+    "type":"Dialog",
+    "title": "Help...",
+    "style": {
+        "font": "Arial 12",
+        "width":"24em", "height":"12em",
+        "align":"left middle",
+        "border": "#4080e0 1px outset",
+        "background-color": "#4080e0",
+        "color":"white"
+    },
+    "title-style": {
+        "font": "Arial 14",
+        "color": "#00e0ff",
+        "background-color": "#2040c0",
+        "border":"#2040c0 1px outset"
+    },
+    "items": [
+        {   "type": "Label",
+            "style": {
+                "left":"0.5em", "top":"0.5em",
+                "width":"6.4em", "height":"1.6em",
+                "align":"center middle",
+                "border":"#908070 1px outset",
+                "background-color": "#908070",
+                "background-image": "none"
+            },
+            "value": "Count"
+        },
+        {   "type": "Textbox",
+            "id": "Score",
+            "style": {
+                "left":"7.2em", "top":"0.5em",
+                "width":"6em", "height":"1.6em",
+                "align":"right middle",
+                "border":"#008000 1px inset",
+                "background-color": "#008000",
+                "background-image": "none"
+            },
+            "look": "textbox",
+            "data-type": "int",
+            "decimal-digits": 0,
+            "data-source": "data",
+            "data-field": "textbox2"
+        },
+        {   "type": "Button",
+            "id": "Ok",
+            "style": {
+                "left":"4em", "top":"2.4em",
+                "width":"6em", "height":"2em",
+                "align":"center middle",
+                "border":"#6080e0 2px",
+                "background-color": "#6080e0"
+            },
+            "value": "Ok"
+        }
+    ]
+}

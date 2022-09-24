@@ -7,8 +7,7 @@
         "z-index": 10,
         "border": "#4080e0 1px outset",
         "font": "Arial 14px normal",
-        "background-image": "./ui/res/images/bg1.png",
-        "background-repeat": "repeat-x repeat-y",
+        "background-image": "none",
         "background-color": "#3060c0"
     },
     "items": [

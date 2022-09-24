@@ -27,7 +27,7 @@ include('./synth-control.js');
         'controls-template':'./ui/res/templates/controls.json',
         'synth-template':   './ui/res/templates/synth-h.json',
         // dialogs
-
+        'dlg-help':         './ui/res/dialogs/help.json',
         // preload images
         'synth-png':        './ui/res/images/synth-h-template.png',
         'control-bg':       './ui/res/images/control-bg.png',
@@ -49,8 +49,16 @@ include('./synth-control.js');
         }        
     };
 
-    Ui.prototype.openDialog = function openDialog(name) {
+    Ui.prototype.openDialog = async function openDialog(name) {
         console.log(`Open dialog '${name}'`);
+        var dlg = glui.create(name, this.resources[name], this.main, this.app);
+        var cx = (glui.width - dlg.width)/2;
+        var cy = (glui.height - dlg.height)/2;
+        dlg.move(cx, cy, glui.Control.order.TOP);
+        var icon_close = dlg.titlebar.items[1].items[0];
+        await icon_close.applyStyle({ 'background-image':'./ui/res/images/icon_close.png' });
+        await dlg.open();
+        return dlg;
         //await glui.OpenSaveDialog({'title': 'Open image...', 'filters': ['*.png', '*.jpg'], 'init': function() { this.move(100, 100);} });
     };
 
@@ -58,8 +66,6 @@ include('./synth-control.js');
         var synthUi = glui.create('Sy', this.resources['synth-template'], this.main, this);
         synthUi.dataBind(synth);
         this.synthUis.push(synthUi);
-        // create soundbank selector
-
         return synthUi;
     };
 
@@ -100,15 +106,15 @@ include('./synth-control.js');
 
         await app.ui.loadResources();
         // load templates and images
-        glui.scale.x = 0.75;
-        glui.scale.y = 0.75;
+        glui.scale.x = 0.6;
+        glui.scale.y = 0.6;
         await glui.initialize(app, true);
 
         var r = app.ui.resources;
         app.ui.main = glui.create('main', r['main-template'], null, app);
         app.ui.controls = glui.create('main-controls', r['controls-template'], app.ui.main, app.ui);
         app.ui.menu = glui.create('main-menu', r['menu-template'], app.ui.main, app); await app.ui.menu.build(r['menu']);
-
+        app.ui.bpm = app.ui.controls.items.find(i => i.id == 'bpm');
         app.ui.onresize();
         glui.animate();
 

@@ -44,13 +44,13 @@
         { "id":"osc1amp",   "style": { "left": "003px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
         { "id":"osc1fre",   "style": { "left": "029px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 0 },
         { "id":"osc1psw",   "style": { "left": "056px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"osc1tune",  "style": { "left": "083px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 1 },
+        { "id":"osc1tune",  "style": { "left": "083px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
         { "id":"osc1wave",  "style": { "left": "110px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
 
         { "id":"osc2amp",   "style": { "left": "141px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
         { "id":"osc2fre",   "style": { "left": "168px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 0 },
         { "id":"osc2psw",   "style": { "left": "195px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"osc2tune",  "style": { "left": "222px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 1 },
+        { "id":"osc2tune",  "style": { "left": "222px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
         { "id":"osc2wave",  "style": { "left": "249px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
 
         { "id":"lfo1amp",   "style": { "left": "280px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
@@ -59,30 +59,30 @@
         { "id":"lfo2amp",   "style": { "left": "338px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
         { "id":"lfo2fre",   "style": { "left": "365px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 0 },
 
-        { "id":"env1atk",   "style": { "left": "396px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"env1dec",   "style": { "left": "423px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
+        { "id":"env1atk",   "style": { "left": "396px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
+        { "id":"env1dec",   "style": { "left": "423px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
         { "id":"env1sus",   "style": { "left": "450px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"env1rel",   "style": { "left": "477px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
+        { "id":"env1rel",   "style": { "left": "477px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
 
         { "id":"env4amp",   "style": { "left": "508px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"env4atk",   "style": { "left": "535px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"env4dec",   "style": { "left": "562px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
+        { "id":"env4atk",   "style": { "left": "535px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
+        { "id":"env4dec",   "style": { "left": "562px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
         { "id":"env4sus",   "style": { "left": "589px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"env4rel",   "style": { "left": "616px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
+        { "id":"env4rel",   "style": { "left": "616px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
 
         { "id":"env2amp",   "style": { "left": "647px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"env2atk",   "style": { "left": "674px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"env2dec",   "style": { "left": "701px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
+        { "id":"env2atk",   "style": { "left": "674px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
+        { "id":"env2dec",   "style": { "left": "701px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
         { "id":"env2sus",   "style": { "left": "728px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"env2rel",   "style": { "left": "755px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
+        { "id":"env2rel",   "style": { "left": "755px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
 
         { "id":"flt1mode",  "style": { "left": "786px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
-        { "id":"flt1cut",   "style": { "left": "813px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
+        { "id":"flt1cut",   "style": { "left": "813px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
         { "id":"flt1res",   "style": { "left": "840px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
         { "id":"env3amp",   "style": { "left": "870px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"env3atk",   "style": { "left": "897px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"env3dec",   "style": { "left": "924px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
+        { "id":"env3atk",   "style": { "left": "897px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
+        { "id":"env3dec",   "style": { "left": "924px", "top":"049px" }, "type": "Textbox", "data-type":"int" },
         { "id":"env3sus",   "style": { "left": "951px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 },
-        { "id":"env3rel",   "style": { "left": "978px", "top":"049px" }, "type": "Textbox", "data-type":"float", "decimal-digits": 2 }
+        { "id":"env3rel",   "style": { "left": "978px", "top":"049px" }, "type": "Textbox", "data-type":"int" }
     ]
 }
