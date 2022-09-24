@@ -189,7 +189,7 @@ include('label.js');
         var dataSource = Textbox.base.dataBind.call(this, source, field);
         DataLink.addHandler(this, 'value', {
             'target':this, 'field':'lines',
-            'fn':Textbox.prototype.valueToLines,
+            'fn':this.valueToLines,
             'args':null
         });
         return dataSource;
@@ -197,7 +197,7 @@ include('label.js');
 
     Textbox.prototype.advanceValue = function advanceValue(n) {
         var delta = n*this.step;
-        var oldValue = this.value;
+        var oldValue = this.getValue();
         var value = oldValue + delta;
         // validate and adjust value
         oldValue = this.setValue(value);

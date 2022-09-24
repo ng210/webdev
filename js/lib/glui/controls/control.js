@@ -384,18 +384,13 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
         var path = getObjectPath(this, 'parent', ancestor);
         return path[0] == ancestor;
     };
-    Control.prototype.applyStyles = async function applyStyles(styles)  {
+    Control.prototype.applyStyle = async function applyStyle(style)  {
         var isChanged = false;
-        if (Array.isArray(this.tags)) {
-            for (var i=0; i<this.tags.length; i++) {
-                var style = styles[this.tags[i]];
-                if (style) {
-                    for (var p in style) {
-                        if (style.hasOwnProperty(p)) {
-                            this.style[p] = style[p];
-                            isChanged = true;
-                        }
-                    }
+        if (style) {
+            for (var p in style) {
+                if (Object.hasOwn(this.style, p)) {
+                    this.style[p] = style[p];
+                    isChanged = true;
                 }
             }
         }

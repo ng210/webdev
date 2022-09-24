@@ -86,7 +86,9 @@ if (!obj.handlers_) debugger
         handler.field = handler.field || field;
         handler.fn = handler.fn || DataLink.defaultHandlers.set;
         handler.args = handler.args || DataLink.defaultXform;
-        asFirst ? handlers.unshift(handler) : handlers.push(handler);
+        if (!obj.handlers_[field].find(h => h.target == handler.target && h.fn == handler.fn && h.args == handler.args)) {
+            asFirst ? handlers.unshift(handler) : handlers.push(handler);
+        }
     };
     DataLink.removeHandler = function removeHandler(obj, filter) {
         if (Object.hasOwn(obj, 'handlers_')) {

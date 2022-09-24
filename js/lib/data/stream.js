@@ -144,6 +144,35 @@
         }
         return this;
     };
+    Stream.prototype.writeInt8 = function writeInt8(value) {
+        ensureSize(this, 4);
+        this.view.setInt8(this.writePosition++, value);
+        if (this.writePosition > this.length) {
+            this.length = this.writePosition;
+        }
+        return this;
+    };
+
+    Stream.prototype.writeInt16 = function writeInt16(value) {
+        ensureSize(this, 8);
+        this.view.setInt16(this.writePosition, value, this.isLittleEndian);
+        this.writePosition += 2;
+        if (this.writePosition > this.length) {
+            this.length = this.writePosition;
+        }
+        return this;
+    };
+
+    Stream.prototype.writeInt32 = function writeInt32(value) {
+        ensureSize(this, 16);
+        this.view.setInt32(this.writePosition, value, this.isLittleEndian);
+        this.writePosition += 4;
+        if (this.writePosition > this.length) {
+            this.length = this.writePosition;
+        }
+        return this;
+    };
+
 
     Stream.prototype.writeFloat32 = function writeFloat32(value) {
         ensureSize(this, 16);
@@ -186,6 +215,24 @@
         var r = this.readPosition;
         this.readPosition += 4;
         return this.view.getUint32(r, this.isLittleEndian);
+    };
+    Stream.prototype.readInt8 = function readInt8(pos) {
+        this.readPosition = pos != undefined ? pos : this.readPosition;
+        return this.view.getInt8(this.readPosition++);
+    };
+
+    Stream.prototype.readInt16 = function readInt16(pos) {
+        this.readPosition = pos != undefined ? pos : this.readPosition;
+        var r = this.readPosition;
+        this.readPosition += 2;
+        return this.view.getInt16(r, this.isLittleEndian);
+    };
+
+    Stream.prototype.readInt32 = function readInt32(pos) {
+        this.readPosition = pos != undefined ? pos : this.readPosition;
+        var r = this.readPosition;
+        this.readPosition += 4;
+        return this.view.getInt32(r, this.isLittleEndian);
     };
 
     Stream.prototype.readFloat32 = function readFloat32(pos) {
