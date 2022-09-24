@@ -1,6 +1,6 @@
 include('/lib/data/dictionary.js');
 include('/lib/player/iadapter-ext.js');
-include('/lib/player/player.js');
+include('/lib/player/player-adapter.js');
 include('/lib/utils/syntax.js');
 include('/lib/type/schema.js');
 include('/lib/player/script-processor.js');
@@ -8,19 +8,19 @@ include('/lib/player/script-processor.js');
 // include('/lib/glui/glui-lib.js');
 
 (async function() {
-    implements(Ps.Player, Ps.IAdapterExt);
+    implements(Ps.PlayerAdapter, Ps.IAdapterExt);
 
-    Ps.Player.prototype.makeCommand = function(command)  {
+    Ps.PlayerAdapter.prototype.makeCommand = function makeCommand(command)  {
         var stream = new Stream(128);
         if (typeof command == 'string') {
-            command = Ps.Player.Commands[command.toUpperCase()];
+            command = Ps.PlayerAdapter.Commands[command.toUpperCase()];
         }
         stream.writeUint8(command);
         var inputStream = null;
         if (arguments[1] instanceof Ps.Sequence) inputStream = arguments[1].stream;
         else if (arguments[1] instanceof Stream) inputStream = arguments[1];
         switch (command) {
-            case Ps.Player.Commands.Assign:
+            case Ps.PlayerAdapter.Commands.Assign:
                 if (inputStream) {
                     stream.writeStream(inputStream, arguments[2], 4);
                 } else {
@@ -30,18 +30,18 @@ include('/lib/player/script-processor.js');
                     stream.writeUint8(arguments[4]);    // loop count
                 }
                 break;
-            case Ps.Player.Commands.Tempo:
+            case Ps.PlayerAdapter.Commands.Tempo:
                 if (inputStream) {
                     stream.writeStream(inputStream, arguments[2], 4);
                 } else {
                     stream.writeFloat32(arguments[1]);
                 }
                 break;
-            case Ps.Player.Commands.EOF:
-                //stream.writeUint8(Ps.Player.Commands.EOF);
+            case Ps.PlayerAdapter.Commands.EOF:
+                //stream.writeUint8(Ps.PlayerAdapter.Commands.EOF);
                 break;
-            case Ps.Player.Commands.EOS:
-                //stream.writeUint8(Ps.Player.Commands.EOS);
+            case Ps.PlayerAdapter.Commands.EOS:
+                //stream.writeUint8(Ps.PlayerAdapter.Commands.EOS);
                 break;
         }
 
@@ -49,13 +49,13 @@ include('/lib/player/script-processor.js');
         return stream;
     };
 
-    Ps.Player.prototype.getSymbol = function getSymbol(name) {
-        return Ps.Player.symbols[name];
+    Ps.PlayerAdapter.prototype.getSymbol = function getSymbol(name) {
+        return Ps.PlayerAdapter.symbols[name];
     };
 
-    Ps.Player.prototype.getSymbols = () => Ps.Player.symbols;
+    Ps.PlayerAdapter.prototype.getSymbols = () => Ps.PlayerAdapter.symbols;
 
-    Ps.Player.prototype.importScript = async function(script) {
+    Ps.PlayerAdapter.prototype.importScript = async function(script) {
         var errors = [];
         var scriptProcessor = new ScriptProcessor();
         var syntax = new Syntax(scriptProcessor.grammar, 0);
@@ -110,23 +110,24 @@ include('/lib/player/script-processor.js');
                 }
 
                 // create datablocks
-                this.datablocks = [];
+                this.player.datablocks = [];
                 for (var i=0; i<scriptProcessor.datablockInfo.length; i++) {
-                    this.datablocks.push(scriptProcessor.createStream(scriptProcessor.datablockInfo[i].data));
+                    this.player.datablocks.push(scriptProcessor.createStream(scriptProcessor.datablockInfo[i].data));
                 }
 
                 // create and prepare adapters
-                await this.prepareContext(this.datablocks[0]);
+                await this.prepareContext(this.player.datablocks[0]);
                 for (var i=0; i<scriptProcessor.adapterInfo.length; i++) {
                     var ai = scriptProcessor.adapterInfo[i];
                     var adapterTypeName = scriptProcessor.parseValue(ai.adapter).value;
                     var datablockId = scriptProcessor.parseValue(ai.datablock).value;
                     var adapter = this;
                     if (adapterTypeName != this.getInfo().name) {
-                        adapter = this.addAdapter(Ps.Player.getAdapterType(adapterTypeName), datablockId);
+                        adapter = this.player.addAdapter(Ps.Player.getAdapterType(adapterTypeName), datablockId);
                     }
-                    await adapter.prepareContext(this.datablocks[datablockId]);
+                    await adapter.prepareContext(this.player.datablocks[datablockId]);
                 }
+                this.player.setRefreshRate(this.player.refreshRate);
 
                 // ensure master sequence is at #0
                 var seqId = scriptProcessor.sequenceInfo.findIndex(x => scriptProcessor.parseValue(x.adapter).value == this.getInfo().name);
@@ -143,7 +144,7 @@ include('/lib/player/script-processor.js');
                 for (var i=0; i<scriptProcessor.sequenceInfo.length; i++) {
                     var si = scriptProcessor.sequenceInfo[i];
                     var adapterTypeName = scriptProcessor.parseValue(si.adapter).value;
-                    var adapter = this.adapters.find(x => x.adapter.getInfo().name == adapterTypeName).adapter;
+                    var adapter = this.player.adapters.find(x => x.adapter.getInfo().name == adapterTypeName).adapter;
                     var frames = [];
                     for (var j=0; j<si.frames.length; j++) {
                         var frj = si.frames[j];
@@ -161,30 +162,30 @@ include('/lib/player/script-processor.js');
                         frames.push(frame);
                     }
                     var sequence = Ps.Sequence.fromFrames(frames, adapter);
-                    this.sequences.push(sequence);
+                    this.player.sequences.push(sequence);
                 }
-                this.masterChannel.assign(0, this.sequences[0]);
+                this.player.masterChannel.assign(0, this.player.sequences[0]);
             }
         }
         return errors;
     };
 
-    Ps.Player.prototype.exportScript = function() {
+    Ps.PlayerAdapter.prototype.exportScript = function() {
         var arr = [];
 
         return arr.join('\n');
     };
 
-    Ps.Player.schema = await Schema.build( { 'use-default-types': true } );
+    Ps.PlayerAdapter.schema = await Schema.build( { 'use-default-types': true } );
 
-    var types = Ps.Player.schema.types;
-    Ps.Player.symbols = {
-        'Ps.Player': { 'type':types.get('uint8'), 'value': Ps.Player.Device.PLAYER },
-        'Ps.Channel': { 'type':types.get('uint8'), 'value': Ps.Player.Device.CHANNEL },
-        'Ps.EOF': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.EOF },
-        'Ps.EOS': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.EOS },
-        'Ps.Assign': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.Assign },
-        'Ps.Tempo': { 'type':types.get('uint8'), 'value': Ps.Player.Commands.Tempo }
+    var types = Ps.PlayerAdapter.schema.types;
+    Ps.PlayerAdapter.symbols = {
+        'Ps.Player': { 'type':types.get('uint8'), 'value': Ps.PlayerAdapter.Device.PLAYER },
+        'Ps.Channel': { 'type':types.get('uint8'), 'value': Ps.PlayerAdapter.Device.CHANNEL },
+        'Ps.EOF': { 'type':types.get('uint8'), 'value': Ps.PlayerAdapter.Commands.EOF },
+        'Ps.EOS': { 'type':types.get('uint8'), 'value': Ps.PlayerAdapter.Commands.EOS },
+        'Ps.Assign': { 'type':types.get('uint8'), 'value': Ps.PlayerAdapter.Commands.Assign },
+        'Ps.Tempo': { 'type':types.get('uint8'), 'value': Ps.PlayerAdapter.Commands.Tempo }
     };
 
     // Ps.Player.createExt = async function createExt() {

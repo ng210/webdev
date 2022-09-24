@@ -17,8 +17,8 @@ include('/lib/data/stream.js');
     };
     Sequence.prototype.writeDelta = function(delta) { this.stream.writeUint16(delta); };
     Sequence.prototype.writeCommand = function(cmd) { this.stream.writeUint8(cmd); };
-    Sequence.prototype.writeEOF = function() { this.stream.writeUint8(Ps.Player.Commands.EOF); };
-    Sequence.prototype.writeEOS = function() { this.stream.writeUint8(Ps.Player.Commands.EOS); };
+    Sequence.prototype.writeEOF = function() { this.stream.writeUint8(Ps.PlayerAdapter.Commands.EOF); };
+    Sequence.prototype.writeEOS = function() { this.stream.writeUint8(Ps.PlayerAdapter.Commands.EOS); };
     Sequence.prototype.writeString = function(str) { this.stream.writeString(str); };
     Sequence.prototype.writeUint8 = function(value) { this.stream.writeUint8(value); };
     Sequence.prototype.writeUint16 = function(value) { this.stream.writeUint16(value); };
@@ -39,13 +39,13 @@ include('/lib/data/stream.js');
             while (true) {
                 // read command code byte
                 cmd = this.getUint8(cursor++);
-                if (cmd > Ps.Player.Commands.EOS) {
+                if (cmd > Ps.PlayerAdapter.Commands.EOS) {
                     var command = this.adapter.makeCommand(cmd, this, cursor);
                     command.buffer = command.buffer.slice(0, command.length);
                     frame.commands.push(command);
                     cursor += command.length - 1;
                 } else {
-                    if (cmd == Ps.Player.Commands.EOF && frame.commands.length == 0) {
+                    if (cmd == Ps.PlayerAdapter.Commands.EOF && frame.commands.length == 0) {
                         var command = new Stream([cmd]);
                         frame.commands.push(command);
                         console.log(command.hexdump());
@@ -54,7 +54,7 @@ include('/lib/data/stream.js');
                 }
             }
             frames.push(frame);
-            if (cmd === Ps.Player.Commands.EOS) {
+            if (cmd === Ps.PlayerAdapter.Commands.EOS) {
                 break;
             }
         }

@@ -21,10 +21,7 @@ include('./sequence.js');
         this.frames = null;
         this.device = null;
         this.adapter = null;
-        this.isActive = false;
-        this.currentTick = 0;
-        this.loopCount = 1;
-        this.cursor = 1;
+        this.reset();
     };
 
     Channel.prototype.assign = function(deviceId, sequence) {
@@ -40,7 +37,7 @@ include('./sequence.js');
         this.run(0);
     };
 
-    Channel.prototype.reset = function() {
+    Channel.prototype.restart = function restart() {
         this.cursor = 1;
         if (--this.loopCount > 0) {
             this.currentTick = 0;
@@ -50,7 +47,31 @@ include('./sequence.js');
         }
     };
 
-    Channel.prototype.run = function(ticks) {
+    Channel.prototype.reset = function reset() {
+        this.isActive = false;
+        this.currentTick = 0;
+        this.loopCount = 1;
+        this.cursor = 1;
+        if (this.device != null) {
+            this.device.reset();
+        }
+    };
+    Channel.prototype.getState = function getState() {
+        return {
+            'isActive': false,
+            'currentTick': 0,
+            'loopCount': 1,
+            'cursor': 1
+        };
+    };
+    Channel.prototype.setState = function setState(state) {
+        this.isActive = state.isActive;
+        this.currentTick = state.currentTick;
+        this.loopCount = state.loopCount;
+        this.cursor = state.cursor;
+    };
+
+    Channel.prototype.run = function run(ticks) {
         var isRestarted = false;
         while (this.isActive) {
             isRestarted = false;
@@ -64,16 +85,16 @@ include('./sequence.js');
                     if (cmd > 1) {
                         this.cursor = this.adapter.processCommand(this, cmd);   //this.device, cmd, this.sequence, this.cursor);
                     } else {
-                        if (cmd === Ps.Player.Commands.EOS) {
+                        if (cmd === Ps.PlayerAdapter.Commands.EOS) {
                             // end of sequence
-                            this.reset();
+                            this.restart();
                             isRestarted = this.isActive;
                         }
                         // cmd == 0: end of frame
                         break;
                     }
                 }
-                if (cmd === Ps.Player.Commands.EOS) {
+                if (cmd === Ps.PlayerAdapter.Commands.EOS) {
                     // end of sequence
                     //this.currentTick = 0;
                     break;

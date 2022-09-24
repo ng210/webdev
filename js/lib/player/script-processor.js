@@ -260,66 +260,6 @@ ScriptProcessor.prototype.mergeString = function mergeString(s, t) {
     return t;
 };
 
-ScriptProcessor.prototype.parseValue = function parseValue(term) {
-    var types = Ps.Player.schema.types;
-    var data = {
-        'type': null,
-        'value': null
-    };
-    if (typeof term === 'string') {
-        var start = 0, length = term.length;
-        if (term.charAt(0) == '"') {
-            data.type = types.get('string');
-        } else {
-            // "..."        => string
-            // b:213        => uint8 (byte)
-            // w:2313       => uint16 (word)
-            // d:1073741824 => uint32 (dword)
-            // f:1.3        => float
-            start = 2;
-            if (term.charAt(1) == ':') {
-                var p = term.charAt(0);
-                switch (p) {
-                    case 'b': data.type = types.get('uint8'); break;
-                    case 'w': data.type = types.get('uint16'); break;
-                    case 'd': data.type = types.get('uint32'); break;
-                    case 'f': data.type = types.get('float'); break;
-                    default:
-                        throw new Error('Invalid prefix ' + p);
-                }
-            }
-        }
-        if (data.type == null) {
-            // 1.3          => float
-            // 23           => uint8
-            // <symbol>     => lookup symbol
-            data.value = Number(term);
-            if (!isNaN(data.value)) {
-                data.type = term.indexOf('.') == -1 ? types.get('uint8') : types.get('float');
-            } else {
-                // look up term
-                var s = this.symbols[term];
-                if (s != undefined) {
-                    data.type = s.type;
-                    data.value = s.value;
-                } else {
-                    throw new Error(`Unknown symbol '${term}'`);
-                }
-            }
-        } else {
-            data.value = data.type.parse(term.substr(start, length));
-        }
-    } else if (typeof term === 'number') {
-        data.type = types.get('uint8');
-        data.value = term;
-    } else {
-        debugger
-        throw new Error('Invalid input!');
-    }
-    if (data.value) data.value = data.value.valueOf();
-    return data;
-};
-
 ScriptProcessor.prototype.createStream = function createStream(data) {
     var stream = new Stream(4096);
     if (!Array.isArray(data)) throw new Error('ScriptProcessor.createStream input is not array!');
@@ -328,6 +268,9 @@ ScriptProcessor.prototype.createStream = function createStream(data) {
         if (v.type != null) {
             switch (v.type.name) {
                 case 'string': stream.writeString(v.value); break;
+                case 'int8': stream.writeInt8(v.value); break;
+                case 'int16': stream.writeInt16(v.value); break;
+                case 'int32': stream.writeInt32(v.value); break;
                 case 'uint8': stream.writeUint8(v.value); break;
                 case 'uint16': stream.writeUint16(v.value); break;
                 case 'uint32': stream.writeUint32(v.value); break;
@@ -340,6 +283,95 @@ ScriptProcessor.prototype.createStream = function createStream(data) {
     var result = new Stream(stream.length);
     result.writeStream(stream, 0, stream.length);
     return result;
+};
+ScriptProcessor.prototype.parseNumber = function parseNumber(term, data) {
+    // b:213        => uint8 (byte)
+    // w:2313       => uint16 (word)
+    // d:1073741824 => uint32 (dword)
+    // f:1.3        => float
+    var result = false;
+    if (term.charAt(1) == ':') {
+        var p = term.charAt(0);
+        var bits = { 'b': 8, 'w':16, 'd':32 }[p];
+        var value = Number(term.substring(2));
+        if (bits != undefined) {
+            // try int
+            data.type = Ps.PlayerAdapter.schema.types.get('uint'+bits);
+            if (!data.type.validate(value)) {
+                // try uint
+                data.type = Ps.PlayerAdapter.schema.types.get('int'+bits);
+                var result = [];
+                if (!data.type.validate(value, result)) {
+                    throw new Error(result);
+                }
+            }
+            data.value = value;
+            result = true;
+        } else {
+            throw new Error(`Invalid number prefix '${p}'!`);
+        }
+    } else {
+        data.value = Number(term);
+        if (!isNaN(data.value)) {
+            data.type = term.indexOf('.') == -1 ? this.getIntType(data.value) : Ps.PlayerAdapter.schema.types.get('float');
+            result = true;
+        }
+    }
+    return result;
+};
+ScriptProcessor.prototype.getIntType = function getIntType(n) {
+    var type = null;
+    var types = ['uint8', 'int8', 'uint16', 'int16', 'uint32', 'int32']
+    var result = false;
+    for (var i=0; i<types.length; i++) {
+        type = Ps.PlayerAdapter.schema.types.get(types[i]);
+        if (result = type.validate(n)) {
+            break;
+        }
+    }
+    if (!result) {
+        throw new Error(`Invalid number '${n}'`);
+    }
+    return type;
+};
+
+ScriptProcessor.prototype.parseValue = function parseValue(term) {
+    var types = Ps.PlayerAdapter.schema.types;
+    var data = {
+        'type': null,
+        'value': null
+    };
+    // term can be
+    // - number
+    // - string
+    //   -literal "xxx"
+    //   - number literal w/o prefix
+    //   - keyword
+    if (typeof term === 'number') {
+        data.type = Number.isInteger(term) ? this.getIntType(term) : Ps.PlayerAdapter.schema.types.get('float');
+        data.value = term;
+    } else if (typeof term === 'string') {
+        if (term.charAt(0) == '"') {
+            data.type = types.get('string');
+            data.value = term.substring(1, term.lastIndexOf('"'));
+        } else {
+            if (!this.parseNumber(term, data)) {
+                // look up term
+                var s = this.symbols[term];
+                if (s != undefined) {
+                    data.type = s.type;
+                    data.value = s.value;
+                } else {
+                    throw new Error(`Unknown symbol '${term}'`);
+                }
+            }
+        }
+    } else {
+        debugger
+        throw new Error('Invalid input!');
+    }
+    if (data.value) data.value = data.value.valueOf();
+    return data;
 };
 
 ScriptProcessor.prototype.addSymbol = function addSymbol(n) {

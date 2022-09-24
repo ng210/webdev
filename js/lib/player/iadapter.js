@@ -35,6 +35,26 @@ include('/lib/data/stream.js');
     IAdapter.prototype.createDeviceImpl = function(deviceType, initData) { throw new Error('Not implemented!'); };
     IAdapter.prototype.processCommand = function(channel, command) { throw new Error('Not implemented!'); };
 
+    IAdapter.prototype.reset = function reset() {
+        for (var i=0; i<this.devices.length; i++) {
+            this.devices[i].reset();
+        }
+    };
+
+	IAdapter.prototype.getState = function getState() {
+        var state = {
+            'devices': []
+        };
+		for (var i=0; i<this.devices.length; i++) {
+            state.devices[i] = this.devices[i].getState();
+        }
+        return state;
+	};
+	IAdapter.prototype.setState = function setState(state) {
+		for (var i=0; i<this.devices.length; i++) {
+            this.devices[i].setState(state.devices[i]);
+        }
+	};
     // IAdapter.getInfo = function() { throw new Error('Not implemented!'); };
     // IAdapter.create = function(player) { throw new Error('Not Implemented!'); };
 
