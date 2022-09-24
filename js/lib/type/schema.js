@@ -242,6 +242,9 @@ include('/lib/data/dictionary.js');
             new IntType('uint8',    basicTypes.int, { 'min': 0, 'max': 255 }),
             new IntType('uint16',   basicTypes.int, { 'min': 0, 'max': 65535 }),
             new IntType('uint32',   basicTypes.int, { 'min': 0, 'max': 4294967296 }),
+            new IntType('int8',     basicTypes.int, { 'min': -128, 'max': 127 }),
+            new IntType('int16',    basicTypes.int, { 'min': -32768, 'max': 32767 }),
+            new IntType('int32',    basicTypes.int, { 'min': -2147483648, 'max': 2147483647 }),
             new MapType('KeyValue', basicTypes.map, { 'keyType':basicTypes.string, 'valueType':basicTypes.int })
         ];
         types.push(...derivedTypes);
