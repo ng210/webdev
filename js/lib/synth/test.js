@@ -1,5 +1,5 @@
 include('/lib/player/player-lib.js');
-include('/lib/player/player-ext.js');
+include('/lib/player/player-adapter-ext.js');
 include('/lib/ge/sound.js');
 //include('/lib/glui/glui-lib.js');
 include('./synth.js');
@@ -116,8 +116,8 @@ include('/lib/synth/synth-adapter-ext.js');
         var sample = 0.0;
         var env = synth.voices[0].envelopes[0];
         env.amp.set(0.5); env.dc.set(0.5);
-        env.atk.set(1.0); env.dec.set(1.0);
-        env.sus.set(0.5); env.rel.set(1.0);
+        env.atk.set(255); env.dec.set(255);
+        env.sus.set(0.5); env.rel.set(255);
 
         sample = env.run(1.0);
         test('Envelope should be in IDLE phase', ctx => {
@@ -129,24 +129,25 @@ include('/lib/synth/synth-adapter-ext.js');
         env.setGate(1.0);
         test('Envelope should enter UP phase (slope up)', ctx => ctx.assert(env.phase, '=', psynth.Env.phase.UP));
 
-        // forward 4 seconds
-        for (var i=0; i<=4*SAMPLE_RATE; i++) sample = env.run(1.0);
-        test('Envelope should switch to DEC phase after 4 seconds', ctx => {
-            ctx.assert(sample, '=', 1.0);
+        // forward 1 seconds
+        for (var i=0; i<SAMPLE_RATE; i++) sample = env.run(1.0);
+        test('Envelope should switch to DEC phase after 1 second', ctx => {
+            ctx.assert(sample.toPrecision(4), '=', '1.000');
             ctx.assert(env.phase, '=', psynth.Env.phase.DEC);
         });
 
-        // forward 2 secs
-        for (var i=0; i<=2*SAMPLE_RATE+1; i++) sample = env.run(1.0);
-        test('Envelope should switch to SUS phase after 2 seconds', ctx => {
-            ctx.assert(sample, '=', 0.75);
+        // forward 0.5 secs
+        var susLvl = env.amp.value*env.sus.value + env.dc.value;
+        for (var i=0; i<SAMPLE_RATE; i++) sample = env.run(1.0);
+        test('Envelope should reach SUS level after 1.5 seconds', ctx => {
+            ctx.assert(sample, '=', susLvl);
             ctx.assert(env.phase, '=', psynth.Env.phase.SUS);
         });
 
         // forward 10 secs
-        for (var i=0; i<=20*SAMPLE_RATE+1; i++) sample = env.run(1.0);
+        for (var i=0; i<=10*SAMPLE_RATE+1; i++) sample = env.run(1.0);
         test('Envelope should remain in SUS phase until slope down', ctx => {
-            ctx.assert(sample, '=', 0.75);
+            ctx.assert(sample, '=', susLvl);
             ctx.assert(env.phase, '=', psynth.Env.phase.SUS);
         });
 
@@ -291,7 +292,7 @@ include('/lib/synth/synth-adapter-ext.js');
         frames.push(new Ps.Frame().setDelta( 1).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 15, 150)));
         frames.push(new Ps.Frame().setDelta( 1).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 15,   0)));
 
-        frames.push(new Ps.Frame().setDelta( 1).addCommand(adapter.makeCommand(Ps.Player.EOS)));
+        frames.push(new Ps.Frame().setDelta( 1).addCommand(adapter.makeCommand(Ps.PlayerAdapter.EOS)));
 
         list.push(frames);
         //#endregion
@@ -310,7 +311,7 @@ include('/lib/synth/synth-adapter-ext.js');
         frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 48, 240)));
         frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(psynth.SynthAdapter.Commands.SetNote, 48,   0)));
 
-        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(Ps.Player.EOS)));
+        frames.push(new Ps.Frame().setDelta( 4).addCommand(adapter.makeCommand(Ps.PlayerAdapter.EOS)));
 
         list.push(frames);
         //#endregion
@@ -321,18 +322,17 @@ include('/lib/synth/synth-adapter-ext.js');
     function createSequences(player) {
         var sequences = [];
         // MASTER sequence
-        var sequence = new Ps.Sequence(player.adapters[Ps.Player.info.id].adapter);
+        var sequence = new Ps.Sequence(player.adapters[Ps.PlayerAdapter.info.id].adapter);
         sequence.writeHeader();
         // Frame #1
         sequence.writeDelta(0);
-        sequence.stream.writeStream(player.makeCommand(Ps.Player.Commands.ASSIGN, 1, 1, 0, 4));
-        //sequence.stream.writeStream(player.makeCommand(Ps.Player.Commands.TEMPO, 4*120/60));
+        sequence.stream.writeStream(player.adapter.makeCommand(Ps.PlayerAdapter.Commands.Assign, 1, 1, 0, 4));
+        //sequence.stream.writeStream(player.makeCommand(Ps.PlayerAdapter.Commands.Tempo, 4*120/60));
         sequence.writeEOF();
         // Frame #2
         sequence.writeDelta(2*32);
         sequence.writeEOS();
         sequences.push(sequence);
-
         var adapter = player.adapters[psynth.SynthAdapter.getInfo().id].adapter;
         var frameList = createFrames(adapter);
         sequence = Ps.Sequence.fromFrames(frameList[0], adapter);
@@ -344,14 +344,15 @@ include('/lib/synth/synth-adapter-ext.js');
     }
 
     async function createDatablocks(adapter) {
-        var playerAdapterInit = new Stream([1, Ps.Player.Device.CHANNEL]);
+        var playerAdapterInit = new Stream([1, Ps.PlayerAdapter.Device.CHANNEL]);
 
         var synthAdapterInit = new Stream(128)
             .writeUint16(SAMPLE_RATE)
             .writeUint8(1)      // 1 device
                 .writeUint8(psynth.SynthAdapter.Device.SYNTH)
                 .writeUint8(1)  // voice count
-                .writeUint8(2); // preset in data block #2
+                .writeUint8(2)  // preset in data block #2
+                .writeUint8(0); // initial program
 
         // create preset in data block #2
         var synthPreset = new Stream(128);
@@ -431,7 +432,7 @@ include('/lib/synth/synth-adapter-ext.js');
         var synth = adapter.devices[0];
         test('A synth should have been created', ctx => ctx.assert(synth instanceof psynth.Synth, 'true'));
         test('Synth should have 1 voice', ctx => ctx.assert(synth.voices.length, '=', 1));
-        test('Synth\'s sound bank should be data block #2', ctx => ctx.assert(synth.soundBank, '=', player.datablocks[2]));
+        test('Synth\'s sound bank should be data block #2', ctx => ctx.assert(synth.soundBankStream, '=', player.datablocks[2]));
     }
 
     async function test_synthAdapter_makeCommands() {
@@ -532,12 +533,12 @@ include('/lib/synth/synth-adapter-ext.js');
         synth.isActive = true;
 
         // create test channel
-        var channel = player.createDevice(Ps.Player.Device.CHANNEL, null);
+        var channel = player.adapter.createDevice(Ps.PlayerAdapter.Device.CHANNEL, null);
         channel.assign(0, player.sequences[1]);
         channel.loopCount = 4;
 
         var stream = Ps.Player.createBinaryData(player);
-        //stream.toFile('test-data.bin', 'application/octet-stream');
+        // .toFile('test-data.bin', 'application/octet-stream');
 
         await run((left, right, bufferSize) => channelBasedFillBuffer(left, right, bufferSize, channel));
     }
@@ -545,7 +546,7 @@ include('/lib/synth/synth-adapter-ext.js');
     async function test_complete_player() {
         message('Test complete player', 1);
         // register adapter types
-        Ps.Player.registerAdapter(Ps.Player);
+        Ps.Player.registerAdapter(Ps.PlayerAdapter);
         Ps.Player.registerAdapter(psynth.SynthAdapter);
         // create player
         var player = Ps.Player.create();
@@ -553,17 +554,17 @@ include('/lib/synth/synth-adapter-ext.js');
         await player.load('./res/test-data.bin');
         test('Player should have 2 adapters: playerAdapter and synthAdapter', ctx => {
             ctx.assert(Object.keys(player.adapters).length, '=', 2);
-            ctx.assert(Object.values(player.adapters)[0].adapter instanceof Ps.Player, 'true');
+            ctx.assert(Object.values(player.adapters)[0].adapter instanceof Ps.PlayerAdapter, 'true');
             ctx.assert(Object.values(player.adapters)[1].adapter instanceof psynth.SynthAdapter, 'true');
         });
         test('Player should have 2 channels', ctx => {
-            ctx.assert(player.channels.length, '=', 2);
+            ctx.assert(player.adapter.channels.length, '=', 2);
         });
         test('Player adapter should have 3 devices: 1 player, 2 channels', ctx => {
-            ctx.assert(player.devices.length, '=', 3);
-            ctx.assert(player.devices[0], '=', player);
-            ctx.assert(player.devices[1].constructor, '=', Ps.Channel);
-            ctx.assert(player.devices[2].constructor, '=', Ps.Channel);
+            ctx.assert(player.adapter.devices.length, '=', 3);
+            ctx.assert(player.adapter.devices[0], '=', player);
+            ctx.assert(player.adapter.devices[1].constructor, '=', Ps.Channel);
+            ctx.assert(player.adapter.devices[2].constructor, '=', Ps.Channel);
         });
         var synthAdapter = player.adapters[psynth.SynthAdapter.getInfo().id].adapter;
         test('Synth adapter should have 1 device: Synth', ctx => {
@@ -571,7 +572,15 @@ include('/lib/synth/synth-adapter-ext.js');
             ctx.assert(synthAdapter.devices[0] instanceof psynth.Synth, 'true');
         });
 
-        await run((left, right, bufferSize) => playerBasedFillBuffer(left, right, bufferSize, player));
+        _isStopped = false;
+        await button('Start');
+        sound.start();
+        addButton('Stop', e => _isStopped = true);
+        await poll( () => !player.isActive || _isStopped);
+        sound.stop();
+
+
+        //await run((left, right, bufferSize) => playerBasedFillBuffer(left, right, bufferSize, player));
 
         // player.start();
         // await poll( () => !player.isActive, 100);
@@ -579,7 +588,7 @@ include('/lib/synth/synth-adapter-ext.js');
 
     async function test_synthAdapter_importscript() {
         header('Test import script');
-        Ps.Player.registerAdapter(Ps.Player);
+        Ps.Player.registerAdapter(Ps.PlayerAdapter);
         Ps.Player.registerAdapter(psynth.SynthAdapter);
         //var res = await load('./res/test-script.txt')
         var res = await load('./res/drums1.ssng')
@@ -588,7 +597,7 @@ include('/lib/synth/synth-adapter-ext.js');
         var player = Ps.Player.create();
         var results = null;
         Stream.isLittleEndian = true;
-        await measure('import script', async function() { results = await player.importScript(res.data) }, 1);
+        await measure('import script', async function() { results = await player.adapter.importScript(res.data) }, 1);
         test('Should load script successfully', ctx => {
             ctx.assert(results, 'empty');
             for (var i=0; i<results.length; i++) {
@@ -802,17 +811,17 @@ include('/lib/synth/synth-adapter-ext.js');
     // }
 
     var tests = () => [
-        test_freqTable,
-        test_control_labels,
-        test_create_synth,
-        test_run_env,
-        test_osc_run,
-        test_generate_sound_simple,
-        test_synthAdapter_makeSetCommandForContoller,
-        test_synthAdapter_prepareContext,
-        test_synthAdapter_makeCommands,
-        test_run_channel,
-        test_complete_player,
+        // test_freqTable,
+        // test_control_labels,
+        // test_create_synth,
+        // test_run_env,
+        // test_osc_run,
+        // test_generate_sound_simple,
+        // test_synthAdapter_makeSetCommandForContoller,
+        // test_synthAdapter_prepareContext,
+        // test_synthAdapter_makeCommands,
+        // test_run_channel,
+        // test_complete_player,
         test_synthAdapter_importscript,
         // test_synthAdapterToDataSeries/*, test_synthAdapterFromDataSeries, test_synth_Ui_binding, test_synth_fromPreset*/
         // test_synth_ui

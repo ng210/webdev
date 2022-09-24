@@ -16,8 +16,22 @@ include('./input.js');
         this.res = controls.res;
         this.mod = controls.mod;
         this.mode = controls.mode;
+
+        this.createCutoffTable();
     }
     
+    Filter.prototype.reset = function reset(input) {
+        for (var i=0; i<3; i++) {
+            this.ai[i] = .0;
+            this.bi[i] = .0;
+            this.ci[i] = .0;
+            this.ui[i] = .0;
+            this.vi[i] = .0;
+        }
+
+        this.lp = [.0, .0];
+        this.hp = [.0, .0];
+    };
     Filter.prototype.run = function run(input) {
         // Apply filter
         var gain = 1.0/this.ai[0];
@@ -46,7 +60,7 @@ include('./input.js');
     Filter.prototype.onchange = function onchange(cut) {
         // Update filter coefficients
         var res = (this.res.value < 0.000001) ? 1.0: 1.0 - this.res.value;
-        var e = (this.cut.value + this.mod.value * cut)/2;
+        var e = (Filter.cutoffTable[this.cut.value] + this.mod.value * cut)/2;
         var g = -res * e;
         var b0 = e*e;
         this.bi[0] = this.bi[1] = b0; this.bi[2] = 2*b0;
@@ -60,11 +74,18 @@ include('./input.js');
     Filter.createControls = function createControls() {
         return {
             amp: new psynth.PotF32(0, 1, .0),   // not used
-            cut:  new psynth.PotF8(0, 1, .0),
+            cut: new psynth.Pot(0, 255, 0),
             res: new psynth.PotF8(0, 1, .0),
             mod: new psynth.PotF8(0, 1, .0),
             mode: new psynth.Pot(0, 7, 1)
         };
+    };
+
+    Filter.cutoffTable = null;
+    Filter.prototype.createCutoffTable = function createCutoffTable() {
+        if (Filter.cutoffTable == null && this.parent.smpRate) {
+            Filter.cutoffTable = psynth.createBezierTable(0.85, 255, y => 0.005 + y*0.995);
+        }
     };
 
     Filter.modes = {

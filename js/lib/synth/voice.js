@@ -26,6 +26,21 @@ include('./filter.js')
         this.filter = new psynth.Filter(parent, parent.controls.flt1);
     }
 
+    Voice.prototype.reset = function reset() {
+        this.velocity.set(0);
+        for (var i=0; i<this.envelopes.length; i++) {
+            this.envelopes[i].reset();
+        }
+
+        for (var i=0; i<this.lfos.length; i++) {
+            this.lfos[i].reset();
+        }
+
+        this.oscillators[0].reset();
+        this.oscillators[1].reset();
+
+        this.filter.reset();
+    };
     Voice.prototype.setNote = function(note, velocity) {
         this.note.value = note;
         for (var i=0; i<this.lfos.length; i++) {

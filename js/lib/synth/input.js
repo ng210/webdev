@@ -33,6 +33,15 @@ include('./psynth.js');
     Pot.prototype.setFromStream = function setFromStream(stream) {
         this.set(stream.readUint8());
     };
+    /* ********************************************************************* */
+    function PotI(min, max, value) {
+        this.init(min, max, (max-min)/100, value);
+    }
+    extend(Pot, PotI);
+
+    PotI.prototype.setFromStream = function setFromStream(stream) {
+        this.set(stream.readInt8());
+    };
 
     /* ********************************************************************* */
     function PotF8(min, max, value) {
@@ -54,6 +63,7 @@ include('./psynth.js');
 
     publish(PotBase, 'PotBase', psynth);
     publish(Pot, 'Pot', psynth);
+    publish(PotI, 'PotI', psynth);
     publish(PotF8, 'PotF8', psynth);
     publish(PotF32, 'PotF32', psynth);
 })();

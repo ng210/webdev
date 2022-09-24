@@ -32,5 +32,21 @@
     // c = pow(2, 1/12); f = pow(c, pitch)*ref_freq (=C0)
     psynth.p2f = p => p == 0 ? 0.0 : Math.pow(2, p/12) * psynth.C;
 
+    psynth.createBezierTable = function createBezierTable(px, steps, transform) {
+        var arr = new Array(steps+1);
+        if (typeof transform !== 'function') {
+            transform = (y, i) => y;
+        }
+        var py = 1 - px;
+        var ax = 1 - 2*px, ay = 1 - 2*py;
+        var bx = 2*px, by = 2*py;
+        for (var i=0; i<=steps; i++) {
+            var x = i/steps;
+            var r = (-bx + Math.sqrt(bx*bx + 4*ax*x))/(2*ax);
+            var y = r*r*ay + by*r;
+            arr[i] = transform(y, i);
+        }
+        return arr;
+    };
     publish(psynth, 'psynth');
 })();

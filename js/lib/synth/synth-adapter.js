@@ -5,7 +5,6 @@ include('/lib/ge/sound.js');
 (function() {
 	function SynthAdapter(player) {
 		SynthAdapter.base.constructor.call(this, player);
-		this.player = player;
 		this.frame = 0;
 		this.samplePerFrame = 0;
 	}
@@ -28,7 +27,7 @@ include('/lib/ge/sound.js');
 				if (voiceCount != 0) {
 					device = new psynth.Synth(sound.sampleRate, voiceCount);
 					device.setSoundBank(this.player.datablocks[initData.readUint8()]);
-					device.setProgram(0);
+					device.setProgram(initData.readUint8());
 				}
 				break;
 			case psynth.SynthAdapter.Device.DELAY:
@@ -46,7 +45,7 @@ include('/lib/ge/sound.js');
         var cursor = channel.cursor;
 		switch (command) {
 			case psynth.SynthAdapter.Commands.SetNote:
-				device.setNote(sequence.getUint8(cursor++), sequence.getUint8(cursor++)/256);
+				device.setNote(sequence.getUint8(cursor++), sequence.getUint8(cursor++)/255);
 				break;
 			case psynth.SynthAdapter.Commands.SetUint8:
 				device.setControl(sequence.getUint8(cursor++), sequence.getUint8(cursor++));
@@ -104,7 +103,7 @@ include('/lib/ge/sound.js');
 			var frameInt = Math.floor(this.frame);
 			if (frameInt == 0) {
 				if (!player.run(1)) {
-					player.reset();
+					player.restart();
                     player.run(0)
 				}
 				this.frame += this.samplePerFrame;

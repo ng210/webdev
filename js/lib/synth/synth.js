@@ -7,8 +7,6 @@ include('voice.js');
     function Synth(smpRate, voiceCount) {
         this.smpRate = smpRate;
         this.omega = psynth.theta / smpRate;
-        this.isActive = false;
-        this.nextVoice = 0;
         this.label = '';
         // create controls
         this.createControls();
@@ -18,8 +16,20 @@ include('voice.js');
         this.setVoiceCount(voiceCount);
         this.soundBank = null;
         this.soundBankStream = null;
-        this.selectedProgram = '';
+        this.selectedProgram = -1;
+        this.isActive = false;
+        this.nextVoice = 0;
     }
+    Synth.prototype.reset = function reset() {
+        this.isActive = false;
+        this.nextVoice = 0;
+        for (var i=0; i<this.voiceCount; i++) {
+            var v = this.voices[i];
+            if (v.isActive) {
+                v.reset();
+            }
+        }
+    };
     Synth.prototype.setVoiceCount = function setVoiceCount(voiceCount) {
         var oldCount = this.voices.length;
         if (oldCount < voiceCount) {
@@ -70,7 +80,6 @@ include('voice.js');
         //throw new Error('voice not found!');
     };
     Synth.prototype.setControl = function(controlId, value) {
-debugger
         this.getControl(controlId).set(value);
         //console.log('setcontrol:', controlId, value);
     };
@@ -109,7 +118,7 @@ debugger
             
             var offset = this.soundBank[id].offset;
             var count = sb.readUint8(offset);
-            this.selectedProgram = this.soundBank[id].name;
+            this.selectedProgram = id;
             for (var i=0; i<count; i++) {
                 var iid = sb.readUint8();
                 var ctrl = this.getControl(iid);
@@ -118,7 +127,12 @@ debugger
             }
         }
     };
-
+    Synth.prototype.getState = function getState() {
+        return this.selectedProgram;
+    };
+    Synth.prototype.setState = function setState(state) {
+        this.setProgram(state);
+    };
     Synth.prototype.createControls = function createControls() {
         this.controls = {
             amp: new psynth.PotF8(0, 1, .8),
@@ -142,7 +156,7 @@ debugger
         this.controls.env4.amp.max = 5000;
         this.controls.env4.dc.max = 5000;
         this.controls.flt1.mode.init(1, 7, 1);
-        this.controls.flt1.cut.set(0.0);
+        this.controls.flt1.cut.set(0);
 
         this.idToControl = [];
         var keys1 = Object.keys(this.controls);
