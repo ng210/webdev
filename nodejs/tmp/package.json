@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/ng210/heroku",
   "dependencies": {
-    "express": "^4.16.4",
+    "express": "^4.18.2",
     "extjs": "^0.1.0"
   }
 }
