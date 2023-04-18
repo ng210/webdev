@@ -1,9 +1,6 @@
 const fs = require('fs');
 
-console.log('NODE_PATH='+process.env.NODE_PATH)
-console.log('jslib='+process.env.jslib)
-
-require('nodejs/nodejs.js');
+require('../../nodejs/nodejs.js');
 include('./test-api.js');
 
 async function main(args, errors) {

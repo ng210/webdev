@@ -1,12 +1,41 @@
 // DO NOT FORGET TO SET THE NODE_PATH ENV.VARIABLE
 // TO USE A CUSTOM JSLIB PATH SET IT AS ENV.VARIABLE
-
 const fs = require('fs');
 const http = require('http');
 require('url');
 const path = require('path');
 //const { getHeapCodeStatistics, getHeapSnapshot } = require('v8');
 global.self = global;
+global.mainName = path.basename(require.main.filename, '.js');
+
+//#region setup environment
+function loadEnvFile() {
+    var fileList = fs.readdirSync(process.cwd());
+    var candidateEnvFile = null;
+    for (var i=0; i<fileList.length; i++) {
+        if (fileList[i].endsWith('.env')) {
+            if (candidateEnvFile == null || fileList[i] == global.mainName + '.env') {
+                candidateEnvFile = fileList[i];
+            }
+        }
+    }
+    if (candidateEnvFile != null) {
+        console.log('Env file found: ' + candidateEnvFile);
+        var content = fs.readFileSync(candidateEnvFile, { 'encoding':'utf8', });
+        lines = content.split('\r');
+        for (var i=0; i<lines.length; i++) {
+            var tokens = lines[i].split('=');
+            var envName = tokens[0].trim();
+            var envValue = tokens[1].trim();
+            console.log(`SET '${envName}'='${envValue}'`)
+            process.env[envName] = envValue;
+        }
+        
+    }
+}
+
+loadEnvFile();
+
 global.jsLib = process.env.jslib || path.resolve(__dirname, '..');
 console.log('jslib: ' + jsLib);
 
@@ -15,6 +44,14 @@ global.DBGLVL = 0;
 require(jsLib+'/base/base.js');
 console.log('require base lib');
 
+global.appUrl = new Url(`file://${path.dirname(require.main.filename).replace(/\\/g, '/')}`);
+global.baseUrl = new Url(`file://${path.resolve(jsLib, '..').replace(/\\/g, '/')}`);
+console.log('BaseUrl: ' + baseUrl.toString());
+console.log('AppUrl: ' + appUrl.toString());
+
+//#endregion
+
+//#region emulate AJAX
 function _processContent(contentType, data) {
     var response = data;
     switch (contentType) {
@@ -125,11 +162,7 @@ ajax.send = function send(options) {
 
     return res;
 };
-
-global.appUrl = new Url(`file://${path.dirname(require.main.filename).replace(/\\/g, '/')}`);
-global.baseUrl = new Url(`file://${path.resolve(jsLib, '..').replace(/\\/g, '/')}`);
-console.log('BaseUrl: ' + baseUrl.toString());
-console.log('AppUrl: ' + appUrl.toString());
+//#endregion
 
 // (async function() {
 //     var tests = [
@@ -159,7 +192,6 @@ global.btoa = function btoa(text) {
 global.atob = function atob(code) {
     return Buffer.from(code, 'base64').toString('binary');
 };
-
 
 global.run = async function run(main) {
     poll(async function() {

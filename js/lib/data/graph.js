@@ -180,7 +180,7 @@
         });
         var path = null;
         if (links[end.id] != null) {
-            var path = [];
+            path = [];
             var link = links[end.id];
             while (link != null) {
                 path.push(link);

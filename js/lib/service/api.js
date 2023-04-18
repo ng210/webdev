@@ -434,7 +434,7 @@ if (ISNODEAPP) {
                                     switch (call.response.mimeType) {
                                         case 'application/json':
                                             try {
-                                                if (body) {
+                                                if (body != undefined) {
                                                     body = JSON.stringify(body);
                                                 }
                                             } catch (err) {

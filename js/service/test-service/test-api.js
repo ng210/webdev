@@ -15,7 +15,7 @@ include('/lib/service/api.js');
     TestApi.prototype.post_bind = function post_bind(res1, res2, req, resp) {
         var res = createResponse(this);
         res.res1 = res1;
-        res.res1 = res2;
+        res.res2 = res2;
         return res;
     };
     TestApi.prototype.get_stats = function get_stats(id, req, resp) {

@@ -442,47 +442,125 @@ print_tree(table.indices.getAt(0).data);
         var obj1 = { id: 1, name: 'Joe', age: 32 };
         var obj2 = { id: 2, name: 'Jane', age: 30 };
         var obj3 = { id: 3, name: 'Ryu', age: 26, addName: function addName(name) { return `${this.name}-${name}(${this.id})`; } };
+        var dl1 = DataLink.create(obj1);
+        var dl2 = DataLink.create(obj2);
+        var dl3 = DataLink.create(obj3);
         var transform = value => `${value.charAt(0).toUpperCase() + value.substr(1)}`;
 
-        DataLink(obj1);
-        DataLink.addHandler(obj1, 'name', { 'target':obj2, 'args':transform });
-        DataLink.addHandler(obj1, 'name', { 'target':obj3, 'args':obj3.addName });
-        obj1.name = 'jack';
-        message(obj1.name);
-        test('Should change obj1.name', ctx => ctx.assert(obj1.name, '=', 'jack'));
-        message(obj2.name);
-        test('Should change obj2.name with global transform', ctx => ctx.assert(obj2.name, '=', 'Jack'));
-        message(obj3.name);
-        test('Should change obj3.name with local transform', ctx => ctx.assert(obj3.name, '=', 'Ryu-jack(3)'));
+        message('Write, linked write', 1);
+        dl1.addField('name');
+        test('Should return value of linked object\'s property', ctx => ctx.assert(obj1.name, '=', dl1.name));
+        dl1.name = 'John';
+        test('Should change value of linked object\'s property', ctx => ctx.assert(obj1.name, '=', 'John'));
 
-        DataLink.link(obj2, 'name', obj3, 'name', obj3.addName);
-        obj3.name = 'Ryu';
-        obj2.name = 'San';
-        message(`${obj2.name} and ${obj3.name}`);
-        test('Should link obj2.name to obj3.name', ctx => {
-            ctx.assert(obj2.name, '=', 'San');
-            ctx.assert(obj3.name, '=', 'Ryu-San(3)');
-        });
-        DataLink.removeHandler(obj1, x => x.field == 'name');
-        DataLink.removeHandler(obj2, x => x.field == 'name');
-        DataLink.sync(obj1, 'name', obj2, 'name');
-        DataLink.link(obj2, 'name', obj3, 'name');
-        test('Should sync the names of obj1 and obj2', ctx => {
-            obj1.name = 'Jill';
-            message(`${obj1.name} and ${obj2.name}`);
-            ctx.assert(obj1.name, '=', 'Jill');
-            ctx.assert(obj2.name, '=', 'Jill');
-            obj2.name = 'Joseph';
-            message(`${obj1.name} and ${obj2.name}`);
-            ctx.assert(obj1.name, '=', 'Joseph');
-            ctx.assert(obj2.name, '=', 'Joseph');
-        });
-        test('Should propagte the change to obj3.name', ctx => {
-            obj3.name = 'Jack';
-            obj1.name = 'Jill';
-            message(obj3.name);
-            ctx.assert(obj3.name, '=', 'Jill');
-        });
+        dl2.addField('name', null, transform);
+        dl2.name = 'janet';
+        test('Should write transformed (global) value into linked object\'s property', ctx => ctx.assert(obj2.name, '=', 'Janet'));
+
+        dl3.addField('name', obj3, obj3.addName);
+        dl3.addField('id');
+        dl3.name = 'Kyu';
+        test('Should write transformed (local) value into linked object\'s property', ctx => ctx.assert(obj3.name, '=', 'Ryu-Kyu(3)'));
+
+        dl1.addHandler('name', obj2, 'name', (context, fieldName, value) => context[fieldName] = value.toLowerCase());
+        dl1.name = 'JAMES';
+        test('Should change value of linked object\'s property directly', ctx => ctx.assert(obj1.name, '=', 'JAMES'));
+        test('Should write transformed value of 2nd linked object\'s property directly', ctx => ctx.assert(obj2.name, '=', 'james'));
+
+        obj3.name = 'RYU';
+        dl2.addHandler('name', dl3, 'name', (context, fieldName, value) => context[fieldName] = value.toLowerCase());
+        dl2.name = 'jACOB';
+        test('Should change value of linked object\'s property via DataLink', ctx => ctx.assert(obj2.name, '=', 'JACOB'));
+        test('Should write transformed value of 2nd linked object\'s property via DataLink', ctx => ctx.assert(obj3.name, '=', 'RYU-jacob(3)'));
+
+        TestConfig.indent--;
+        message('Cascading cyclic write');
+
+        obj1.name = 'Joe';
+        obj2.name = 'John';
+        obj3.name = 'Jane';
+        dl1 = DataLink.create(obj1);
+        dl2 = DataLink.create(obj2);
+        dl3 = DataLink.create(obj3);
+        dl1.addField('name');
+        dl1.addHandler('name', dl2);
+        dl2.addField('name');
+        dl1.addHandler('name', dl3);
+        dl3.addField('name');
+        dl1.addHandler('name', dl1);
+
+        dl1.name = 'James';
+        test('Should change value of 2nd linked object\'s property', ctx => ctx.assert(obj2.name, '=', 'James'));
+        test('Should change value of 3rd linked object\'s property', ctx => ctx.assert(obj3.name, '=', 'James'));
+        test('Should change value of directly linked object\'s property', ctx => ctx.assert(obj1.name, '=', 'James'));
+
+        message('Create link', 1);
+        obj1.name = 'Joe';
+        obj2.name = 'John';
+        dl1 = DataLink.create(obj1);
+        dl2 = DataLink.create(obj2);
+        dl1.addField('name');
+        dl2.addField('name');
+        dl1.addLink('name', dl2, 'name', transform);
+        dl1.name = 'james';
+        test('Should change value of object\'s property', ctx => ctx.assert(obj1.name, '=', 'james'));
+        test('Should change value of linked object\'s property', ctx => ctx.assert(obj2.name, '=', 'James'));
+        TestConfig.indent--;
+
+        message('Create sync', 1);
+        obj1.name = 'Joe';
+        obj2.name = 'John';
+        dl1 = DataLink.create(obj1);
+        dl2 = DataLink.create(obj2);
+        dl1.addField('name');
+        dl2.addField('name');
+        dl1.addSync('name', dl2, 'name', v => v.toUpperCase(), v => v.toLowerCase());
+        dl1.name = 'james';
+        test('Should change value of object\'s property', ctx => ctx.assert(obj1.name, '=', 'james'));
+        test('Should change value of linked object\'s property', ctx => ctx.assert(obj2.name, '=', 'JAMES'));
+
+        TestConfig.indent--;
+
+
+        // DataLink(obj1);
+        // DataLink.addHandler(obj1, 'name', { 'target':obj2, 'args':transform });
+        // DataLink.addHandler(obj1, 'name', { 'target':obj3, 'args':obj3.addName });
+        // obj1.name = 'jack';
+        // message(obj1.name);
+        // test('Should change obj1.name', ctx => ctx.assert(obj1.name, '=', 'jack'));
+        // message(obj2.name);
+        // test('Should change obj2.name with global transform', ctx => ctx.assert(obj2.name, '=', 'Jack'));
+        // message(obj3.name);
+        // test('Should change obj3.name with local transform', ctx => ctx.assert(obj3.name, '=', 'Ryu-jack(3)'));
+
+        // DataLink.link(obj2, 'name', obj3, 'name', obj3.addName);
+        // obj3.name = 'Ryu';
+        // obj2.name = 'San';
+        // message(`${obj2.name} and ${obj3.name}`);
+        // test('Should link obj2.name to obj3.name', ctx => {
+        //     ctx.assert(obj2.name, '=', 'San');
+        //     ctx.assert(obj3.name, '=', 'Ryu-San(3)');
+        // });
+        // DataLink.removeHandler(obj1, x => x.field == 'name');
+        // DataLink.removeHandler(obj2, x => x.field == 'name');
+        // DataLink.sync(obj1, 'name', obj2, 'name');
+        // DataLink.link(obj2, 'name', obj3, 'name');
+        // test('Should sync the names of obj1 and obj2', ctx => {
+        //     obj1.name = 'Jill';
+        //     message(`${obj1.name} and ${obj2.name}`);
+        //     ctx.assert(obj1.name, '=', 'Jill');
+        //     ctx.assert(obj2.name, '=', 'Jill');
+        //     obj2.name = 'Joseph';
+        //     message(`${obj1.name} and ${obj2.name}`);
+        //     ctx.assert(obj1.name, '=', 'Joseph');
+        //     ctx.assert(obj2.name, '=', 'Joseph');
+        // });
+        // test('Should propagte the change to obj3.name', ctx => {
+        //     obj3.name = 'Jack';
+        //     obj1.name = 'Jill';
+        //     message(obj3.name);
+        //     ctx.assert(obj3.name, '=', 'Jill');
+        // });
 
         // test("Should add link to the field 'name' without transform", context => {
         //     obj1.name = 'Joe';
@@ -1121,7 +1199,7 @@ print_tree(table.indices.getAt(0).data);
         test_Graph,
         test_BTree,
         test_Map,
-        // test_datatable
+        test_datatable
     ];
 
     publish(tests, 'Data tests');
