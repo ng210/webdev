@@ -25,5 +25,5 @@ var grammar = {
         { input:'F2 C',     output:'F1', priority:  30,  action: null },
         { input:'F2 B2',    output:'L',  priority:  20,  action: null },
         { input:'L',        output:'',   priority:  10,  action: null }
-    ],
+    ]
 };
