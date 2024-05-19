@@ -26,8 +26,8 @@ include('./map-spr-renderer.js');
         if (!Array.isArray(settings.size) || !settings.service) throw new Error('Could not initialize, mandatory settings missing!')
         this.viewSize.set(settings.size);
         this.data = new Array(2 * this.viewSize.x * this.viewSize.y);
-var tileSetUrl = './res/generic-tiles.json';
-this.createTestData(tileSetUrl);
+    var tileSetUrl = './res/generic-tiles.json';
+    this.createTestData(tileSetUrl);
         // // create api client and fetch map info
         // this.mapApi = await Api.Client(settings.service);
         // var resp = await this.mapApi.rest.map.read();

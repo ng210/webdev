@@ -46,6 +46,11 @@ include('./player.js');
         }
         return cursor;
     };
+    PlayerAdapter.prototype.reset = function reset() {
+        for (var i=1; i<this.devices.length; i++) {
+            this.devices[i].reset();
+        }
+    };
     PlayerAdapter.prototype.run = function run(ticks) {
         for (var i=1; i<this.devices.length; i++) {
             this.devices[i].run(ticks);

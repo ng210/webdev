@@ -118,6 +118,14 @@ include('./synth-control.js');
         app.ui.onresize();
         glui.animate();
 
+        var playerLink = DataLink.create(app.play.player);
+        playerLink.addField('refreshRate');
+        playerLink.addSync('refreshRate', app.ui.bpm.dataLink, 'value',
+            v => 3.75*v,
+            function(v) { v /= 3.75; this.obj().setRefreshRate(v); return v; }
+        );
+
+
         console.log('Ui initialized');
     };
 

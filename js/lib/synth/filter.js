@@ -60,7 +60,7 @@ include('./input.js');
     Filter.prototype.onchange = function onchange(cut) {
         // Update filter coefficients
         var res = (this.res.value < 0.000001) ? 1.0: 1.0 - this.res.value;
-        var e = (Filter.cutoffTable[this.cut.value] + this.mod.value * cut)/2;
+        var e = 0.01 + 0.49*(Filter.cutoffTable[this.cut.value] + this.mod.value * cut);
         var g = -res * e;
         var b0 = e*e;
         this.bi[0] = this.bi[1] = b0; this.bi[2] = 2*b0;

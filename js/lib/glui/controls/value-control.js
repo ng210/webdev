@@ -12,25 +12,13 @@ include('control.js');
 		this.step = 1;
 		this.isNormalized = false;
 		this.decimalDigits = 2;
-		this.createDataLink();
+		this.dataLink = DataLink.create(this);
+		this.dataLink.addField('value');
+		this.dataLink.addHandler('value', this, '-', context => glui.Control.prototype.size.call(context, null, null, false), [], false);
 		ValueControl.base.constructor.call(this, id, template, parent, context);
     }
     extend(glui.Control, ValueControl);
 
-	ValueControl.prototype.createDataLink = function createDataLink() {
-		if (DataLink.is(this)) {
-			DataLink.removeHandler(this, h => h.field == 'value');
-			DataLink.removeHandler(this, h => h.field == '-');
-		} else {
-			DataLink(this);
-		}
-		DataLink.addHandler(this, 'value', {
-			'target':this,
-			'field':'-',
-			'fn':() => glui.Control.prototype.size.call(this, null, null, false),
-			'args':this
-		});
-	};
     ValueControl.prototype.getHandlers = function getHandlers() {
         var handlers = ValueControl.base.getHandlers.call(this);
         handlers.push({ name: 'change', topDown: false });
@@ -176,15 +164,16 @@ include('control.js');
 	ValueControl.prototype.dataBind = function(source, field) {
 		if (ValueControl.base.dataBind.call(this, source, field)) {
 			// a value control needs both, data-source and data-field
-			if (this.dataSource != null && this.dataSource.hasOwnProperty(this.dataField)) {
+			if (this.dataSource != null) {
 				// initial read from data source
-				var value = this.dataSource[this.dataField];
 				if (typeof source.min == 'number') this.min = source.min;
 				if (typeof source.max == 'number') this.max = source.max;
 				if (typeof source.step == 'number') this.step = source.step;
 				var toValue = DataLink.defaultXform;
 				var toSource = DataLink.defaultXform;
-				DataLink.sync(this, 'value', this.dataSource, this.dataField, toSource, toValue);
+				//DataLink.sync(this, 'value', this.dataSource, this.dataField, toSource, toValue);
+				this.dataSource.addSync(this.dataField, this, 'value', toSource, toValue);
+				var value = this.dataSource[this.dataField];
 				this.setValue(value);
 			}
 		}
@@ -220,7 +209,7 @@ include('control.js');
 	ValueControl.prototype.setValue = function setValue(value) {
 		value = this.checkValue(value);
 		var oldValue = this.value;
-		this.value = value;
+		this.dataLink.value = value;
 		return oldValue;
 	};
 	ValueControl.prototype.getValue = function getValue() {

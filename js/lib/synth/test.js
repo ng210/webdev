@@ -811,17 +811,17 @@ include('/lib/synth/synth-adapter-ext.js');
     // }
 
     var tests = () => [
-        // test_freqTable,
-        // test_control_labels,
-        // test_create_synth,
-        // test_run_env,
-        // test_osc_run,
-        // test_generate_sound_simple,
-        // test_synthAdapter_makeSetCommandForContoller,
-        // test_synthAdapter_prepareContext,
-        // test_synthAdapter_makeCommands,
-        // test_run_channel,
-        // test_complete_player,
+        test_freqTable,
+        test_control_labels,
+        test_create_synth,
+        test_run_env,
+        test_osc_run,
+        test_generate_sound_simple,
+        test_synthAdapter_makeSetCommandForContoller,
+        test_synthAdapter_prepareContext,
+        test_synthAdapter_makeCommands,
+        test_run_channel,
+        test_complete_player,
         test_synthAdapter_importscript,
         // test_synthAdapterToDataSeries/*, test_synthAdapterFromDataSeries, test_synth_Ui_binding, test_synth_fromPreset*/
         // test_synth_ui

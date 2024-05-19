@@ -73,7 +73,7 @@ include('/lib/webgl/sprite/sprite-manager.js');
         a.sprite.actor = a;
         a.renderer = spriteManager.renderer;
         return a;
-    }
+    };
 
     publish(SpriteManagerFactory, 'SpriteManagerFactory', ge);
     publish(SpriteManager, 'SpriteManager', ge);

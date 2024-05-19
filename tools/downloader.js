@@ -57,9 +57,9 @@ function downloadVideo(url, filePath) {
 
 async function main(start) {
     var nr = start || 1;
-    var pageUrlParts = ['https://archive.org/', 'details/videoplaytv-dragon-ball-episode-', 1];
+    var pageUrlParts = ['https://archive.org/', 'details/videoplaytv-dragon-ball-z-episode-', 1];
 
-    const urlParts = ["https://ia802304.us.archive.org/33/items/videoplaytv-dragon-ball-episode-", nr, "/%5BVideoplaytv%5DDragon%20Ball%20episode%20", nr, ".mp4"];
+    //const urlParts = ["https://ia802304.us.archive.org/33/items/videoplaytv-dragon-ball-episode-", nr, "/%5BVideoplaytv%5DDragon%20Ball%20episode%20", nr, ".mp4"];
     var hasError = false;
     while (!hasError) {
 
@@ -69,13 +69,13 @@ async function main(start) {
             pageUrlParts[2] = nr < 10 ? '0'+nr : nr;
             var url = pageUrlParts.join('');
             var ep = ('00' + nr).slice(-3);
-            var filePath = path.resolve(targetPath, `DB-episode-${ep}.mp4`)
+            var filePath = path.resolve(targetPath, `DBZ-episode-${ep}.mp4`)
             if (!fs.existsSync(filePath)) {
                 // get page
                 try {
                     print(` ** Load page '${url}'.\n`);
                     var page = await download(url);
-                    var m = page.match(/download\/videoplaytv-dragon-ball-episode-(\d+)\/%5BVideoplaytv%5DDragon%20Ball%20episode%20(\d+).mp4/);
+                    var m = page.match(/download\/videoplaytv-dragon-ball-z-episode-(\d+)\/%5BVideoplaytv%5DDragon%20Ball%20Z%20episode%20(\d+).mp4/);
                     if (m) {
                         url = pageUrlParts[0] + m[0];
                         threads.push(downloadVideo(url, filePath));
@@ -97,16 +97,3 @@ async function main(start) {
 }
 
 main();
-
-// var epNr = 1;
-// var filePath = path.resolve(targetPath, `DB-episode-${epNr}.mp4`)
-// const file = fs.createWriteStream(filePath);
-// https.get('https://archive.org/download/videoplaytv-dragon-ball-episode-01/%5BVideoplaytv%5DDragon%20Ball%20episode%2001.mp4', resp => {
-//     var url = resp.headers.location;
-//     console.log(url)
-//     // resp.pipe(file);
-//     // file.on('finish', () => {
-//     //     file.close();
-//     //     print('done.\n');
-//     // });
-// });

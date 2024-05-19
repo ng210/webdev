@@ -161,6 +161,7 @@ include('label.js');
         this.cursorPos = [0, 0];
         this.isFocused = false;
         //this.renderer3d = new TextboxRenderer3d()
+        this.dataLink.addHandler('value', this, '-', (ctrl, field, value) => {ctrl.valueToLines(value) }, []);
     }
     extend(glui.Label, Textbox);
 
@@ -187,13 +188,9 @@ include('label.js');
     };
     Textbox.prototype.dataBind = function dataBind(source, field) {
         var dataSource = Textbox.base.dataBind.call(this, source, field);
-        DataLink.addHandler(this, 'value', {
-            'target':this, 'field':'lines',
-            'fn':this.valueToLines,
-            'args':null
-        });
+        //dataSource.addHandler('value', this, 'value', (ctrl, field, value) => ctrl.valueToLines(value), []);
         return dataSource;
-    }
+    };
 
     Textbox.prototype.advanceValue = function advanceValue(n) {
         var delta = n*this.step;
@@ -205,13 +202,13 @@ include('label.js');
             this.callHandler('change', {'type':'change','oldValue': oldValue, 'value':value, 'control':this});
         }
     };
-    Textbox.prototype.valueToLines = function valueToLines(field, value, args, sources) {
+    Textbox.prototype.valueToLines = function valueToLines(value) {
         if (this.isNumeric) {
             if (typeof value !== 'number') {
                 value = this.defaultValue;
             }
             this.lines = [value.toFixed(this.decimalDigits)];
-            if (this.look == Textbox.Look.Knob) {
+            if (this.look == Textbox.Look.Knob && this.renderer) {
                 this.renderer.angle = 2*Math.PI*this.toNormalized(value);
             }
         } else {

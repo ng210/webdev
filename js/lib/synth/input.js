@@ -2,6 +2,9 @@ include('./psynth.js');
 (function() {
     function PotBase(min, max, value) {
         this.init(min, max, (max-min)/100, value);
+        this.ui = {
+            setValue: v => false
+        };
     }
     PotBase.prototype.set = function set(value) {
         if (value > this.min) {

@@ -104,7 +104,6 @@ include('/lib/ge/sound.js');
 			if (frameInt == 0) {
 				if (!player.run(1)) {
 					player.restart();
-                    player.run(0)
 				}
 				this.frame += this.samplePerFrame;
 			}

@@ -53,9 +53,8 @@ include('/lib/glui/controls/container.js');
                     knob.renderer.initialize();
 
                     var controlId = psynth.Synth.controls[knob.id];
-                    var control = synth.getControl(controlId);
-                    control.ui = knob;
-                    knob.dataBind(control, 'value');
+                    synth.bindControl(controlId, knob);
+                    if (knob.max == 255) knob.step = 1;
                     //control.set = SynthControl.setControl;
                 }
             }

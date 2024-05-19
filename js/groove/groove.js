@@ -1,6 +1,6 @@
 include('/lib/ge/sound.js');
 include('/lib/player/player-lib.js');
-include('/lib/player/player-ext.js');
+include('/lib/player/player-adapter-ext.js');
 include('/lib/synth/synth.js');
 include('/lib/synth/synth-adapter-ext.js');
 include('/lib/webgl/webgl.js');
@@ -128,7 +128,7 @@ function SynthApp() {
 }
 
 SynthApp.prototype.createPlayer = async function createPlayer(data) {
-    var player = await Ps.Player.create();
+    var player = Ps.Player.create();
     // create data blocks
     for (var i=0; i<data['data-blocks'].length; i++) {
         var block = data['data-blocks'][i];
@@ -194,7 +194,7 @@ SynthApp.prototype.createPlayer = async function createPlayer(data) {
 SynthApp.prototype.initialize = async function initialize() {
     // init sound and playback
     this.samplePerFrame = SAMPLE_RATE*60/FRAMES_PER_BEAT/this.settings.bpm;
-    Ps.Player.registerAdapter(Ps.Player);
+    Ps.Player.registerAdapter(Ps.PlayerAdapter);
     Ps.Player.registerAdapter(psynth.SynthAdapter);
     var data = await load('./data.json');
     if (data.error) throw new Error(data.error);

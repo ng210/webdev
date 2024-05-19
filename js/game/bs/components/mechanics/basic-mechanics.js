@@ -18,6 +18,7 @@ include('./mechanics.js');
     //#endregion
 
     //#region BasicMechanics
+    //#region Forces
     function Force() {
     }
     Force.prototype.apply = function apply(obj) {
@@ -46,6 +47,7 @@ include('./mechanics.js');
         var l = 1/d.len2;
         obj.current.acceleration.add(d.norm().mul(this.amount).scale(l));
     };
+    //#endregion
 
     function BasicMechanics(engine, id) {
         BasicMechanics.base.constructor.call(this, engine, id);

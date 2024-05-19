@@ -123,8 +123,8 @@ window.onload = async function(e) {
     var w = 80, h = 64;
 
     _map = new Map(w, h, false);
-    _map.isShadeMode = true;
-    _mapService.shadeMode = true;
+    // _map.isShadeMode = true;
+    // _mapService.shadeMode = true;
 
     var cvs = document.getElementById('cvs');
     await _map.initialize('res/earth-tiles.png', _mapService, cvs);

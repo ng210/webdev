@@ -10,14 +10,15 @@ adapter "SynthAdapter", synthInit
 datablock "playerInit", { 12,
     Ps.Channel, Ps.Channel, Ps.Channel, Ps.Channel,
     Ps.Channel, Ps.Channel, Ps.Channel, Ps.Channel,
-    Ps.Channel, Ps.Channel, Ps.Channel, Ps.Channel
+    Ps.Channel, Ps.Channel, Ps.Channel, Ps.Channel,
+    32.0
 }
 datablock "synthInit", { SAMPLING_RATE, 5,
-    Sy.Synth, 1, soundbank,
-    Sy.Synth, 6, soundbank,
-    Sy.Synth, 1, soundbank,
-    Sy.Synth, 1, soundbank,
-    Sy.Synth, 1, soundbank
+    Sy.Synth, 1, soundbank, 0,
+    Sy.Synth, 6, soundbank, 1,
+    Sy.Synth, 1, soundbank, 2,
+    Sy.Synth, 1, soundbank, 3,
+    Sy.Synth, 1, soundbank, 5
 }
 datablock "soundbank", {
     // 6 presets
@@ -31,42 +32,42 @@ datablock "soundbank", {
 
     //:default
         31,
-        Sy.amp,      60,
+        Sy.amp,     120,
         Sy.env1amp, 1.0,    Sy.env2amp, 0.4,    Sy.env3amp, 1.0,
         Sy.env1dc,  0.0,    Sy.env2dc,  0.3,    Sy.env3dc,  0.0,
-        Sy.env1atk,   0,    Sy.env2atk,   0,    Sy.env3atk,   0,
-        Sy.env1dec,  40,    Sy.env2dec,  20,    Sy.env3dec,   4,
-        Sy.env1sus, 140,    Sy.env2sus,  80,    Sy.env3sus,  20,
-        Sy.env1rel,  20,    Sy.env2rel,  50,    Sy.env3rel,  10,
+        Sy.env1atk,   0,    Sy.env2atk,   0,    Sy.env3atk,   2,
+        Sy.env1dec,  40,    Sy.env2dec,  20,    Sy.env3dec,  40,
+        Sy.env1sus, 140,    Sy.env2sus,  80,    Sy.env3sus,  60,
+        Sy.env1rel,  30,    Sy.env2rel,  50,    Sy.env3rel,  80,
 
-        Sy.osc1amp, 0.4,        Sy.osc2amp, 0.5,
+        Sy.osc1amp, 0.4,        Sy.osc2amp, 0.3,
         Sy.osc1fre, 0.0,        Sy.osc2fre, 0.1,
         Sy.osc1tune, 12,        Sy.osc2tune, 24,
         Sy.osc1wave, Sy.Saw,    Sy.osc2wave, Sy.Saw,
 
         Sy.flt1cut, 220,
-        Sy.flt1res, 20,
-        Sy.flt1mod, 150,
+        Sy.flt1res, 80,
+        Sy.flt1mod, 120,
         Sy.flt1mode, Sy.LowPass,
 
     //:synth1
         35,
-        Sy.amp,     130,
+        Sy.amp,      40,
 
-        Sy.lfo1amp, 0.6,    Sy.lfo2amp, 6.0,
+        Sy.lfo1amp, 0.3,    Sy.lfo2amp, 3.0,
         Sy.lfo1fre, 4.4,    Sy.lfo2fre, 6.0,
         
         Sy.env1amp, 1.0,    Sy.env2amp, 0.5,    Sy.env3amp, 1.0,
         Sy.env1dc,  0.0,    Sy.env2dc,  0.5,    Sy.env3dc,  0.0,
-        Sy.env1atk,   2,    Sy.env2atk,   2,    Sy.env3atk,   6,
-        Sy.env1dec,   3,    Sy.env2dec,  40,    Sy.env3dec,  20,
-        Sy.env1sus,  60,    Sy.env2sus,  40,    Sy.env3sus,  60,
-        Sy.env1rel, 120,    Sy.env2rel,  60,    Sy.env3rel,  60,
+        Sy.env1atk,  12,    Sy.env2atk,   2,    Sy.env3atk,   6,
+        Sy.env1dec,  64,    Sy.env2dec,  40,    Sy.env3dec,  60,
+        Sy.env1sus,  60,    Sy.env2sus,  40,    Sy.env3sus, 120,
+        Sy.env1rel, 180,    Sy.env2rel,  60,    Sy.env3rel, 160,
 
-        Sy.osc1amp, 0.5,        Sy.osc2amp, 0.4,
+        Sy.osc1amp, 0.5,        Sy.osc2amp, 0.3,
         Sy.osc1fre, 0.0,        Sy.osc2fre, 1.0,
         Sy.osc1tune,  0,        Sy.osc2tune, 12,
-        Sy.osc1wave, Sy.Pls,    Sy.osc2wave, Sy.Pls,
+        Sy.osc1wave, Sy.Saw,    Sy.osc2wave, Sy.Pls,
         
         Sy.flt1cut, 100,
         Sy.flt1res,  80,
@@ -75,13 +76,13 @@ datablock "soundbank", {
         
     //:bass1
         31,
-        Sy.amp,      80,
+        Sy.amp,     100,
 
         Sy.env1amp, 1.0,    Sy.env2amp, 0.3,    Sy.env3amp, 1.0,
         Sy.env1dc,  0.0,    Sy.env2dc,  0.5,    Sy.env3dc,  0.0,
-        Sy.env1atk,   2,    Sy.env2atk,   1,    Sy.env3atk,   1,
-        Sy.env1dec,  10,    Sy.env2dec,   4,    Sy.env3dec,   4,
-        Sy.env1sus,  80,    Sy.env2sus,  80,    Sy.env3sus,  10,
+        Sy.env1atk,   8,    Sy.env2atk,   1,    Sy.env3atk,  16,
+        Sy.env1dec,  40,    Sy.env2dec,   4,    Sy.env3dec,  60,
+        Sy.env1sus, 120,    Sy.env2sus,  80,    Sy.env3sus,  80,
         Sy.env1rel,  40,    Sy.env2rel,  20,    Sy.env3rel,  40,
         
         Sy.osc1amp, 0.6,        Sy.osc2amp, 0.2,
@@ -90,7 +91,7 @@ datablock "soundbank", {
         Sy.osc1wave, Sy.Pls,    Sy.osc2wave, Sy.Saw,
 
         Sy.flt1cut,  10,
-        Sy.flt1res,  20,
+        Sy.flt1res,  60,
         Sy.flt1mod,  82,
         Sy.flt1mode, Sy.LowPass,
 
@@ -101,12 +102,12 @@ datablock "soundbank", {
         Sy.lfo1amp, 0.0,    Sy.lfo2amp, 0.0,
         Sy.lfo1fre, 0.0,    Sy.lfo2fre, 35.0,
 
-        Sy.env1amp,    1.0,     Sy.env2amp,    1.0,     Sy.env3amp,    1.0,     Sy.env4amp,  210.0,
-        Sy.env1dc,     0.0,     Sy.env2dc,    80.0,     Sy.env3dc,     0.0,     Sy.env4dc,    30.0,
-        Sy.env1atk,      0,     Sy.env2atk,      0,     Sy.env3atk,      0,     Sy.env4atk,      0,
-        Sy.env1dec,      2,     Sy.env2dec,      0,     Sy.env3dec,      1,     Sy.env4dec,      4,
-        Sy.env1sus,    120,     Sy.env2sus,     80,     Sy.env3sus,      1,     Sy.env4sus,      4,
-        Sy.env1rel,     12,     Sy.env2rel,     10,     Sy.env3rel,      1,     Sy.env4rel,     10,
+        Sy.env1amp,    1.0,     Sy.env2amp,    1.0,     Sy.env3amp,    1.0,     Sy.env4amp,  290.0,
+        Sy.env1dc,     0.0,     Sy.env2dc,    80.0,     Sy.env3dc,     0.0,     Sy.env4dc,    32.0,
+        Sy.env1atk,      1,     Sy.env2atk,      0,     Sy.env3atk,      0,     Sy.env4atk,      0,
+        Sy.env1dec,      4,     Sy.env2dec,      0,     Sy.env3dec,      2,     Sy.env4dec,      8,
+        Sy.env1sus,    120,     Sy.env2sus,     80,     Sy.env3sus,      1,     Sy.env4sus,      2,
+        Sy.env1rel,      8,     Sy.env2rel,     10,     Sy.env3rel,     10,     Sy.env4rel,     14,
         
         Sy.osc1amp,    0.9,     Sy.osc2amp,    0.1,
         Sy.osc1fre,    0.0,     Sy.osc2tune,     0,
@@ -128,9 +129,9 @@ datablock "soundbank", {
         Sy.env1amp,    1.0,     Sy.env2amp,    0.0,     Sy.env3amp,    2.0,     Sy.env4amp,   30.0,
         Sy.env1dc,     0.0,     Sy.env2dc,     0.0,     Sy.env3dc,     0.0,     Sy.env4dc,    90.0,
         Sy.env1atk,      0,     Sy.env2atk,      0,     Sy.env3atk,      0,     Sy.env4atk,      0,
-        Sy.env1dec,      3,     Sy.env2dec,      0,     Sy.env3dec,      1,     Sy.env4dec,      2,
-        Sy.env1sus,     30,     Sy.env2sus,      0,     Sy.env3sus,     10,     Sy.env4sus,     40,
-        Sy.env1rel,     40,     Sy.env2rel,      0,     Sy.env3rel,    200,     Sy.env4rel,    240,
+        Sy.env1dec,     26,     Sy.env2dec,      0,     Sy.env3dec,     30,     Sy.env4dec,      2,
+        Sy.env1sus,     40,     Sy.env2sus,      0,     Sy.env3sus,     25,     Sy.env4sus,     24,
+        Sy.env1rel,     80,     Sy.env2rel,      0,     Sy.env3rel,    200,     Sy.env4rel,    240,
 
         Sy.osc1amp,    0.5,     Sy.osc2amp,    0.4,
         Sy.osc1fre,    0.0,     Sy.osc2fre, 6163.0,
@@ -152,23 +153,24 @@ datablock "soundbank", {
         Sy.env1amp,    1.0,     Sy.env2amp,    0.0,     Sy.env3amp,    2.0,     Sy.env4amp,  210.0,
         Sy.env1dc,     0.0,     Sy.env2dc,     0.5,     Sy.env3dc,     0.0,     Sy.env4dc,     0.0,
         Sy.env1atk,      0,     Sy.env2atk,      0,     Sy.env3atk,      0,     Sy.env4atk,      0,
-        Sy.env1dec,      3,     Sy.env2dec,      0,     Sy.env3dec,      2,     Sy.env4dec,      1,
-        Sy.env1sus,     30,     Sy.env2sus,      0,     Sy.env3sus,    120,     Sy.env4sus,     20,
+        Sy.env1dec,     16,     Sy.env2dec,      0,     Sy.env3dec,      2,     Sy.env4dec,     10,
+        Sy.env1sus,     20,     Sy.env2sus,      0,     Sy.env3sus,    120,     Sy.env4sus,    120,
         Sy.env1rel,     20,     Sy.env2rel,      0,     Sy.env3rel,    100,     Sy.env4rel,     80,
         
-        Sy.osc1amp,    0.3,     Sy.osc2amp,    0.4,
-        Sy.osc1fre, 3137.0,     Sy.osc2fre, 9143.0,
+        Sy.osc1amp,    0.08,     Sy.osc2amp,    0.7,
+        Sy.osc1fre, 2412.0,     Sy.osc2fre, 12000.0,
         Sy.osc1tune,     0,     Sy.osc2tune,     0,
-        Sy.osc1wave, Sy.Pls,    Sy.osc2wave, Sy.Rnd,
+        Sy.osc1wave, Sy.Pls,    Sy.osc2wave,    24,
 
-        Sy.flt1cut,    202,
-        Sy.flt1res,     40,
+        Sy.flt1cut,    192,
+        Sy.flt1res,     20,
         Sy.flt1mod,    250,
-        Sy.flt1mode, Sy.BandPass
+        Sy.flt1mode, Sy.HighPass
 }
 
 sequence "masterSeq", "PlayerAdapter", {
     frame  w:0, {
+        Ps.Tempo(26.0),
         Ps.Assign(1, Mono01,    Mono, 4),
         Ps.Assign(2, CMod,      Mono, 1),
         Ps.Assign(8, Tune01,    Mono, 1),
@@ -182,8 +184,7 @@ sequence "masterSeq", "PlayerAdapter", {
 }
 
 sequence "Mono01", "SynthAdapter", {
-    frame w:0, { Sy.SetProgram(0),
-                 Sy.SetNote(Sy.E1,  80) },
+    frame w:0, { Sy.SetNote(Sy.E1,  80) },
     frame w:2, { Sy.SetNote(Sy.E1,   0) },
     frame w:2, { Sy.SetNote(Sy.G1, 100) },
     frame w:2, { Sy.SetNote(Sy.G0,   0) },
@@ -231,16 +232,15 @@ sequence "Tune01", "SynthAdapter", {
 }
 
 sequence "CMod", "SynthAdapter", {
-    frame  w:0, { Sy.SetFloat8(Sy.flt1cut,  0) },
-    frame w:64, { Sy.SetFloat8(Sy.flt1cut, 60) },
-    frame w:64, { Sy.SetFloat8(Sy.flt1cut, 10) },
-    frame w:64, { Sy.SetFloat8(Sy.flt1cut, 90) },
+    frame  w:0, { Sy.SetUint8(Sy.flt1cut,  0) },
+    frame w:64, { Sy.SetUint8(Sy.flt1cut, 60) },
+    frame w:64, { Sy.SetUint8(Sy.flt1cut, 10) },
+    frame w:64, { Sy.SetUint8(Sy.flt1cut, 90) },
     frame w:64, { Ps.EOS() }
 }
 
 sequence "Bass01", "SynthAdapter", {
-    frame w:0, { Sy.SetProgram(2),
-                 Sy.SetNote(Sy.E0,  20) },
+    frame w:0, { Sy.SetNote(Sy.E0,  20) },
     frame w:4, { Sy.SetNote(Sy.E0,   0) },
     frame w:4, { Sy.SetNote(Sy.E0, 120) },
     frame w:4, { Sy.SetNote(Sy.E0,   0) },
@@ -266,8 +266,7 @@ sequence "Bass01", "SynthAdapter", {
 }
 
 sequence "Chords01", "SynthAdapter", {
-    frame w:24, { Sy.SetProgram(1),
-                  Sy.SetNote(Sy.E4,  80), Sy.SetNote(Sy.G4,  60), Sy.SetNote(Sy.D4,  50) },
+    frame w:24, { Sy.SetNote(Sy.E4,  80), Sy.SetNote(Sy.G4,  60), Sy.SetNote(Sy.D4,  50) },
     frame w:16, { Sy.SetNote(Sy.E4,   0), Sy.SetNote(Sy.G4,   0), Sy.SetNote(Sy.D4,   0) },
 
     frame w:48, { Sy.SetNote(Sy.E4,  80), Sy.SetNote(Sy.A4,  80), Sy.SetNote(Sy.D4,  50) },
@@ -331,8 +330,7 @@ sequence "Drums01", "SynthAdapter", {
 }
 
 sequence "HiHats01", "SynthAdapter", {
-    frame w:0, { Sy.SetProgram(5),
-                    Sy.SetNote(Sy.C4, 240) },
+    frame w:0, { Sy.SetNote(Sy.C4, 240) },
     frame w:5, { Sy.SetNote(Sy.C4,   0) },
     frame w:3, { Sy.SetNote(Sy.C4, 100) },
     frame w:2, { Sy.SetNote(Sy.C4,   0) },

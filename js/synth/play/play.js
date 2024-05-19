@@ -8,10 +8,6 @@ include('/lib/data/stream.js');
         this.sampleRate = 48000;
         this.bpm = 0;
         this.player = Ps.Player.create();
-        DataLink.sync(this.player, 'refreshRate', this, 'bpm',
-            v => 3.75*v,
-            function(v) { v /= 3.75; this.setRefreshRate(v); return v; }
-        );
         this.adapters = {};
         this.state = {};
     }

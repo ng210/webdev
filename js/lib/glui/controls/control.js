@@ -160,15 +160,14 @@ const DEBUG_EVENT = 'click_|mouseout_|mouseover_';
     Control.prototype.dataBind = function dataBind(source, field) {
         if (!this.noBinding) {
             if (source) {
-                if (this.dataSource && DataLink.is(this.dataSource)) {
-                    DataLink.removeHandler(this.dataSource, h => h.target == this);
-                    DataLink.removeHandler(this, h => h.target == this.dataSource);
+                if (this.dataSource) {
+                    delete this.dataSource;
                 }
-                this.dataSource = DataLink(source);
+                this.dataSource = DataLink.create(source);
             }
             if (this.dataSource) {
                 this.dataField = field || this.dataField;
-                DataLink.addField(this.dataSource, this.dataField);
+                this.dataSource.addField(this.dataField);
             }
         }
         return this.dataSource;

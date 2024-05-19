@@ -213,8 +213,6 @@ include('container.js');
     Dialog.prototype.close = function close() {
         this.isActive = false;
         this.setVisible(false);
-        console.log(this.titlebar.items[1].style.visible);
-        console.log(this.titlebar.items[1].items[0].style.visible);
         // change focus        
         glui.repaint();
     };
@@ -273,9 +271,11 @@ include('container.js');
                             // 'value': 'x',
                             'style': {
                                 'width':'2.4em', 'height':'auto',
+                                'padding':'0px',
                                 'border':'#808090 2px',
                                 'background-color': '#a0a0b0',
-                                'background-image': 'res/icon_close.png'
+                                'background-image': 'res/icon_close.png',
+                                'background-repeat':'none'
                             },
                             'command': 'close'
                         }

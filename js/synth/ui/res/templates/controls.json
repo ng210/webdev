@@ -37,7 +37,8 @@
                 "width": "2.2em", "height":"1.6em",
                 "border": "#7090e0 2px outset",
                 "background-color": "#7090e0",
-                "padding": "-2px"
+                "padding": "-2px",
+                "visible":false
             },
             "source":"./ui/res/images/knob-restart.png"
         },
@@ -67,7 +68,8 @@
                 "width": "2.2em", "height":"1.6em",
                 "border": "#7090e0 2px outset",
                 "background-color": "#7090e0",
-                "padding": "-2px"
+                "padding": "-2px",
+                "visible":false
             },
             "source":"./ui/res/images/knob-stop.png"
         },

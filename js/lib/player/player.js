@@ -89,7 +89,7 @@
         return this.masterChannel.isActive;
     };
     Player.prototype.reset = function reset() {
-        for (var i=1; i<this.adapters.length; i++) {
+        for (var i=0; i<this.adapters.length; i++) {
             this.adapters[i].adapter.reset();
         }
         if (this.sequences.length > 0) {
@@ -102,6 +102,9 @@
         }
     };
     Player.prototype.restart = function restart() {
+        for (var i=1; i<this.adapter.channels.length; i++) {
+            this.adapter.channels[i].isActive = false;
+        }
         this.masterChannel.assign(0, this.sequences[0]);
         this.masterChannel.loopCount = 0;
         this.masterChannel.isActive = true;

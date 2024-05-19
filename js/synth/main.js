@@ -19,8 +19,8 @@ SynthApp.prototype.initialize = async function initialize() {
         this.ui.bpm.dataBind(this.play, 'bpm');
 
         // await this.loadSong('./data/drums1.ssng')
-        await this.loadSong('./data/default.ssng');
-        //await this.loadSong('./groove.ssng');
+        //await this.loadSong('./data/default.ssng');
+        await this.loadSong('./groove.ssng');
         
     } catch (err) {
         console.log('Error');

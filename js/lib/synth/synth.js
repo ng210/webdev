@@ -25,9 +25,7 @@ include('voice.js');
         this.nextVoice = 0;
         for (var i=0; i<this.voiceCount; i++) {
             var v = this.voices[i];
-            if (v.isActive) {
-                v.reset();
-            }
+            v.reset();
         }
     };
     Synth.prototype.setVoiceCount = function setVoiceCount(voiceCount) {
@@ -50,15 +48,15 @@ include('voice.js');
         if (velocity != 0) {
             // get free voice
             var voice = this.voices[0];
-            //var ix = 0;
+            var ix = 0;
             for (var i=0; i<this.voices.length; i++) {
                 if (voice.getTicks() < this.voices[i].getTicks()) {
                     voice = this.voices[i];
-                    //ix = i;
+                    ix = i;
                 }
                 if (!this.voices[i].isActive()) {
                     voice = this.voices[i];
-                    //ix = i;
+                    ix = i;
                     break;
                 }
             }
@@ -80,7 +78,10 @@ include('voice.js');
         //throw new Error('voice not found!');
     };
     Synth.prototype.setControl = function(controlId, value) {
-        this.getControl(controlId).set(value);
+        var control = this.getControl(controlId);
+        control.set(value);
+        control.ui.setValue(value);
+
         //console.log('setcontrol:', controlId, value);
     };
     Synth.prototype.run = function(left, right, start, end) {
@@ -174,6 +175,12 @@ include('voice.js');
                     }
                 }
             }
+        }
+    };
+    Synth.prototype.bindControl = function bindControl(controlId, uiControl) {
+        var control = this.idToControl[controlId];
+        if (control) {
+            control.ui = uiControl;
         }
     };
 

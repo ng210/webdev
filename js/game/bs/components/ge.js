@@ -17,9 +17,10 @@ include('/lib/math/v3.js');
         resolution: new V2(),
         ratio: new V3(),
         settings: {},
+
         renderers: [],
-        actors: [],
         inputHandlers: [],
+        actors: [],
 
         time: 0,
         game: null,
@@ -108,14 +109,9 @@ include('/lib/math/v3.js');
     };
     //#endregion
 
+    //#region Utilities
     ge.setFpsHandler = function setFpsHandler(handler) {
         ge.fpsHandler = handler;
-    };
-
-    ge.addActor = function addActor(id) {
-        var a = new ge.Actor(this, id);
-        this.actors.push(a);
-        return a;
     };
 
     ge.setResolution = function setResolution(width, height) {
@@ -132,6 +128,13 @@ include('/lib/math/v3.js');
         // if fullscreen...
         ge.setResolution(gl.canvas.width, gl.canvas.height);
     };
+
+    ge.addActor = function addActor(id) {
+        var a = new ge.Actor(this, id);
+        this.actors.push(a);
+        return a;
+    };
+    //#endregion
 
     //#region Main loop
     ge.begin = function begin() {

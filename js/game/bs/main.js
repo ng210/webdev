@@ -43,11 +43,11 @@ Game.prototype.init = async function init() {
     this.segmentManager = await ge.createInstance('SegmentManager', 'segmgr1');
     await ge.createInstance('BasicMechanics', 'sm1', {
         'forces': [
-            { 'type':'field', 'direction': new V3(0, -0.0008, 0) },
-            // { 'type':'point', 'center': new V3(this.frame, -this.frame), 'amount': new V3(0, -200.0, 0) }
+            //{ 'type':'field', 'direction': new V3(0.0, -0.001, 0.0) },
+            { 'type':'point', 'center': new V3(this.frame, -this.frame), 'amount': new V3(0, -200.0, 0) }
             //{ 'type':'point', 'center': new V3(100, -5000), 'amount': new V3(0, 50000.0, 0) }
         ],
-        'damping': 0.6
+        'damping': 0.7
     });
     this.keyboardHandler = await ge.createInstance('KeyboardHandler', 'kbhandler1');
     this.mouseHandler = await ge.createInstance('MouseHandler', 'mousehandler1');
@@ -65,7 +65,7 @@ Game.prototype.init = async function init() {
     //     { 'type':'point', 'center': new V3(this.center), 'amount': new V3(10.0) }
     // ]);
 
-    var dummy = this.addBall(new V3(2560.0, 862.0, 0.0), new V3(0.0));
+    //var dummy = this.addBall(new V3(2560.0, 862.0, 0.0), new V3(0.0));
     ge.prerender();
 };
 
