@@ -1,0 +1,50 @@
+#main {
+    display: grid;
+    justify-content: center;
+}
+
+#board {
+    background-color: #403010;
+    border: 8px outset #201808;
+    position: relative;
+}
+
+h1 {
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    text-align: center;
+    font-size: 48pt;
+    margin-bottom: 1em;
+}
+
+.tile {
+    box-sizing: border-box;
+}
+
+.block {
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0px;
+    position: absolute;
+    background-color: #e6c048;
+    border: 2px outset #e6c048;
+    font-family: Consolas, 'Courier New', Courier, monospace;
+    font-weight: bolder;
+    text-align: center;
+}
+
+.grid {
+    position: absolute;
+    background-color: none;
+    border: 2px solid #806020;
+}
+
+@keyframes grow {
+    from { transform: scale(0.1) }
+    to { transform: scale(1.0) }
+  }    
+
+.anim_grow {
+    animation-name: grow;
+    animation-duration: 0.5s;
+}
