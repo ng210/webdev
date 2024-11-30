@@ -15,7 +15,8 @@
     "nodejs"
   ],
   "dependencies": {
-    "express": "^4.9.8"
+    "express": "^4.19.2",
+    "node-fetch": "^3.3.2"
   },
   "author": "Gabor",
   "license": "ISC",

@@ -1,0 +1,104 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #C0A080;
+    margin: 0px;
+    overflow: hidden;
+}
+
+.container {
+    display: grid;
+    grid: 1fr 7fr / 1fr 2fr 1fr;
+    width: 100vw;
+    height: 100vh;
+    justify-content: center;
+}
+.header {
+    grid-area: 1 / span 3;
+    background-color: #506040;
+    color: white;
+    text-shadow: 0px 0px 16px #C8F0A0;
+    text-align: center;
+    font-size: xxx-large;
+    font-family:Impact;
+    padding: 0px;
+}
+
+.letter {
+    position: absolute;
+    width: fit-content;
+    height: 1em;
+    z-index: 100;
+}
+
+.left {
+    background-color: #A0C080;
+}
+
+.right {
+    background-color: #80A0C0;
+}
+
+.stack {
+    position: relative;
+    background-color: silver;
+}
+
+.fraction {
+    position: absolute;
+    background-color: silver;
+    border: 1px solid black;
+    z-index: 100;
+}
+
+#message {
+    position:absolute;
+    width:fit-content;
+    height:fit-content;
+    display: none;
+    font-size: xx-large;
+    background-color: silver;
+    color: blue;
+    padding: 1em;
+    box-shadow: 3px 4px 12px black;
+}
+
+.item {
+    display: block;
+    position: absolute;
+    border: 1px none;
+    background-color: gray;
+    z-index: 100;
+}
+
+.cell {
+    width: 32px;
+    height: 32px;
+}
+
+/* .item > div {
+    display: none;
+} */
+
+
+.ltype {
+    background-color: blue;
+}
+
+.itype {
+    background-color: red;
+}
+
+.otype {
+    background-color: yellow;
+}
+
+.ttype {
+    background-color: purple;
+}
+
+.rltype {
+    background-color: green;
+}

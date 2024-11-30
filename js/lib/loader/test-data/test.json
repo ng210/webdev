@@ -1,0 +1,17 @@
+[
+    {
+        "id": 1,
+        "name": "test.txt",
+        "type": "text"
+    },
+    {
+        "id": 2,
+        "name": "test.json",
+        "type": "json"
+    },
+    {
+        "id": 3,
+        "name": "test.png",
+        "type": "image"
+    }
+]

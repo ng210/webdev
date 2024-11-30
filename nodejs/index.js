@@ -94,7 +94,7 @@ function readLinks(resPath) {
 
 app.get('/*', function(req, resp) {
     var resPath = path.normalize(path.join(documentPath, req.path));
-    if (DEBUG) console.debug(`Access '${resPath}'`);
+    if (DEBUG) console.debug(`Get '${resPath}'`);
     try {
         var linkedPath = readLinks(resPath);
         if (!linkedPath && fs.statSync(resPath).isDirectory()) {
@@ -112,6 +112,14 @@ app.get('/*', function(req, resp) {
     }
 });
 
+app.post('/ping/*', function(req, resp) {
+    if (DEBUG) {
+        console.debug(`Post '${req.url}'`);
+        console.log(req.body);
+    }
+    resp.statusCode = 200;
+    resp.send(req.body);
+});
 
 console.log(`server is listening on ${port}`);
 

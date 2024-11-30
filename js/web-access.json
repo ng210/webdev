@@ -1,16 +1,22 @@
 {
-    "default": "deny",
+    "default": "allow",
     "allow": [
         "demo",
         "dune",
         "groove",
         "map",
+        "minesweeper",
         "synth",
         "service",
         "shaudio",
         "test",
+        "tetris",
         "wasm",
+        "webshop",
         "index.html",
-        "test.json"
+        "test.json",
+        "base.css",
+        "fetch.html",
+        "grid.html"
     ]
 }

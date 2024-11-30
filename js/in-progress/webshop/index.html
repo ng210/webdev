@@ -1,0 +1,22 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="main.css">
+        <script src="main.js" type="module"></script>
+    </head>
+    <body>
+        <div class="main-grid">
+            <div class="head">Webshop</div>
+            <div class="menu">
+                <div class="menuitem" onclick="navigate('customers')">Ügyfelek</div><br/>
+                <div class="menuitem" onclick="navigate('products')">Termékek</div><br/>
+                <div class="menuitem" onclick="navigate('orders')">Rendelések</div><br/>
+            </div>
+            <div id="content" class="content-grid">
+                <div class="list" id="list"></div>
+                <div class="detail" id="detail"></div>
+            </div>
+            <div class="footer">Készítette: Gipsz Jakab</div>
+        </div>
+    </body>
+</html>

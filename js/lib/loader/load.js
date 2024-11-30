@@ -1,0 +1,65 @@
+import { Url } from './url.js'
+
+async function load(args) {
+    var result = null;
+    try {
+        // constuct url from 
+        var url = args;
+        if (typeof args === 'object') {
+            url = new Url(args.url, args.base || '').toString();
+        }
+
+        var method = args.method || 'GET';
+        var data = args.data || null;
+        var headers = args.headers || {};
+        var contentType = '';
+        if (args.contentType) contentType = args.contentType;
+        else {
+            // get content type by the extension
+            var ix = url.lastIndexOf('.');
+            if (ix != -1 && ix > 0) {
+                var ext = url.substring(ix+1);
+                contentType = load.ext2contentType[ext] || 'application/octet-stream';
+            }
+        }
+        headers['Content-Type'] = headers['Content-Type'] || contentType;
+
+        var resp = await fetch(url, {
+            method: method,
+            headers: headers,
+            body: data
+        });
+
+        if (resp.ok) {
+            // get data-type by content-type
+            var dataType = load.contentType2dataType[contentType] || 'blob';
+            result = await resp[dataType]();
+        } else {
+            throw new Error(`${resp.status} ${resp.statusText}`);
+        }
+    } catch (err) {
+        console.error(err);
+        result = err;
+    }
+    return result;
+}
+
+load.ext2contentType = {};
+
+load.contentType2dataType = {};
+load.addType = function addType(ext, contentType, dataType) {
+    load.ext2contentType[ext] = contentType;
+    load.contentType2dataType[contentType] = dataType;
+};
+
+load.addType('txt', 'text/plain', 'text');
+load.addType('json', 'application/json', 'json');
+load.addType('bin', 'application/octet-stream', 'blob');
+load.addType('gif', 'image/gif', 'blob');
+load.addType('png', 'image/png', 'blob');
+load.addType('jpg', 'image/jpg', 'blob');
+load.addType('css', 'text/css', 'text');
+load.addType('xml', 'text/xml', 'text');
+load.addType('html', 'text/html', 'text');
+
+export { load }
