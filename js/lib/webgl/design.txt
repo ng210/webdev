@@ -1,0 +1,131 @@
+1️⃣ Buffer Updates & Efficiency
+    Issue:
+        If each sprite's attributes are updated every frame, updating the entire buffer can be inefficient.
+    Solution:
+        Map memory efficiently: Store all sprite data in one large buffer instead of separate buffers per sprite.
+        Sub-data updates: Use gl.bufferSubData() to update only the modified part of the buffer instead of re-uploading the entire buffer.
+
+2️⃣ Sprite Pooling in SpriteManager
+    Issue:
+        Creating/destroying sprites dynamically can be costly in terms of memory allocation.
+    Solution:
+        Pre-allocate a pool of sprites and mark them as active/inactive instead of deleting them.
+        Reuse inactive sprites when new ones are needed.
+        Keep the buffer pre-allocated and update only active sprite data.
+
+3️⃣ Handling Transparency Efficiently
+    Issue:
+        Sorting sprites back-to-front every frame for alpha blending is expensive.
+    Solution:
+        Separate opaque and transparent sprites and batch render them differently.
+        Consider depth peeling or screen-space sorting for transparency management.
+
+4️⃣ Batch Rendering & Draw Call Optimization
+    Issue:
+        If each sprite is drawn separately, WebGL overhead increases due to multiple draw calls.
+    Solution:
+        Batch sprites into a single buffer and use one draw call for multiple sprites.
+        Use instanced rendering (gl.drawArraysInstanced()) to minimize state changes.
+        Store per-instance data in a structured buffer instead of separate buffers.
+
+5️⃣ Texture & Buffer Linkage
+    Issue:
+        If textures and buffers are tightly linked, switching textures can be costly.
+    Solution:
+        Use texture atlases to minimize texture switches.
+        Keep the ability to bind different buffers to different textures dynamically.
+6️⃣ ShaderProgram Flexibility
+    Issue:
+        If attributes are hardcoded, switching between different shaders can be inflexible.
+    Solution:
+        Extract attributes dynamically from shader source code.
+        Allow multiple attribute buffers for different properties (position, UVs, etc.).
+        Use UBOs (Uniform Buffer Objects) to manage uniforms more efficiently.
+
+
+
+
+1️⃣ Buffer Updates & Efficiency
+
+1️⃣1️⃣ Tiny Vertex Buffer (Quad Buffer)
+    ✅ Purpose:
+        Holds the 4 vertices of a unit quad that all sprites share.
+    ✅ Advantage:
+        Only one vertex buffer is needed for all sprites.
+    ⚠️ Potential Issue:
+        Fixed topology: The quad buffer assumes all sprites are quads, which may limit flexibility for non-quad shapes (e.g., custom meshes).
+        Vertex Duplication: Using gl.TRIANGLE_STRIP (4 vertices) instead of gl.TRIANGLES (6 vertices) can cause issues with index buffering.
+    ✅ Solution:
+        Keep it as a unit quad centered at (0,0), scaled in the vertex shader.
+        Store 4 vertices (gl.TRIANGLE_STRIP) OR 6 vertices (gl.TRIANGLES, using an index buffer).
+
+1️⃣2️⃣ Large Attribute Buffer (Per-Sprite Attributes)
+    ✅ Purpose:
+        Stores position, scale, rotation, frame index, etc. for all sprites.
+    ✅ Advantage:
+        Only one buffer needs to be updated, reducing WebGL state changes.
+    ⚠️ Potential Issues:
+        Dynamic updates: If many sprites change each frame, gl.bufferSubData() might still be slow.
+        Memory alignment: The stride (size of one sprite’s data) must be properly aligned to avoid padding issues.
+        Per-instance updates: Some attributes (e.g., position) may update frequently, while others (e.g., rotation, frame index) rarely change.
+    ✅ Solution:
+        Interleave data (struct-of-arrays) → Reduces WebGL calls.
+        Use gl.bufferSubData() smartly → Update only changed portions.
+        Consider multiple buffers → Separate frequently-updated (position) and rarely-updated (frame index).
+
+1️⃣3️⃣ Texture Data Buffer
+    ✅ Purpose:
+        Used to supply texture data to the shader.
+    ✅ Advantage:
+        Enables rendering into a texture (e.g., simulating compute shaders).
+    ⚠️ Potential Issues:
+        Format compatibility: Different GPUs may have limitations on gl.RGBA32F (floating-point textures).
+        Filtering & Wrapping: If used for computation, set gl.NEAREST filtering to avoid interpolation artifacts.
+        Reading Back Data: WebGL doesn’t support reading textures directly into JavaScript (gl.readPixels() is slow).
+    ✅ Solution:
+        Use floating-point textures (gl.RGBA32F) if needed for computation.
+        Bind textures to framebuffers for GPU-GPU communication (avoid readbacks).
+        Store packed data in gl.RGBA8 if gl.RGBA32F is unsupported.
+
+1️⃣4️⃣ Uniform Buffer (For Per-Sprite Uniforms)
+    ✅ Purpose:
+        Stores global uniforms like view matrices, time-based effects, or per-instance uniforms.
+    ✅ Advantage:
+        gl.UNIFORM_BUFFER allows efficient updates with gl.bufferSubData().
+    ⚠️ Potential Issues:
+        WebGL 2 Only: Uniform Buffer Objects (UBOs) require WebGL 2 (#version 300 es).
+        Limited Storage: UBOs are small (typically 16KB max).
+        Performance Trade-off: If each sprite has its own uniform, this might be slower than an attribute buffer.
+    ✅ Solution:
+        Use a Uniform Buffer Object (UBO) for global uniforms (like projection matrix).
+        For per-instance uniforms, consider using attributes instead.
+        Use texture buffers if large uniform data is needed.
+
+
+
+What’s Already Covered by Buffer?
+    ✔ Creates a texture from an image or typed array (Buffer.fromImage() and Buffer.fromArrayBuffer()).
+    ✔ Uploads data into a texture (uploadToTexture()).
+    ✔ Binds the texture for rendering.
+
+Missing Features (That a Texture Class Would Handle Better)
+    ❌ Mipmapping – Needed for minification filters (useful for downscaled textures).
+    ❌ Custom Wrapping & Filtering Options – The Buffer class currently hardcodes gl.LINEAR filtering and gl.CLAMP_TO_EDGE.
+    ❌ Texture Swapping – Switching between different textures efficiently.
+    ❌ Multisampling Support – If you want high-quality rendering, multisampled textures (gl.renderbufferStorageMultisample()) need a different setup.
+    ❌ Array Textures / Cube Maps – Special cases that are harder to handle in Buffer.
+
+Decision: Keep Texture Inside Buffer or Separate It?
+    Option 1: Keep Texture Inside Buffer (Minimalist Approach)
+        Pros:
+            Fewer classes, simpler API.
+            Works fine for basic sprite rendering.
+        Cons:
+            Less flexibility for advanced texture operations.
+            Harder to manage multiple textures efficiently.
+    Option 2: Create a Separate Texture Class (Modular & Extendable)
+        Pros:
+            Can handle mipmapping, wrapping, filtering, swapping, array textures.
+            Easier to optimize texture reuse instead of creating new ones in buffers.
+        Cons:
+            Slightly more complexity.

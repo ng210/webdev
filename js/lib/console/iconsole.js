@@ -48,23 +48,23 @@ class IConsole {
 }
 
 const Colors = {
-    'Black':        'black',
-    'Red':          'red',
-    'Green':        'green',
-    'Yellow':       'yellow',
-    'Blue':         'blue',
-    'Magenta':      'magenta',
-    'Cyan':         'cyan',
-    'LightGray':    'lightgray',
+    'Black':        '#000000',
+    'Red':          '#800000',
+    'Green':        '#008000',
+    'Yellow':       '#808000',
+    'Blue':         '#000080',
+    'Magenta':      '#800080',
+    'Cyan':         '#008080',
+    'LightGray':    '#c0c0c0',
 
-    'Gray':         'gray',
-    'LightRed':     'lightred',
-    'LightGreen':   'lightgreen',
-    'LightYellow':  'lightyellow',
-    'LightBlue':    'lightblue',
-    'LightMagenta': 'lightmagenta',
-    'LightCyan':    'lightcyan',
-    'White':        'white'
+    'Gray':         '#808080',
+    'LightRed':     '#e04040',
+    'LightGreen':   '#40e040',
+    'LightYellow':  '#e0e040',
+    'LightBlue':    '#4040e0',
+    'LightMagenta': '#8400e0',
+    'LightCyan':    '#40e0e0',
+    'White':        '#ffffff'
 };
 
 const DefaultColor = Colors.LightGreen;

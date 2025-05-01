@@ -1,31 +1,113 @@
-import { poll } from '/lib/util.js'
-import { HTML } from '/lib/html.js';
+import { poll } from '../util.js'
+import { HTML } from '../html.js';
 import { IConsole, Colors } from './iconsole.js'
 
 class BrowserConsole extends IConsole {
-    static #cons = null;
-    #container = null;
+    //static #cons = null;
+    //#container = null;
     //#hasInput = false;
+    static #singleton = null;
+    #console = null;
+    #border = null;
+    #content = null;
+    #parent = null;
+    options = {
+        'showCaller': false
+    };
+    #isDragging = false;
+    enable = true;
+
 
     static get instance() {
-        if (BrowserConsole.#cons == null) {
-            BrowserConsole.#initColors();
-            var cons = new BrowserConsole();
-            cons.#container = document.createElement('console');
-            cons.#container.console = this;
-            BrowserConsole.#cons = cons;
+        return BrowserConsole.get();
+        // if (BrowserConsole.#singleton == null) {
+        //     BrowserConsole.#initColors();
+        //     var cons = new BrowserConsole();
+        //     // cons.#container = document.createElement('console');
+        //     // cons.#container.console = this;
+        //     // BrowserConsole.#cons = cons;
+        // }
+
+        // return BrowserConsole.#singleton;
+    }
+
+    constructor(parentId, options) {
+        super();
+        this.#console = document.createElement('console');
+        this.#border = document.createElement('div');
+        let style = document.createElement('style');
+        style.innerHTML = `@import '${import.meta.url.substring(0, import.meta.url.lastIndexOf('/'))+'/console.css'}'`;
+        this.#console.appendChild(style);
+        this.#border.className = 'border';
+        this.#border.addEventListener('pointerdown', e => this.#onPointerDown(e));
+        this.#border.addEventListener('pointerup', e => this.#onPointerUp(e));
+        this.#border.addEventListener('pointermove', e => this.#onPointerMove(e));
+
+        this.#console.appendChild(this.#border);
+        this.#content = document.createElement('div');
+        this.#content.className = 'content';
+        this.#console.appendChild(this.#content);
+
+        if (typeof parentId === 'string') {
+            this.#parent = document.getElementById(parentId);
+        } else {
+            this.#parent = document.body;
         }
 
-        return BrowserConsole.#cons;
+        for (let key in options) {
+            if (this.options[key] !== undefined) {
+                this.options[key] = options[key];
+            }
+        }
     }
+
+    static get() {
+        if (BrowserConsole.#singleton == null) {
+            BrowserConsole.#singleton = new BrowserConsole();
+        }
+        return BrowserConsole.#singleton;
+    }
+
+    #onPointerDown(e) {
+        this.#isDragging = true;
+        this.#border.setPointerCapture(e.pointerId);
+    }
+
+    #onPointerUp(e) {
+        this.#isDragging = false;
+        this.#border.releasePointerCapture(e.pointerId);
+    }
+
+    #onPointerMove(e) {
+        if (this.#isDragging) {
+            this.setConsoleTop(e.clientY);
+        }
+    }
+
+    render() {
+        if (!this.#parent.contains(this.#console)) {
+            this.#parent.appendChild(this.#console);
+        }
+    }
+
 
     append(parentId) {
         var parent = document.getElementById(parentId) || document.body;
-        parent.appendChild(BrowserConsole.#cons.#container);
+        parent.appendChild(this.#console);
     }
 
     _write(txt) {
-        this.#container.innerHTML += `<span style="color:${this.color}">${HTML.encode(txt)}</span>`;
+        this.render();
+        let span = document.createElement('span');
+        span.style.color = this.color;
+        span.innerHTML = HTML.encode(txt);
+        this.#content.appendChild(span);
+        //this.#content.innerHTML += `<span style="color:${this.color}">${HTML.encode(txt)}</span>`;
+    }
+
+    setConsoleTop(y) {
+        this.#console.style.top = `${y}px`;
+        this.#console.style.height = (this.#console.parentNode.clientHeight - y) + 'px';
     }
 
     async prompt(question) {
@@ -33,11 +115,11 @@ class BrowserConsole extends IConsole {
         var input = document.createElement('INPUT');
         input.console = this;
         input.addEventListener('change', e => e.target.console.hasInput = true);
-        this.#container.appendChild(input);
+        this.#content.appendChild(input);
         await poll(cn => cn.hasInput, 100, this);
         this.hasInput = false;
         var answer = input.value;
-        this.#container.removeChild(input);
+        this.#content.removeChild(input);
         this.write(answer);
 
         return answer;
@@ -58,13 +140,43 @@ class BrowserConsole extends IConsole {
             );
             el.style.border = 'solid 1px gray';
             el.style.cursor = 'pointer';
-            this.#container.appendChild(el);
+            this.#content.appendChild(el);
         }
         await poll(() => answer != null);
         for (var oi=0; oi<optElems.length; oi++) {
-            this.#container.removeChild(optElems[oi]);
+            this.#content.removeChild(optElems[oi]);
         }
         return answer;
+    }
+
+    insertElement(htmlElement) {
+        this.render();
+        if (this.enable) {
+            this.#content.appendChild(htmlElement);
+        }
+    }
+
+    static #handleButtonClick(e) {
+        var button = e.target;
+        if (typeof button._onClick === 'function') button._onClick(button, e);
+        button.removeEventListener('click', BrowserConsole.#handleButtonClick);
+    }
+
+    button(text, onClick) {
+        let button = document.createElement('button');
+        this.insertElement(button);
+        this.writeln('');
+        //let button = this.#content.children[this.#content.children.length-1];
+        button.innerHTML = text;
+        button._onClick = onClick;
+        button.addEventListener('click', BrowserConsole.#handleButtonClick);
+        return button;
+    }
+
+    async waitButton(text) {
+        let button = this.button(text, btn => btn._isClicked = true);
+        button._isClicked = false;
+        await poll(() => button._isClicked, 100);
     }
 
 //     static onMouseEvent(e) {

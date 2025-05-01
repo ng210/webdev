@@ -1,5 +1,5 @@
-import { Url } from '/lib/loader/url.js'
-import { Test } from '/lib/test/test.js'
+import { Url } from '../loader/url.js'
+import Test from '../test/test.js'
 
 class UrlTests extends Test {
 

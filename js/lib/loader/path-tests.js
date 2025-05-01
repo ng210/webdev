@@ -1,5 +1,5 @@
-import { Path, CurrentDir } from '/lib/loader/path.js'
-import { Test } from '/lib/test/test.js'
+import { Path, CurrentDir } from '../loader/path.js'
+import Test from '../test/test.js'
 
 class PathTests extends Test {
     #data = [

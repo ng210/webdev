@@ -1,17 +1,25 @@
-import { getConsole, Colors } from '/lib/console/console.js'
-import { Test } from './test.js'
-import { Url } from '/lib/loader/url.js'
+import { getConsole, Colors } from '../console/console.js'
+import Test from './test.js'
+import { Url } from '../loader/url.js'
 
-var _cons = null;
-var _errors = 0;
-var _total = 0;
+let _cons = null;
+let _errors = 0;
+let _total = 0;
+
+// async function readTestUrl() {
+//     let url = null;
+//     let frag = new Url(location.href);
+//     url = new Url(frag.origin);
+//     url.pathname = frag.hash.substring(1);
+//     return url;
+// }
 
 async function main() {
     _cons = await getConsole('cons');
     _errors = 0;
     _total = 0;
 
-    var url = null;
+    let url = null;
     if (typeof window === 'undefined') {
         if (process.argv.length > 2) {
             url = new Url(process.argv[2]);
@@ -19,7 +27,7 @@ async function main() {
             _cons.writeln('*** Usage: node[.exe] run-test.js <path of test class>');
         }
     } else {
-        var frag = new Url(location.href);
+        let frag = new Url(location.href);
         url = new Url(frag.origin);
         url.pathname = frag.hash.substring(1);
     }
@@ -28,12 +36,12 @@ async function main() {
 
     _cons.writeln(`*** Load tests from: ${url}`);
 
-    var test = null;
+    let test = null;
     try {
-        var mdl = await import(url);
-        var names = Object.getOwnPropertyNames(mdl);
-        for (var name of names) {
-            var sym = mdl[name];
+        let mdl = await import(url);
+        let names = Object.getOwnPropertyNames(mdl);
+        for (let name of names) {
+            let sym = mdl[name];
             if (sym && sym.prototype instanceof Test) {
                 _cons.writeln(`*** Found test class '${sym.name}'\n`);
                 test = Reflect.construct(sym, []);
@@ -53,5 +61,9 @@ async function main() {
         _cons.error(err);
     }
 }
-
-typeof window === 'undefined' ? main() : window.onload = main;
+if (typeof window === 'undefined') {
+    main();
+} else {
+    window.addEventListener('hashchange', main);
+    window.addEventListener('load', main);
+}

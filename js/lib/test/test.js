@@ -1,5 +1,5 @@
-import { getConsole, Colors } from '/lib/console/console.js'
-import { Url } from '/lib/loader/url.js'
+import { getConsole, Colors } from '../console/console.js'
+import { Url } from '../loader/url.js'
 
 const defaultTestConfig_ = {
     // indentText: '        ',
@@ -31,7 +31,7 @@ const defaultTestConfig_ = {
     // }
 };
 
-class Test {
+export default class Test {
     static #_operators = {
         '=': (a,b) => Test.compare(a, b) == 0,
         '!=': (a,b) => Test.compare(a, b) != 0,
@@ -54,22 +54,22 @@ class Test {
         }
     }
 
-    setup() {}
-    teardown() {}
-    setupAll() {}
-    teardownAll() {}
+    async setup() {}
+    async teardown() {}
+    async setupAll() {}
+    async teardownAll() {}
 
     static stringify(data) {
         var txt = '';
         if (typeof data === 'string' || data == null || data == undefined) txt = '' + data;
-        else if (typeof data === 'object' && data.hasOwnProperty('toString')) txt = data.toString();
+        else if (typeof data === 'object' && data.toString != Object.toString) txt = data.toString();
         else txt = JSON.stringify(data);
         return txt;
     }
 
     static compare(expected, received) {
         var res = 0;
-        switch (typeof a) {
+        switch (typeof expected) {
             case 'string':
                 res = expected.localeCompare(received); break;
             case 'bool':
@@ -104,7 +104,7 @@ class Test {
 
     #check(lbl, received, expected, predicate) {
         this.#checkError();
-        this.cons.writeln(lbl, Colors.White);
+        this.cons.write(lbl, Colors.LightGray);
 
         try {
             if (predicate == undefined) {
@@ -112,22 +112,24 @@ class Test {
                 expected = undefined;
             }
 
-            if (!Array.isArray(received)) received = [received];
-            if (!Array.isArray(expected)) expected = [expected];
+            if (typeof received[Symbol.iterator] !== 'function') received = [received];
+            if (typeof received[Symbol.iterator] !== 'function') expected = [expected];
 
+            let hasErrors = false;
             for (var ri=0; ri<received.length; ri++) {
-                // this.cons.write(' - expected: ');
-                // this.cons.writeln(Test.stringify(expected), Colors.Lightgray);
-                this.cons.write(' - received: ');
-                this.cons.write(Test.stringify(received[ri]), Colors.LightYellow);
-
                 this.currentResult = predicate(received[ri], expected[ri]);
-                if (this.currentResult) {
-                    this.cons.writeln('···Passed', Colors.LightGreen);
-                } else {
+                if (!this.currentResult) {
+                    hasErrors = true;
                     this.cons.writeln('···Failed', Colors.LightRed);
+                    this.cons.write(' - expected: ');
+                    this.cons.writeln(Test.stringify(expected), Colors.LightGray);
+                    this.cons.write(' - received: ');
+                    this.cons.write(Test.stringify(received[ri]), Colors.LightYellow);
                     this.errors++;
                 }
+            }
+            if (!hasErrors) {
+                this.cons.writeln('···Passed', Colors.LightGreen);
             }
         } catch (err) {
             this.hasError = true;
@@ -156,16 +158,25 @@ class Test {
     }
 
 
-    // throws(errType) {
-    //     if (this.hasError && this.currentResult instanceof errType) {
-    //         this.cons.writeln('...Passed', Colors.LightGreen);
-    //         this.hasError = false;
-    //     } else {
-    //         this.cons.writeln('...Failed', Colors.LightRed);
-    //         this.errors++;
-    //     }
-    //     this.total++;
-    // }
+    throws(lbl, error, call) {
+        let received = null;
+        try {
+            call();
+        } catch (err) {
+            received = err;
+        }
+        this.currentResult = this.#check(lbl, received.message, error, Test.#_operators['=']);
+        return this;
+    }
+
+    startTimer() {
+        return new Date().getTime();
+    }
+
+    stopTimer(lbl, timer) {
+        let delta = new Date().getTime() - timer;
+        this.cons.writeln(`${lbl} - ${delta} ms`);
+    }
 
     async assertMultiple(data, expected, predicate) {
         var hasError = false;
@@ -199,20 +210,22 @@ class Test {
     async runAll() {
         if (!this.cons) {
             this.cons = await getConsole();
+            this.cons.setConsoleTop(0.9 * document.body.clientHeight);
         }
         //var color = this.cons.color;
         //this.cons.color = Colors.White;
         this.cons.writeln(`\n*** Running ${this.constructor.name} tests ********`, Colors.White);
         await this.setupAll();
-        for (var name of Object.getOwnPropertyNames(Object.getPrototypeOf(this))) {
+        for (let name of Object.getOwnPropertyNames(Object.getPrototypeOf(this))) {
             if (name.startsWith('test')) {
                 this.cons.write('\n*** Test found: ');
                 this.total++;
                 this.cons.writeln(name, Colors.LightCyan);
-                this.setup();
+                await this.setup();
                 await this[name].call(this);
                 this.#checkError();
-                this.teardown();
+                await this.teardown();
+                this.cons.writeln('');
             }
         }
         await this.teardownAll();
@@ -235,8 +248,6 @@ class Test {
         //cons.color = color;
     }
 }
-
-export { Test };
 
 
 //var _indentText = ['&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;', '&nbsp;'];

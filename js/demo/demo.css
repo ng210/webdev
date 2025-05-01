@@ -1,0 +1,80 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0px;
+}
+
+canvas {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    background-color: black;
+}
+
+#settings {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    display: grid;
+    font-family: monospace;
+    font-size: x-large;
+    font-weight: bold;
+    border: ridge 4px #80808040;
+    background-color: #80808080;
+}
+
+div.settings {
+    width: 100%;
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    border: outset 4px #ffffff40;
+    background-color: #ffffff40;
+    cursor: pointer;
+    justify-content: center;
+    padding: 0.2em 0.1em;
+    align-items: center;
+}
+
+div.buttons {
+    display: flex;
+    justify-content: center;
+}
+
+span.settings {
+    grid-column: 1;
+    grid-row: 1;
+    text-align: center;
+}
+
+span.fps {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: center;
+    font-family: Consolas, 'Courier New', Courier, monospace;
+    font-size: small;
+}
+
+label.settings {
+    font-weight: bold;
+    padding: 0.1em 0.4em;
+    border: inset 1px #80808040;
+}
+
+input.settings {
+    cursor:pointer;
+}
+
+button.settings {
+    grid-column: span 2;
+    border-width: 3px;
+    width: 5em;
+    font-size: large;
+    background-color: #ffffff80;
+}
+
+button.settings:hover {
+    background-color: #ffffffc0;
+}

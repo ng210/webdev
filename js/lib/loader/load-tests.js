@@ -1,5 +1,5 @@
-import { load } from '/lib/loader/load.js'
-import { Test } from '/lib/test/test.js'
+import { load } from '/js/lib/loader/load.js'
+import Test from '/js/lib/test/test.js'
 
 class LoadTest extends Test {
     async testLoadJsonSucceeds() {
