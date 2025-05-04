@@ -1,5 +1,5 @@
 import { getConsole, Colors } from './console.js'
-import { Test } from '../test/test.js'
+import Test from '/js/lib/test/test.js'
 
 class ConsoleTests extends Test {
     #cons = null;
@@ -9,8 +9,9 @@ class ConsoleTests extends Test {
     }
 
     async testWriteln() {
-        this.#cons.writeln('This is a whole line.');
-        await this.assert('Write a line', () => true);
+        let line = 'This is a single line.';
+        this.#cons.writeln(line);
+        this.isTrue('Wrote a line', this.#cons.lines(-1) == line);
     }
 
     async testColors() {
@@ -23,19 +24,19 @@ class ConsoleTests extends Test {
         this.#cons.color = color;
         this.#cons.writeln('');
 
-        await this.assert('Write colors', () => true);
+        this.isEqual('Write colors', this.#cons.lines(-1), '████████████████');
     }
 
     async testPrompt() {
         var answer = await this.cons.prompt('Type "hi"');
         this.#cons.writeln('');
-        await this.assert('Prompt for \'hi\'', () => answer == 'hi');
+        this.isEqual('Prompt for \'hi\'', answer, 'hi');
     }
 
     async testChoice() {
         var answer = await this.cons.choice('Select', { 'O': 'Ok', 'C': 'Cancel'});
         this.#cons.writeln(`Selected '${answer}'`);
-        await this.assert('Choose \'ok\' or \'cancel\'', () => answer == 'Ok' || answer == 'Cancel');
+        this.isTrue('Choose \'ok\' or \'cancel\'', answer == 'Ok' || answer == 'Cancel');
     }
 }
 

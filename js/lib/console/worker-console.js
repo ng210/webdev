@@ -1,7 +1,7 @@
-import { IConsole, Colors } from './iconsole.js'
+import { ConsoleBase, Colors } from './console-base.js'
 import { html } from '../html.js';
 
-class WorkerConsole extends IConsole {
+class WorkerConsole extends ConsoleBase {
     constructor(lbl) {
         super();
     }

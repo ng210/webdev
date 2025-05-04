@@ -1,8 +1,8 @@
-import { IConsole, Colors } from './iconsole.js'
+import { ConsoleBase, Colors } from './console-base.js'
 import { poll } from '../util.js'
 import readline from 'node:readline';
 
-class CliConsole extends IConsole {
+class CliConsole extends ConsoleBase {
     static cons = null;
 
     constructor() {

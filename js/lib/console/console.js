@@ -1,4 +1,4 @@
-import { Colors } from './iconsole.js'
+import { Colors } from './console-base.js'
 
 var _console = null;
 async function getConsole(args) {

@@ -1,4 +1,4 @@
-class IConsole {
+class ConsoleBase {
     #color = DefaultColor;
     get color() {
         return this.#color;
@@ -7,11 +7,20 @@ class IConsole {
         this.#color = Object.values(Colors).indexOf(col) != -1 ? col : DefaultColor;
     }
 
+    #lines = [];
+
+    lines(ix = -1) {
+        if (ix < 0) ix += this.#lines.length;
+        return this.#lines[ix];
+    }
+
+
     _write(txt) {
         throw new Error('Not Implemented!');
     }
 
     write(txt, ink) {
+        this.#lines.push(...txt.split('\n'));
         if (ink != undefined) {
             var color = this.#color;
             this.#color = ink;
@@ -69,4 +78,4 @@ const Colors = {
 
 const DefaultColor = Colors.LightGreen;
 
-export { IConsole, Colors, DefaultColor };
+export { ConsoleBase, Colors, DefaultColor };

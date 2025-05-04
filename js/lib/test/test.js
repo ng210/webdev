@@ -113,7 +113,7 @@ export default class Test {
             }
 
             if (typeof received[Symbol.iterator] !== 'function') received = [received];
-            if (typeof received[Symbol.iterator] !== 'function') expected = [expected];
+            if (typeof expected[Symbol.iterator] !== 'function') expected = [expected];
 
             let hasErrors = false;
             for (var ri=0; ri<received.length; ri++) {

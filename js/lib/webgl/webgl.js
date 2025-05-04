@@ -259,6 +259,18 @@ class WebGL {
 		return WebGL.#extensions[extensionName];
 	}
 
+	getImageData(image) {
+		// read pixel data from image
+		const canvas = document.createElement('canvas');
+		const ctx = canvas.getContext('2d');
+		canvas.width = image.width;
+		canvas.height = image.height;
+		ctx.drawImage(image, 0, 0);
+		const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		// destroy canvas?
+		return imageData;
+	}
+
 	//#region Texture handling
 	getTexture(id) {
 		return this.#textures[id];
@@ -336,13 +348,7 @@ class WebGL {
     // Create a buffer from an image object
     createBufferfromImage(image, tag) {
 		const gl = this.gl;
-		// read pixel data from image
-		const canvas = document.createElement('canvas');
-		const ctx = canvas.getContext('2d');
-		canvas.width = image.width;
-		canvas.height = image.height;
-		ctx.drawImage(image, 0, 0);
-		const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		let imgData = this.getImageData(image);
 		// create buffer
 		let buffer = this.createBuffer(gl.ARRAY_BUFFER, tag);
 		buffer.uploadData(imageData.data, gl.STATIC_DRAW);

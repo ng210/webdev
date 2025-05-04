@@ -1,8 +1,8 @@
 import { poll } from '../util.js'
 import { HTML } from '../html.js';
-import { IConsole, Colors } from './iconsole.js'
+import { ConsoleBase, Colors } from './console-base.js'
 
-class BrowserConsole extends IConsole {
+class BrowserConsole extends ConsoleBase {
     //static #cons = null;
     //#container = null;
     //#hasInput = false;

@@ -1,4 +1,4 @@
-import Vec4 from "../../math/vec4.js";
+import Vec4 from "/js/lib/math/vec4.js";
 
 // 00 translation:  4
 // 04 velocity:     4
@@ -49,7 +49,7 @@ class ParticleManager {
 
         gl_Position = position;
         v_color = color;
-        v_color.a *= misc.y / misc.x * (1.0 - fInvalid);
+        //v_color.a *= misc.y / misc.x * (1.0 - fInvalid);
 
         gl_PointSize = misc.z;
     }`;
@@ -66,15 +66,27 @@ class ParticleManager {
         fragColor = u_color * v_color;
     } `;
 
-    constructor(webgl, count) {
+    constructor(webgl, count = 0) {
         this.#webgl = webgl;
         const gl = this.#webgl.gl;
+        if (count > 0) this.setCount(count);
+        this.#program = this.#webgl.createProgram(
+            {
+                vertexSrc: this.#defaultVertexShader,
+                fragmentSrc: this.#defaultFragmentShader
+            }
+        );
+    }
+
+    setCount(count) {
         this.#count = count;
         let dataCount = count * FloatsPerParticle;
-        const [width, height] = webgl.calculateTextureSize(dataCount/4);
+        const [width, height] = this.#webgl.calculateTextureSize(dataCount/4);
         let data = new Float32Array(width * height * 4);
         // create texture
-        this.dataTexture = webgl.createTexture(
+        if (this.dataTexture) this.dataTexture.delete();
+        const gl = this.#webgl.gl;
+        this.dataTexture = this.#webgl.createTexture(
             'float[4]', width, height, {
                 minFilter: gl.NEAREST,
                 magFilter: gl.NEAREST,
@@ -84,13 +96,6 @@ class ParticleManager {
                 tag: 'data1',
                 data: data
             });
-
-        this.#program = this.#webgl.createProgram(
-            {
-                vertexSrc: this.#defaultVertexShader,
-                fragmentSrc: this.#defaultFragmentShader
-            }
-        );
     }
 
     addParticles(callback) {
