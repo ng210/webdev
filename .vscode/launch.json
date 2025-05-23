@@ -8,7 +8,8 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "envFile": "${fileDirname}/debug.env"
+            "envFile": "${fileDirname}/debug.env",
+            "cwd": "${workspaceFolder}/js/lib/base"
         }
     ]
 }

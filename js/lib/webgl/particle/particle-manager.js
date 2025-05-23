@@ -49,7 +49,7 @@ class ParticleManager {
 
         gl_Position = position;
         v_color = color;
-        //v_color.a *= misc.y / misc.x * (1.0 - fInvalid);
+        v_color.a *= misc.y / misc.x * (1.0 - fInvalid);
 
         gl_PointSize = misc.z;
     }`;
@@ -68,14 +68,17 @@ class ParticleManager {
 
     constructor(webgl, count = 0) {
         this.#webgl = webgl;
-        const gl = this.#webgl.gl;
         if (count > 0) this.setCount(count);
-        this.#program = this.#webgl.createProgram(
+        this.setProgram(
             {
                 vertexSrc: this.#defaultVertexShader,
                 fragmentSrc: this.#defaultFragmentShader
             }
         );
+    }
+
+    setProgram(prg) {
+        this.#program = this.#webgl.createProgram(prg);
     }
 
     setCount(count) {

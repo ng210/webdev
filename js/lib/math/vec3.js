@@ -185,6 +185,27 @@ export default class Vec3 {
             this.#index = index;
         }
         this.set(x, y, z);
+
+        Object.defineProperties(this, {
+            0: {
+                configurable: false,
+                enumerable: false,
+                get: function() { return this.x; },
+                set: function(value) { this.x = value; }
+            },
+            1: {
+                configurable: false,
+                enumerable: false,
+                get: function() { return this.y; },
+                set: function(value) { this.y = value; }
+            },
+            2: {
+                configurable: false,
+                enumerable: false,
+                get: function() { return this.z; },
+                set: function(value) { this.z = value; }
+            }
+        });
     }
 
     clone() {

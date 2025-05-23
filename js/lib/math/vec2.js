@@ -83,6 +83,21 @@ export default class Vec2 {
         this.#array = array;
         this.#index = ix;
         this.set(x, y);
+
+        Object.defineProperties(this, {
+            0: {
+                configurable: false,
+                enumerable: false,
+                get: function() { return this.x; },
+                set: function(value) { this.x = value; }
+            },
+            1: {
+                configurable: false,
+                enumerable: false,
+                get: function() { return this.y; },
+                set: function(value) { this.y = value; }
+            }
+        });
     }
 
     set(x, y) {

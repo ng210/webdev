@@ -112,8 +112,8 @@ export default class Test {
                 expected = undefined;
             }
 
-            if (typeof received[Symbol.iterator] !== 'function') received = [received];
-            if (typeof expected[Symbol.iterator] !== 'function') expected = [expected];
+            if (typeof received === 'string' || typeof received[Symbol.iterator] !== 'function') received = [received];
+            if (typeof received === 'string' || typeof expected[Symbol.iterator] !== 'function') expected = [expected];
 
             let hasErrors = false;
             for (var ri=0; ri<received.length; ri++) {
@@ -210,7 +210,7 @@ export default class Test {
     async runAll() {
         if (!this.cons) {
             this.cons = await getConsole();
-            this.cons.setConsoleTop(0.9 * document.body.clientHeight);
+            this.cons.setConsoleTop(0.6 * document.body.clientHeight);
         }
         //var color = this.cons.color;
         //this.cons.color = Colors.White;

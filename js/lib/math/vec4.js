@@ -104,6 +104,33 @@ export default class Vec4 {
         this.#array = array;
         this.#index = ix;
         this.set(x, y, z, w);
+
+        Object.defineProperties(this, {
+            0: {
+                configurable: false,
+                enumerable: false,
+                get: function() { return this.x; },
+                set: function(value) { this.x = value; }
+            },
+            1: {
+                configurable: false,
+                enumerable: false,
+                get: function() { return this.y; },
+                set: function(value) { this.y = value; }
+            },
+            2: {
+                configurable: false,
+                enumerable: false,
+                get: function() { return this.z; },
+                set: function(value) { this.z = value; }
+            },
+            4: {
+                configurable: false,
+                enumerable: false,
+                get: function() { return this.w; },
+                set: function(value) { this.w = value; }
+            }
+        });
     }
     set(x, y, z, w) {
         this.x = x;

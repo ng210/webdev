@@ -32,7 +32,7 @@ export default class Particles extends Demo {
             random:     { value:  .5, min:  .0, max:  1., step:  .1 },
             area:       { value: .01, min:   0, max:  .4, step: .01 },
             life:       { value:   4, min:   1, max:  20, step:   1 },
-            speed:      { value:   5, min:   0, max:  10, step:   1 },
+            speed:      { value:   5, min:   0, max:  10, step: .25 },
             angle:      { value:  90, min:   0, max: 360, step:   10 },
             size:       { value:   2, min:   1, max:  10, step:   1 }
         };

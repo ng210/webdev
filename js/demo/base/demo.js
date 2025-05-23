@@ -1,6 +1,7 @@
 //import Buffer from '/js/lib/glui/buffer.js'
-import Control from '/js/demo/base/control.js'
+import RangeControl from '/js/lib/glui/control/html/range-control.js'
 import Vec4 from '/js/lib/math/vec4.js'
+
 
 export default class Demo {
     #frame;
@@ -155,11 +156,16 @@ export default class Demo {
     onWheel(e) {
     }
 
-
     createSettingsPanel() {
+        //let panel = new PanelControl('settings');
         let panel = document.querySelector('#settings');
         panel.innerHTML = '';
-        let header =document.createElement('div'); 
+        // panel.header = 'Settings';
+        // panel.enableDragging = true;
+        // panel.addHandler('pointerdown', Demo.dispatchEvent);
+        // panel.addHandler('pointerup', Demo.dispatchEvent);
+        // panel.addHandler('pointermove', Demo.dispatchEvent);
+        let header = document.createElement('div'); 
         header.className = 'settings';
         panel.appendChild(header);
         let title = document.createElement('span');
@@ -180,10 +186,21 @@ export default class Demo {
             label.className = 'settings';
             label.innerHTML = k;
             panel.appendChild(label);
-            let control = new Control(k, setting);
+            // create control depending on setting type
+            // - range
+            // - dropdown list
+            let control = null;
+            if (Array.isArray(settings.values)) {
+                debugger
+                control = new DropDownListControl(k, setting);
+            } else if (setting.min != undefined && setting.max != undefined) {
+                control = new RangeControl(k);
+                control.dataSource = setting;
+                control.initialize();
+            }
             setting.control = control;
-            control.onChange = ctrl => this.updateSetting(ctrl);
-            panel.appendChild(control.elem);
+            control.addHandler('input', e => this.updateSetting(e.target.control));
+            control.append(panel);
 
             // if (setting.min != undefined) {
             //     let input = document.createElement('input');
