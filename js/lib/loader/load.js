@@ -61,5 +61,7 @@ load.addType('jpg', 'image/jpg', 'blob');
 load.addType('css', 'text/css', 'text');
 load.addType('xml', 'text/xml', 'text');
 load.addType('html', 'text/html', 'text');
+load.addType('vs', 'text/plain', 'text');
+load.addType('fs', 'text/plain', 'text');
 
 export { load }

@@ -16,6 +16,7 @@ export default class Demo {
     #startTime;
     #startFrame;
     #fps;
+    #startStopButton = null;
 
     canvas;
     frontBuffer;
@@ -30,6 +31,7 @@ export default class Demo {
     }
 
     constructor() {
+        this.#frame = 0;
         this.#initializedPromise = new Promise(
             resolved => {
                 this.#initializedResolved = resolved;
@@ -73,7 +75,7 @@ export default class Demo {
 
     updateSetting(ctrl) {
         if (ctrl) {
-            let value = ctrl.value;
+            let value = parseFloat(ctrl.value);
             if (this.onChange(ctrl.id, value)) {
                 this.settings[ctrl.id].value = value;
             }
@@ -82,10 +84,8 @@ export default class Demo {
 
     startStop(btn) {
         if (this.isRunning) {
-            btn.innerHTML = 'Start';
             this.stop();
         } else {
-            btn.innerHTML = 'Stop';
             this.start();
         }
     }
@@ -240,10 +240,11 @@ export default class Demo {
         buttons.className = 'buttons settings';
         let button = document.createElement('button');
         button.className = 'settings';
-        button.innerHTML = 'Stop';
+        button.innerHTML = '°~°';
         button.addEventListener('click', e => this.startStop(e.target));
         buttons.appendChild(button);
         panel.appendChild(buttons);
+        this.#startStopButton = button;
         this.#panel = panel;
 
         let panelPosition = localStorage.getItem('pp');
@@ -257,7 +258,6 @@ export default class Demo {
 
     async run() {
         await this.#initializedPromise;
-        //this.createSettingsPanel();
         this.restart();
     }
 
@@ -272,10 +272,12 @@ export default class Demo {
         this.#startFrame = 0;
         this.#startTime = Date.now();
         this.isRunning = true;
+        this.#startStopButton.innerHTML = 'Stop';
         this.#handler = requestAnimationFrame(() => this.#main());
     }
 
     stop() {
+        this.#startStopButton.innerHTML = 'Start';
         this.isRunning = false;
     }
 

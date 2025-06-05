@@ -75,6 +75,13 @@ class WebGL {
 				gl.uniform1i(location, tex.unit);
 			}
 		},
+		[WebGL2RenderingContext.INT_SAMPLER_2D]: {
+			size: 1,
+			setter: (gl, location, tex) => {
+				tex.bind();
+				gl.uniform1i(location, tex.unit);
+			}
+		},
 		[WebGL2RenderingContext.UNSIGNED_INT_SAMPLER_2D]: {
 			size: 1,
 			setter: (gl, location, tex) => {
@@ -87,57 +94,85 @@ class WebGL {
 
     static #textureFormatMap = {
 		"int8": {
-			format: WebGL2RenderingContext.RED,
-			internalFormat: WebGL2RenderingContext.R8,
-			type: WebGL2RenderingContext.UNSIGNED_BYTE,
+			format: WebGL2RenderingContext.RG_INTEGER,
+			internalFormat: WebGL2RenderingContext.R8I,
+			type: WebGL2RenderingContext.BYTE,
 			size: 1,
 			bytes: 1
 		},
 		"int8[2]": {
-			format: WebGL2RenderingContext.RG,
-			internalFormat: WebGL2RenderingContext.RG8,
-			type: WebGL2RenderingContext.UNSIGNED_BYTE,
+			format: WebGL2RenderingContext.RG_INTEGER,
+			internalFormat: WebGL2RenderingContext.RG8I,
+			type: WebGL2RenderingContext.BYTE,
 			size: 2,
 			bytes: 2
 		},
 		"int8[3]": {
-			format: WebGL2RenderingContext.RGB,
-			internalFormat: WebGL2RenderingContext.RGB8,
-			type: WebGL2RenderingContext.UNSIGNED_BYTE,
+			format: WebGL2RenderingContext.RGB_INTEGER,
+			internalFormat: WebGL2RenderingContext.RGB8I,
+			type: WebGL2RenderingContext.BYTE,
 			size: 3,
 			bytes: 3
 		},
 		"int8[4]": {
-			format: WebGL2RenderingContext.RGBA,
-			internalFormat: WebGL2RenderingContext.RGBA8,
-			type: WebGL2RenderingContext.UNSIGNED_BYTE,
+			format: WebGL2RenderingContext.RGBA_INTEGER,
+			internalFormat: WebGL2RenderingContext.RGBA8I,
+			type: WebGL2RenderingContext.BYTE,
 			size: 4,
 			bytes: 4
 		},
-		"byte": {
+		"uint8": {
 			format: WebGL2RenderingContext.RED_INTEGER,
 			internalFormat: WebGL2RenderingContext.R8UI,
 			type: WebGL2RenderingContext.UNSIGNED_BYTE,
 			size: 1,
 			bytes: 1
 		},
-		"byte[2]": {
+		"uint8[2]": {
 			format: WebGL2RenderingContext.RG_INTEGER,
 			internalFormat: WebGL2RenderingContext.RG8UI,
 			type: WebGL2RenderingContext.UNSIGNED_BYTE,
 			size: 2,
 			bytes: 2
 		},
-		"byte[3]": {
+		"uint8[3]": {
 			format: WebGL2RenderingContext.RGB_INTEGER,
 			internalFormat: WebGL2RenderingContext.RGB8UI,
 			type: WebGL2RenderingContext.UNSIGNED_BYTE,
 			size: 3,
 			bytes: 3
 		},
-		"byte[4]": {
+		"uint8[4]": {
 			format: WebGL2RenderingContext.RGBA_INTEGER,
 			internalFormat: WebGL2RenderingContext.RGBA8UI,
+			type: WebGL2RenderingContext.UNSIGNED_BYTE,
+			size: 4,
+			bytes: 4
+		},
+		"byte": {
+			format: WebGL2RenderingContext.RED,
+			internalFormat: WebGL2RenderingContext.R8,
+			type: WebGL2RenderingContext.UNSIGNED_BYTE,
+			size: 1,
+			bytes: 1
+		},
+		"byte[2]": {
+			format: WebGL2RenderingContext.RG,
+			internalFormat: WebGL2RenderingContext.RG8,
+			type: WebGL2RenderingContext.UNSIGNED_BYTE,
+			size: 2,
+			bytes: 2
+		},
+		"byte[3]": {
+			format: WebGL2RenderingContext.RGB,
+			internalFormat: WebGL2RenderingContext.RGB8,
+			type: WebGL2RenderingContext.UNSIGNED_BYTE,
+			size: 3,
+			bytes: 3
+		},
+		"byte[4]": {
+			format: WebGL2RenderingContext.RGBA,
+			internalFormat: WebGL2RenderingContext.RGBA8,
 			type: WebGL2RenderingContext.UNSIGNED_BYTE,
 			size: 4,
 			bytes: 4
@@ -299,7 +334,7 @@ class WebGL {
 
     // Create a texture from an HTML image object
     createTextureFromImage(image, tag) {
-		const {format, internalFormat, type, size} = this.textureFormatMap['int8[4]'];
+		const {format, internalFormat, type, size} = this.textureFormatMap['byte[4]'];
 		let options = {
 			internalFormat: internalFormat,
 			format: format,

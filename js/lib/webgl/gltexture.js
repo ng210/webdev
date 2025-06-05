@@ -77,9 +77,7 @@ export default class glTexture {
     initTexture() {
         const gl = this.webgl.gl;
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
-        if (this.data) {
-            gl.texImage2D(gl.TEXTURE_2D, 0, this.internalFormat, this.width, this.height, 0, this.format, this.type, this.data);
-        }
+        gl.texImage2D(gl.TEXTURE_2D, 0, this.internalFormat, this.width, this.height, 0, this.format, this.type, this.data);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.minFilter);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this.magFilter);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, this.wrapS);
@@ -114,11 +112,6 @@ export default class glTexture {
     }
 
     uploadData(data) {
-        const gl = this.webgl.gl;
-        // //gl.activeTexture(gl.TEXTURE0 + this.texture.unit);
-        // gl.bindTexture(gl.TEXTURE_2D, this.texture);
-        // gl.texImage2D(gl.TEXTURE_2D, 0, this.internalFormat, this.width, this.height, 0, this.format, this.type, data);
-        // gl.bindTexture(gl.TEXTURE_2D, null);
         this.data = data;
         this.update();
     }
@@ -126,15 +119,15 @@ export default class glTexture {
     update() {
         const gl = this.webgl.gl;
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
-        // gl.texSubImage2D(
-        //     gl.TEXTURE_2D,
-        //     0,                  // level
-        //     0, 0,               // offset
-        //     this.width, this.height,
-        //     this.format,
-        //     this.type,
-        //     this.data);
-        gl.texImage2D(gl.TEXTURE_2D, 0, this.internalFormat, this.width, this.height, 0, this.format, this.type, this.data);
+        gl.texSubImage2D(
+            gl.TEXTURE_2D,
+            0,                  // level
+            0, 0,               // offset
+            this.width, this.height,
+            this.format,
+            this.type,
+            this.data);
+        //gl.texImage2D(gl.TEXTURE_2D, 0, this.internalFormat, this.width, this.height, 0, this.format, this.type, this.data);
         gl.bindTexture(gl.TEXTURE_2D, null);
     }
 
