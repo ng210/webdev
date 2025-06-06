@@ -4,13 +4,6 @@ import WebGL from '/js/lib/webgl/webgl.js'
 import {load} from '/js/lib/loader/load.js'
 import ComputeShader from '/js/lib/webgl/compute-shader.js'
 
-const _dummy = new Float32Array(256 * 256 * 2);
-for (let i = 0; i < _dummy.length;) {
-    let col = (i % 200)/200;
-    _dummy[i++] = col;
-    _dummy[i++] = col;
-}
-
 export default class Blank extends Demo {
     #sampleRate = 48000;
     #sound = null;
@@ -32,11 +25,11 @@ export default class Blank extends Demo {
         v_texcoord = pos * 0.5 + 0.5;
         gl_Position = vec4(pos, 0.0, 1.0);
         }`;
-    #computeShader = null;
+
     #oscWindowWidth = 0;
 
     get size() {
-        return [640, 480];
+        return [800, 600];
     }
 
     getNoteFrequency(note) {
@@ -71,7 +64,6 @@ export default class Blank extends Demo {
     async initialize() {
         super.initialize();
         this.#sound = new Sound(this.#sampleRate, (left, right, count, offset) => {
-            //console.log(this.#bufferWrite, this.#oscWindowWidth);
             let bw = 2*this.#bufferWrite;
             for (let i = 0; i < count; i++) {
                 let ls = this.generate(this.#time);
@@ -92,28 +84,11 @@ export default class Blank extends Demo {
         this.#webgl.canvas.height = this.size[1];
         this.#webgl.useExtension('EXT_color_buffer_float');
         const gl = this.#webgl.gl;
-        //this.#texture = this.#webgl.createTexture('float[2]', 256, 256);    //, { data: this.#buffer });
 
         this.#texture = this.#webgl.createTexture('float[2]', 256, 256, {
             minFilter: this.#webgl.gl.NEAREST,
             magFilter: this.#webgl.gl.NEAREST
         });
-        //this.#texture = this.#webgl.createTextureFromImage(img1, 'test');
-
-        // // this.#computeShader = new ComputeShader(this.#webgl, 'visual');
-        // // this.#computeShader.setProgram();
-        // this.#program = this.#webgl.createProgram(
-        //     {
-        //         vertexSrc: this.#vertexShader,
-        //         fragmentSrc: fragmentShader
-        //     });
-        // this.#program.use();
-
-        // this.#webgl.createBufferFromArrayBuffer(
-        //     gl.ARRAY_BUFFER,
-        //     new Float32Array([-0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5]),
-        //     'vertices'
-        // );
 
         let fragmentShader = await load({ url: './visuals.fs', base:import.meta.url });
         this.#program = this.#webgl.createProgram(
@@ -173,7 +148,6 @@ export default class Blank extends Demo {
 	}
 
     update(frame, dt) {
-        //this.#texture.uploadData(this.#buffer);
         this.#texture.uploadData(this.#buffer);
     }
 
@@ -183,7 +157,7 @@ export default class Blank extends Demo {
 
         this.#program.use();
         this.#texture.bind();
-        //this.#program.setUniform('uColor', [0.4, 0.6, 1.0, 1.0]);
+
         this.#program.setUniform('u_resolution', this.size);
         this.#program.setUniform('u_size', this.#oscWindowWidth);
         this.#program.setUniform('u_texture', this.#texture);
@@ -191,15 +165,6 @@ export default class Blank extends Demo {
         gl.clearColor(0, 0, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-        // gl.clearColor(0.0, 0.0, 0.0, 1);
-        // gl.clear(gl.COLOR_BUFFER_BIT);
-        // this.#texture.uploadData(_dummy);
-        // this.#texture.bind();
-        // this.#program.setUniform('u_texture', this.#texture);
-        // //this.#program.setUniform('u_size', this.size);
-
-        // gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 
     async run() {

@@ -30,11 +30,13 @@ vec4 lineOsc(vec2 uv_, float ix_, vec2 size) {
     vec2 uv2 = (gl_FragCoord.xy+vec2(1.0, 0.0))/u_resolution;
     float ix1 = uv1.x * u_size;
     vec2 texcoor1 = vec2(mod(ix1, size.x)/size.x, ix1/size.x/size.y);
-    vec2 smp1 = 0.3 * texture(u_texture, texcoor1).xy + vec2(0.25, 0.75);
+    vec2 smp1 = 0.2 * texture(u_texture, texcoor1).xy + vec2(0.25, 0.75);
+
+    color = vec4(0.01, 0.03, 0.05, 1.0) * (step(0.05, uv1.y)*step(uv1.y, 0.45) + step(0.55, uv1.y)*step(uv1.y, 0.95));
 
     float ix2 = uv2.x * u_size;
     vec2 texcoor2 = vec2(mod(ix2, size.x)/size.x, ix2/size.x/size.y);
-    vec2 smp2 = 0.3 * texture(u_texture, texcoor2).xy + vec2(0.25, 0.75);
+    vec2 smp2 = 0.2 * texture(u_texture, texcoor2).xy + vec2(0.25, 0.75);
 
     vec2 p11 = vec2(uv1.x, smp1.x);
     vec2 p12 = vec2(uv2.x, smp2.x);
@@ -42,7 +44,7 @@ vec4 lineOsc(vec2 uv_, float ix_, vec2 size) {
     float lineWidth = 0.002;
     float d = pointToSegmentDistance(uv1, p11, p12);
     float alpha = smoothstep(lineWidth, lineWidth * 0.5, d);
-    color = vec4(alpha*vec3(.8,.3,.2), 1.);
+    color += vec4(alpha*vec3(.8,.3,.2), 1.);
 
     vec2 p21 = vec2(uv1.x, smp1.y);
     vec2 p22 = vec2(uv2.x, smp2.y);
