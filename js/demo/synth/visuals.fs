@@ -20,9 +20,29 @@ float pointToSegmentDistance(vec2 p, vec2 a, vec2 b) {
 vec4 pointOsc(vec2 uv, float ix, vec2 size) {
     vec2 texcoor = vec2(mod(ix, size.x)/size.x, ix/size.x/size.y);
     vec2 smp = 0.3 * texture(u_texture, texcoor).xy + vec2(0.25, 0.75);
-    color = (1.-step(.001, abs(uv.y-smp.x))) * vec4(.2,.8,.3, 1.);
-    color += (1.-step(.001, abs(uv.y-smp.y))) * vec4(.8,.3,.2, 1.);
+    color = step(abs(uv.y-smp.x), .002) * vec4(.2,.8,.3, 1.);
+    color += step(abs(uv.y-smp.y), .002) * vec4(.8,.3,.2, 1.);
     return color;
+}
+
+vec4 barOsc(vec2 uv, float ix, vec2 size) {
+    vec2 texcoor = vec2(mod(ix, size.x)/size.x, ix/size.x/size.y);
+    vec2 smp = 0.3 * texture(u_texture, texcoor).xy + vec2(0.25, 0.75);
+
+    vec2 p11 = vec2(uv.x, 0.25);
+    vec2 p12 = vec2(uv.x, smp.x);
+    vec2 p21 = vec2(uv.x, 0.75);
+    vec2 p22 = vec2(uv.x, smp.y);
+
+    float lineWidth = 0.002;
+    float d = pointToSegmentDistance(uv, p11, p12);
+    float alpha = smoothstep(lineWidth, lineWidth * 0.5, d);
+    color = vec4(alpha*vec3(.2,.8,.3), 1.);
+    d = pointToSegmentDistance(uv, p21, p22);
+    alpha = smoothstep(lineWidth, lineWidth * 0.5, d);
+    color += vec4(alpha*vec3(.8,.3,.2), 1.);
+
+    return color * step(mod(gl_FragCoord.x, 3.0), 1.0);
 }
 
 vec4 lineOsc(vec2 uv_, float ix_, vec2 size) {
@@ -55,11 +75,44 @@ vec4 lineOsc(vec2 uv_, float ix_, vec2 size) {
     return color;
 }
 
+vec4 circleOsc(vec2 uv, float ix_, vec2 size) {
+    vec2 center = vec2(0.5);
+    vec2 coord = uv - center;
+
+    float baseRadius = 0.2;
+    float thickness = 0.001;
+
+    float angle = atan(coord.y, coord.x);
+    float normAngle = (angle + 3.14159265) / (2.0 * 3.14159265);
+
+    float ix = normAngle * u_size;
+    vec2 texcoord = vec2(mod(ix, size.x) / size.x, floor(ix / size.x) / size.y);
+    vec2 smp = texture(u_texture, texcoord).xy;
+
+    float lineWidth = 0.002;
+
+    float displacedRadius = baseRadius + smp.x * 0.2;
+    float currentRadius = length(coord);
+    float d = abs(currentRadius - displacedRadius);
+
+    float alpha = smoothstep(lineWidth, lineWidth * 0.5, d);
+    vec4 color = vec4(alpha*vec3(.2,.8,.3), 1.);
+
+    displacedRadius = baseRadius + smp.y * 0.2;
+    currentRadius = length(coord);
+    d = abs(currentRadius - displacedRadius);
+    alpha = smoothstep(lineWidth, lineWidth * 0.5, d);
+    color += vec4(alpha*vec3(.8,.3,.2), 1.);
+
+    return color;
+}
 
 void main(void) {
     vec2 uv = gl_FragCoord.xy/u_resolution;
     vec2 size = vec2(textureSize(u_texture, 0));
     float ix = uv.x * u_size;
     //color = pointOsc(uv, ix, size);
-    color = lineOsc(uv, ix, size);
+    //color = barOsc(uv, ix, size);
+    //color = lineOsc(uv, ix, size);
+    color = circleOsc(uv, ix, size);
 }
