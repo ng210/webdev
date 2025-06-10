@@ -54,7 +54,8 @@ export default class Blank extends Demo {
             fre3:       { value:281.0, min:   1, max: 880.0, step:   1   },
             psw3:       { value:  0.5, min:   0, max:   1.0, step:   .05 },
 
-            scale:      { value:    1, min:   1, max:   8, step:     1   }
+            scale:      { value:    1, min:   1, max:   8, step:     1   },
+            type:       { value:    0, min:   0, max:   3, step:     1   }
         };
         this.#buffer = new Float32Array(2*256*256);
         this.#buffer.fill(0);
@@ -149,6 +150,7 @@ export default class Blank extends Demo {
 
     update(frame, dt) {
         this.#texture.uploadData(this.#buffer);
+        this.#program.setUniform('u_type', this.settings.type.value);
     }
 
     render(frame, dt) {

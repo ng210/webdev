@@ -6,6 +6,7 @@ in vec2 v_texcoord;
 uniform sampler2D u_texture;
 uniform vec2 u_resolution;
 uniform float u_size;
+uniform int u_type;
 
 out vec4 color;
 
@@ -111,8 +112,8 @@ void main(void) {
     vec2 uv = gl_FragCoord.xy/u_resolution;
     vec2 size = vec2(textureSize(u_texture, 0));
     float ix = uv.x * u_size;
-    //color = pointOsc(uv, ix, size);
-    //color = barOsc(uv, ix, size);
-    //color = lineOsc(uv, ix, size);
-    color = circleOsc(uv, ix, size);
+    if (u_type == 0) color = pointOsc(uv, ix, size);
+    if (u_type == 1) color = barOsc(uv, ix, size);
+    if (u_type == 2) color = lineOsc(uv, ix, size);
+    if (u_type == 3) color = circleOsc(uv, ix, size);
 }
