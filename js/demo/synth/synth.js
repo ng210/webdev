@@ -3,6 +3,7 @@ import Sound from '/js/lib/sound.js'
 import WebGL from '/js/lib/webgl/webgl.js'
 import {load} from '/js/lib/loader/load.js'
 import ComputeShader from '/js/lib/webgl/compute-shader.js'
+import { lerp } from '/js/lib/fn.js'
 
 export default class Blank extends Demo {
     #sampleRate = 48000;
@@ -54,6 +55,8 @@ export default class Blank extends Demo {
             fre3:       { value:281.0, min:   1, max: 880.0, step:   1   },
             psw3:       { value:  0.5, min:   0, max:   1.0, step:   .05 },
 
+            additive:   { value:    1, min:   0, max:   1, step:     1   },
+
             scale:      { value:    1, min:   1, max:   8, step:     1   },
             type:       { value:    0, min:   0, max:   3, step:     1   }
         };
@@ -101,7 +104,7 @@ export default class Blank extends Demo {
         this.onChange('scale', this.settings.scale.value);
     }
 
-    osc(type, fre, amp, psw, time) {
+    osc(type, fre, psw, time) {
         let f = 2 * Math.PI / this.#sampleRate;
         let t = time * f * fre;
         let smp = 0;
@@ -121,14 +124,25 @@ export default class Blank extends Demo {
                 return 0;
         }
 
-        return amp * smp
+        return smp;
     }
 
     generate(time) {
-        let osc1 = this.osc(this.settings.osc1.value, this.settings.fre1.value, this.settings.amp1.value, this.settings.psw1.value, time);
-        let osc2 = this.osc(this.settings.osc2.value, this.settings.fre2.value, this.settings.amp2.value, this.settings.psw2.value, time);
-        let osc3 = this.osc(this.settings.osc3.value, this.settings.fre3.value, this.settings.amp3.value, this.settings.psw3.value, time);
-        return (osc1 + osc2 + osc3) / 3;
+        let osc1 = this.osc(this.settings.osc1.value, this.settings.fre1.value, this.settings.psw1.value, time);
+        let osc2 = this.osc(this.settings.osc2.value, this.settings.fre2.value, this.settings.psw2.value, time);
+        let osc3 = this.osc(this.settings.osc3.value, this.settings.fre3.value, this.settings.psw3.value, time);
+        let out = 0.0;
+        if (this.settings.additive.value != 0) {
+            out = this.settings.amp1.value*osc1;
+            out += this.settings.amp2.value*osc2;
+            out += this.settings.amp3.value*osc3;
+            out /= 3;
+        } else {
+            out =  lerp(1.0, osc1, this.settings.amp1.value);
+            out *= lerp(1.0, osc2, this.settings.amp2.value);
+            out *= lerp(1.0, osc3, this.settings.amp3.value);
+        }
+        return out;
     }        
 
 	onChange(id, value) {
