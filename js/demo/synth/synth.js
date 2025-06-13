@@ -2,7 +2,6 @@ import Demo from '/js/demo/base/demo.js'
 import Sound from '/js/lib/sound.js'
 import WebGL from '/js/lib/webgl/webgl.js'
 import {load} from '/js/lib/loader/load.js'
-import ComputeShader from '/js/lib/webgl/compute-shader.js'
 import { lerp } from '/js/lib/fn.js'
 
 export default class Blank extends Demo {
@@ -27,6 +26,8 @@ export default class Blank extends Demo {
         gl_Position = vec4(pos, 0.0, 1.0);
         }`;
 
+    #prevValues = [0, 0, 0];
+
     #oscWindowWidth = 0;
 
     get size() {
@@ -42,18 +43,18 @@ export default class Blank extends Demo {
         this.settings = {
             osc1:       { value:    3, min:  0, max:      4, step:   1   },
             amp1:       { value: 0.50, min:  .0, max:   1.0, step:  .05  },
-            fre1:       { value: 94.0, min:   1, max: 880.0, step:   1   },
-            psw1:       { value:  0.2, min:   0, max:   1.0, step:   .05 },
+            fre1:       { value: 94.0, min:   1, max:3520.0, step:   1   },
+            psw1:       { value:  0.2, min:   0, max:   1.0, step:   .01 },
 
             osc2:       { value:    3, min:  0, max:      4, step:   1   },
             amp2:       { value: 0.15, min:  .0, max:   1.0, step:  .05  },
-            fre2:       { value:237.0, min:   1, max: 880.0, step:   1   },
-            psw2:       { value:  0.8, min:   0, max:   1.0, step:   .05 },
+            fre2:       { value:237.0, min:   1, max:3520.0, step:   1   },
+            psw2:       { value:  0.8, min:   0, max:   1.0, step:   .01 },
 
             osc3:       { value:    3, min:  0, max:      4, step:   1   },
             amp3:       { value: 0.25, min:  .0, max:   1.0, step:  .05  },
-            fre3:       { value:281.0, min:   1, max: 880.0, step:   1   },
-            psw3:       { value:  0.5, min:   0, max:   1.0, step:   .05 },
+            fre3:       { value:281.0, min:   1, max:3520.0, step:   1   },
+            psw3:       { value:  0.5, min:   0, max:   1.0, step:   .01 },
 
             additive:   { value:    1, min:   0, max:   1, step:     1   },
 
@@ -104,22 +105,37 @@ export default class Blank extends Demo {
         this.onChange('scale', this.settings.scale.value);
     }
 
-    osc(type, fre, psw, time) {
-        let f = 2 * Math.PI / this.#sampleRate;
-        let t = time * f * fre;
+    osc(id, type, fre, psw, time) {
+        // let f = 2 * Math.PI / this.#sampleRate;
+        // let t = time * f * fre;
+        
         let smp = 0;
+        let f = fre / this.#sampleRate;
+        let t = time * f;
+        let ph = t - Math.trunc(t);
 
         switch (type) {
             case 0: // sine
-                smp = Math.sin(2 * Math.PI * fre * time / this.#sampleRate); break;
+                smp = Math.sin(2 * Math.PI * t); break;
             case 1: // square
-                smp = Math.sin(t) >= psw ? 1 : -1; break;
+                smp = ph >= psw ? 1 : -1; break;
+                //smp = Math.sin(t) >= psw ? 1 : -1; break;
             case 2: // sawtooth
-                smp = 2 * (0.5 * t / Math.PI - Math.floor(0.5*t / Math.PI + 0.5)); break;
+                smp = ph < psw ? 2*ph/psw - 1 : -1; break;
+                // smp = (ph < psw ? ph/psw : -1); break;
+            //     smp = 2 * (0.5 * t / Math.PI - Math.floor(0.5*t / Math.PI + 0.5)); break;
             case 3: // triangle
-                smp = Math.asin(Math.sin(t)) * (2 / Math.PI); break;
+                smp = ph < psw ? 2*ph/psw - 1 : 2*(1-ph)/(1-psw) - 1; break;
+            //     smp = Math.asin(Math.sin(t)) * (2 / Math.PI); break;
             case 4: // noise
-                smp = 2 * Math.random() - 1; break;
+                f = 8 * fre / this.#sampleRate;
+                t = time * f;
+                ph = t - Math.trunc(t);
+                if (ph < f || ph > psw-f/2 && ph < psw+f/2) {
+                    this.#prevValues[id] = 2*Math.random()-1;
+                }
+                smp = this.#prevValues[id]; //ph >= psw ? this.#prevValues[id] : -this.#prevValues[id];
+                break;
             default:
                 return 0;
         }
@@ -128,9 +144,9 @@ export default class Blank extends Demo {
     }
 
     generate(time) {
-        let osc1 = this.osc(this.settings.osc1.value, this.settings.fre1.value, this.settings.psw1.value, time);
-        let osc2 = this.osc(this.settings.osc2.value, this.settings.fre2.value, this.settings.psw2.value, time);
-        let osc3 = this.osc(this.settings.osc3.value, this.settings.fre3.value, this.settings.psw3.value, time);
+        let osc1 = this.osc(0, this.settings.osc1.value, this.settings.fre1.value, this.settings.psw1.value, time);
+        let osc2 = this.osc(1, this.settings.osc2.value, this.settings.fre2.value, this.settings.psw2.value, time);
+        let osc3 = this.osc(2, this.settings.osc3.value, this.settings.fre3.value, this.settings.psw3.value, time);
         let out = 0.0;
         if (this.settings.additive.value != 0) {
             out = this.settings.amp1.value*osc1;
