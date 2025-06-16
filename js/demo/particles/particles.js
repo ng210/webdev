@@ -26,13 +26,13 @@ export default class Particles extends Demo {
         super();
         this.settings = {
             set:        { value: 100, min:  10, max: 500, step:  10 },
-            ratio:      { value:   1, min:   1, max:  10, step:   1 },
+            ratio:      { value:   3, min:   1, max:  10, step:   1 },
           //time:       { value:  80, min:   1, max: 200, step:   5 },
           //scale:      { value:   4, min:   1, max:  10, step:   1 },
-            random:     { value:  .5, min:  .0, max:  1., step:  .1 },
-            area:       { value: .01, min:   0, max:  .4, step: .01 },
-            life:       { value:   4, min:   1, max:  20, step:   1 },
-            speed:      { value:   5, min:   0, max:  10, step: .25 },
+            random:     { value:  .8, min:  .0, max:  1., step:  .1 },
+            area:       { value: .02, min:   0, max:  .4, step: .01 },
+            life:       { value:   2, min:   1, max:  20, step:   1 },
+            speed:      { value:   3, min:   0, max:  10, step: .25 },
             angle:      { value:  90, min:   0, max: 360, step:   10 },
             size:       { value:   2, min:   1, max:  10, step:   1 }
         };
@@ -45,7 +45,7 @@ export default class Particles extends Demo {
                 scaleY: 1.0});
         this.#webgl.useExtension('EXT_color_buffer_float');
         const gl = this.#webgl.gl;
-        this.#count = 200000;
+        this.#count = 100000;
         this.#ptMgr = new ParticleManager(this.#webgl, this.#count);
         //this.#ptMgr.diffuseColor = [1.0, 1.0, 1.0, 1.0];
 
@@ -105,7 +105,7 @@ export default class Particles extends Demo {
                         break;
                 }
             }`);
-
+        this.#ptMgr.dataTexture = this.#cs.output;
         this.updateWind();
     }
 
@@ -189,7 +189,6 @@ export default class Particles extends Demo {
         this.#cs.feedback();
     
         this.#webgl.gl.viewport(0, 0, this.#webgl.canvas.width, this.#webgl.canvas.height);
-        this.#ptMgr.dataTexture = this.#cs.output;
         this.#ptMgr.render(frame, dt);
     }
 

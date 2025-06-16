@@ -74,9 +74,6 @@ export default class Bump extends Demo {
 			case 'image':
 				this.setImage(value);
 				break;
-			// default:
-			// 	this.update(0, 0);
-			// 	break;
 		}
 		return true;
 	}
