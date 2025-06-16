@@ -1,10 +1,10 @@
 export default class Vec2 {
     //#region Pool
-    static #pool;
-    static #poolIndex;
-    static #poolCount;
+    static #pool = null;
+    static #poolIndex = -1;
+    static #poolCount = 0;
 
-    static initialize(size) {
+    static initialize(size = 1000) {
         Vec2.#pool = new Float32Array(2*size);
         Vec2.#poolIndex = 0;
         Vec2.#poolCount = 0;
@@ -23,6 +23,9 @@ export default class Vec2 {
     }
 
     static allocate() {
+        if (Vec2.#pool == null) {
+            Vec2.initialize();
+        }
         if (Vec2.#poolIndex != -1) {
             let index = Vec2.#poolIndex;
             Vec2.#poolIndex = Vec2.#pool[index];
@@ -47,7 +50,6 @@ export default class Vec2 {
         return 2*ix < Vec2.#pool.length ? new Vec2(Vec2.#pool, 2*ix) : null;
     }
 
-
     static getPoolIndex() { return Vec2.#poolIndex; }
 
     static getPoolCount() { return Vec2.#poolCount; }
@@ -63,6 +65,15 @@ export default class Vec2 {
     get len() { return Math.sqrt(this.len2); }
     get len2() { return this.x**2 + this.y**2; }
 
+    [Symbol.iterator]() {
+        let index = -1;
+        return {
+            next: () => ({
+                value: this.#array[this.#index + ++index],
+                done: index == 2 })
+        };
+    }
+
     constructor() {
         let array = Vec2.#pool;
         let ix = 0;
@@ -75,8 +86,8 @@ export default class Vec2 {
             x = arguments[2] || array[ix];
             y = arguments[3] || array[ix+1];
         } else {
-            array = Vec2.#pool;
             ix = Vec2.allocate();
+            array = Vec2.#pool;
             if (arguments[0] != undefined) x = arguments[0];
             if (arguments[1] != undefined) y = arguments[1];
         }

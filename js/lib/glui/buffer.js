@@ -7,6 +7,7 @@ export default class Buffer {
     get height() { return this.canvas.height; }
 
     constructor() {
+        let data = null;
         if (arguments[0] instanceof HTMLCanvasElement) {
             this.canvas = arguments[0];
         } else {
@@ -18,10 +19,14 @@ export default class Buffer {
                     wi = arguments[0];
                     he = arguments[1];
                 }
-            } else if (arguments[0] instanceof HTMLImageElement ||
-                       arguments[0] instanceof Buffer) {
+            } else if (arguments[0] instanceof HTMLImageElement) {
                 wi = arguments[0].width;
                 he = arguments[0].height;
+                data = arguments[0];
+            } else if (arguments[0] instanceof Buffer) {
+                wi = arguments[0].width;
+                he = arguments[0].height;
+                data = arguments[0].canvas;
             }
 
             this.canvas.width = wi;
@@ -29,6 +34,7 @@ export default class Buffer {
         }
 
         this.context = this.canvas.getContext('2d');
+        if (data) this.#blit(data);
         this.imageData = this.context.getImageData(0, 0, this.width, this.height);
 
         // this.canvas = document.createElement('canvas');

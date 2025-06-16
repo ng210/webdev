@@ -15,15 +15,20 @@ export default class HtmlControl extends IControl {
         this.#id = id;
     }
 
-    createElement(tag) {
-        this.#elem = document.createElement(tag);
-        this.#elem.setAttribute('title', this.id);
+    async initialize(data) {
+        this.#elem = this.createElement(data);
         this.#elem.control = this;
     }
+
+    createElement(data) { throw new Error('Not implemented!'); }
 
     append(parent) {
         if (this.#elem != null) {
             parent.appendChild(this.#elem);
         }
+    }
+
+    addHandlerImpl(event, handler) {
+        this.#elem.addEventListener(event, handler);
     }
 }

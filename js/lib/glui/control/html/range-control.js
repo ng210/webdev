@@ -10,7 +10,7 @@ export default class RangeControl extends HtmlControl {
         this.elem.value = v < min ? min : v > max ? max : v;
     }
     async initialize(data) {
-        this.createElement('input');
+        await super.initialize();
         this.elem.setAttribute('type', 'range');
         if (this.dataSource != null) {
             this.elem.setAttribute('min', this.dataSource.min != undefined ? parseFloat(this.dataSource.min) : 0);
@@ -18,17 +18,22 @@ export default class RangeControl extends HtmlControl {
             this.elem.setAttribute('step', this.dataSource.step != undefined ? parseFloat(this.dataSource.step) : 1);
             this.elem.value = this.dataSource.value != undefined ? parseFloat(this.dataSource.value) : this.dataSource;
         }
+        RangeControl.prototype.onChange.apply(this, null);
+        this.addHandler('change', e => this.onChange(e));
     }
 
     constructor(id) {
         super(id);
     }
 
-    update(dt, frame) { }
-    render(dt, frame) { throw new Error('Not implemented!'); }
-    addHandler(event, handler) {
-        if (this.elem && this.validEvents.includes(event.toLowerCase())) {
-            this.elem.addEventListener(event, handler);
-        }
+    createElement(data) {
+        return document.createElement('input');
+    }
+
+    // update(dt, frame) { }
+    // render(dt, frame) { }
+
+    onChange(e) {
+        this.elem.setAttribute('title', this.value);
     }
 }

@@ -5,7 +5,7 @@ class ControlTest extends Test {
     dataSource = {
         range1: 12,
         range2: { min: 0, max: 1.0, step: 0.1, value: 0.5 }
-    }
+    };
     controls = [];
 
     onChange(e) {

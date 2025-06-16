@@ -1,30 +1,30 @@
 import { Url } from './url.js'
 
-async function load(args) {
-    var result = null;
+async function _load(args) {
+    let result = null;
     try {
-        // constuct url from 
-        var url = args;
+        // construct url from 
+        let url = args;
         if (typeof args === 'object') {
             url = new Url(args.url, args.base || '').toString();
         }
 
-        var method = args.method || 'GET';
-        var data = args.data || null;
-        var headers = args.headers || {};
-        var contentType = '';
+        let method = args.method || 'GET';
+        let data = args.data || null;
+        let headers = args.headers || {};
+        let contentType = '';
         if (args.contentType) contentType = args.contentType;
         else {
             // get content type by the extension
-            var ix = url.lastIndexOf('.');
+            let ix = url.lastIndexOf('.');
             if (ix != -1 && ix > 0) {
-                var ext = url.substring(ix+1);
+                let ext = url.substring(ix+1);
                 contentType = load.ext2contentType[ext] || 'application/octet-stream';
             }
         }
         headers['Content-Type'] = headers['Content-Type'] || contentType;
 
-        var resp = await fetch(url, {
+        let resp = await fetch(url, {
             method: method,
             headers: headers,
             body: data
@@ -32,7 +32,7 @@ async function load(args) {
 
         if (resp.ok) {
             // get data-type by content-type
-            var dataType = load.contentType2dataType[contentType] || 'blob';
+            let dataType = load.contentType2dataType[contentType] || 'blob';
             result = await resp[dataType]();
         } else {
             throw new Error(`${resp.status} ${resp.statusText}`);
@@ -42,6 +42,18 @@ async function load(args) {
         result = err;
     }
     return result;
+}
+
+async function load(args) {
+    if (Array.isArray(args)) {
+        let promises = [];
+        for (var item of arr) {
+            promises.push(_load(item));
+        }
+        return await Promise.all(promises);
+    } else {
+        return await _load(args);
+    }
 }
 
 load.ext2contentType = {};
