@@ -273,7 +273,7 @@ export default class Demo {
         this.#startTime = Date.now();
         this.isRunning = true;
         this.#startStopButton.innerHTML = 'Stop';
-        this.#handler = requestAnimationFrame(() => this.#main());
+        this.#handler = requestAnimationFrame(time => this.#main(time));
     }
 
     stop() {
@@ -286,26 +286,25 @@ export default class Demo {
         this.start();
     }
 
-    #main() {
+    #main(time) {
         cancelAnimationFrame(this.#handler);
         if (this.isRunning) {
-            let now = new Date().getTime();
-            let delta = now - this.#startTime;
+            let delta = time - this.#startTime;
             if (delta > 1000) {
                 // update fps value
                 this.#fps.innerHTML =(1000*(this.#frame - this.#startFrame) / delta).toFixed(2);
                 this.#startFrame = this.#frame;
-                this.#startTime = now;
+                this.#startTime = time;
             }
-            let dt = now - this.#ts;
-            this.#ts = now;
+            let dt = time - this.#ts;
+            this.#ts = time;
             // check inputs
             // update
             this.update(this.#frame, dt);
             // render
             this.render(this.#frame, dt);
             this.#frame++;
-            this.#handler = requestAnimationFrame(() => this.#main());
+            this.#handler = requestAnimationFrame(time => this.#main(time));
         }
     }
 }
