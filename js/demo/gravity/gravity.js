@@ -1,6 +1,6 @@
 import Demo from '/js/demo/base/demo.js'
 import Vec2 from '/js/lib/math/vec2.js'
-import { Particle, Star } from './star.js';
+import Star from './star.js';
 
 export default class Gravity extends Demo {
     #stars = [];
