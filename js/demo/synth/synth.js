@@ -107,6 +107,8 @@ class Flt {
 }
 
 export default class Synth extends Demo {
+    static waveforms = ['Sinus', 'Pulse', 'Saw', 'Tri', 'Noise'];
+    static synthMode = ['AM', 'additive'];
     #sampleRate = 48000;
     #sound = null;
     #time = 0;
@@ -144,17 +146,17 @@ export default class Synth extends Demo {
     constructor() {
         super();
         this.settings = {
-            osc1:       { value:    3, min:  0, max:      4, step:   1   },
+            osc1:       { list: Synth.waveforms, value:2  },
             amp1:       { value: 0.50, min:  .0, max:   1.0, step:  .05  },
             fre1:       { value: 94.0, min:   1, max:3520.0, step:   1   },
             psw1:       { value:  0.2, min:   0, max:   1.0, step:   .01 },
 
-            osc2:       { value:    3, min:  0, max:      4, step:   1   },
+            osc2:       { list: Synth.waveforms, value:2  },
             amp2:       { value: 0.15, min:  .0, max:   1.0, step:  .05  },
             fre2:       { value:237.0, min:   1, max:3520.0, step:   1   },
             psw2:       { value:  0.8, min:   0, max:   1.0, step:   .01 },
 
-            osc3:       { value:    3, min:  0, max:      4, step:   1   },
+            osc3:       { list: Synth.waveforms, value:2  },
             amp3:       { value: 0.25, min:  .0, max:   1.0, step:  .05  },
             fre3:       { value:281.0, min:   1, max:3520.0, step:   1   },
             psw3:       { value:  0.5, min:   0, max:   1.0, step:   .01 },
@@ -162,7 +164,7 @@ export default class Synth extends Demo {
             cut:        { value:  0.5, min:   0, max:   1.0, step:   .01 },
             res:        { value:  0.5, min:   0, max:   1.0, step:   .01 },
 
-            additive:   { value:    1, min:   0, max:   1, step:     1   },
+            mode:       { list: Synth.synthMode, value: 0 },
 
             scale:      { value:    1, min:   1, max:   8, step:     1   },
             type:       { value:    0, min:   0, max:   3, step:     1   }
@@ -267,7 +269,7 @@ export default class Synth extends Demo {
         let osc2 = this.osc(1, this.settings.osc2.value, this.settings.fre2.value, this.settings.psw2.value, time);
         let osc3 = this.osc(2, this.settings.osc3.value, this.settings.fre3.value, this.settings.psw3.value, time);
         let out = 0.0;
-        if (this.settings.additive.value != 0) {
+        if (this.settings.mode.value == 1) {
             out = this.settings.amp1.value*osc1;
             out += this.settings.amp2.value*osc2;
             out += this.settings.amp3.value*osc3;

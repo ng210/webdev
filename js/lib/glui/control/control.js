@@ -31,7 +31,11 @@ export default class Control {
     #handlers = {};
     get handlers() { return this.#handlers; }
 
-    constructor(id) { this.id = id; }
+    constructor(id) {
+        this.id = id;
+        this.label = id;
+    }
+
     async initialize(data) { throw new Error('Not implemented!'); }
     dataBind(dataSource) {
         this.#dataSource = dataSource;

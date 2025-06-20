@@ -17,7 +17,8 @@ canvas {
     position: absolute;
     left: 10px;
     top: 10px;
-    display: grid;
+    display: flex;
+    flex-direction: column;
     font-family: monospace;
     font-size: x-large;
     font-weight: bold;
@@ -27,8 +28,7 @@ canvas {
 
 div.settings {
     width: 100%;
-    grid-column: span 2;
-    display: grid;
+    /* display: grid; */
     grid-template-columns: 1fr auto;
     border: outset 4px #ffffff40;
     background-color: #ffffff40;
@@ -44,31 +44,83 @@ div.buttons {
 }
 
 span.settings {
-    grid-column: 1;
-    grid-row: 1;
+    /* grid-column: 1;
+    grid-row: 1; */
     text-align: center;
 }
 
 span.fps {
-    grid-column: 2;
-    grid-row: 1;
+    /* grid-column: 2;
+    grid-row: 1; */
     text-align: center;
     font-family: Consolas, 'Courier New', Courier, monospace;
     font-size: small;
 }
 
-label.settings {
+/* #settings label {
+    display: inline-block;
+    text-align: center;
+    width: 4em;
     font-weight: bold;
-    padding: 0.1em 0.4em;
-    border: inset 1px #80808040;
+    padding: 0;
+    border: inset 2px #80808040;
+} */
+
+#settings input {
+    cursor:pointer;
+    border: inset 2px #80808040;
 }
 
-input.settings {
-    cursor:pointer;
+.range {
+    width: 100%;
+    font-family: Consolas;
+    font-size: 12pt;
+    color: #d0e0ffa0;
+    text-shadow: 1px 1px 2px #000000c0;
+    background: #4444;
+    text-align: center;
+}
+div.range {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 14em;
+    height: 1.8em;
+    border: outset 1px #8888;
+    padding: 2px;
+}
+
+label.range {
+    width: 10em;
+}
+
+input.range {
+    height: 0.6em;
+    width: 10em;
+    background: #222a;
+    padding-bottom: 2px;
+    cursor: pointer;
+    /* writing-mode: vertical-lr;
+    transform: rotate(180deg); */
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+input.range::-webkit-slider-thumb {
+    background: #ccc8;
+    border-radius: 1px;
+    width: 0.6em;
+    height: 1em;
+    box-shadow: -1px -1px 2px black;
+    -webkit-appearance: none;
+}
+
+span.range {
+    width: 6em;
 }
 
 button.settings {
-    grid-column: span 2;
+    /* grid-column: span 2; */
     border-width: 3px;
     width: 5em;
     font-size: large;

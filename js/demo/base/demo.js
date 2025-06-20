@@ -1,5 +1,6 @@
 //import Buffer from '/js/lib/glui/buffer.js'
-import RangeControl from '/js/lib/glui/control/html/range-control.js'
+import RangeControl from '/js/lib/glui/control/range-control.js'
+import HtmlRangeElem from '/js/lib/glui/control/html/html-range-elem.js'
 import Vec4 from '/js/lib/math/vec4.js'
 
 
@@ -49,7 +50,7 @@ export default class Demo {
         this.canvas.addEventListener('pointerup', Demo.dispatchEvent);
         this.canvas.addEventListener('pointermove', Demo.dispatchEvent);
         this.canvas.addEventListener('wheel', Demo.dispatchEvent, { passive: false });
-        this.createSettingsPanel();
+        await this.createSettingsPanel();
         this.#initializedResolved(true);
     }
 
@@ -75,7 +76,7 @@ export default class Demo {
 
     updateSetting(ctrl) {
         if (ctrl) {
-            let value = parseFloat(ctrl.value);
+            let value = parseFloat(ctrl.uiElement.value);
             if (this.onChange(ctrl.id, value)) {
                 this.settings[ctrl.id].value = value;
             }
@@ -156,7 +157,7 @@ export default class Demo {
     onWheel(e) {
     }
 
-    createSettingsPanel() {
+    async createSettingsPanel() {
         //let panel = new PanelControl('settings');
         let panel = document.querySelector('#settings');
         panel.innerHTML = '';
@@ -182,25 +183,25 @@ export default class Demo {
         header.appendChild(this.#fps);
         for (let k in this.settings) {
             let setting = this.settings[k];
-            let label = document.createElement('label');
-            label.className = 'settings';
-            label.innerHTML = k;
-            panel.appendChild(label);
+            // let label = document.createElement('label');
+            // label.className = 'settings';
+            // label.innerHTML = k;
+            // panel.appendChild(label);
             // create control depending on setting type
             // - range
             // - dropdown list
             let control = null;
-            if (Array.isArray(settings.values)) {
-                debugger
-                control = new DropDownListControl(k, setting);
-            } else if (setting.min != undefined && setting.max != undefined) {
+            if (Array.isArray(setting.list) || setting.min != undefined && setting.max != undefined) {
+
+
                 control = new RangeControl(k);
-                control.dataSource = setting;
-                control.initialize();
+                control.uiElement = new HtmlRangeElem(control);
+                control.dataBind(setting);
+                await control.initialize();
             }
             setting.control = control;
-            control.addHandler('input', e => this.updateSetting(e.target.control));
-            control.append(panel);
+            control.addHandler('input', e => this.updateSetting(control));
+            control.uiElement.parent = panel;
 
             // if (setting.min != undefined) {
             //     let input = document.createElement('input');
@@ -270,7 +271,7 @@ export default class Demo {
         this.#ts = new Date().getTime();
         this.#fps.innerHTML = '00.00';
         this.#startFrame = 0;
-        this.#startTime = Date.now();
+        this.#startTime = 0;
         this.isRunning = true;
         this.#startStopButton.innerHTML = 'Stop';
         this.#handler = requestAnimationFrame(time => this.#main(time));
