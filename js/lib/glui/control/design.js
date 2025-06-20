@@ -48,7 +48,7 @@ class Control {
   dataSource, validEvents
   
   constructor(id, data)
-  dataBing(dataSource)
+  dataBind(dataSource)
   async initialize(data)
   addHandler(event, handler)
 }

@@ -79,14 +79,15 @@ function implement(cls, iface) {
     let descriptors = Object.getOwnPropertyDescriptors(iface.prototype);
     for (let k in descriptors) {
         let desc = descriptors[k];
-        let method = null;
         if (typeof desc.value === 'function') {
             if (desc.value != iface) {
                 Object.defineProperty(cls, k, desc);
             }
-        } else if (desc.get != undefined) {
+        }
+        if (desc.get != undefined) {
             Object.defineProperty(cls, k, desc);
-        } else if (desc.set != undefined) {
+        }
+        if (desc.set != undefined) {
             Object.defineProperty(cls, k, desc);
         }
     }

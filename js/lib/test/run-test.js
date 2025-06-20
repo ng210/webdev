@@ -36,6 +36,11 @@ async function main() {
 
     _cons.writeln(`*** Load tests from: ${url}`);
 
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = url.pathname.replace('.js', '.css');
+    document.head.appendChild(link);
+
     let test = null;
     try {
         let mdl = await import(url);
