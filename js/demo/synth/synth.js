@@ -3,112 +3,12 @@ import Sound from '/js/lib/sound.js'
 import WebGL from '/js/lib/webgl/webgl.js'
 import {load} from '/js/lib/loader/load.js'
 import { lerp } from '/js/lib/fn.js'
-
-class FltStage {
-    ai = new Array(3);    // nominator coeffs
-    bi = new Array(3);    // LP denominator coeffs
-    ci = new Array(3);    // HP denominator coeffs
-    ui = new Array(3);    // LP inputs
-    vi = new Array(3);    // HP inputs
-    lp = new Array(2);    // LP outputs
-    hp = new Array(2);    // HP outputs
-
-    constructor() {
-        this.ai.fill(0);
-        this.bi.fill(0);
-        this.ci.fill(0);
-        this.ui.fill(0);
-        this.vi.fill(0);
-        this.lp.fill(0);
-        this.hp.fill(0);
-    }
-
-    run() {
-        return 0.0;
-    }
-
-    update(e, g) {
-
-    }
-}
-    
-class FltStage1Pole extends FltStage {
-    constructor() {
-        super();
-        this.ci[0] = 1.0;
-        this.ci[1] = -1.0;
-    }
-
-    run() {
-        // let gain = 1.0f / ai_[0];
-        // y0 = (b0*u0 + b1*u1 - a1*y1)/a0
-        let lp = (this.bi[0] * this.ui[0] + this.bi[1] * this.ui[1] - this.ai[1] * this.lp[0]) / this.ai[0];        // * gain;
-        let hp = (this.ci[0] * this.vi[0] + this.ci[1] * this.vi[1] - this.ai[1] * this.hp[0]) / this.ai[0];
-        this.ui[1] = this.ui[0];
-        this.vi[1] = this.vi[0];
-        this.lp[0] = lp;
-        this.hp[0] = hp;
-    }
-        
-    update(e, g) {
-        this.bi[0] = this.bi[1] = e;
-        // this.ci[0] = 1.0;
-        // this.ci[1] = -1.0;
-        this.ai[0] = e + 1;
-        this.ai[1] = e - 1;
-    }
-}
-
-class Flt {
-    #stages = [];
-    #stageCount = 0;
-
-    constructor(poleCount = 1) {
-        this.#stages.push(new FltStage1Pole());
-        this.#stageCount = 1;
-    }
-
-    run(u0) {
-        let lp = u0;
-        let hp = lp;
-
-        for (let i = 0; i < this.#stageCount; i++) {
-            let stage = this.#stages[i];
-            stage.ui[0] = lp;
-            stage.vi[0] = hp;
-            stage.run();
-            lp = stage.lp[0];
-            hp = stage.hp[0];
-        }
-
-        // hp = u0 - lp;
-        let output = 0.0;
-        // let mode = values_->mode.b;
-        // if ((mode & FmLowPass) != 0)
-        output += lp;
-        // if ((mode & FmHighPass) != 0) output += hp;
-        // if ((mode & FmBandPass) != 0) {
-        //     output += (u0 - hp - lp);
-        // }
-
-        return output;
-    }
-
-    update(cut, res) {
-        let q = res < 0.000001 ? 1.0 : 1.0 - res;
-        let e = 0.5 * cut * cut;    //0.5 * Math.PI * cut;
-        if (e <= 0) e = 0.001;
-        let g = -q * e;
-
-        for (var i = 0; i < this.#stageCount; i++) {
-            this.#stages[i].update(e, g);
-        }
-    }
-}
+import { Flt } from './filter.js'
 
 export default class Synth extends Demo {
     static waveforms = ['Sinus', 'Pulse', 'Saw', 'Tri', 'Noise'];
     static synthMode = ['AM', 'add'];
+    static filterMode = ['LP', 'HP'];
     #sampleRate = 48000;
     #sound = null;
     #time = 0;
@@ -161,10 +61,11 @@ export default class Synth extends Demo {
             fre3:       { value:281.0, min:   1, max:3520.0, step:   1   },
             psw3:       { value:  0.5, min:   0, max:   1.0, step:   .01 },
 
-            cut:        { value:  0.5, min:   0, max:   1.0, step:   .01 },
-            res:        { value:  0.5, min:   0, max:   1.0, step:   .01 },
+            cut:        { value:  0.5, min: 0.1, max:   1.0, step:   .01 },
+            res:        { value:  0.5, min:   0, max:  0.99, step:   .01 },
+            pass:       { list: Object.keys(Flt.modes), value:1 },
 
-            mode:       { list: Synth.synthMode, value: 0 },
+            mode:       { list: Synth.synthMode, value: 1 },
 
             scale:      { value:    1, min:   1, max:   8, step:     1   },
             type:       { value:    0, min:   0, max:   3, step:     1   }
@@ -174,8 +75,12 @@ export default class Synth extends Demo {
         this.#bufferWrite = 0;
 
         this.#flt = [];
-        this.#flt.push(new Flt());
-        this.#flt.push(new Flt());
+        let flt = new Flt(2)
+        flt.mode = this.settings.pass.value;
+        this.#flt.push(flt);
+        flt = new Flt(2)
+        flt.mode = this.settings.pass.value;
+        this.#flt.push(flt);
     }
 
     generateSamples(left, right, count) {
@@ -300,6 +205,13 @@ export default class Synth extends Demo {
                 this.#flt[0].update(this.settings.cut.value, value);
                 this.#flt[1].update(this.settings.cut.value, value);
                 break;
+            case 'pass':
+                this.#flt[0].mode = value;
+                this.#flt[1].mode = value;
+                break;
+            case 'type':
+                this.#program.setUniform('u_type', value);
+                break;
             case 'scale':
                 this.#oscWindowWidth = this.#sound.BUFFER_SIZE*value;
                 break;
@@ -309,7 +221,6 @@ export default class Synth extends Demo {
 
     update(frame, dt) {
         this.#texture.uploadData(this.#buffer);
-        this.#program.setUniform('u_type', this.settings.type.value);
     }
 
     render(frame, dt) {
