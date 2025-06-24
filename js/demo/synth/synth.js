@@ -108,7 +108,7 @@ class Flt {
 
 export default class Synth extends Demo {
     static waveforms = ['Sinus', 'Pulse', 'Saw', 'Tri', 'Noise'];
-    static synthMode = ['AM', 'additive'];
+    static synthMode = ['AM', 'add'];
     #sampleRate = 48000;
     #sound = null;
     #time = 0;
@@ -217,7 +217,7 @@ export default class Synth extends Demo {
         this.#program = this.#webgl.createProgram(
             {
                 vertexSrc: this.#vertexShader,
-                fragmentSrc: fragmentShader
+                fragmentSrc: fragmentShader.content
             });
 
         this.onChange('scale', this.settings.scale.value);

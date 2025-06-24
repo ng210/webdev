@@ -3,8 +3,8 @@ import Test from '/js/lib/test/test.js'
 
 class LoadTest extends Test {
     async testLoadJsonSucceeds() {
-        var data = await load({ url: './test-data/test.json', base:import.meta.url });
-        this.isEqual('Should load json data', data, [
+        var resp = await load({ url: './test-data/test.json', base:import.meta.url });
+        this.isEqual('Should load json data', resp.content, [
             {
                 "id": 1,
                 "name": "test.txt",
@@ -24,18 +24,18 @@ class LoadTest extends Test {
     }
 
     async testLoadTxtAsJsonFails() {
-        var data = await load({
+        var resp = await load({
             url: './test-data/test.txt', base:import.meta.url,
             contentType: 'application/json'
         });
-        this.isTrue('Should return error for wrong content type', data instanceof Error);
+        this.isTrue('Should return error for wrong content type', resp.content instanceof Error);
     }
 
     async testLoadFailsWith404() {
-        var data = await load({
+        var resp = await load({
             url: './test-data/baka.json', base:import.meta.url
         });
-        this.isTrue('Should return 404 error', data instanceof Error && data.message.indexOf('404') != -1);
+        this.isTrue('Should return 404 error', resp.content instanceof Error && resp.content.message.indexOf('404') != -1);
     }
 }
 

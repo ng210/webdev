@@ -35,24 +35,25 @@ export default class Bump extends Demo {
 			'assets/javascript.gif'
 		];
 		this.#heightMaps = [];
-		let resources = [];
+		let responses = [];
+		let dataSource = { list:[], value: 0 };
 		for (let url of urls) {
-			resources.push(load(url)
+			responses.push(load(url)
 				.then(
-					async res => {
-						if (res instanceof Error) {
-							console.log(res);
+					async resp => {
+						if (resp.content instanceof Error) {
+							console.log(resp.content);
 						} else {
+							dataSource.list.push(resp.url.split('/').pop());
 							const img = new Image();
-							img.src = URL.createObjectURL(res);
+							img.src = URL.createObjectURL(resp.content);
 							await img.decode();
 							this.#heightMaps.push(this.createHeightMap(img));
 						}
 					}));
 		}
-		await Promise.all(resources);
-		this.settings.image.max = this.#heightMaps.length-1;
-		this.settings.image.control.elem.setAttribute('max', this.settings.image.max);
+		await Promise.all(responses);
+		this.settings.image.control.dataBind(dataSource);
 		this.setImage(0);
 		this.resize();
 		this.update(0);

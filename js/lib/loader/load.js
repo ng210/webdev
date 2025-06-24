@@ -2,9 +2,8 @@ import { Url } from './url.js'
 
 async function _load(args) {
     let result = null;
+    let url = args;
     try {
-        // construct url from 
-        let url = args;
         if (typeof args === 'object') {
             url = new Url(args.url, args.base || '').toString();
         }
@@ -41,7 +40,7 @@ async function _load(args) {
         console.error(err);
         result = err;
     }
-    return result;
+    return { url: url, content: result };
 }
 
 async function load(args) {

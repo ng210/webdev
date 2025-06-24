@@ -13,6 +13,10 @@ async function loadDemo() {
     url.hash = '';
     console.log('loading...' + url.toString())
     let mdl = await import(url.toString());
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = url.pathname.replace('.js', '.css');
+    document.head.appendChild(link);
     _demo = Reflect.construct(mdl.default, []);
     await _demo.initialize();
     _demo.run();

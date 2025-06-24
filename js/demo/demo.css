@@ -28,7 +28,7 @@ canvas {
 
 div.settings {
     width: 100%;
-    /* display: grid; */
+    display: grid;
     grid-template-columns: 1fr auto;
     border: outset 4px #ffffff40;
     background-color: #ffffff40;
@@ -72,9 +72,8 @@ span.fps {
 }
 
 .range {
-    width: 100%;
     font-family: Consolas;
-    font-size: 12pt;
+    font-size: 11pt;
     color: #d0e0ffa0;
     text-shadow: 1px 1px 2px #000000c0;
     background: #4444;
@@ -84,19 +83,18 @@ div.range {
     display: flex;
     flex-direction: row;
     align-items: center;
-    width: 14em;
     height: 1.8em;
     border: outset 1px #8888;
     padding: 2px;
 }
 
 label.range {
-    width: 10em;
+    width: 5.5em;
 }
 
 input.range {
     height: 0.6em;
-    width: 10em;
+    width: 8em;
     background: #222a;
     padding-bottom: 2px;
     cursor: pointer;
@@ -116,7 +114,7 @@ input.range::-webkit-slider-thumb {
 }
 
 span.range {
-    width: 6em;
+    width: 3em;
 }
 
 button.settings {
