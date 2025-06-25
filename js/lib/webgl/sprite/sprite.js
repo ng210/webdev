@@ -61,8 +61,8 @@ export default class Sprite {
         this.isDirty = this.#visible != v;
         this.#visible = v;
     }
-    #width;
-    #height;
+    get width() { return this.baseWidth * this.#scale.x; }
+    get height() { return this.baseHeight * this.#scale.y; };
 
     constructor(sprMgr, ix) {
         this.#sprMgr = sprMgr;

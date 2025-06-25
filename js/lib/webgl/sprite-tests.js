@@ -47,7 +47,7 @@ export default class SpriteTest extends Test {
                 0.9*(2*Math.random() - 1),
                 0);
             // rotation
-            //spr.rotation = Math.random() * 2 * Math.PI;
+            spr.rotation = Math.random() * 2 * Math.PI;
             // scale
             spr.scale.set(Math.random()+2, Math.random()+2).scale(0.006);
             // color

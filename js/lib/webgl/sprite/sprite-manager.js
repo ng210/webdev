@@ -106,6 +106,14 @@ export default class SpriteManager /*extends IAdapter*/ {
         this.#program = null;
     }
 
+    spr(ix) {
+        let sp = null;
+        if (ix >= 0 && ix < this.#count) {
+            sp = this.#pool[ix];
+        }
+        return sp;
+    }
+
     async loadAtlas(imgUrl, mapUrl) {
         let img = new Image();
         img.src = imgUrl;
