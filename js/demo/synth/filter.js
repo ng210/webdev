@@ -125,7 +125,7 @@ class Flt {
 
     update(cut, res) {
         let q = res < 0.000001 ? 1.0 : 1.0 - res;
-        let e = 0.5 * cut * cut;    //0.5 * Math.PI * cut;
+        let e = 0.5 * cut * cut * Math.PI;
         if (e <= 0) e = 0.001;
         let g = -q * e;
 

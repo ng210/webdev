@@ -61,7 +61,7 @@ export default class Synth extends Demo {
             fre3:       { value:281.0, min:   1, max:3520.0, step:   1   },
             psw3:       { value:  0.5, min:   0, max:   1.0, step:   .01 },
 
-            cut:        { value:  0.5, min: 0.1, max:   1.0, step:   .01 },
+            cut:        { value:  0.5, min: 0.0, max:   1.0, step:   .01 },
             res:        { value:  0.5, min:   0, max:  0.99, step:   .01 },
             pass:       { list: Object.keys(Flt.modes), value:1 },
 
