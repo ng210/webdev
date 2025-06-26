@@ -1,5 +1,5 @@
 import Vec2 from './vec2.js'
-import Test from '/js/lib/test/test.js'
+import Test from '../test/test.js'
 
 const COUNT = 10;
 

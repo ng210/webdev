@@ -1,7 +1,7 @@
 import { getConsole, Colors } from '../console/console.js'
-import Test from '/js/lib/test/test.js';
-import WebGL from '/js/lib/webgl/webgl.js';
-import ComputeShader from '/js/lib/webgl/compute-shader.js';
+import Test from '../test/test.js';
+import WebGL from './webgl.js';
+import ComputeShader from './compute-shader.js';
 
 export default class WebGLTest extends Test {
     #webgl = null;
@@ -105,16 +105,16 @@ export default class WebGLTest extends Test {
         );
 
         let img1 = new Image();
-        img1.src = '/js/lib/webgl/assets/test.gif';
+        img1.src = './assets/test.gif';
         await img1.decode();
         this.#webgl.createTextureFromImage(img1, 'test');
 
         let img2 = new Image();
-        img2.src = '/js/lib/webgl/assets/ascii_charset.png';
+        img2.src = './assets/ascii_charset.png';
         await img2.decode();
         this.#webgl.createTextureFromImage(img2, 'ascii');
 
-        this.asciiMap = await fetch('/js/lib/webgl/assets/ascii_charset_map.json').then(r => r.json());
+        this.asciiMap = await fetch('./assets/ascii_charset_map.json').then(r => r.json());
     }
 
     teardown() {

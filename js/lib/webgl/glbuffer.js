@@ -1,5 +1,5 @@
-//import WebGL from '/js/lib/webgl/webgl.js'
-import glTexture from '/js/lib/webgl/gltexture.js'
+// import WebGL from '/js/lib/webgl/webgl.js'
+// import glTexture from '/js/lib/webgl/gltexture.js'
 
 export default class glBuffer {
     get length() {

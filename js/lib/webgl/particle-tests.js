@@ -1,8 +1,8 @@
-import { getConsole } from '/js/lib/console/console.js'
-import Test from '/js/lib/test/test.js';
-import WebGL from '/js/lib/webgl/webgl.js';
+import { getConsole } from '../console/console.js'
+import Test from '../test/test.js';
+import WebGL from './webgl.js';
 import ParticleManager from './particle/particle-manager.js';
-import { sleep } from '/js/lib/util.js';
+import { sleep } from '../util.js';
 
 //const PARTICLE_COUNT = 2**14;
 const SCALE = 1/1;

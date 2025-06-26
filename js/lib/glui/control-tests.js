@@ -1,6 +1,6 @@
-import Test from '/js/lib/test/test.js'
-import RangeControl from '/js/lib/glui/control/range-control.js'
-import HtmlRangeElem from '/js/lib/glui/control/html/html-range-elem.js'
+import Test from '../test/test.js'
+import RangeControl from './control/range-control.js'
+import HtmlRangeElem from './control/html/html-range-elem.js'
 
 class ControlTest extends Test {
     static colors = ['black', 'gray', 'white', 'red', 'green', 'blue', 'yellow', 'brown'];

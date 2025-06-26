@@ -1,5 +1,5 @@
 import { getConsole, Colors } from './console.js'
-import Test from '/js/lib/test/test.js'
+import Test from '../test/test.js'
 
 class ConsoleTests extends Test {
     #cons = null;
