@@ -1,9 +1,0 @@
-{
-    "DataTypes": [
-        {   "name":"Repo-Logic", "type":"Repo-Item",
-            "attributes": [
-                { "name":"method", "type":"string", "required":true }
-            ]
-        }
-    ]
-}

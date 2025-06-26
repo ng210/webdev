@@ -1,9 +1,0 @@
-{
-    "DataTypes": [
-        {   "name":"Repo-Component", "type":"Repo-Item",
-            "attributes": [
-                { "name":"origin", "type":"v3" }
-            ]
-        }
-    ]
-}
