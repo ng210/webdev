@@ -15,7 +15,7 @@
     "nodejs"
   ],
   "dependencies": {
-    "express": "^4.19.2",
+    "express": "^4.21.2",
     "node-fetch": "^3.3.2"
   },
   "author": "Gabor",
