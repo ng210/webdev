@@ -1,5 +1,5 @@
-import Vec2 from '/js/lib/math/vec2.js';
-import Vec4 from '/js/lib/math/vec4.js';
+import Vec2 from '../../math/vec2.js';
+import Vec4 from '../../math/vec4.js';
 
 const SF = {    // sprite fields
     'tx':  0,
