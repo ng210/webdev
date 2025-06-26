@@ -17,8 +17,8 @@ export default class SpriteTest extends Test {
     async setup() {
         this.#webgl = new WebGL(null, {
             fullScreen: true,
-            scaleX: 0.8,
-            scaleY: 0.8
+            scaleX: 1.0,
+            scaleY: 1.0
         });
         const st = this.#webgl.canvas.style;
         st.translation = 'absolute';
@@ -43,13 +43,13 @@ export default class SpriteTest extends Test {
             let spr = this.#sprMgr.allocate();
             // translate
             spr.translation.set(
-                0.9*(2*Math.random() - 1),
-                0.9*(2*Math.random() - 1),
-                0);
+                (0.05 + 0.9*Math.random()) * this.#webgl.canvas.width,
+                (0.05 + 0.9*Math.random()) * this.#webgl.canvas.height,
+                 0);
             // rotation
             spr.rotation = Math.random() * 2 * Math.PI;
             // scale
-            spr.scale.set(Math.random()+2, Math.random()+2).scale(0.006);
+            spr.scale = [0.5 * Math.random() + 0.5, 0.5 * Math.random() + 0.5];
             // color
             spr.color.set(
                 0.5 + 0.5*Math.random(),

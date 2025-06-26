@@ -31,7 +31,16 @@ export default class Sprite {
     get translation() { this.isDirty = true; return this.#translation; }
     // padding1:    1
     #scale;
-    get scale() { this.isDirty = true; return this.#scale; }
+    #scale_;
+    get scale() { return this.#scale_; }
+    set scale(s) {
+        this.#scale_[0] = s[0];
+        this.#scale_[1] = s[1];
+        this.#scale.set(
+            this.#scale_[0] * this.#baseWidth,
+            this.#scale_[1] * this.#baseHeight);
+        this.isDirty = true;
+    }
     //#rotation;
     get rotation() { return this.#array[this.#ix+SF.rz]; }
     set rotation(r) { this.isDirty = true; this.#array[this.#ix+SF.rz] = r; }
@@ -51,8 +60,8 @@ export default class Sprite {
         this.#texCoords.set(
             frame[0], frame[1],
             frame[2], frame[3]);
+        this.scale = this.#scale_;
         this.isDirty = true;
-
     }
 
     #visible;
@@ -71,6 +80,7 @@ export default class Sprite {
         this.isDirty = true;
         this.#translation = new Vec4(this.#array, ix+SF.tx);
         this.#scale = new Vec2(this.#array, ix+SF.sx, 1, 1);
+        this.#scale_ = [1, 1];
         this.#texCoords = new Vec4(this.#array, ix+SF.u1, 0, 0, 1, 1);
         this.#color = new Vec4(this.#array, ix+SF.cr, 1, 1, 1, 1);
     }

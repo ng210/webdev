@@ -14,6 +14,7 @@ const FloatsPerSprite = 16;
 
 export default class SpriteManager /*extends IAdapter*/ {
     #webgl;
+    get webgl() { return this.#webgl; }
     #dataArray = null;
     get dataArray() { return this.#dataArray; }
     #atlas = null;
@@ -33,6 +34,8 @@ export default class SpriteManager /*extends IAdapter*/ {
     #defaultVertexShader =
     `#version 300 es
 
+    uniform vec2 u_resolution;
+
     // buffer #1
     in vec2 a_position;
 
@@ -47,20 +50,22 @@ export default class SpriteManager /*extends IAdapter*/ {
     out vec4 v_color;
 
     void main() {
-        mat4 m = mat4(1.0);
         float c = cos(a_rotation);
         float s = sin(a_rotation);
-        m[0][0] = c*a_scale.x;
-        m[0][1] = s*a_scale.x;
-        m[1][0] = -s*a_scale.y;
-        m[1][1] = c*a_scale.y;
-        m[2][2] = 1.0;  //a_scale.z
-        m[2][3] = 1.0;
-        m[3][0] = a_translate.x;
-        m[3][1] = a_translate.y;
-        m[3][2] = 0.0;  //a_translate.z;
-        m[3][3] = 1.0;
-        gl_Position = m*vec4(a_position, 0.0, 1.0);
+        mat4 model = mat4(
+            vec4(c * a_scale.x, s * a_scale.x, 0.0, 0.0),
+            vec4(-s * a_scale.y, c * a_scale.y, 0.0, 0.0),
+            vec4(0.0, 0.0, 1.0, 0.0),
+            vec4(a_translate.xy, 0.0, 1.0)
+        );
+
+        mat4 proj = mat4(
+            vec4(2.0 / u_resolution.x, 0.0, 0.0, 0.0),
+            vec4(0.0, -2.0 / u_resolution.y, 0.0, 0.0),
+            vec4(0.0, 0.0, 1.0, 0.0),
+            vec4(-1.0, 1.0, 0.0, 1.0)
+        );
+        gl_Position = proj * model * vec4(a_position, 0.0, 1.0);
         if (gl_VertexID == 0) v_texcoord = a_texcoord.xw;
         else if (gl_VertexID == 1) v_texcoord = a_texcoord.xy;
         else if (gl_VertexID == 2) v_texcoord = a_texcoord.zy;
@@ -75,13 +80,13 @@ export default class SpriteManager /*extends IAdapter*/ {
     precision mediump float;
 
     out vec4 fragColor;
-    uniform vec4 uColor;
+    uniform vec4 u_color;
     in vec2 v_texcoord;
     in vec4 v_color;
     uniform sampler2D u_texture;
     
     void main() {
-        fragColor = uColor * v_color * texture(u_texture, v_texcoord);
+        fragColor = u_color * v_color * texture(u_texture, v_texcoord);
     } `;
 
     constructor(webgl, count) {
@@ -190,7 +195,8 @@ export default class SpriteManager /*extends IAdapter*/ {
 
         this.#program.use();
         this.#program.setUniform('u_texture', this.#atlas.texture);
-        this.#program.setUniform('uColor', this.diffuseColor);
+        this.#program.setUniform('u_color', this.diffuseColor);
+        this.#program.setUniform('u_resolution', [this.#webgl.canvas.width, this.#webgl.canvas.height]);
         gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, this.#count);
     }
 
