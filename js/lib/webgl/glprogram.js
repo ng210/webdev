@@ -1,4 +1,4 @@
-import WebGL from '/js/lib/webgl/webgl.js'
+import WebGL from './webgl.js'
 
 export default class glProgram {
     constructor(webgl, options) {

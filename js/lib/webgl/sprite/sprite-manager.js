@@ -1,7 +1,6 @@
-import WebGL from '/js/lib/webgl/webgl.js';
-import Sprite from '/js/lib/webgl/sprite/sprite.js';
-
-import { load } from "/js/lib/loader/load.js";
+// import WebGL from '/js/lib/webgl/webgl.js';
+import Sprite from './sprite.js';
+// import { load } from "/js/lib/loader/load.js";
 
 // 00 translation: 3
 // 03 padding1:    1
