@@ -1,4 +1,4 @@
-import HtmlElem from "/js/lib/glui/control/html/html-elem.js";
+import HtmlElem from "./html-elem.js";
 
 export default class HtmlRangeElem extends HtmlElem {
     #lbl = null;

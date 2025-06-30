@@ -1,4 +1,4 @@
-import Test from '../test/test.js'
+import Test from '../../test/test.js'
 import RangeControl from './control/range-control.js'
 import HtmlRangeElem from './control/html/html-range-elem.js'
 
