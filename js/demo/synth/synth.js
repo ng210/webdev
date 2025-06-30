@@ -1,8 +1,8 @@
-import Demo from '/js/demo/base/demo.js'
-import Sound from '/js/lib/sound.js'
-import WebGL from '/js/lib/webgl/webgl.js'
-import {load} from '/js/lib/loader/load.js'
-import { lerp } from '/js/lib/fn.js'
+import Demo from '../base/demo.js'
+import Sound from '../../lib/sound.js'
+import WebGL from '../../lib/webgl/webgl.js'
+import {load} from '../../lib/loader/load.js'
+import { lerp } from '../../lib/fn.js'
 import { Flt } from './filter.js'
 
 export default class Synth extends Demo {
