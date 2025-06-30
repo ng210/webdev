@@ -1,7 +1,7 @@
 import { Url } from './url.js'
 
 async function _load(args) {
-    let result = null;
+    let content = null;
     let url = args;
     try {
         if (typeof args === 'object') {
@@ -15,11 +15,8 @@ async function _load(args) {
         if (args.contentType) contentType = args.contentType;
         else {
             // get content type by the extension
-            let ix = url.lastIndexOf('.');
-            if (ix != -1 && ix > 0) {
-                let ext = url.substring(ix+1);
-                contentType = load.ext2contentType[ext] || 'application/octet-stream';
-            }
+            contentType = _getContentTypeByExtension(url);
+
         }
         headers['Content-Type'] = headers['Content-Type'] || contentType;
 
@@ -31,22 +28,32 @@ async function _load(args) {
 
         if (resp.ok) {
             // get data-type by content-type
-            let dataType = load.contentType2dataType[contentType] || 'blob';
-            result = await resp[dataType]();
+            const dataType = load.contentType2dataType[contentType] || 'blob';
+            content = await resp[dataType]();
         } else {
             throw new Error(`${resp.status} ${resp.statusText}`);
         }
     } catch (err) {
         console.error(err);
-        result = err;
+        content = err;
     }
-    return { url: url, content: result };
+    return { url, content };
+}
+
+function _getContentTypeByExtension(url) {
+    let contentType = null;
+    let ix = url.lastIndexOf('.');
+    if (ix != -1 && ix > 0) {
+        let ext = url.substring(ix+1);
+        contentType = load.ext2contentType[ext];
+    }
+    return contentType || 'application/octet-stream';
 }
 
 async function load(args) {
     if (Array.isArray(args)) {
         let promises = [];
-        for (var item of arr) {
+        for (var item of args) {
             promises.push(_load(item));
         }
         return await Promise.all(promises);
@@ -74,5 +81,6 @@ load.addType('xml', 'text/xml', 'text');
 load.addType('html', 'text/html', 'text');
 load.addType('vs', 'text/plain', 'text');
 load.addType('fs', 'text/plain', 'text');
+load.addType('dat', 'application/octet-stream', 'arrayBuffer');
 
 export { load }

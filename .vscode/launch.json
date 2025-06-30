@@ -9,7 +9,7 @@
                 "<node_internals>/**"
             ],
             "envFile": "${fileDirname}/debug.env",
-            "cwd": "${workspaceFolder}/js/lib/base"
+            "cwd": "${workspaceFolder}/js"
         }
     ]
 }

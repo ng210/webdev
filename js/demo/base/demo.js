@@ -1,7 +1,7 @@
 //import Buffer from '/js/lib/glui/buffer.js'
-import RangeControl from '/js/lib/glui/control/range-control.js'
-import HtmlRangeElem from '/js/lib/glui/control/html/html-range-elem.js'
-import Vec4 from '/js/lib/math/vec4.js'
+import RangeControl from '../../lib/glui/control/range-control.js'
+import HtmlRangeElem from '../../lib/glui/control/html/html-range-elem.js'
+import Vec4 from '../../lib/math/vec4.js'
 
 
 export default class Demo {

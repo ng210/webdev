@@ -113,8 +113,11 @@ export default class Test {
             }
 
             if (typeof received === 'string' || typeof received[Symbol.iterator] !== 'function') received = [received];
-            if (typeof expected === 'string' || typeof expected[Symbol.iterator] !== 'function') expected = [expected];
-
+            if (expected != undefined) {
+                if (typeof expected === 'string' || typeof expected[Symbol.iterator] !== 'function') expected = [expected];
+            } else {
+                expected = [];
+            }
             let hasErrors = false;
             for (var ri=0; ri<received.length; ri++) {
                 this.currentResult = predicate(received[ri], expected[ri]);
@@ -125,11 +128,12 @@ export default class Test {
                     this.cons.writeln(Test.stringify(expected), Colors.LightGray);
                     this.cons.write(' - received: ');
                     this.cons.write(Test.stringify(received[ri]), Colors.LightYellow);
-                    this.errors++;
                 }
             }
             if (!hasErrors) {
                 this.cons.writeln('···Passed', Colors.LightGreen);
+            } else {
+                this.errors++;
             }
         } catch (err) {
             this.hasError = true;
