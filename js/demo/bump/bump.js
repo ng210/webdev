@@ -1,7 +1,7 @@
-import { load } from '/js/lib/loader/load.js'
-import Demo from '/js/demo/base/demo.js'
-import Buffer from '/js/lib/glui/buffer.js'
-import Vec2 from '/js/lib/math/vec2.js'
+import { load } from '../../lib/loader/load.js'
+import Demo from '../base/demo.js'
+import Buffer from '../../lib/glui/buffer.js'
+import Vec2 from '../../lib/math/vec2.js'
 
 export default class Bump extends Demo {
 	#heightMap = null;
