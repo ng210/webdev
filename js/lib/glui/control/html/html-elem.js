@@ -1,4 +1,4 @@
-import UiElement from '/js/lib/glui/control/uielement.js'
+import UiElement from '../uielement.js'
 
 export default class HtmlElem extends UiElement {
     #elem = null;

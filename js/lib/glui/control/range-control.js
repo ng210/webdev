@@ -1,4 +1,4 @@
-import Control from "/js/lib/glui/control/control.js";
+import Control from "./control.js";
 
 export default class RangeControl extends Control {
     static #validEvents = ['input', 'change', 'pointermove', 'pointerover', 'pointerout'];
