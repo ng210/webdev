@@ -1,9 +1,0 @@
-{
-    "default": "deny",
-    "allow": [
-        "index.html",
-        "main.js",
-        "res",
-        "src"
-    ]
-}

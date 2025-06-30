@@ -1,9 +1,0 @@
-{
-    "DataTypes": [
-        {   "name":"Repo-Item",
-            "attributes": [
-                { "name":"id", "type":"dbid", "required":true }
-            ]
-        }
-    ]
-}
