@@ -1,5 +1,3 @@
-//import WebGL from '/js/lib/webgl/webgl.js'
-
 export default class glTexture {
     // get validTypes() {
     //     const gl = this.webgl.gl;

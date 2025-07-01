@@ -1,7 +1,7 @@
-import { getConsole } from '/js/lib/console/console.js'
-import Test from '/js/lib/test/test.js';
-import WebGL from '/js/lib/webgl/webgl.js';
-import SpriteManager from '/js/lib/webgl/sprite/sprite-manager.js';
+import { getConsole } from '../console/console.js'
+import Test from '../test/test.js';
+import WebGL from './webgl.js';
+import SpriteManager from './sprite/sprite-manager.js';
 
 const SPRITE_COUNT = 4000;
 

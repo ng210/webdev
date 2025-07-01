@@ -1,6 +1,6 @@
-import Demo from '/js/demo/base/demo.js'
-import Buffer from '/js/lib/glui/buffer.js'
-import { lerp } from '/js/lib/fn.js'
+import Demo from '../base/demo.js'
+import Buffer from '../../lib/glui/buffer.js'
+import { lerp } from '../../lib/fn.js'
 
 export default class Plasma extends Demo {
     #counter;

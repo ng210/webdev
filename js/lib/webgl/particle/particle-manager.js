@@ -1,4 +1,4 @@
-import Vec4 from "/js/lib/math/vec4.js";
+import Vec4 from "../../math/vec4.js";
 
 // 00 translation:  4
 // 04 velocity:     4

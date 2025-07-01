@@ -1,6 +1,6 @@
-import glBuffer from "/js/lib/webgl/glbuffer.js";
-import glTexture from "/js/lib/webgl/gltexture.js";
-import glProgram from "/js/lib/webgl/glProgram.js";
+import glBuffer from './glbuffer.js';
+import glTexture from './gltexture.js';
+import glProgram from './glProgram.js';
 
 class WebGL {
 	static VERTEX_ATTRIB_POSITION	= 0x01;

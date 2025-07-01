@@ -1,4 +1,4 @@
-import Particle from '/js/lib/glui/particle.js'
+import Particle from '../../lib/glui/particle.js'
 
 const SpeedOfLight = 30;
 

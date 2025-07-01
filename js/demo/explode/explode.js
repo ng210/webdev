@@ -1,9 +1,9 @@
-import Demo from '/js/demo/base/demo.js'
-import WebGL from '/js/lib/webgl/webgl.js';
-import Vec4 from "/js/lib/math/vec4.js";
-import ParticleManager from '/js/lib/webgl/particle/particle-manager.js';
-import ComputeShader from '/js/lib/webgl/compute-shader.js';
-import ColorUtil from '/js/lib/color-util.js';
+import Demo from '../base/demo.js'
+import WebGL from '../../lib/webgl/webgl.js';
+import Vec4 from "../../lib/math/vec4.js";
+import ParticleManager from '../../lib/webgl/particle/particle-manager.js';
+import ComputeShader from '../../lib/webgl/compute-shader.js';
+import ColorUtil from '../../lib/color-util.js';
 
 const FloatsPerParticle = 16;
 
@@ -137,10 +137,10 @@ export default class Explode extends Demo {
         this.updateSize();
         this.#textures[0] = this.#ptMgr.dataTexture;
         let image = new Image();
-        //image.src = '/js/demo/assets/Linear_RGB_color_wheel.png';
-        //image.src = '/js/demo/assets/Legoland01.jpg';
-        //image.src = '/js/demo/assets/map3.jpg';
-        image.src = '/js/demo/assets/goldenaxe.gif';
+        //image.src = 'assets/Linear_RGB_color_wheel.png';
+        //image.src = 'assets/Legoland01.jpg';
+        //image.src = 'assets/map3.jpg';
+        image.src = 'assets/goldenaxe.gif';
         await image.decode();
         this.addParticlesFromImage(image);
         this.updateComputeShader();
