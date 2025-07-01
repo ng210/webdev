@@ -2,6 +2,7 @@ import { getConsole, Colors } from '../console/console.js'
 import Test from '../test/test.js';
 import WebGL from './webgl.js';
 import ComputeShader from './compute-shader.js';
+import { load } from '../loader/load.js';
 
 export default class WebGLTest extends Test {
     #webgl = null;
@@ -124,9 +125,9 @@ export default class WebGLTest extends Test {
         );
 
         this.#webgl.createTextureFromImage(this.#images[0], 'test');
-        this.#webgl.createTextureFromImage(this.#images[1], 'test');
+        this.#webgl.createTextureFromImage(this.#images[1], 'ascii');
 
-        this.asciiMap = await load({ url: 'assets/ascii_charset_map.json', base: import.meta.src }).then(r => r.json());
+        this.asciiMap = await load({ url: 'assets/ascii_charset_map.json', base: import.meta.url }).then(r => r.content);
     }
 
     teardown() {
