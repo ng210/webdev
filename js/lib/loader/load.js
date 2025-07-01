@@ -45,7 +45,7 @@ function _getContentTypeByExtension(url) {
     let ix = url.lastIndexOf('.');
     if (ix != -1 && ix > 0) {
         let ext = url.substring(ix+1);
-        contentType = load.ext2contentType[ext];
+        contentType = load.ext2contentType[ext.toLowerCase()];
     }
     return contentType || 'application/octet-stream';
 }
