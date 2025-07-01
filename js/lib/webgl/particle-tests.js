@@ -2,7 +2,7 @@ import { getConsole } from '../console/console.js'
 import Test from '../test/test.js';
 import WebGL from './webgl.js';
 import ParticleManager from './particle/particle-manager.js';
-import { sleep } from '/js/lib/util.js';
+import { sleep } from '../util.js';
 import { load } from '../loader/load.js';
 import Vec4 from '../math/vec4.js';
 //const PARTICLE_COUNT = 2**14;
