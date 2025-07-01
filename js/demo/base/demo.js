@@ -1,4 +1,3 @@
-//import Buffer from '/js/lib/glui/buffer.js'
 import RangeControl from '../../lib/glui/control/range-control.js'
 import HtmlRangeElem from '../../lib/glui/control/html/html-range-elem.js'
 import Vec4 from '../../lib/math/vec4.js'
@@ -183,17 +182,11 @@ export default class Demo {
         header.appendChild(this.#fps);
         for (let k in this.settings) {
             let setting = this.settings[k];
-            // let label = document.createElement('label');
-            // label.className = 'settings';
-            // label.innerHTML = k;
-            // panel.appendChild(label);
             // create control depending on setting type
             // - range
             // - dropdown list
             let control = null;
             if (Array.isArray(setting.list) || setting.min != undefined && setting.max != undefined) {
-
-
                 control = new RangeControl(k);
                 control.uiElement = new HtmlRangeElem(control);
                 control.dataBind(setting);
@@ -202,40 +195,6 @@ export default class Demo {
             setting.control = control;
             control.addHandler('input', e => this.updateSetting(control));
             control.uiElement.parent = panel;
-
-            // if (setting.min != undefined) {
-            //     let input = document.createElement('input');
-            //     input.id = k;
-            //     input.type = 'range';
-            //     input.className = 'settings';
-            //     input.setAttribute('min', setting.min);
-            //     input.setAttribute('max', setting.max);
-            //     input.setAttribute('step', setting.step);
-            //     input.addEventListener('input', e => this.updateSetting(e.target));
-            //     input.value = setting.value;
-            //     panel.appendChild(input);
-            // } else if (Array.isArray(setting.values)) {
-            //     let select = document.createElement('select');
-            //     select.id = k;
-            //     select.className = 'settings';
-            //     for (var ix in setting.values) {
-            //         const value = setting.values[ix];
-            //         let option = document.createElement('option');
-            //         option.className = 'settings';
-            //         option.value = value;
-            //         option.textContent = value;
-            //         select.appendChild(option);
-            //     }
-            //     if (setting.index != undefined) {
-            //         select.value = setting.value = setting.values[setting.index];
-            //     } else {
-            //         select.value = setting.value;
-            //         setting.index = setting.values.indexOf(setting.value);
-            //     }
-            //     select.selectedIndex = setting.index;
-            //     select.addEventListener('change', e => this.updateSetting(e.target));
-            //     panel.appendChild(select);
-            // }            
         }
         let buttons = document.createElement('div');
         buttons.className = 'buttons settings';

@@ -1,7 +1,7 @@
-import { getConsole } from '../console/console.js'
-import Test from '../test/test.js';
-import WebGL from './webgl.js';
-import SpriteManager from './sprite/sprite-manager.js';
+import { getConsole } from '/js/lib/console/console.js'
+import Test from '/js/lib/test/test.js';
+import WebGL from '/js/lib/webgl/webgl.js';
+import SpriteManager from '/js/lib/webgl/sprite/sprite-manager.js';
 
 const SPRITE_COUNT = 4000;
 
@@ -28,8 +28,8 @@ export default class SpriteTest extends Test {
         this.#sprMgr = new SpriteManager(this.#webgl, SPRITE_COUNT);
         this.#sprMgr.program = await this.#sprMgr.loadShaders();
         await this.#sprMgr.loadAtlas(
-            './assets/ascii_charset.png',
-            './assets/ascii_charset.json');
+            new URL('assets/ascii_charset.png', import.meta.url).toString(),
+            new URL('assets/ascii_charset.json', import.meta.url).toString());
     }
 
     teardown() {
@@ -47,9 +47,9 @@ export default class SpriteTest extends Test {
                 (0.05 + 0.9*Math.random()) * this.#webgl.canvas.height,
                  0);
             // rotation
-            spr.rotation = Math.random() * 2 * Math.PI;
+            spr.rotation = 0;   //Math.random() * 2 * Math.PI;
             // scale
-            spr.scale = [0.5 * Math.random() + 0.5, 0.5 * Math.random() + 0.5];
+            spr.scale.set([0.5 * Math.random() + 0.5, 0.5 * Math.random() + 0.5]);
             // color
             spr.color.set(
                 0.5 + 0.5*Math.random(),
