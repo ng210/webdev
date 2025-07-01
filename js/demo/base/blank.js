@@ -1,5 +1,5 @@
-import Demo from '/js/demo/base/demo.js'
-import Buffer from '/js/lib/glui/buffer.js'
+import Demo from '../base/demo.js'
+import Buffer from '../../lib/glui/buffer.js'
 
 export default class Blank extends Demo {
     #buffer;

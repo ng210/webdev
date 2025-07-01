@@ -7,6 +7,11 @@ export default class WebGLTest extends Test {
     #webgl = null;
     #cons = null;
     #program = null;
+    #images = [];
+    #imageUrls = [
+        'assets/test.gif',
+        'assets/ascii_charset.png'
+    ];
 
     #vertexShaders = [
         `#version 300 es
@@ -82,6 +87,20 @@ export default class WebGLTest extends Test {
         } `];
     async setupAll() {
         this.#cons = await getConsole();
+        for (let url of this.#imageUrls) {
+            let image = await load({url: url, base: import.meta.url})
+            .then(async resp => {
+                if (resp.content instanceof Error) {
+                    console.log(resp.content);
+                } else {
+                    const img = new Image();
+                    img.src = URL.createObjectURL(resp.content);
+                    await img.decode();
+                    return img;
+                }
+            });
+            this.#images.push(image);
+        }
     }
 
     async setup() {
@@ -104,17 +123,10 @@ export default class WebGLTest extends Test {
             'index'
         );
 
-        let img1 = new Image();
-        img1.src = './assets/test.gif';
-        await img1.decode();
-        this.#webgl.createTextureFromImage(img1, 'test');
+        this.#webgl.createTextureFromImage(this.#images[0], 'test');
+        this.#webgl.createTextureFromImage(this.#images[1], 'test');
 
-        let img2 = new Image();
-        img2.src = './assets/ascii_charset.png';
-        await img2.decode();
-        this.#webgl.createTextureFromImage(img2, 'ascii');
-
-        this.asciiMap = await fetch('./assets/ascii_charset_map.json').then(r => r.json());
+        this.asciiMap = await load({ url: 'assets/ascii_charset_map.json', base: import.meta.src }).then(r => r.json());
     }
 
     teardown() {

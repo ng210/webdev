@@ -1,5 +1,5 @@
-import { load } from '../../lib/loader/load.js'
 import Demo from '../base/demo.js'
+import { load } from '../../lib/loader/load.js'
 import Buffer from '../../lib/glui/buffer.js'
 import Vec2 from '../../lib/math/vec2.js'
 

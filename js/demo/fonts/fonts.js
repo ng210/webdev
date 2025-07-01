@@ -1,6 +1,6 @@
-import Demo from '/js/demo/base/demo.js'
-import WebGL from '/js/lib/webgl/webgl.js';
-import SpriteManager from '/js/lib/webgl/sprite/sprite-manager.js';
+import Demo from '../base/demo.js'
+import WebGL from '../../lib/webgl/webgl.js';
+import SpriteManager from '../../lib/webgl/sprite/sprite-manager.js';
 
 export default class Fonts extends Demo {
     static #spriteCount = 1000;
@@ -46,7 +46,7 @@ export default class Fonts extends Demo {
                 }
             }
         },
-        flip: (fr, dt) => {
+        flipx: (fr, dt) => {
             let scale = this.settings.scale.value;
             if (fr < 40) {
                 for (let si=0; si<Fonts.texts[this.#textIndex].length; si++) {
@@ -62,6 +62,22 @@ export default class Fonts extends Demo {
                 }
             }
         },
+        flipy: (fr, dt) => {
+            let scale = this.settings.scale.value;
+            if (fr < 40) {
+                for (let si=0; si<Fonts.texts[this.#textIndex].length; si++) {
+                    let spr = this.#sprMgr.spr(si);
+                    spr.scale.set([scale, scale * fr/40]);
+                    spr.color.w = fr / 40;
+                }
+            } else if (fr > 120) {
+                for (let si=0; si<Fonts.texts[this.#textIndex].length; si++) {
+                    let spr = this.#sprMgr.spr(si);
+                    spr.scale.set([scale, scale * (160 - fr)/40]);
+                    spr.color.w = (160 - fr) / 40;
+                }
+            }
+        }
     };
 
     get size() {

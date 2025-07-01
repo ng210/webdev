@@ -1,5 +1,5 @@
 import Vec4 from "../../math/vec4.js";
-//import { smoothstep } from "/js/lib/fn.js";
+//import { smoothstep } from "../../fn.js";
 
 class Particle {
     
