@@ -1,5 +1,5 @@
-import Vec2 from '/js/lib/math/vec2.js';
-import Vec4 from '/js/lib/math/vec4.js';
+import Vec2 from '../../math/vec2.js';
+import Vec4 from '../../math/vec4.js';
 
 const SF = {    // sprite fields
     'tx':  0,
@@ -33,14 +33,6 @@ export default class Sprite {
     #scale;
     #scale_;
     get scale() { return this.#scale_; }
-    set scale(s) {
-        this.#scale_[0] = s[0];
-        this.#scale_[1] = s[1];
-        this.#scale.set(
-            this.#scale_[0] * this.#baseWidth,
-            this.#scale_[1] * this.#baseHeight);
-        this.isDirty = true;
-    }
     //#rotation;
     get rotation() { return this.#array[this.#ix+SF.rz]; }
     set rotation(r) { this.isDirty = true; this.#array[this.#ix+SF.rz] = r; }
@@ -58,9 +50,9 @@ export default class Sprite {
         this.#baseWidth = frame[4];
         this.#baseHeight = frame[5];
         this.#texCoords.set(
-            frame[0], frame[1],
-            frame[2], frame[3]);
-        this.scale = this.#scale_;
+            frame[0], frame[3],
+            frame[2], frame[1]);
+        this.scale.set([this.#scale_.x, this.#scale_.y]);
         this.isDirty = true;
     }
 
@@ -70,8 +62,8 @@ export default class Sprite {
         this.isDirty = this.#visible != v;
         this.#visible = v;
     }
-    get width() { return this.baseWidth * this.#scale.x; }
-    get height() { return this.baseHeight * this.#scale.y; };
+    get width() { return this.#baseWidth * this.#scale_.x; }
+    get height() { return this.#baseHeight * this.#scale_.y; };
 
     constructor(sprMgr, ix) {
         this.#sprMgr = sprMgr;
@@ -80,7 +72,16 @@ export default class Sprite {
         this.isDirty = true;
         this.#translation = new Vec4(this.#array, ix+SF.tx);
         this.#scale = new Vec2(this.#array, ix+SF.sx, 1, 1);
-        this.#scale_ = [1, 1];
+        this.#scale_ = new Vec2(new Float32Array(2), 0, 1, 1);
+        this.#scale_.set = s => {
+            this.#scale_.x = s[0];
+            this.#scale_.y = s[1];
+            this.#scale.set(
+                this.#scale_.x * this.#baseWidth,
+                this.#scale_.y * this.#baseHeight);
+            this.isDirty = true;
+        };
+
         this.#texCoords = new Vec4(this.#array, ix+SF.u1, 0, 0, 1, 1);
         this.#color = new Vec4(this.#array, ix+SF.cr, 1, 1, 1, 1);
     }

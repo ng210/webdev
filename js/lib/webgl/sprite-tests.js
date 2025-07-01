@@ -28,8 +28,8 @@ export default class SpriteTest extends Test {
         this.#sprMgr = new SpriteManager(this.#webgl, SPRITE_COUNT);
         this.#sprMgr.program = await this.#sprMgr.loadShaders();
         await this.#sprMgr.loadAtlas(
-            '/js/lib/webgl/assets/ascii_charset.png',
-            '/js/lib/webgl/assets/ascii_charset.json');
+            new URL('assets/ascii_charset.png', import.meta.url).toString(),
+            new URL('assets/ascii_charset.json', import.meta.url).toString());
     }
 
     teardown() {
@@ -47,9 +47,9 @@ export default class SpriteTest extends Test {
                 (0.05 + 0.9*Math.random()) * this.#webgl.canvas.height,
                  0);
             // rotation
-            spr.rotation = Math.random() * 2 * Math.PI;
+            spr.rotation = 0;   //Math.random() * 2 * Math.PI;
             // scale
-            spr.scale = [0.5 * Math.random() + 0.5, 0.5 * Math.random() + 0.5];
+            spr.scale.set([0.5 * Math.random() + 0.5, 0.5 * Math.random() + 0.5]);
             // color
             spr.color.set(
                 0.5 + 0.5*Math.random(),

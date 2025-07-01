@@ -6,14 +6,74 @@ export default class Fonts extends Demo {
     static #spriteCount = 1000;
     #webgl = null;
     #sprMgr = null;
+    static texts = [
+        "JavaScript moves logic, but WebGL renders the visuals.",
+        "One shader tells more than a thousand loops.",
+        "WebGL: where pixels come to life.",
+        "Objects come and go, but the RenderBuffer is forever.", 
+        "The GPU does not wait - optimize cleverly."
+    ];
+    #textIndex = -1;
+
+    #effects = {
+        fade: (fr, dt) => {
+            let alpha = 1;
+            if (fr < 30) alpha = fr / 30;
+            else if (fr > 130) alpha = (160 - fr) / 30;
+            for (let si=0; si<Fonts.texts[this.#textIndex].length; si++) {
+                let spr = this.#sprMgr.spr(si);
+                spr.color.w = alpha;
+            }
+        },
+        fall: (fr, dt) => {
+            if (fr == 0) {
+                for (let si=0; si<Fonts.texts[this.#textIndex].length; si++) {
+                    let spr = this.#sprMgr.spr(si);
+                    spr.translation.y -= 40*0.8;
+                }
+            }
+            if (fr < 40) {
+                for (let si=0; si<Fonts.texts[this.#textIndex].length; si++) {
+                    let spr = this.#sprMgr.spr(si);
+                    spr.translation.y += 0.8;
+                    spr.color.w = fr / 40;
+                }
+            } else if (fr > 100) {
+                for (let si=0; si<Fonts.texts[this.#textIndex].length; si++) {
+                    let spr = this.#sprMgr.spr(si);
+                    spr.translation.y += 3.4;
+                    spr.color.w = (160 - fr) / 60;
+                }
+            }
+        },
+        flip: (fr, dt) => {
+            let scale = this.settings.scale.value;
+            if (fr < 40) {
+                for (let si=0; si<Fonts.texts[this.#textIndex].length; si++) {
+                    let spr = this.#sprMgr.spr(si);
+                    spr.scale.set([scale * fr/40, scale]);
+                    spr.color.w = fr / 40;
+                }
+            } else if (fr > 120) {
+                for (let si=0; si<Fonts.texts[this.#textIndex].length; si++) {
+                    let spr = this.#sprMgr.spr(si);
+                    spr.scale.set([scale * (160 - fr)/40, scale]);
+                    spr.color.w = (160 - fr) / 40;
+                }
+            }
+        },
+    };
 
     get size() {
-        return [800, 600];
+        return [1024, 800];
     }
 
     constructor() {
         super();
         this.settings = {
+            scale: { min: 0.1, max: 2.0, value: 0.5, step: 0.1},
+            gap: { min: 0, max: 10, value: 2, step: 1 },
+            effects: { list: Object.keys(this.#effects), value: 0 }
         };
         this.#webgl = new WebGL(
             document.querySelector('canvas'),
@@ -34,15 +94,18 @@ export default class Fonts extends Demo {
 
         this.#sprMgr.program = await this.#sprMgr.loadShaders();
         await this.#sprMgr.loadAtlas(
-            '/js/lib/webgl/assets/ascii_charset.png',
-            '/js/lib/webgl/assets/ascii_charset.json');
+            { url: 'assets/ascii_charset.png', base: document.scripts[0].src },
+            { url: 'assets/ascii_charset.json', base: document.scripts[0].src });
 
         for (let i=0; i<Fonts.#spriteCount; i++) {
             let spr = this.#sprMgr.allocate();
-            //spr.visible = false;
-            spr.frame = 1;
-            spr.scale.set(0.0, 0.0);
-            spr.color.set(1, 0, 1, 1);
+            // rotation
+            spr.rotation = 0.0;
+            // scale
+            spr.scale.set([0, 0]);
+            // color
+            spr.color.set(1, 1, 1, 1);
+            spr.frame = Math.floor(Math.random() * this.#sprMgr.frameCount);
         }
     }
 
@@ -52,46 +115,63 @@ export default class Fonts extends Demo {
             const code = text.charCodeAt(ci) - 32;
             if (code >= 0 && code <= 94) {
                 let frame = this.#sprMgr.getFrame(code);
-                width += frame[4] / this.#webgl.canvas.width;
+                width += frame[4] * this.settings.scale.value + this.settings.gap.value;
             }
         }
         return width;
     }
 
-    renderText(text, x, y, scale) {
-        for (let ci=0; ci<text.length; ci++) {
-            const code = text.charCodeAt(ci);
-            if (code >= 32 && code <= 126) {
-                let spr = this.#sprMgr.spr(ci);
-                spr.translation.set(x, y, 0);
-                spr.rotation = 0;
-                spr.scale.set(scale, scale);
-                spr.color.set(1, 1, 1, 0.5);
-                spr.frame = code - 32;
-                x += 2*spr.baseWidth / this.#webgl.canvas.width;
+    renderText(text, x, y) {
+        for (let si=0; si<Fonts.#spriteCount; si++) {
+            let spr = this.#sprMgr.spr(si);
+            if (si < text.length) {
+                const code = text.charCodeAt(si);
+                if (code >= 32 && code <= 126) {
+                    spr.translation.set(x, y, 0);
+                    spr.rotation = 0;
+                    spr.scale.set([this.settings.scale.value, this.settings.scale.value]);
+                    spr.color.w = 1.0;
+                    spr.frame = code - 32;
+                    x += spr.width + this.settings.gap.value;
+                }
+            } else {
+                spr.scale.set([0, 0]);
             }
         }
     }
 
 	onChange(id, value) {
+        let scale = this.settings.scale.value;
+        let gap = this.settings.gap.value;
+        switch (id) {
+            case 'scale':
+            case 'gap':
+                let text = Fonts.texts[this.#textIndex];
+                let width = this.textWidth(text);
+                let x = 0.5 * (this.#webgl.canvas.width - width);
+                let y = 0.5 * this.#webgl.canvas.height;
+                for (let si=0; si<text.length; si++) {
+                    let spr = this.#sprMgr.spr(si);
+                    spr.translation.set(x, y, 0);
+                    spr.scale.set([scale, scale]);
+                    x += spr.width + this.settings.gap.value;
+                }
+                break;
+        }
+
         return true;
 	}
 
     update(frame, dt) {
-        if (frame == 0) {
-            let text = '0123456789';
-            let scale = 0.1;
-            let width = this.textWidth(text);
-console.log(width);
-            this.renderText(text, -width/2, 0, scale);
-        } else if (frame == 200) {
-            let text = '0123456789012345678901234567890123456789';
-            let scale = 0.05;
-            let width = this.textWidth(text);
-console.log(width);
-            this.renderText(text, -width/2, 0, scale);
+        let fr = frame % 160; 
+        if (fr == 0) {
+            this.#textIndex = (this.#textIndex + 1) % Fonts.texts.length;
+            let width = this.textWidth(Fonts.texts[this.#textIndex]);
+            this.renderText(Fonts.texts[this.#textIndex], 0.5*(this.#webgl.canvas.width - width), 0.5*this.#webgl.canvas.height);
         }
 
+        let fxName = this.settings.effects.list[this.settings.effects.value];
+        this.#effects[fxName].apply(this, [fr, dt]);
         this.#sprMgr.update();
     }
 

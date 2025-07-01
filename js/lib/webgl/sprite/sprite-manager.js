@@ -1,7 +1,5 @@
-import WebGL from '/js/lib/webgl/webgl.js';
-import Sprite from '/js/lib/webgl/sprite/sprite.js';
-
-import { load } from "/js/lib/loader/load.js";
+import Sprite from './sprite.js';
+import { load } from "../../loader/load.js";
 
 // 00 translation: 3
 // 03 padding1:    1
@@ -120,10 +118,21 @@ export default class SpriteManager /*extends IAdapter*/ {
     }
 
     async loadAtlas(imgUrl, mapUrl) {
-        let img = new Image();
-        img.src = imgUrl;
-        await img.decode();
-        let map = await fetch(mapUrl).then(r => r.json());
+        let img = await load(imgUrl)
+            .then(async resp => {
+                if (resp instanceof Error) console.log(resp);
+                else {
+                    const image = new Image();
+                    image.src = URL.createObjectURL(resp.content);
+                    await image.decode();
+                    return image;
+                }});
+        let map = await load(mapUrl)
+            .then(async resp => {
+                if (resp instanceof Error) console.log(resp);
+                else return resp.content;
+            });
+
         for (let v of Object.values(map)) {
             v[4] = v[2] - v[0];
             v[5] = v[3] - v[1];
