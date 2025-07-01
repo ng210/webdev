@@ -6,11 +6,11 @@ import Vec4 from "../../math/vec4.js";
 // 0C color:        4
 
 
-// must be a multiple of 4
-const FloatsPerParticle = 4 + 4 + 4 + 4;
-
 class ParticleManager {
+    // must be a multiple of 4
+    static FloatsPerParticle = 4 + 4 + 4 + 4;
     #webgl;
+    get data() { return this.dataTexture.data; }
     dataTexture = null;
     #count = 0;
     get count() { return this.#count; }
@@ -83,7 +83,7 @@ class ParticleManager {
 
     setCount(count) {
         this.#count = count;
-        let dataCount = count * FloatsPerParticle;
+        let dataCount = count * ParticleManager.FloatsPerParticle;
         const [width, height] = this.#webgl.calculateTextureSize(dataCount/4);
         let data = new Float32Array(width * height * 4);
         // create texture
@@ -129,14 +129,14 @@ class ParticleManager {
                     0.5 + 0.5 * Math.random(),
                     0.8
                 );
-                ix += FloatsPerParticle;
+                ix += ParticleManager.FloatsPerParticle;
             }
         }
     }
 
     get(ix) {
-        let start = ix * FloatsPerParticle;
-        return this.dataTexture.data.subarray(start, start + FloatsPerParticle);
+        let start = ix * ParticleManager.FloatsPerParticle;
+        return this.dataTexture.data.subarray(start, start + ParticleManager.FloatsPerParticle);
     }
 
     reset() {

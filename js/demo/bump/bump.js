@@ -38,7 +38,7 @@ export default class Bump extends Demo {
 		let responses = [];
 		let dataSource = { list:[], value: 0 };
 		for (let url of urls) {
-			responses.push(load(url)
+			responses.push(load({url: url, base: document.scripts[0].src})
 				.then(
 					async resp => {
 						if (resp.content instanceof Error) {
