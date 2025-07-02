@@ -15,7 +15,7 @@ export default class Fonts extends Demo {
     ];
     #textIndex = -1;
 
-    #effects = {
+    #transitions = {
         fade: (fr, dt) => {
             let alpha = 1;
             if (fr < 30) alpha = fr / 30;
@@ -89,7 +89,7 @@ export default class Fonts extends Demo {
         this.settings = {
             scale: { min: 0.1, max: 2.0, value: 0.5, step: 0.1},
             gap: { min: 0, max: 10, value: 2, step: 1 },
-            effects: { list: Object.keys(this.#effects), value: 0 }
+            transitions: { list: Object.keys(this.#transitions), value: 0 }
         };
         this.#webgl = new WebGL(
             document.querySelector('canvas'),
@@ -186,8 +186,8 @@ export default class Fonts extends Demo {
             this.renderText(Fonts.texts[this.#textIndex], 0.5*(this.#webgl.canvas.width - width), 0.5*this.#webgl.canvas.height);
         }
 
-        let fxName = this.settings.effects.list[this.settings.effects.value];
-        this.#effects[fxName].apply(this, [fr, dt]);
+        let fxName = this.settings.transitions.list[this.settings.transitions.value];
+        this.#transitions[fxName].apply(this, [fr, dt]);
         this.#sprMgr.update();
     }
 
