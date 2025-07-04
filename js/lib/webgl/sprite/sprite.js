@@ -55,6 +55,7 @@ export default class Sprite {
         this.scale.set([this.#scale_.x, this.#scale_.y]);
         this.isDirty = true;
     }
+    get frame() { return this.#frame; }
 
     #visible;
     get visible() { return this.#visible; }
