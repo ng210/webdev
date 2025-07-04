@@ -77,6 +77,25 @@ export default class Fonts extends Demo {
                     spr.color.w = (160 - fr) / 40;
                 }
             }
+        },
+        roll: (fr, dt) => {
+            if (fr % 3 == 0) {
+                let text = Fonts.texts[this.#textIndex];
+                if (fr == 0) {
+                    for (let si=0; si<text.length; si++) {
+                        let spr = this.#sprMgr.spr(si);
+                        let frame = text.charCodeAt(si) - 32 - Math.floor(Math.random()*80/3);
+                        if (frame < 0) frame += 94;
+                        spr.frame = frame;
+                    }
+                } else {
+                    for (let si=0; si<text.length; si++) {
+                        let spr = this.#sprMgr.spr(si);
+                        if (spr.frame != text.charCodeAt(si) - 32) spr.frame = (spr.frame + 1) % 94;
+                        if (fr < 20) spr.color.w = fr / 20;
+                    }
+                }
+            }
         }
     };
 
@@ -89,7 +108,7 @@ export default class Fonts extends Demo {
         this.settings = {
             scale: { min: 0.1, max: 2.0, value: 0.5, step: 0.1},
             gap: { min: 0, max: 10, value: 2, step: 1 },
-            transitions: { list: Object.keys(this.#transitions), value: 0 }
+            transition: { list: Object.keys(this.#transitions), value: 0 }
         };
         this.#webgl = new WebGL(
             document.querySelector('canvas'),
@@ -186,7 +205,7 @@ export default class Fonts extends Demo {
             this.renderText(Fonts.texts[this.#textIndex], 0.5*(this.#webgl.canvas.width - width), 0.5*this.#webgl.canvas.height);
         }
 
-        let fxName = this.settings.transitions.list[this.settings.transitions.value];
+        let fxName = this.settings.transition.list[this.settings.transition.value];
         this.#transitions[fxName].apply(this, [fr, dt]);
         this.#sprMgr.update();
     }
