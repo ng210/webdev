@@ -112,8 +112,8 @@ export default class Demo {
         const scaleY = this.canvas.height / rect.height;
         this.mousePos.x = (e.clientX - rect.left) * scaleX;
         this.mousePos.y = (e.clientY - rect.top) * scaleY;
-        this.glMousePos.x = 2.0 * e.clientX * scaleX/this.canvas.width - 1.0;
-        this.glMousePos.y = 2.0 - 2.0 * e.clientY * scaleY/this.canvas.height - 1.0;
+        this.glMousePos.x = 2.0 * this.mousePos.x/this.canvas.width - 1.0;
+        this.glMousePos.y = 2.0 * (1.0 - this.mousePos.y/this.canvas.height) - 1.0;
     }
 
     onPointerDown(e) {
@@ -227,7 +227,7 @@ export default class Demo {
     }
 
     start() {
-        this.#ts = new Date().getTime();
+        this.#ts = 0;
         this.#fps.innerHTML = '00.00';
         this.#startFrame = 0;
         this.#startTime = 0;

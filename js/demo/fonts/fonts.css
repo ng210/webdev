@@ -1,11 +1,11 @@
-#transitions_lbl {
-    width: 6.5em;
-}
-
-#transitions_inp {
+#_lbl {
     width: 6em;
 }
 
-#transitions_val {
-    width: 4em;
+#transition_inp {
+    width: 6em;
+}
+
+#transition_val {
+    width: 6em;
 }

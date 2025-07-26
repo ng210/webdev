@@ -10,6 +10,8 @@ class WebGL {
 	static VERTEX_ATTRIB_TEXTURE2	= 0x10;
 	static #extensions = {};
 
+	static FLOAT_ARR	= 0x2000;
+
 	#buffers = [];
 	#textures = [];
 
@@ -17,11 +19,29 @@ class WebGL {
 	gl = null;
 	scale = null;
 
+	static screenVShader =
+        `#version 300 es
+        out vec2 v_texcoord;
+
+        void main() {
+        // 6 vertices for two triangles forming a quad
+        int id = gl_VertexID;
+        vec2 pos = vec2((id == 0 || id == 2 || id == 4) ? -1.0 : 1.0,
+                        (id == 0 || id == 1 || id == 3) ? -1.0 : 1.0);
+        v_texcoord = pos * 0.5 + 0.5;
+        gl_Position = vec4(pos, 0.0, 1.0);
+        }`;
+
 	static typeMap = {
 		[WebGL2RenderingContext.FLOAT]: {
 			size: 1,
 			base: WebGL2RenderingContext.FLOAT,
 			setter: (gl, location, value) => gl.uniform1f(location, value)
+		},
+		[WebGL.FLOAT_ARR]: {
+			size: 0,
+			base: WebGL2RenderingContext.FLOAT,
+			setter: (gl, location, value) => gl.uniform1fv(location, value)
 		},
 		[WebGL2RenderingContext.FLOAT_VEC2]: {
 			size: 2,
@@ -294,7 +314,7 @@ class WebGL {
 		return WebGL.#extensions[extensionName];
 	}
 
-	getImageData(image) {
+	static getImageData(image) {
 		// read pixel data from image
 		const canvas = document.createElement('canvas');
 		const ctx = canvas.getContext('2d');
@@ -383,7 +403,7 @@ class WebGL {
     // Create a buffer from an image object
     createBufferfromImage(image, tag) {
 		const gl = this.gl;
-		let imgData = this.getImageData(image);
+		let imageData = this.getImageData(image);
 		// create buffer
 		let buffer = this.createBuffer(gl.ARRAY_BUFFER, tag);
 		buffer.uploadData(imageData.data, gl.STATIC_DRAW);

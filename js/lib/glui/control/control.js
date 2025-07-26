@@ -8,7 +8,12 @@ export default class Control {
     set label(v) { this.#label = v; }
     #value = null;
     get value() { return this.#value; }
-    set value(v) { this.#value = v; }
+    set value(v) {
+        this.#value = v;
+        if (this.uiElement != null) {
+            this.uiElement.value = v;
+        }
+    }
     #uiElement = null;
     get uiElement() { return this.#uiElement; }
     set uiElement(v) {

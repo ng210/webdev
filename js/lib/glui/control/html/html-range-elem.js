@@ -6,6 +6,10 @@ export default class HtmlRangeElem extends HtmlElem {
     #val = null;
 
     get value() { return this.#inp.value; }
+    set value(v) {
+        this.#inp.value = v;
+        this.onChange(null);
+    }
 
     constructor(control) {
         super(control);

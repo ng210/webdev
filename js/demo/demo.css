@@ -89,7 +89,7 @@ div.range {
 }
 
 label.range {
-    width: 5.5em;
+    width: 6em;
 }
 
 input.range {
@@ -114,7 +114,7 @@ input.range::-webkit-slider-thumb {
 }
 
 span.range {
-    width: 3em;
+    width: 4em;
 }
 
 button.settings {

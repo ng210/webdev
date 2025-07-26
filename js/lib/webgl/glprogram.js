@@ -118,10 +118,16 @@ export default class glProgram {
         let uniforms = {};
         for (let i = 0; i < uniformCount; i++) {
             const info = gl.getActiveUniform(program, i);
-            uniforms[info.name] = {
+            let name = info.name;
+            let type = info.type;
+            if (name.endsWith('[0]')) {
+                name = name.substring(0, name.indexOf('['));
+                type = WebGL.FLOAT_ARR;
+            }
+            uniforms[name] = {
                 name: info.name,
                 size: info.size,
-                type: info.type,
+                type: type,
                 location: gl.getUniformLocation(program, info.name),
                 bufferId: -1,
                 offset: 0,

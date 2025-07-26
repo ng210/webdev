@@ -3,6 +3,7 @@ import { Url } from './url.js'
 async function _load(args) {
     let content = null;
     let url = args;
+    let result = null;
     try {
         if (typeof args === 'object') {
             url = new Url(args.url, args.base || '').toString();
@@ -33,11 +34,12 @@ async function _load(args) {
         } else {
             throw new Error(`${resp.status} ${resp.statusText}`);
         }
+        result = { url, content };
     } catch (err) {
         console.error(err);
-        content = err;
+        result = err;
     }
-    return { url, content };
+    return result;
 }
 
 function _getContentTypeByExtension(url) {

@@ -2,6 +2,7 @@ import { getConsole, Colors } from '../console/console.js'
 import Test from '../test/test.js';
 import WebGL from './webgl.js';
 import ComputeShader from './compute-shader.js';
+import { load } from '../loader/load.js'
 
 export default class WebGLTest extends Test {
     #webgl = null;
@@ -124,9 +125,9 @@ export default class WebGLTest extends Test {
         );
 
         this.#webgl.createTextureFromImage(this.#images[0], 'test');
-        this.#webgl.createTextureFromImage(this.#images[1], 'test');
+        this.#webgl.createTextureFromImage(this.#images[1], 'ascii');
 
-        this.asciiMap = await load({ url: 'assets/ascii_charset_map.json', base: import.meta.src }).then(r => r.json());
+        this.asciiMap = (await load({ url: 'assets/ascii_charset_map.json', base: import.meta.url })).content;
     }
 
     teardown() {
@@ -285,10 +286,10 @@ export default class WebGLTest extends Test {
             precision highp float;
             precision highp usampler2D;
             in vec2 v_texcoord;
-            out uint uresult;
-            uniform usampler2D u_texture;
+            out float result;
+            uniform sampler2D u_texture;
             void main() {
-                uresult = texture(u_texture, v_texcoord).r * 2u;
+                result = texture(u_texture, v_texcoord).r * 2.0;
             }`);
         computeShaderUint.run();
         var output = computeShaderUint.readOutput();

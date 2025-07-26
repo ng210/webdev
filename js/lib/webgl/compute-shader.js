@@ -1,7 +1,10 @@
+import WebGL from './webgl.js';
 import glTexture from './gltexture.js';
 
 export default class ComputeShader {
 	#webgl = null;
+    program = null;
+
 	constructor(webgl, tag) {
         webgl.useExtension('EXT_color_buffer_float');
 		this.#webgl = webgl;
@@ -80,15 +83,15 @@ export default class ComputeShader {
     #setTexture(texture, ix) {
         const gl = this.#webgl.gl;
         this.textures[ix] = texture;
-        if (!this.frameBuffers[ix]) {
+        //if (!this.frameBuffers[ix]) {
             this.frameBuffers[ix] = this.#webgl.createFramebuffer(`${this.tag}_fb${ix}`);
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffers[ix].buffer);
             gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.textures[ix].texture, 0);
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        }
+        //}
     }
 
-    setInput(data, size = null) {
+    setInput(data, size = 1) {
         if (data instanceof glTexture) {
             this.#setTexture(data, this.index);
         } else {
@@ -116,6 +119,7 @@ export default class ComputeShader {
             let input = this.#createTexture(source, width, height, typeName);
             this.#setTexture(input, this.index);
         }
+        return this.textures[this.index];
     }
 
     setOutput(arg = null) {
@@ -134,7 +138,8 @@ export default class ComputeShader {
 		const gl = this.#webgl.gl;
         this.program = this.#webgl.createProgram(
             {
-                vertexSrc: ComputeShader.#vertexShader,
+                vertexSrc: WebGL.screenVShader,
+                //vertexSrc: ComputeShader.#vertexShader,
                 fragmentSrc: shader
             });
     }

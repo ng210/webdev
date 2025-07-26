@@ -1,6 +1,6 @@
 import Demo from '../base/demo.js'
 import Buffer from '../../lib/glui/buffer.js'
-import { lerp } from '../../lib/fn.js'
+import { lerp } from '../../lib/math/fn.js'
 
 export default class Plasma extends Demo {
     #counter;
@@ -23,7 +23,7 @@ export default class Plasma extends Demo {
 			motion:     { value: 1,   min:-10,max:10,   step: 0.1 },
 			variation:  { value: 4,   min:0,  max:10,   step: 0.01 },
 			shape:      { value: 0,   min:0,  max:3,    step: 0.01 },
-			color:      { value: 0,   min:0,  max:2,    step: 1 },
+			color:      { list: ['rgb', 'ocb', 'blue'],   value:0 },
 			saturation: { value: 0.6, min:0,  max:1,    step: 0.01 }
         };
     }
