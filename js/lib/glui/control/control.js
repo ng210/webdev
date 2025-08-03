@@ -52,11 +52,22 @@ export default class Control {
     appendChild(child) { 
         if (this.#uiElement != null && child.uiElement != null &&
             !this.#children.includes(child) && this.#uiElement.appendChild(child.uiElement)) {
+                if (child.parent != null) {
+                    child.parent.removeChild(child);
+                }
                 child.parent = this;
                 this.#children.push(child);
                 return true;
         }
         else return false;
+    }
+
+    removeChild(child) {
+        if (this.#children.includes(child)) {
+            this.#children.splice(this.#children.indexOf(child), 1);
+            this.#uiElement.elem.removeChild(child.uiElement.elem);
+            child.parent = null;
+        }
     }
 
     dataBind(dataSource) {
@@ -67,12 +78,12 @@ export default class Control {
 
     addHandler(event, handler) {
         if (this.validEvents.includes(event) && typeof handler === 'function') {
+            if (this.#handlers[event] == null) this.#handlers[event] = [];
+            this.#handlers[event].push(handler);
             if (this.#uiElement != null) {
-                if (this.#handlers[event] == null) this.#handlers[event] = [];
-                this.#handlers[event].push(handler);
                 this.#uiElement.addHandler(event, handler);
-                return true;
             }
+            return true;
         }
         return false;
     }

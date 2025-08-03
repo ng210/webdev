@@ -13,12 +13,19 @@ export default class HtmlElem extends UiElement {
 
     appendChild(child) {
         if (this.#elem != null && child.elem != null) {
-            this.#elem.appendChild(child);
+            this.#elem.appendChild(child.elem);
             return true;
         } else return false;
     }
+
+    removeChild(child) {
+        this.#elem.removeChild(child.elem);
+    }
+
     update(dt = 0, frame = 0) { }
+    
     render(dt = 0, frame = 0) { }
+    
     addHandler(event, handler) {
         this.#elem.addEventListener(event, handler);
     }

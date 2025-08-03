@@ -1,5 +1,7 @@
 import Test from '../test/test.js'
+import PanelControl from './control/panel-control.js'
 import RangeControl from './control/range-control.js'
+import HtmlElem from './control/html/html-elem.js'
 import HtmlRangeElem from './control/html/html-range-elem.js'
 
 class ControlTest extends Test {
@@ -18,7 +20,14 @@ class ControlTest extends Test {
     }
 
     async setupAll() {
-        let ctrl = new RangeControl('range1');
+        let ctrl = new PanelControl('body');
+        ctrl.label = 'body';
+        ctrl.uiElement = new HtmlElem(ctrl);
+        ctrl.uiElement.elem = document.querySelector('body');
+        await ctrl.initialize();
+        this.body = ctrl;
+
+        ctrl = new RangeControl('range1');
         ctrl.label = 'Range1';
         ctrl.uiElement = new HtmlRangeElem(ctrl);
         ctrl.dataBind(ControlTest.dataSource.range1);
@@ -41,12 +50,12 @@ class ControlTest extends Test {
 
     testAddRangeControls() {
         let ctrl = this.controls[0];
-        this.body.append(ctrl);
+        this.body.appendChild(ctrl);
         let v = ControlTest.dataSource.range1.value;
         this.isEqual(`Range1 value is ${v}`, ctrl.value, v);
 
         ctrl = this.controls[1];
-        this.body.append(ctrl);
+        this.body.appendChild(ctrl);
         v = ControlTest.dataSource.colors.list[ControlTest.dataSource.colors.value];
         this.isEqual(`Range1 value is ${v}`, ctrl.value, v);
     }

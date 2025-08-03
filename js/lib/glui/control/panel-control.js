@@ -1,19 +1,13 @@
-import IControl from './icontrol.js'
+import Control from "./control.js";
 
-export default class PanelControl extends IControl {
-    #id = '';
-    get id() { return this.#id; }
-
-    #enableDragging = false;
-    get enableDragging() { return this.#enableDragging; }
-    set enableDragging(v) { this.#enableDragging = v; }
+export default class PanelControl extends Control {
+    static #validEvents = ['input', 'change', 'pointermove', 'pointerover', 'pointerout'];
+    get validEvents() { return PanelControl.#validEvents; }
 
     constructor(id) {
-        super();
-        this.#id = id;
+        super(id);
     }
 
-    addHandler(eventName, handler, options) {
-        
+    async initialize(data) {
     }
 }
