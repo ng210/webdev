@@ -75,10 +75,10 @@ export default class Synth extends Demo {
         this.#bufferWrite = 0;
 
         this.#flt = [];
-        let flt = new Flt(2)
+        let flt = new Flt(2);
         flt.mode = this.settings.pass.value;
         this.#flt.push(flt);
-        flt = new Flt(2)
+        flt = new Flt(2);
         flt.mode = this.settings.pass.value;
         this.#flt.push(flt);
     }

@@ -31,6 +31,12 @@ export default class Control {
     #title = '';
     get title() { return this.#title; }
     set title(v) { this.#title = v; }
+    #parent = null;
+    get parent() { return this.#parent; }
+    set parent(p) { this.#parent = p; }
+    #children = [];
+    get children() { return this.#children; }
+
     get validEvents() { throw new Error('Not implemented!'); }
 
     #handlers = {};
@@ -42,6 +48,17 @@ export default class Control {
     }
 
     async initialize(data) { throw new Error('Not implemented!'); }
+    
+    appendChild(child) { 
+        if (this.#uiElement != null && child.uiElement != null &&
+            !this.#children.includes(child) && this.#uiElement.appendChild(child.uiElement)) {
+                child.parent = this;
+                this.#children.push(child);
+                return true;
+        }
+        else return false;
+    }
+
     dataBind(dataSource) {
         this.#dataSource = dataSource;
         this.value = dataSource.value;
@@ -50,11 +67,13 @@ export default class Control {
 
     addHandler(event, handler) {
         if (this.validEvents.includes(event) && typeof handler === 'function') {
-            if (this.#handlers[event] == null) this.#handlers[event] = [];
-            this.#handlers[event].push(handler);
             if (this.#uiElement != null) {
+                if (this.#handlers[event] == null) this.#handlers[event] = [];
+                this.#handlers[event].push(handler);
                 this.#uiElement.addHandler(event, handler);
+                return true;
             }
         }
+        return false;
     }
 }

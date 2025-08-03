@@ -1,6 +1,6 @@
 import Test from '../test/test.js'
-import RangeControl from './control/range-control.js'
-import HtmlRangeElem from './control/html/html-range-elem.js'
+import RangeControl from '../glui/control/range-control.js'
+import WebGLRangeElem from './glui/webgl-range-elem.js'
 
 class ControlTest extends Test {
     static colors = ['black', 'gray', 'white', 'red', 'green', 'blue', 'yellow', 'brown'];
@@ -9,7 +9,6 @@ class ControlTest extends Test {
         colors: { list: ControlTest.colors, value: 1 },
         dropdown1: ControlTest.colors
     };
-    body = null;
     controls = [];
 
     onChange(e) {
@@ -20,7 +19,7 @@ class ControlTest extends Test {
     async setupAll() {
         let ctrl = new RangeControl('range1');
         ctrl.label = 'Range1';
-        ctrl.uiElement = new HtmlRangeElem(ctrl);
+        ctrl.uiElement = new WebGLRangeElem(ctrl);
         ctrl.dataBind(ControlTest.dataSource.range1);
         this.controls.push(ctrl);
         await ctrl.initialize();
@@ -28,7 +27,7 @@ class ControlTest extends Test {
 
         ctrl = new RangeControl('colors');
         ctrl.label = 'Colors';
-        ctrl.uiElement = new HtmlRangeElem(ctrl);
+        ctrl.uiElement = new WebGLRangeElem(ctrl);
         ctrl.dataBind(ControlTest.dataSource.colors);
         this.controls.push(ctrl);
         await ctrl.initialize();
@@ -41,12 +40,12 @@ class ControlTest extends Test {
 
     testAddRangeControls() {
         let ctrl = this.controls[0];
-        this.body.append(ctrl);
+        ctrl.uiElement.parent = document.body;
         let v = ControlTest.dataSource.range1.value;
         this.isEqual(`Range1 value is ${v}`, ctrl.value, v);
 
         ctrl = this.controls[1];
-        this.body.append(ctrl);
+        ctrl.uiElement.parent = document.body;
         v = ControlTest.dataSource.colors.list[ControlTest.dataSource.colors.value];
         this.isEqual(`Range1 value is ${v}`, ctrl.value, v);
     }

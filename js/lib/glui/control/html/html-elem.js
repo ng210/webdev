@@ -7,14 +7,15 @@ export default class HtmlElem extends UiElement {
 
     get value() { return this.#elem.value; }
 
-    get parent() { return super.parent; }
-    set parent(v) {
-        super.parent = v;
-        v.appendChild(this.elem);
+    constructor(control) {
+        super(control);
     }
 
-    constructor(control) {
-        super(control)
+    appendChild(child) {
+        if (this.#elem != null && child.elem != null) {
+            this.#elem.appendChild(child);
+            return true;
+        } else return false;
     }
     update(dt = 0, frame = 0) { }
     render(dt = 0, frame = 0) { }
@@ -22,11 +23,7 @@ export default class HtmlElem extends UiElement {
         this.#elem.addEventListener(event, handler);
     }
 
-    createElement(data) { throw new Error('Not implemented!'); }
+    onDataSourceChanged(ds) { throw new Error('Not implemented!'); }
 
-    append(parent) {
-        if (this.#elem != null) {
-            parent.appendChild(this.#elem);
-        }
-    }
+    createElement(data) { throw new Error('Not implemented!'); }
 }
