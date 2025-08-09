@@ -5,7 +5,13 @@ export default class HtmlRangeElem extends HtmlElem {
     #inp = null;
     #val = null;
 
-    get value() { return this.#inp.value; }
+    get value() {
+        let v = this.#inp.value; 
+        if (this.control.dataSource.list) {
+            v = this.control.dataSource.list[v];
+        }
+        return v;
+    }
     set value(v) {
         this.#inp.value = v;
         this.onChange(null);
@@ -53,13 +59,15 @@ export default class HtmlRangeElem extends HtmlElem {
 
     // render(dt, frame) { }
 
-    onChange(e) {
-        let v = this.#inp.value;
-        if (this.control.dataSource.list) {
-            this.#val.innerHTML = this.control.dataSource.list[v];
-        } else {
-            this.#val.innerHTML = v;
-        }
+    onChange(e, ctrl) {
+        debugger
+        this.#val.innerHTML = this.value;
+        // let v = this.#inp.value;
+        // if (this.control.dataSource.list) {
+        //     this.#val.innerHTML = this.control.dataSource.list[v];
+        // } else {
+        //     this.#val.innerHTML = v;
+        // }
         //this.elem.setAttribute('title', this.control.value);
     }
 }

@@ -76,12 +76,20 @@ export default class Control {
         this.uiElement.onDataSourceChanged(dataSource);
     }
 
+    assignHtmlElem(elem) {
+        if (elem instanceof HTMLElement) {
+            this.uiElement = new HtmlElem(this);
+            this.uiElement.elem = elem;
+        }
+    }
+
     addHandler(event, handler) {
         if (this.validEvents.includes(event) && typeof handler === 'function') {
             if (this.#handlers[event] == null) this.#handlers[event] = [];
-            this.#handlers[event].push(handler);
+            let h = e => handler(e, this)
+            this.#handlers[event].push(h);
             if (this.#uiElement != null) {
-                this.#uiElement.addHandler(event, handler);
+                this.#uiElement.addHandler(event, h);
             }
             return true;
         }

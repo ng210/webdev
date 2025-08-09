@@ -1,11 +1,13 @@
 body {
+    position: absolute;
     padding: 0em 1em;
 }
 
 div.range {
+    position: absolute;
     width: fit-content;
     padding: 0.1em 0.4em;
-    height: auto;
+    height: 8em;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -24,6 +26,7 @@ div.range {
 }
 
 input.range {
+    position: relative;
     width: 0.6em;
     height: 6em;
     background: #4448;

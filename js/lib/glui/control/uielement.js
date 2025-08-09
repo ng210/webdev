@@ -1,4 +1,13 @@
 export default class UiElement {
+    get left() { throw new Error('Not implemented!'); }
+    set left(l) { throw new Error('Not implemented!'); }
+    get top() { throw new Error('Not implemented!'); }
+    set top(t) { throw new Error('Not implemented!'); }
+    get width() { throw new Error('Not implemented!'); }
+    set width(w) { throw new Error('Not implemented!'); }
+    get height() { throw new Error('Not implemented!'); }
+    set height(h) { throw new Error('Not implemented!'); }
+
     get value() { throw new Error('Not implemented!'); }
     #control = null;
     get control() { return this.#control; }

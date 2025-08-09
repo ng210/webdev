@@ -1,4 +1,7 @@
+import PanelControl from '../../lib/glui/control/panel-control.js'
+import StaticControl from '../../lib/glui/control/static-control.js'
 import RangeControl from '../../lib/glui/control/range-control.js'
+import HtmlElem from '../../lib/glui/control/html/html-elem.js'
 import HtmlRangeElem from '../../lib/glui/control/html/html-range-elem.js'
 import Vec4 from '../../lib/math/vec4.js'
 
@@ -12,7 +15,7 @@ export default class Demo {
     #isDragging = false;
     #offsetX;
     #offsetY;
-    #panel;
+    #settingsPanel;
     #startTime;
     #startFrame;
     #fps;
@@ -26,6 +29,8 @@ export default class Demo {
     glMousePos = null;
     mouseButtons = [0, 0, 0];
 
+    body = null;
+
     get size() {
         return [320, 240];
     }
@@ -38,6 +43,9 @@ export default class Demo {
             });
         this.mousePos = new Vec4(0, 0, 0, 0);
         this.glMousePos = new Vec4(0, 0, 0, 0);
+
+        this.body = new PanelControl('body');
+        this.body.uiElement = new HtmlElem(this.body, document.querySelector('body'));
     }
 
     async initialize() {
@@ -119,8 +127,8 @@ export default class Demo {
     onPointerDown(e) {
         if (e.target instanceof HTMLSpanElement) {
             this.#isDragging = true;
-            this.#offsetX = e.clientX - this.#panel.offsetLeft;
-            this.#offsetY = e.clientY - this.#panel.offsetTop;
+            this.#offsetX = e.clientX - this.#settingsPanel.uiElement.left;
+            this.#offsetY = e.clientY - this.#settingsPanel.uiElement.top;
         }
         else
         if (e.target instanceof HTMLCanvasElement) {
@@ -135,7 +143,7 @@ export default class Demo {
             //this.#panel.style.cursor = 'grab';
             //this.#panel.releasePointerCapture(e.pointerId);
             localStorage.setItem('pp', JSON.stringify(
-                [this.#panel.offsetLeft, this.#panel.offsetTop]));
+                [this.#settingsPanel.uiElement.left, this.#settingsPanel.uiElement.top]));
         } else
         if (e.target instanceof HTMLCanvasElement) {
             this.mouseButtons = e.buttons;
@@ -145,8 +153,8 @@ export default class Demo {
 
     onPointerMove(e) {
         if (this.#isDragging) {
-            this.#panel.style.left = (e.clientX - this.#offsetX) + 'px';
-            this.#panel.style.top = (e.clientY - this.#offsetY) + 'px';
+            this.#settingsPanel.left = (e.clientX - this.#offsetX) + 'px';
+            this.#settingsPanel.top = (e.clientY - this.#offsetY) + 'px';
         } else
         if (e.target instanceof HTMLCanvasElement) {
             this.setMousePos(e);
@@ -157,29 +165,26 @@ export default class Demo {
     }
 
     async createSettingsPanel() {
-        //let panel = new PanelControl('settings');
-        let panel = document.querySelector('#settings');
-        panel.innerHTML = '';
+        this.#settingsPanel = new PanelControl('settings');
+        this.#settingsPanel.uiElement = new HtmlElem(this.#settingsPanel, panel);
         // panel.header = 'Settings';
         // panel.enableDragging = true;
         // panel.addHandler('pointerdown', Demo.dispatchEvent);
         // panel.addHandler('pointerup', Demo.dispatchEvent);
         // panel.addHandler('pointermove', Demo.dispatchEvent);
-        let header = document.createElement('div'); 
-        header.className = 'settings';
-        panel.appendChild(header);
-        let title = document.createElement('span');
-        title.className = 'settings';
-        title.innerHTML = 'Settings';
-        title.addEventListener('pointerdown', Demo.dispatchEvent);
-        title.addEventListener('pointerup', Demo.dispatchEvent);
-        title.addEventListener('pointermove', Demo.dispatchEvent);
+        let header = new PanelControl('header');
+        header.uiElement = new HtmlElem(header);
+        // alignment flex, grid, etc.
+        this.#settingsPanel.appendChild(header);
+        let title = new StaticControl('title', 'Settings');
+        title.addHandler('pointerdown', Demo.dispatchEvent);
+        title.addHandler('pointerup', Demo.dispatchEvent);
+        title.addHandler('pointermove', Demo.dispatchEvent);
         title.demo = this;
         header.appendChild(title);
-        this.#fps = document.createElement('span');
-        this.#fps.className = 'fps';
-        this.#fps.innerHTML = '00.00';
+        this.#fps = new StaticControl('fps', '00.00');
         header.appendChild(this.#fps);
+
         for (let k in this.settings) {
             let setting = this.settings[k];
             // create control depending on setting type
@@ -194,24 +199,64 @@ export default class Demo {
             }
             setting.control = control;
             control.addHandler('input', e => this.updateSetting(control));
-            control.uiElement.parent = panel;
+            this.#settingsPanel.appendChild(control);
         }
-        let buttons = document.createElement('div');
-        buttons.className = 'buttons settings';
-        let button = document.createElement('button');
-        button.className = 'settings';
-        button.innerHTML = '°~°';
-        button.addEventListener('click', e => this.startStop(e.target));
+
+        let buttons = new PanelControl('buttons');
+        buttons.uiElement = new HtmlElem(buttons);
+        let button = new ButtonControl('startStop', '°~°');
+        button.addHandler('click', e => this.startStop(e.target));
         buttons.appendChild(button);
-        panel.appendChild(buttons);
+        this.#settingsPanel.appendChild(buttons);
         this.#startStopButton = button;
-        this.#panel = panel;
+
+        // let header = document.createElement('div'); 
+        // header.className = 'settings';
+        // panel.appendChild(header);
+        // let title = document.createElement('span');
+        // title.className = 'settings';
+        // title.innerHTML = 'Settings';
+        // title.addEventListener('pointerdown', Demo.dispatchEvent);
+        // title.addEventListener('pointerup', Demo.dispatchEvent);
+        // title.addEventListener('pointermove', Demo.dispatchEvent);
+        // title.demo = this;
+        // header.appendChild(title);
+        // this.#fps = document.createElement('span');
+        // this.#fps.className = 'fps';
+        // this.#fps.innerHTML = '00.00';
+        // header.appendChild(this.#fps);
+        // for (let k in this.settings) {
+        //     let setting = this.settings[k];
+        //     // create control depending on setting type
+        //     // - range
+        //     // - dropdown list
+        //     let control = null;
+        //     if (Array.isArray(setting.list) || setting.min != undefined && setting.max != undefined) {
+        //         control = new RangeControl(k);
+        //         control.uiElement = new HtmlRangeElem(control);
+        //         control.dataBind(setting);
+        //         await control.initialize();
+        //     }
+        //     setting.control = control;
+        //     control.addHandler('input', e => this.updateSetting(control));
+        //     control.uiElement.parent = panel;
+        // }
+        // let buttons = document.createElement('div');
+        // buttons.className = 'buttons settings';
+        // let button = document.createElement('button');
+        // button.className = 'settings';
+        // button.innerHTML = '°~°';
+        // button.addEventListener('click', e => this.startStop(e.target));
+        // buttons.appendChild(button);
+        // panel.appendChild(buttons);
+        // this.#startStopButton = button;
+        // //this.#panel = panel;
 
         let panelPosition = localStorage.getItem('pp');
         if (panelPosition) {
             let pos = JSON.parse(panelPosition);
-            this.#panel.style.left = pos[0] + 'px';
-            this.#panel.style.top = pos[1] + 'px';
+            this.#settingsPanel.left = pos[0];
+            this.#settingsPanel.top = pos[1];
         }
     }
 
@@ -232,12 +277,12 @@ export default class Demo {
         this.#startFrame = 0;
         this.#startTime = 0;
         this.isRunning = true;
-        this.#startStopButton.innerHTML = 'Stop';
+        this.#startStopButton.value = 'Stop';
         this.#handler = requestAnimationFrame(time => this.#main(time));
     }
 
     stop() {
-        this.#startStopButton.innerHTML = 'Start';
+        this.#startStopButton.value = 'Start';
         this.isRunning = false;
     }
 
