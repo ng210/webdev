@@ -6,14 +6,21 @@ export default class HtmlRangeElem extends HtmlElem {
     #val = null;
 
     get value() {
-        let v = this.#inp.value; 
-        if (this.control.dataSource.list) {
-            v = this.control.dataSource.list[v];
-        }
-        return v;
+        return this.#inp.value;
+        // let v = this.#inp.value;
+        // if (this.control.dataSource.list) {
+        //     v = this.control.dataSource.list[v];
+        // }
+        // return v;
     }
     set value(v) {
         this.#inp.value = v;
+//         if (this.control.dataSource.list) {
+//             v = this.control.dataSource.list.indexOf(v);
+//         }
+//         if (v < )
+// debugger
+//         this.#inp.value = this.control.dataSource.list ? this.control.dataSource.list.indexOf(v) : v;
         this.onChange(null);
     }
 
@@ -21,7 +28,7 @@ export default class HtmlRangeElem extends HtmlElem {
         super(control);
         this.elem = this.createElement();
         this.addHandler('change', e => this.onChange(e));
-        this.addHandler('input', e => this.onChange(e));
+        this.addHandler('input', e => this.onInput(e));
     }
 
     createElement(data) {
@@ -40,12 +47,13 @@ export default class HtmlRangeElem extends HtmlElem {
         this.#inp.className = 'range';
         this.#val = document.createElement('span');
         this.#val.id = `${this.control.id}_val`;
-        this.#val.innerHTML = this.control.value;
+        this.#val.innerHTML = '';
         this.#val.className = 'range';
         cnt.appendChild(this.#lbl);
         cnt.appendChild(this.#inp);
         cnt.appendChild(this.#val);
         this.#lbl.setAttribute('for', id);
+        cnt.uiElement = this;
         return cnt;
     }
 
@@ -53,21 +61,24 @@ export default class HtmlRangeElem extends HtmlElem {
         this.#inp.setAttribute('min', parseFloat(ds.min));
         this.#inp.setAttribute('max', parseFloat(ds.max));
         this.#inp.setAttribute('step', parseFloat(ds.step));
-        this.#inp.value = ds.value;
+        this.#inp.value = this.value;
         this.onChange(null);
     }
 
     // render(dt, frame) { }
 
-    onChange(e, ctrl) {
-        debugger
-        this.#val.innerHTML = this.value;
+    onChange(e) {
+        // this.#val.innerHTML = this.value;
         // let v = this.#inp.value;
-        // if (this.control.dataSource.list) {
-        //     this.#val.innerHTML = this.control.dataSource.list[v];
-        // } else {
-        //     this.#val.innerHTML = v;
-        // }
+        if (this.control.dataSource.list) {
+            this.#val.innerHTML = this.control.dataSource.list[this.value];
+        } else {
+            this.#val.innerHTML = this.value;
+        }
         //this.elem.setAttribute('title', this.control.value);
+    }
+
+    onInput(e) {
+        this.#val.innerHTML = this.value;
     }
 }

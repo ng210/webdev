@@ -19,6 +19,5 @@ export default class UiElement {
     update(dt = 0, frame = 0) { throw new Error('Not implemented!'); }
     render(dt = 0, frame = 0) { throw new Error('Not implemented!'); }
     removeChild(child) { throw new Error('Not implemented!'); }
-
     onDataSourceChanged(ds) { throw new Error('Not implemented!'); }
 }

@@ -6,10 +6,10 @@ export default class Control {
     #label = '';
     get label() { return this.#label; }
     set label(v) { this.#label = v; }
-    #value = null;
-    get value() { return this.#value; }
+    get value() {
+        return this.uiElement ? this.uiElement.value : null;
+    }
     set value(v) {
-        this.#value = v;
         if (this.uiElement != null) {
             this.uiElement.value = v;
         }
@@ -83,16 +83,38 @@ export default class Control {
         }
     }
 
-    addHandler(event, handler) {
-        if (this.validEvents.includes(event) && typeof handler === 'function') {
+    addHandler(event, context = this, handler = null) {
+        if (this.validEvents.includes(event)) {
+            if (handler == null) {
+                while (context != null) {
+                    handler = context[`on${event.charAt(0).toUpperCase()}${event.slice(1)}`];
+                    if (typeof handler === 'function') break;
+                    context = context.parent;
+                }
+            }
+
+            if (typeof handler !== 'function') {
+                throw new Error(`Invalid handler for event ${event}`);
+            }
+
             if (this.#handlers[event] == null) this.#handlers[event] = [];
-            let h = e => handler(e, this)
+            let h = e => handler.apply(context, [e]);
             this.#handlers[event].push(h);
             if (this.#uiElement != null) {
                 this.#uiElement.addHandler(event, h);
             }
-            return true;
+        } else throw new Error(`Invalid event '${event}' for controller!`);
+    }
+
+    static getControl(el) {
+        let ctrl = null;
+        while (ctrl == null && el != null) {
+            if (el.uiElement != null) {
+                ctrl = el.uiElement.control;
+            } else {
+                el = el.parent || el.parentNode;
+            }
         }
-        return false;
+        return ctrl;
     }
 }

@@ -1,5 +1,6 @@
 import { getConsole, Colors } from '../console/console.js'
 import Test from '../test/test.js'
+import Control from './control/control.js'
 import PanelControl from './control/panel-control.js'
 import RangeControl from './control/range-control.js'
 import HtmlElem from './control/html/html-elem.js'
@@ -13,14 +14,15 @@ class ControlTest extends Test {
     static colors = ['black', 'gray', 'white', 'red', 'green', 'blue', 'yellow', 'brown'];
     static dataSource = {
         range1: { min: 0, max: 10, step: 0.1, value: 5 },
-        colors: { list: ControlTest.colors, value: 1 },
+        colors: { list: ControlTest.colors, value: ControlTest.colors[1] },
         dropdown1: ControlTest.colors
     };
     body = null;
     controls = {};
 
-    onChange(e, elem) {
-        this.cons.writeln(`${e.type}: ${elem.value}`);
+    onChange(e) {
+        let ctrl = Control.getControl(e.target);
+        this.cons.writeln(`${e.type}: ${ctrl.value}`);
     }
 
     async createControl(id, label, type = 'range', dataSource = null) {
@@ -81,14 +83,14 @@ class ControlTest extends Test {
             'Range1',
             'range',
             ControlTest.dataSource.range1);
-        range1.addHandler('change', (e, elem) => this.onChange(e, elem));
+        range1.addHandler('change', this);
 
         let range2 = await this.createControl(
             'colors',
             'Colors',
             'range',
             ControlTest.dataSource.colors);
-        range2.addHandler('change', (e, elem) => this.onChange(e, elem));
+        range2.addHandler('change', this);
 
 
         for (let ctrlId in this.controls) {
@@ -96,6 +98,7 @@ class ControlTest extends Test {
             this.isEqual(`${ctrl.label} value is ${ctrl.value}`, ctrl.value, ds[ctrlId].value);
         }
 
+        this.#cons.writeln('');
         await this.#cons.waitButton('Continue');
 
         range1.uiElement.top = 80;

@@ -2,12 +2,23 @@ import Control from "./control.js";
 
 export default class RangeControl extends Control {
     static #validEvents = ['input', 'change', 'pointermove', 'pointerover', 'pointerout'];
-    get value() { return super.value; }
+    get value() {
+        let v = this.uiElement.value;
+        return Array.isArray(this.dataSource.list) ? this.dataSource.list[v] : v;
+    }
     set value(v) {
-        if (v < this.dataSource.min) v = this.dataSource.min;
-        else if (v > this.dataSource.max) v = this.dataSource.max;
         if (Array.isArray(this.dataSource.list)) {
-            v = this.dataSource.list[v];
+            if (this.dataSource.list.includes(v)) {
+                v = this.dataSource.list.indexOf(v);
+            }
+        } else if (typeof v === 'number') {
+            if (v < this.dataSource.min) v = this.dataSource.min;
+            else if (v > this.dataSource.max) v = this.dataSource.max;
+            if (Array.isArray(this.dataSource.list)) {
+                if (!this.dataSource.list.includes(v)) {
+                    v = this.dataSource.list[v];
+                }
+            }
         }
         super.value = v;
     }
@@ -24,7 +35,7 @@ export default class RangeControl extends Control {
     }
 
     async initialize(data) {
-        // this.addHandler('change', e => this.onInputOrChange(e));
+        this.addHandler('change', this);
         // this.addHandler('input', e => this.onInputOrChange(e));
     }
 
@@ -44,9 +55,11 @@ export default class RangeControl extends Control {
         super.dataBind(dataSource);
     }
 
-    // onInputOrChange(e) {
-    //     this.value = this.uiElement.value;
-    //     this.title = this.value;
-    //     //this.uiElement.update();
-    // }
+    onChange(e) {
+        this.uiElement.onChange(e);
+    }
+
+    onInput(e) {
+        this.uiElement.onInput(e);
+    }
 }
