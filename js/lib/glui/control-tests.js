@@ -4,7 +4,7 @@ import Control from './control/control.js'
 import PanelControl from './control/panel-control.js'
 import RangeControl from './control/range-control.js'
 import HtmlElem from './control/html/html-elem.js'
-import HtmlStaticElem from './control/html/html-static-elem.js'
+//import HtmlStaticElem from './control/html/html-static-elem.js'
 import HtmlRangeElem from './control/html/html-range-elem.js'
 import HtmlButtonElem from './control/html/html-button-elem.js'
 
@@ -67,6 +67,7 @@ class ControlTest extends Test {
 
     async setupAll() {
         this.#cons = await getConsole();
+        Control.ui = HtmlElem;
 
         this.body = await this.createControl('body', '', 'panel');
         this.body.uiElement.elem = document.querySelector('body');

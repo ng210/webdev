@@ -5,7 +5,6 @@ import HtmlElem from '../../lib/glui/control/html/html-elem.js'
 import HtmlRangeElem from '../../lib/glui/control/html/html-range-elem.js'
 import Vec4 from '../../lib/math/vec4.js'
 
-
 export default class Demo {
     #frame;
     #ts;

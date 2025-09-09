@@ -1,37 +1,42 @@
 import UiElement from '../uielement.js'
 
 export default class HtmlElem extends UiElement {
-    #elem = null;
-    set elem(v) { this.#elem = v; }
-    get elem() { return this.#elem; }
+    #HTMLelem = null;
+    set HTMLelem(v) { this.#HTMLelem = v; }
+    get HTMLelem() { return this.#HTMLelem; }
 
-    get left() { return this.#elem.style.left; }
-    set left(v) { this.#elem.style.left = `${v}px`; }
-    get top() { return this.#elem.style.top; }
-    set top(v) { this.#elem.style.top = `${v}px`; }
-    get width() { return this.#elem.style.width; }
-    set width(v) { this.#elem.style.width = `${v}px`; }
-    get height() { return this.#elem.style.height; }
-    set height(v) { this.#elem.style.height = `${v}px`; }
+    get left() { return this.#HTMLelem.style.left; }
+    set left(v) { this.#HTMLelem.style.left = `${v}px`; }
+    get top() { return this.#HTMLelem.style.top; }
+    set top(v) { this.#HTMLelem.style.top = `${v}px`; }
+    get width() { return this.#HTMLelem.style.width; }
+    set width(v) { this.#HTMLelem.style.width = `${v}px`; }
+    get height() { return this.#HTMLelem.style.height; }
+    set height(v) { this.#HTMLelem.style.height = `${v}px`; }
+    get value() { return this.#HTMLelem.value; }
 
-    get value() { return this.#elem.value; }
+    static create(elem, control) {
+        if (elem instanceof HTMLElement) {
+            return new HtmlElem(control, elem);
+        }
+    }
 
     constructor(control, htmlElement = null) {
         super(control);
         if (htmlElement != null) {
-            this.#elem = htmlElement;
+            this.#HTMLelem = htmlElement;
         }
     }
 
     appendChild(child) {
-        if (this.#elem != null && child.elem != null) {
-            this.#elem.appendChild(child.elem);
+        if (this.#HTMLelem != null && child.HTMLelem != null) {
+            this.#HTMLelem.appendChild(child.HTMLelem);
             return true;
         } else return false;
     }
 
     removeChild(child) {
-        this.#elem.removeChild(child.elem);
+        this.#HTMLelem.removeChild(child.HTMLelem);
     }
 
     update(dt = 0, frame = 0) { }
@@ -39,7 +44,7 @@ export default class HtmlElem extends UiElement {
     render(dt = 0, frame = 0) { }
     
     addHandler(event, handler) {
-        this.elem.addEventListener(event, handler);
+        this.HTMLelem.addEventListener(event, handler);
     }
 
     onDataSourceChanged(ds) { throw new Error('Not implemented!'); }
