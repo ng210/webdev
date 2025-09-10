@@ -2,6 +2,7 @@
     "default": "deny",
     "allow": [
         "demo",
+        "games",
         "lib",
         "index.html",
         "main.js"
