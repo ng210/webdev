@@ -2,7 +2,7 @@ import Demo from '../base/demo.js'
 import Sound from '../../lib/sound.js'
 import WebGL from '../../lib/webgl/webgl.js'
 import {load} from '../../lib/loader/load.js'
-import { lerp } from '../../lib/fn.js'
+import { lerp } from '../../lib/math/fn.js'
 import { Flt } from './filter.js'
 
 export default class Synth extends Demo {
