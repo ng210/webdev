@@ -3,27 +3,31 @@ import glTexture from './gltexture.js';
 
 export default class ComputeShader {
 	#webgl = null;
-    program = null;
+    #program;
+    #textures;
+    #frameBuffers;
+    #index;
+    get index() { return this.#index; }
+    #tag;
 
 	constructor(webgl, tag) {
         webgl.useExtension('EXT_color_buffer_float');
 		this.#webgl = webgl;
-		//this.inputTypeName = '';
 
-        this.textures = [null, null];
-        this.frameBuffers = [null, null];
-        this.index = 0;
+        this.#textures = [null, null];
+        this.#frameBuffers = [null, null];
+        this.#index = 0;
 
-		this.program = null;
-		this.tag = tag;
+		this.#program = null;
+		this.#tag = tag;
 	}
 
     get input() {
-        return this.textures[this.index];
+        return this.#textures[this.#index];
     }
 
     get output() {
-        return this.textures[1 - this.index];
+        return this.#textures[1 - this.#index];
     }
 
 	static #vertexShader =
@@ -74,7 +78,7 @@ export default class ComputeShader {
             wrapS: gl.CLAMP_TO_EDGE,
             wrapT: gl.CLAMP_TO_EDGE,
             useMipmaps: false,
-            tag: this.tag + '_' + this.index,
+            tag: this.#tag + '_' + this.#index,
             data: source
         };
         return this.#webgl.createTexture(typeName, width, height, options);
@@ -82,18 +86,20 @@ export default class ComputeShader {
 
     #setTexture(texture, ix) {
         const gl = this.#webgl.gl;
-        this.textures[ix] = texture;
-        //if (!this.frameBuffers[ix]) {
-            this.frameBuffers[ix] = this.#webgl.createFramebuffer(`${this.tag}_fb${ix}`);
-            gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffers[ix].buffer);
-            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.textures[ix].texture, 0);
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        //}
+        this.#textures[ix] = texture;
+        if (this.#frameBuffers[ix]) {
+            this.#webgl.deleteBuffer(this.#frameBuffers[ix]);
+        }
+        this.#frameBuffers[ix] = this.#webgl.createFramebuffer(`${this.#tag}_fb${ix}`, this.#textures[ix].texture);
+//         gl.bindFramebuffer(gl.FRAMEBUFFER, this.#frameBuffers[ix].buffer);
+//         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.#textures[ix].texture, 0);
+// this.#webgl.glCheck('framebufferTexture2D');
+//         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 
     setInput(data, size = 1) {
         if (data instanceof glTexture) {
-            this.#setTexture(data, this.index);
+            this.#setTexture(data, this.#index);
         } else {
             // specify type
             let typeName = '';
@@ -117,26 +123,26 @@ export default class ComputeShader {
             source.set(data);
 
             let input = this.#createTexture(source, width, height, typeName);
-            this.#setTexture(input, this.index);
+            this.#setTexture(input, this.#index);
         }
-        return this.textures[this.index];
+        return this.#textures[this.#index];
     }
 
     setOutput(arg = null) {
         if (arg instanceof glTexture) {
-            this.#setTexture(arg, 1 - this.index);
+            this.#setTexture(arg, 1 - this.#index);
         } else {
-            let input = this.textures[this.index];
+            let input = this.#textures[this.#index];
             let source = Reflect.construct(input.data.constructor, [input.data.length]);
             let output = this.#createTexture(source, input.width, input.height, input.typeName);
-            this.#setTexture(output, 1 - this.index);
+            this.#setTexture(output, 1 - this.#index);
         }
-        return this.textures[1 - this.index];
+        return this.#textures[1 - this.#index];
     }
 
     setProgram(shader) {
 		const gl = this.#webgl.gl;
-        this.program = this.#webgl.createProgram(
+        this.#program = this.#webgl.createProgram(
             {
                 vertexSrc: WebGL.screenVShader,
                 //vertexSrc: ComputeShader.#vertexShader,
@@ -146,33 +152,37 @@ export default class ComputeShader {
 
 	run(uniforms = {}) {
         const gl = this.#webgl.gl;
-        this.program.use();
-        let input = this.textures[this.index];
-        let output = this.textures[1 - this.index];
+        this.#program.use();
+        let input = this.#textures[this.#index];
+        let output = this.#textures[1 - this.#index];
         input.bind(0);
-        this.program.setUniform('u_texture', input);
+        this.#program.setUniform('u_texture', input);
         for (let key in uniforms) {
-            this.program.setUniform(key, uniforms[key]);
+            this.#program.setUniform(key, uniforms[key]);
         }
-        //this.program.setUniform('u_time', dt/1000.0);
+        //this.#program.setUniform('u_time', dt/1000.0);
         gl.viewport(0, 0, output.width, output.height);
         gl.disable(gl.BLEND);
         // gl.clearColor(0, 0, 0, 1);
         // gl.clear(gl.COLOR_BUFFER_BIT);
-		gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffers[1 - this.index].buffer);
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this.#frameBuffers[1 - this.#index].buffer);
+const fbStatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+if (fbStatus !== gl.FRAMEBUFFER_COMPLETE) {
+    console.error("Framebuffer incomplete:", fbStatus.toString(16));
+}
         gl.drawArrays(gl.TRIANGLES, 0, 6);
 		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 	}
 
     feedback() {
-        this.index = 1 - this.index;
+        this.#index = 1 - this.#index;
     }
 
 	readOutput(target = null) {
         const gl = this.#webgl.gl;
-        const output = this.textures[1 - this.index];
+        const output = this.#textures[1 - this.#index];
         target = target || output.data;
-		gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffers[1 - this.index].buffer);
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this.#frameBuffers[1 - this.#index].buffer);
         gl.readBuffer(gl.COLOR_ATTACHMENT0);
         gl.readPixels(
             0, 0,
@@ -185,12 +195,20 @@ export default class ComputeShader {
 	}
 
     destroy() {
-        delete this.textures[0].data;
-        delete this.textures[1].data;
-        this.frameBuffers[0].delete();
-        this.frameBuffers[1].delete();
-        this.textures[0].delete();
-        this.textures[1].delete();
+        const gl = this.#webgl.gl;
+        for (let ix=0; ix<2; ix++) {
+            this.#webgl.deleteBuffer(this.#frameBuffers[ix]);
+            this.#webgl.deleteTexture(this.#textures[ix]);
+        }
+
+        // gl.bindFramebuffer(gl.FRAMEBUFFER, this.#frameBuffers[0].buffer);
+        // gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0);
+        // delete this.#textures[0].data;
+        // delete this.#textures[1].data;
+        // this.#frameBuffers[0].delete();
+        // this.#frameBuffers[1].delete();
+        // this.#textures[0].delete();
+        // this.#textures[1].delete();
     }
 }
 
@@ -233,7 +251,7 @@ export default class ComputeShader {
 //         gl.viewport(0, 0, this.output.width, this.output.height);
 //         gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
 //         webGL.useProgram(this.prg, constants);
-//         gl.activeTexture(gl.TEXTURE0);
+//         gl.activeTexture(gl.#texture0);
 //         gl.bindTexture(gl.TEXTURE_2D, this.input.texture);
 //         if (typeof fill === 'function') {
 //             var size = this.input.type.length;

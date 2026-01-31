@@ -1,19 +1,28 @@
 import WebGL from './webgl.js'
 
 export default class glProgram {
+    #webgl = null;
+    #vertexSrc = null;
+    #fragmentSrc = null;
+    #program = null;
+    #fs = null;
+    #vs = null;
+    #attributes = null;
+    #uniforms = null;
+    #attributeBuffers = null;
     constructor(webgl, options) {
-        this.webgl = webgl;
-        this.vertexSrc = options.vertexSrc;
-        this.fragmentSrc = options.fragmentSrc;
-        this.program = this.createShaderProgram(this.vertexSrc, this.fragmentSrc);
-        this.attributes = this.extractAttributes();
-        this.uniforms = this.extractUniforms();
+        this.#webgl = webgl;
+        this.#vertexSrc = options.vertexSrc;
+        this.#fragmentSrc = options.fragmentSrc;
+        this.#program = this.createShaderProgram(this.#vertexSrc, this.#fragmentSrc);
+        this.#attributes = this.extractAttributes();
+        this.#uniforms = this.extractUniforms();
         options.attributes = options.attributes || {};
 
-        this.attributeBuffers = {};
-        const buffers = this.attributeBuffers;
-        for (let ak in this.attributes) {
-            let attribute = this.attributes[ak];
+        this.#attributeBuffers = {};
+        const buffers = this.#attributeBuffers;
+        for (let ak in this.#attributes) {
+            let attribute = this.#attributes[ak];
             if (attribute.location != -1) {
                 let attribInfo = options.attributes[ak];
                 if (attribInfo) {
@@ -47,8 +56,8 @@ export default class glProgram {
         // }
 
         let offset = 0;
-        for (let uk in this.uniforms) {
-            let uniform = this.uniforms[uk];
+        for (let uk in this.#uniforms) {
+            let uniform = this.#uniforms[uk];
             if (uniform.location != -1) {
 				// uniform.update = type.updater;
 				// uniform.set = type.set;
@@ -59,12 +68,12 @@ export default class glProgram {
     }
 
     createShaderProgram(vertexSrc, fragmentSrc) {
-        const gl = this.webgl.gl;
-        const vs = this.compileShader(gl.VERTEX_SHADER, vertexSrc);
-        const fs = this.compileShader(gl.FRAGMENT_SHADER, fragmentSrc);
+        const gl = this.#webgl.gl;
+        this.#vs = this.compileShader(gl.VERTEX_SHADER, vertexSrc);
+        this.#fs = this.compileShader(gl.FRAGMENT_SHADER, fragmentSrc);
         const program = gl.createProgram();
-        gl.attachShader(program, vs);
-        gl.attachShader(program, fs);
+        gl.attachShader(program, this.#vs);
+        gl.attachShader(program, this.#fs);
         gl.linkProgram(program);
 
         if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
@@ -75,7 +84,7 @@ export default class glProgram {
     }
 
     compileShader(type, source) {
-        const gl = this.webgl.gl;
+        const gl = this.#webgl.gl;
         const shader = gl.createShader(type);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
@@ -87,8 +96,8 @@ export default class glProgram {
     }
 
     extractAttributes() {
-        const gl = this.webgl.gl;
-        const program = this.program;
+        const gl = this.#webgl.gl;
+        const program = this.#program;
         const attributeCount = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
         let attributes = {};
         for (let i = 0; i < attributeCount; i++) {
@@ -112,8 +121,8 @@ export default class glProgram {
     }
 
     extractUniforms() {
-        const gl = this.webgl.gl;
-        const program = this.program;
+        const gl = this.#webgl.gl;
+        const program = this.#program;
         const uniformCount = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
         let uniforms = {};
         for (let i = 0; i < uniformCount; i++) {
@@ -138,11 +147,11 @@ export default class glProgram {
     }
 
     use() {
-        const gl = this.webgl.gl;
-        gl.useProgram(this.program);
-        for (let bufferId in this.attributeBuffers) {
-            let bufferInfo = this.attributeBuffers[bufferId];
-            const buffer = this.webgl.getBuffer(bufferId);
+        const gl = this.#webgl.gl;
+        gl.useProgram(this.#program);
+        for (let bufferId in this.#attributeBuffers) {
+            let bufferInfo = this.#attributeBuffers[bufferId];
+            const buffer = this.#webgl.getBuffer(bufferId);
             if (!buffer) {
                 console.warn(`Invalid buffer #${bufferId}!`);
                 return;
@@ -156,21 +165,21 @@ export default class glProgram {
     }
 
     setUniform(name, value) {
-        const gl = this.webgl.gl;
-        if (!(name in this.uniforms)) {
+        const gl = this.#webgl.gl;
+        if (!(name in this.#uniforms)) {
             console.warn(`Uniform ${name} not found`);
             return;
         }
-        const typeInfo = WebGL.typeMap[this.uniforms[name].type];
+        const typeInfo = WebGL.typeMap[this.#uniforms[name].type];
         if (typeInfo && typeInfo.setter) {
-            typeInfo.setter(gl, this.uniforms[name].location, value);
+            typeInfo.setter(gl, this.#uniforms[name].location, value);
         } else {
             console.warn(`Unsupported uniform type for ${name}`);
         }
     }
 
     setAttribute(attribute, bufferInfo) {
-        const gl = this.webgl.gl;
+        const gl = this.#webgl.gl;
         const name = attribute.name;
         const typeInfo = WebGL.typeMap[attribute.type];
         if (!typeInfo) {
@@ -192,6 +201,8 @@ export default class glProgram {
     }
 
     delete() {
-        this.webgl.gl.deleteProgram(this.program);
+        this.#webgl.gl.deleteProgram(this.#program);
+        this.#webgl.gl.deleteShader(this.#vs);
+        this.#webgl.gl.deleteShader(this.#fs);
     }
 }
