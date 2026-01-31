@@ -14,13 +14,22 @@ class ConsoleBase {
         return this.#lines[ix];
     }
 
-
     _write(txt) {
         throw new Error('Not Implemented!');
     }
 
     write(txt, ink) {
-        this.#lines.push(...txt.split('\n'));
+        let lines = txt.split('\n');
+        if (lines.length == 1) {
+            this.#lines[this.#lines.length - 1] += txt
+        } else {
+            let ix = 0;
+            for (; ix < lines.length - 1; ix++) {
+                this.#lines.push(lines[ix]);
+            }
+            if (lines[ix] != '') this.#lines.push(lines[ix]);
+        }
+        
         if (ink != undefined) {
             var color = this.#color;
             this.#color = ink;

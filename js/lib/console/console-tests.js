@@ -16,15 +16,15 @@ class ConsoleTests extends Test {
 
     async testColors() {
         this.cons.writeln('');
-        var color = this.#cons.color;
+        //var color = this.#cons.color;
         for (var ci in Colors) {
-            this.#cons.color = Colors[ci];
-            this.#cons.write('██');
+            //this.#cons.color = Colors[ci];
+            this.#cons.write('██', Colors[ci]);
         }
-        this.#cons.color = color;
+        //this.#cons.color = color;
+        let expected = Object.values(Colors).reduce((acc, cur) => acc + '██', '');
         this.#cons.writeln('');
-
-        this.isEqual('Write colors', this.#cons.lines(-1), '████████████████');
+        this.isEqual('Write colors', this.#cons.lines(-2), expected);
     }
 
     async testPrompt() {
