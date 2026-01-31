@@ -16,7 +16,7 @@ class BrowserConsole extends ConsoleBase {
     };
     #isDragging = false;
     enable = true;
-
+    #top = 100;
 
     static get instance() {
         return BrowserConsole.get();
@@ -59,6 +59,8 @@ class BrowserConsole extends ConsoleBase {
                 this.options[key] = options[key];
             }
         }
+
+        this.#top = 0.75*document.body.clientHeight;
     }
 
     static get() {
@@ -81,13 +83,17 @@ class BrowserConsole extends ConsoleBase {
     #onPointerMove(e) {
         if (this.#isDragging) {
             this.setConsoleTop(e.clientY);
+            this.render();
         }
     }
 
     render() {
         if (!this.#parent.contains(this.#console)) {
             this.#parent.appendChild(this.#console);
+            window.addEventListener('resize', event => this.render());
         }
+        this.#console.style.top = `${this.#top}px`;
+        this.#console.style.height = (this.#console.parentNode.clientHeight - this.#top) + 'px';
     }
 
 
@@ -106,8 +112,7 @@ class BrowserConsole extends ConsoleBase {
     }
 
     setConsoleTop(y) {
-        this.#console.style.top = `${y}px`;
-        this.#console.style.height = (this.#console.parentNode.clientHeight - y) + 'px';
+        this.#top = y;
     }
 
     async prompt(question) {

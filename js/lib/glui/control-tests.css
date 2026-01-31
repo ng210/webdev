@@ -1,6 +1,11 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
-    position: absolute;
-    padding: 0em 1em;
+    padding: 1em;
+    width: 100vw;
+    height: 100vh;
 }
 
 div.range {
@@ -16,6 +21,39 @@ div.range {
     border-radius: 8px;
 }
 
+.glui-static {
+    background-color: silver;
+    border: ridge 3px lightblue;
+    color: blue;
+    font-family: Consolas, 'Courier New', Courier, monospace;
+    padding: 0.2em 0.4em;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+.glui-static.red {
+    color: red;
+    border: outset 3px red;
+}
+
+.glui-static.highlight {
+    background-color: yellow;
+    color: black;
+    border: outset 3px orange;
+}
+.glui-button {
+    position: absolute;
+    left: 100px;
+    top: 8em;
+    padding: 0.2em 0.4em;
+    font-size: large;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px #000c;
+    border-color: #cef;
+    border-radius: 8px;
+    background-color: #acf;
+}
+
 .range {
     width: 100%;
     font-family: Consolas;
@@ -23,6 +61,17 @@ div.range {
     text-shadow: 1px 1px 2px #000000c0;
     background: #4444;
     text-align: center;
+}
+
+.range-value {
+    color: black;
+    font-weight: bold;
+    display: inline-block;
+    text-align: center;
+    padding: 0.2em;
+    width: 6em;
+    border: ridge 2px #eeec;
+    border-radius: 4px;
 }
 
 input.range {

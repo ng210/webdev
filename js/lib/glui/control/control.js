@@ -1,202 +1,247 @@
-// base class
+// Base Control class
 export default class Control {
+    static #supportedEvents = ['click', 'pointermove' ,'pointerenter', 'pointerleave'];
+    get supportedEvents() { return [...Control.#supportedEvents]; }
+    static #suppressedEvents = [];
+    suppressedEvents = [...Control.#suppressedEvents];
+
     #id;
     get id() { return this.#id; }
     set id(newId) { this.#id = newId; }
 
     #parent;
     get parent() { return this.#parent; }
-
-    #children;
-    get children() { return [...this.#children]; }
-    addChild(ctrl) {
-        if (this.#children.includes(ctrl)) return;
-        if (ctrl.#parent) {
-            ctrl.#parent.removeChild(ctrl);
-        }
-        ctrl.#parent = this;
-        this.#children.push(ctrl);
-    }
-
-    removeChild(ctrl) {
-        const i = this.#children.indexOf(ctrl);
-        if (i !== -1) {
-            this.#children.splice(i, 1);
-            if (ctrl.#parent === this) {
-                ctrl.#parent = null;
-            }
-        }
-    }
+    set parent(ctrl) { this.#parent = ctrl; }
 
     #view;
     get view() { return this.#view; }
-    set view(v) {
-        if (this.#view?.onDetach) this.#view.onDetach();
-        this.#view = v;
-        if (this.#view?.onAttach) this.#view.onAttach(this);
+    async setView(v) {
+        const oldView = this.#view;
+        const newView = v || null;
+
+        try {
+            if (oldView?.onDetach) {
+                await oldView.onDetach();
+            }
+            this.#view = newView;
+            if (newView) {
+                await newView.onAttach(this);
+                newView.initVisuals(this.#visuals);
+                this.#prevVisuals = { ...this.#visuals };
+                newView.bindEvents();
+            }
+        } catch (err) {
+            console.error("View change failed:", err);
+        }
+
+        return oldView;
     }
 
+    #position = { x: 0, y: 0 };
+    get position() { return { ...this.#position }; }
+    setPosition(x, y) {
+        this.#position.x = x;
+        this.#position.y = y;
+        this.#view?.applyVisual('left', this.#position.x);
+        this.#view?.applyVisual('top', this.#position.y);
+    }
+    #width = 0;
+    get width() { return this.#width; }
+    set width(v) {
+        this.#width = v;
+        this.#view?.applyVisual('width', v);
+    }
+    #height = 0;
+    get height() { return this.#height; }
+    set height(v) {
+        this.#height = v;
+        this.#view?.applyVisual('height', v);
+    }
+
+    move(dx, dy) {
+        this.#position.x += dx;
+        this.#view?.applyVisual('left', this.#position.x);
+        this.#position.y += dy;
+        this.#view?.applyVisual('top', this.#position.y);
+    }
+
+    #capturePoint = null;
+    setPointerCapture(event) {
+        // set to current pointer position
+        this.#capturePoint = { x: event.x, y: event.y };
+        this.view.setPointerCapture(event);
+        return true;
+    }
+
+    releasePointerCapture(event) {
+        this.#capturePoint = null;
+        this.view.setPointerCapture(event);
+        return true;
+    }
+
+    #isDragging = false;
+    #lastDragPoint = null;
+    #dragOffset = null;
+    startDragging(event) {
+        this.#isDragging = true;
+        this.#lastDragPoint = { x: event.x, y: event.y };
+        this.#dragOffset = {
+            x: event.x - this.#position.x,
+            y: event.y - this.#position.y
+        };
+        this.on('pointermove', this.doDragging, this);
+        this.setPointerCapture(event);
+        return false;
+    }
+
+    doDragging(event) {
+        if (this.#isDragging) {
+            event.x = event.x - this.#dragOffset.x;
+            event.y = event.y - this.#dragOffset.y;
+            event.offsetX = event.x - this.#capturePoint.x;
+            event.offsetY = event.y - this.#capturePoint.y;
+            event.deltaX = event.x - this.#lastDragPoint.x;
+            event.deltaY = event.y - this.#lastDragPoint.y;
+            this.#lastDragPoint.x = event.x;
+            this.#lastDragPoint.y = event.y;
+            event.type = 'dragging';
+            this.trigger(event);
+        }
+    }
+
+    stopDragging(event) {
+        this.#isDragging = false;
+        this.off('pointermove', this.doDragging);
+        this.releasePointerCapture(event);
+        return false;
+    }
+
+    addDragging() {
+        this.on('pointerdown', this.startDragging, this);
+        this.on('pointerup', this.stopDragging, this);
+    }
 
     #handlers;
     on(eventName, handler, context = this) {
-        if (!this.#handlers[eventName]) {
-            this.#handlers[eventName] = [];
-        }
-        this.#handlers[eventName].push({handler, context});
+        if (!this.#handlers[eventName]) this.#handlers[eventName] = [];
+        this.#handlers[eventName].push({ handler, context });
     }
+
     off(eventName, handler) {
         if (this.#handlers[eventName]) {
-            this.#handlers[eventName] = this.#handlers[eventName]
-            .filter(h => h.handler !== handler);
+            this.#handlers[eventName] = this.#handlers[eventName].filter(h => h.handler !== handler);
         }
     }
-    trigger(eventName, ...args) {
-        if (this.#handlers[eventName]) {
-            for (const { handler, context } of this.#handlers[eventName]) {
+
+    trigger(event) {
+        const type = event.type;
+
+        // 1️⃣ Call user-registered handlers first
+        if (this.#handlers[type]) {
+            for (const { handler, context } of this.#handlers[type]) {
                 try {
-                    handler.apply(context, args);
+                    const result = handler.call(context, event, this);
+                    if (result === true) return true; // stop propagation
                 } catch (e) {
-                    console.error(`Error in handler for ${eventName}:`, e);
+                    console.error(`Error in handler for ${type}:`, e);
                 }
             }
         }
+
+        // 2️⃣ Call semi-automatic on<EventName> method if defined
+        const autoHandlerName = 'on' + type[0].toUpperCase() + type.slice(1);
+        const autoHandler = this[autoHandlerName];
+        if (typeof autoHandler === 'function') {
+            try {
+                const result = autoHandler.call(this, event, this);
+                if (result === true) return true; // stop propagation
+            } catch (e) {
+                console.error(`Error in ${autoHandlerName}:`, e);
+            }
+        }
+
+        // 3️⃣ Propagate to parent if not stopped
+        if (this.parent) {
+            return this.parent.trigger(event);
+        }
+
+        return false;
     }
+
     once(eventName, handler, context = this) {
-        const wrapper = (...args) => {
-            handler.apply(this, args);
+        const wrapper = (event, ctrl) => {
+            handler.call(context, event, ctrl);
             this.off(eventName, wrapper);
         };
         this.on(eventName, wrapper, context);
     }
+
     clearEvents(eventName) {
-        if (eventName) {
-            delete this.#handlers[eventName];
-        } else {
-            this.#handlers = {};
+        if (eventName) delete this.#handlers[eventName];
+        else this.#handlers = {};
+    }
+
+    #visuals = {
+        'left': '0px',
+        'top': '0px',
+        'width': '100px',
+        'height': '100px',
+        'color': 'black',
+        'background-color': 'white',
+        'border-color': 'black',
+        'border-width': '1px',
+        'border-style': 'solid',
+        'font-size': '14px',
+        'font-family': 'Arial, sans-serif',
+        'text-align': 'center',
+        'padding': '4px',
+        'margin': '2px'
+    };
+    #prevVisuals = {};
+    getVisual(prop) {
+        return this.#visuals[prop];
+    }
+    addVisual(prop, value) {
+        this.#prevVisuals[prop] = this.#visuals[prop];
+        this.#visuals[prop] = value;
+        this.view?.applyVisual(prop, this.#visuals[prop]);
+    }
+    removeVisual(prop) {
+        this.#visuals[prop] = this.#prevVisuals[prop];
+        this.view?.applyVisual(prop, this.#visuals[prop]);
+    }
+    setVisuals(visuals) {
+        for (let [k, v] of Object.entries(visuals)) {
+            this.#prevVisuals[prop] = this.#visuals[k];
+            this.#visuals[k] = v;
         }
+        this.view?.applyVisuals(visuals);
+    }
+
+    #visualClasses = new Set();
+    addVisualClass(className) {
+        if (!this.#visualClasses.has(className)) {
+            this.#visualClasses.add(className);
+            this.view?.addVisualClass(className);
+        }
+    }
+    removeVisualClass(className) {
+        this.#visualClasses.delete(className);
+        this.view?.removeVisualClass(className);
     }
 
 
-    constructor({ id = null } = {}) {
+    constructor(id) {
+        if (!id) throw new Error("Control must have an id");
         this.#id = id;
         this.#parent = null;
-        this.#children = [];
         this.#view = null;
         this.#handlers = {};
     }
+
+    async destroy() {
+        if (this.view) {
+            await this.#view.onDetach();
+        }
+    }
 }
-
-
-
-// export default class Control {
-//     #id = '';
-//     get id() { return this.#id; }
-//     set id(v) { this.#id = v; }
-//     #label = '';
-//     get label() { return this.#label; }
-//     set label(v) { this.#label = v; }
-//     get value() {
-//         return this.uiElement ? this.uiElement.value : null;
-//     }
-//     set value(v) {
-//         if (this.uiElement != null) {
-//             this.uiElement.value = v;
-//         }
-//     }
-//     #uiElement = null;
-//     get uiElement() { return this.#uiElement; }
-//     set uiElement(elem) {
-//         this.#uiElement = elem;
-//         // add handlers
-//         for (let event in this.#handlers) {
-//             for (let handler of this.#handlers[event]) {
-//                 this.#uiElement.addHandler(event, handler);
-//             }
-//         }
-//         // update/render?
-//     }
-//     #dataSource = null;
-//     get dataSource() { return this.#dataSource; }
-//     #title = '';
-//     get title() { return this.#title; }
-//     set title(v) { this.#title = v; }
-//     #parent = null;
-//     get parent() { return this.#parent; }
-//     set parent(p) { this.#parent = p; }
-//     #children = [];
-//     get children() { return this.#children; }
-
-//     get validEvents() { throw new Error('Not implemented!'); }
-
-//     #handlers = {};
-//     get handlers() { return this.#handlers; }
-
-//     constructor(id) {
-//         this.id = id;
-//         this.label = id;
-//     }
-
-//     async initialize(data) { throw new Error('Not implemented!'); }
-    
-//     appendChild(child) { 
-//         if (this.#uiElement != null && child.uiElement != null &&
-//             !this.#children.includes(child) && this.#uiElement.appendChild(child.uiElement)) {
-//                 if (child.parent != null) {
-//                     child.parent.removeChild(child);
-//                 }
-//                 child.parent = this;
-//                 this.#children.push(child);
-//                 return true;
-//         }
-//         else return false;
-//     }
-
-//     removeChild(child) {
-//         if (this.#children.includes(child)) {
-//             this.#children.splice(this.#children.indexOf(child), 1);
-//             this.#uiElement.elem.removeChild(child.uiElement.elem);
-//             child.parent = null;
-//         }
-//     }
-
-//     dataBind(dataSource) {
-//         this.#dataSource = dataSource;
-//         this.value = dataSource.value;
-//         this.uiElement.onDataSourceChanged(dataSource);
-//     }
-
-//     addHandler(event, context = this, handler = null) {
-//         if (this.validEvents.includes(event)) {
-//             if (handler == null) {
-//                 while (context != null) {
-//                     handler = context[`on${event.charAt(0).toUpperCase()}${event.slice(1)}`];
-//                     if (typeof handler === 'function') break;
-//                     context = context.parent;
-//                 }
-//             }
-
-//             if (typeof handler !== 'function') {
-//                 throw new Error(`Invalid handler for event ${event}`);
-//             }
-
-//             if (this.#handlers[event] == null) this.#handlers[event] = [];
-//             let h = e => handler.apply(context, [e]);
-//             this.#handlers[event].push(h);
-//             if (this.#uiElement != null) {
-//                 this.#uiElement.addHandler(event, h);
-//             }
-//         } else throw new Error(`Invalid event '${event}' for controller!`);
-//     }
-
-//     static getControl(el) {
-//         let ctrl = null;
-//         while (ctrl == null && el != null) {
-//             if (el.uiElement != null) {
-//                 ctrl = el.uiElement.control;
-//             } else {
-//                 el = el.parent || el.parentNode;
-//             }
-//         }
-//         return ctrl;
-//     }
-// }
