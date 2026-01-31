@@ -33,10 +33,14 @@ export default class Particles extends Demo {
             area:       { value: .02, min:   0, max:  .4, step: .01 },
             life:       { value:   2, min:   1, max:  20, step:   1 },
             speed:      { value:   3, min:   0, max:  10, step: .25 },
-            angle:      { value:  90, min:   0, max: 360, step:   10 },
+            angle:      { value:  90, min:   0, max: 360, step:  10 },
+            power:      { value:   0, min:   0, max:   1, step: .01 },
             size:       { value:   2, min:   1, max:  10, step:   1 }
         };
+    }
 
+    async initialize() {
+        await super.initialize();
         this.#webgl = new WebGL(
             document.querySelector('canvas'),
             {
@@ -109,12 +113,15 @@ export default class Particles extends Demo {
         this.updateWind();
     }
 
-    async initialize() {
-        super.initialize();
+    async destroy() {
+        await super.destroy();
+        this.#cs.destroy();
+        this.#webgl.destroy();
+        console.log('d')
     }
 
     updateWind() {
-        this.#acceleration.fromPolar(0.1, 2.0 * Math.PI / 360 * this.settings.angle.value, 0.5 * Math.PI);
+        this.#acceleration.fromPolar(this.settings.power.value, 2.0 * Math.PI / 360 * this.settings.angle.value, 0.5 * Math.PI);
     }
 
     addParticles(settings) {
@@ -160,7 +167,7 @@ export default class Particles extends Demo {
         gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, tex.width, tex.height, tex.format, tex.type, tex.data);
     }
 
-    onChange(id, value) {
+    onChange(ctrl) {
         // if (id == 'count') {
         //     this.stop();
         //     setTimeout(() => {
@@ -168,8 +175,11 @@ export default class Particles extends Demo {
         //         this.start();
         //     }, 0);
         // }
-        if (id == 'angle') {
-            this.updateWind();
+        switch (ctrl.id) {
+            case 'angle':
+            case 'power':
+                this.updateWind();
+                break;
         }
         return true;
     }
@@ -185,15 +195,15 @@ export default class Particles extends Demo {
             u_time: dt / 1000.0,
             u_acc: this.#acceleration
         });
-        this.#cs.readOutput();
-        this.#cs.feedback();
+        // this.#cs.readOutput();
+        // this.#cs.feedback();
     
         this.#webgl.gl.viewport(0, 0, this.#webgl.canvas.width, this.#webgl.canvas.height);
         this.#ptMgr.render(frame, dt);
     }
 
-    onPointerDown(e) {
-        super.onPointerDown(e);
+    onPointerdown(e) {
+        super.onPointerdown(e);
         let settings = {};
         for (let key in this.settings) {
             settings[key] = { value: this.settings[key].value };

@@ -1,8 +1,11 @@
 import PanelControl from '../../lib/glui/control/panel-control.js'
 import StaticControl from '../../lib/glui/control/static-control.js'
 import RangeControl from '../../lib/glui/control/range-control.js'
-import HtmlElem from '../../lib/glui/control/html/html-elem.js'
-import HtmlRangeElem from '../../lib/glui/control/html/html-range-elem.js'
+import ButtonControl from '../../lib/glui/control/button-control.js'
+import HtmlView from '../../lib/glui/control/html/html-view.js'
+import HtmlStaticView from '../../lib/glui/control/html/html-static-view.js'
+import HtmlRangeView from '../../lib/glui/control/html/html-range-view.js'
+import HtmlButtonView from '../../lib/glui/control/html/html-button-view.js'
 import Vec4 from '../../lib/math/vec4.js'
 
 export default class Demo {
@@ -34,6 +37,21 @@ export default class Demo {
         return [320, 240];
     }
 
+    async createCanvas() {
+        this.canvasControl = new PanelControl('canvas');
+        this.canvasControl.parent = this.body;
+        await this.canvasControl.setView(new HtmlView(document.createElement('canvas')));
+        this.canvas = this.canvasControl.view.element;
+        // *** todo: generic solution
+        this.canvasControl.view.element.width = this.size[0];
+        this.canvasControl.view.element.height = this.size[1];
+        this.canvasControl.demo = this;
+        this.canvasControl.on('pointerdown', this.dispatchEvent, this);
+        this.canvasControl.on('pointerup', this.dispatchEvent, this);
+        this.canvasControl.on('pointermove', this.dispatchEvent, this);
+        this.canvasControl.on('wheel', this.dispatchEvent, this); //, { passive: false });
+    }
+
     constructor() {
         this.#frame = 0;
         this.#initializedPromise = new Promise(
@@ -44,34 +62,32 @@ export default class Demo {
         this.glMousePos = new Vec4(0, 0, 0, 0);
 
         this.body = new PanelControl('body');
-        this.body.uiElement = new HtmlElem(this.body, document.querySelector('body'));
+        this.body.setView(new HtmlView(document.body));
     }
 
     async initialize() {
-        this.canvas = document.querySelector('canvas');
-        this.canvas.width = this.size[0];
-        this.canvas.height = this.size[1];
-        this.canvas.demo = this;
-        this.canvas.addEventListener('pointerdown', Demo.dispatchEvent);
-        this.canvas.addEventListener('pointerup', Demo.dispatchEvent);
-        this.canvas.addEventListener('pointermove', Demo.dispatchEvent);
-        this.canvas.addEventListener('wheel', Demo.dispatchEvent, { passive: false });
         await this.createSettingsPanel();
         this.#initializedResolved(true);
+        await this.createCanvas();
     }
 
     async destroy() {
-        this.canvas.removeEventListener('pointerdown', Demo.dispatchEvent);
-        this.canvas.removeEventListener('pointerup', Demo.dispatchEvent);
-        this.canvas.removeEventListener('pointermove', Demo.dispatchEvent);
-        let title = document.querySelector('#settings>div>span');
-        title.removeEventListener('pointerdown', Demo.dispatchEvent);
-        title.removeEventListener('pointerup', Demo.dispatchEvent);
-        title.removeEventListener('pointermove', Demo.dispatchEvent);
+        this.stop();
+        this.canvasControl.off('pointerdown',this.dispatchEvent);
+        this.canvasControl.off('pointerup',this.dispatchEvent);
+        this.canvasControl.off('pointermove',this.dispatchEvent);
+        this.canvasControl.off('wheel',this.dispatchEvent);
+        // let title = document.querySelector('#settings>div>span');
+        // title.removeEventListener('pointerdown', Demo.dispatchEvent);
+        // title.removeEventListener('pointerup', Demo.dispatchEvent);
+        // title.removeEventListener('pointermove', Demo.dispatchEvent);
+        await this.#settingsPanel.destroy();
+        await this.canvasControl.destroy();
+        this.canvas = null;
     }
 
-    onChange(id, value) {
-        return true;
+    onChange(ctrl) {
+        return;
     }
 
     update(dt) {
@@ -80,16 +96,18 @@ export default class Demo {
     render(dt) {
     }
 
-    updateSetting(ctrl) {
+    updateSetting(event) {
+        let ctrl = event.target;
         if (ctrl) {
-            let value = parseFloat(ctrl.uiElement.value);
-            if (this.onChange(ctrl.id, value)) {
-                this.settings[ctrl.id].value = value;
-            }
+            this.onChange(ctrl);
+            // //let value = parseFloat(ctrl.uiElement.value);
+            // if (this.onChange(ctrl)) {
+            //     this.settings[ctrl.id].value = value;
+            // }
         }
     }
 
-    startStop(btn) {
+    startStop() {
         if (this.isRunning) {
             this.stop();
         } else {
@@ -97,168 +115,180 @@ export default class Demo {
         }
     }
 
-    static dispatchEvent(e) {
-        let demo = e.target.demo;
-        if (demo) {
-            let handler = '';
-            switch (e.type) {
-                case 'pointerdown': handler = 'onPointerDown'; break;
-                case 'pointerup': handler = 'onPointerUp'; break;
-                case 'pointermove': handler = 'onPointerMove'; break;
-                case 'wheel': handler = 'onWheel'; break;
-            }
-            if (typeof demo[handler] === 'function') {
-                demo[handler](e);
+    dispatchEvent(event) {
+        const handlerName = 'on' + event.type[0].toUpperCase() + event.type.slice(1);
+        const handler = this[handlerName];
+        if (typeof handler === 'function') {
+            try {
+                const result = handler.call(this, event, this);
+                if (result === true) return true; // stop propagation
+            } catch (e) {
+                console.error(`Error in ${handlerName}:`, e);
             }
         }
+        return false;
     }
 
-    setMousePos(e) {
+    onPointerdown(event) {
+        this.mouseButtons = event.buttons;
+    }
+
+    onPointerup(event) {
+        this.mouseButtons = event.buttons;
+    }
+
+    onPointermove(event) {
         const rect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
-        this.mousePos.x = (e.clientX - rect.left) * scaleX;
-        this.mousePos.y = (e.clientY - rect.top) * scaleY;
+        this.mousePos.x = (event.x - rect.left) * scaleX;
+        this.mousePos.y = (event.y - rect.top) * scaleY;
         this.glMousePos.x = 2.0 * this.mousePos.x/this.canvas.width - 1.0;
         this.glMousePos.y = 2.0 * (1.0 - this.mousePos.y/this.canvas.height) - 1.0;
     }
 
-    onPointerDown(e) {
-        if (e.target instanceof HTMLSpanElement) {
-            this.#isDragging = true;
-            this.#offsetX = e.clientX - this.#settingsPanel.uiElement.left;
-            this.#offsetY = e.clientY - this.#settingsPanel.uiElement.top;
-        }
-        else
-        if (e.target instanceof HTMLCanvasElement) {
-            this.mouseButtons = e.buttons;
-            this.setMousePos(e);
-        }
-    }
-
-    onPointerUp(e) {
-        if (e.target instanceof HTMLSpanElement) {
-            this.#isDragging = false;
-            //this.#panel.style.cursor = 'grab';
-            //this.#panel.releasePointerCapture(e.pointerId);
-            localStorage.setItem('pp', JSON.stringify(
-                [this.#settingsPanel.uiElement.left, this.#settingsPanel.uiElement.top]));
-        } else
-        if (e.target instanceof HTMLCanvasElement) {
-            this.mouseButtons = e.buttons;
-            this.setMousePos(e);
-        }
-    }
-
-    onPointerMove(e) {
-        if (this.#isDragging) {
-            this.#settingsPanel.left = (e.clientX - this.#offsetX) + 'px';
-            this.#settingsPanel.top = (e.clientY - this.#offsetY) + 'px';
-        } else
-        if (e.target instanceof HTMLCanvasElement) {
-            this.setMousePos(e);
-        }
-    }
-
-    onWheel(e) {
+    onWheel(event) {
     }
 
     async createSettingsPanel() {
-        this.#settingsPanel = new PanelControl('settings');
-        this.#settingsPanel.uiElement = new HtmlElem(this.#settingsPanel, panel);
-        // panel.header = 'Settings';
-        // panel.enableDragging = true;
-        // panel.addHandler('pointerdown', Demo.dispatchEvent);
-        // panel.addHandler('pointerup', Demo.dispatchEvent);
-        // panel.addHandler('pointermove', Demo.dispatchEvent);
-        let header = new PanelControl('header');
-        header.uiElement = new HtmlElem(header);
-        // alignment flex, grid, etc.
-        this.#settingsPanel.appendChild(header);
-        let title = new StaticControl('title', 'Settings');
-        title.addHandler('pointerdown', Demo.dispatchEvent);
-        title.addHandler('pointerup', Demo.dispatchEvent);
-        title.addHandler('pointermove', Demo.dispatchEvent);
-        title.demo = this;
-        header.appendChild(title);
-        this.#fps = new StaticControl('fps', '00.00');
-        header.appendChild(this.#fps);
+        let panel = this.#settingsPanel = new PanelControl('settings');
+        panel.parent = this.body;
+        panel.addDragging();
+        await panel.setView(new HtmlView(document.createElement('div')));
+
+        let header = new PanelControl('settings-header');
+        header.parent = panel;
+        await header.setView(new HtmlView(document.createElement('div')));
+
+        let title = new StaticControl('title');
+        title.parent = header;
+        title.value = 'Settings';
+        await title.setView(new HtmlStaticView());
+        title.addVisualClass('title');
+        title.addVisualClass('settings');
+        this.#fps = new StaticControl('fps');
+        this.#fps.value = '00.00';
+        this.#fps.parent = header;
+        await this.#fps.setView(new HtmlStaticView());
+        this.#fps.addVisualClass('fps');
+        this.#fps.addVisualClass('settings');
 
         for (let k in this.settings) {
             let setting = this.settings[k];
             // create control depending on setting type
             // - range
             // - dropdown list
+            let container = new PanelControl(`cnt-${k}`);
+            container.parent = panel;
+            await container.setView(new HtmlView(document.createElement('div')));
+            container.addVisualClass('cnt');
+            container.addVisualClass('settings');
+
+            let label = new StaticControl(`lbl-${k}`);
+            label.value = k;
+            label.parent = container;
+            await label.setView(new HtmlStaticView());
+            label.addVisualClass('label');
+            label.addVisualClass('settings');
+
+            let isList = Array.isArray(setting.list);
             let control = null;
-            if (Array.isArray(setting.list) || setting.min != undefined && setting.max != undefined) {
+            if (isList || setting.min != undefined && setting.max != undefined) {
                 control = new RangeControl(k);
-                control.uiElement = new HtmlRangeElem(control);
-                control.dataBind(setting);
-                await control.initialize();
+                control.parent = container;
+                await control.setView(new HtmlRangeView());
+                if (isList) {
+                    control.source = setting.list;
+                } else {
+                    control.source = setting;
+                }
+                control.addVisualClass('range');
             }
+            control.addVisualClass('settings');
             setting.control = control;
-            control.addHandler('input', e => this.updateSetting(control));
-            this.#settingsPanel.appendChild(control);
+            control.on('changed', this.updateSetting, this);
+
+            let value = new StaticControl(`val-${k}`)
+            value.parent = container;
+            await value.setView(new HtmlStaticView());
+            value.view.decimals = 2;
+            value.addVisualClass('value');
+            value.addVisualClass('settings');
+            value.dataBind(setting);
+            control.dataBind(value);
         }
 
         let buttons = new PanelControl('buttons');
-        buttons.uiElement = new HtmlElem(buttons);
+        buttons.parent = panel;
+        await buttons.setView(new HtmlView(document.createElement('div')));
+        buttons.addVisualClass('buttons');
+        buttons.addVisualClass('settings');
         let button = new ButtonControl('startStop', '°~°');
-        button.addHandler('click', e => this.startStop(e.target));
-        buttons.appendChild(button);
-        this.#settingsPanel.appendChild(buttons);
+        button.parent = buttons;
+        await button.setView(new HtmlButtonView());
+        button.addVisualClass('button');
+        button.addVisualClass('settings');
+        button.suppressedEvents = ['pointerdown'];
+        button.onClick = event => {
+            this.startStop();
+            return true;
+        };
         this.#startStopButton = button;
-
-        // let header = document.createElement('div'); 
-        // header.className = 'settings';
-        // panel.appendChild(header);
-        // let title = document.createElement('span');
-        // title.className = 'settings';
-        // title.innerHTML = 'Settings';
-        // title.addEventListener('pointerdown', Demo.dispatchEvent);
-        // title.addEventListener('pointerup', Demo.dispatchEvent);
-        // title.addEventListener('pointermove', Demo.dispatchEvent);
-        // title.demo = this;
-        // header.appendChild(title);
-        // this.#fps = document.createElement('span');
-        // this.#fps.className = 'fps';
-        // this.#fps.innerHTML = '00.00';
-        // header.appendChild(this.#fps);
-        // for (let k in this.settings) {
-        //     let setting = this.settings[k];
-        //     // create control depending on setting type
-        //     // - range
-        //     // - dropdown list
-        //     let control = null;
-        //     if (Array.isArray(setting.list) || setting.min != undefined && setting.max != undefined) {
-        //         control = new RangeControl(k);
-        //         control.uiElement = new HtmlRangeElem(control);
-        //         control.dataBind(setting);
-        //         await control.initialize();
-        //     }
-        //     setting.control = control;
-        //     control.addHandler('input', e => this.updateSetting(control));
-        //     control.uiElement.parent = panel;
-        // }
-        // let buttons = document.createElement('div');
-        // buttons.className = 'buttons settings';
-        // let button = document.createElement('button');
-        // button.className = 'settings';
-        // button.innerHTML = '°~°';
-        // button.addEventListener('click', e => this.startStop(e.target));
+        
+        // button.addHandler('click', e => this.startStop(e.target));
         // buttons.appendChild(button);
-        // panel.appendChild(buttons);
-        // this.#startStopButton = button;
-        // //this.#panel = panel;
+        // this.#settingsPanel.appendChild(buttons);
+        
 
-        let panelPosition = localStorage.getItem('pp');
-        if (panelPosition) {
-            let pos = JSON.parse(panelPosition);
-            this.#settingsPanel.left = pos[0];
-            this.#settingsPanel.top = pos[1];
-        }
+        // // let header = document.createElement('div'); 
+        // // header.className = 'settings';
+        // // panel.appendChild(header);
+        // // let title = document.createElement('span');
+        // // title.className = 'settings';
+        // // title.innerHTML = 'Settings';
+        // // title.addEventListener('pointerdown', Demo.dispatchEvent);
+        // // title.addEventListener('pointerup', Demo.dispatchEvent);
+        // // title.addEventListener('pointermove', Demo.dispatchEvent);
+        // // title.demo = this;
+        // // header.appendChild(title);
+        // // this.#fps = document.createElement('span');
+        // // this.#fps.className = 'fps';
+        // // this.#fps.innerHTML = '00.00';
+        // // header.appendChild(this.#fps);
+        // // for (let k in this.settings) {
+        // //     let setting = this.settings[k];
+        // //     // create control depending on setting type
+        // //     // - range
+        // //     // - dropdown list
+        // //     let control = null;
+        // //     if (Array.isArray(setting.list) || setting.min != undefined && setting.max != undefined) {
+        // //         control = new RangeControl(k);
+        // //         control.uiElement = new HtmlRangeElem(control);
+        // //         control.dataBind(setting);
+        // //         await control.initialize();
+        // //     }
+        // //     setting.control = control;
+        // //     control.addHandler('input', e => this.updateSetting(control));
+        // //     control.uiElement.parent = panel;
+        // // }
+        // // let buttons = document.createElement('div');
+        // // buttons.className = 'buttons settings';
+        // // let button = document.createElement('button');
+        // // button.className = 'settings';
+        // // button.innerHTML = '°~°';
+        // // button.addEventListener('click', e => this.startStop(e.target));
+        // // buttons.appendChild(button);
+        // // panel.appendChild(buttons);
+        // // this.#startStopButton = button;
+        // // //this.#panel = panel;
+
+        // let panelPosition = localStorage.getItem('pp');
+        // if (panelPosition) {
+        //     let pos = JSON.parse(panelPosition);
+        //     this.#settingsPanel.left = pos[0];
+        //     this.#settingsPanel.top = pos[1];
+        // }
     }
-
 
     async run() {
         await this.#initializedPromise;

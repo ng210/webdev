@@ -18,8 +18,8 @@ async function loadDemo() {
     link.href = url.pathname.replace('.js', '.css');
     document.head.appendChild(link);
     _demo = Reflect.construct(mdl.default, []);
-    await _demo.initialize();
-    _demo.run();
+    // await _demo.initialize();
+    // _demo.run();
 }
 
 async function unloadDemo() {

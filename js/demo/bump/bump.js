@@ -23,7 +23,7 @@ export default class Bump extends Demo {
 	}
 
 	async initialize() {
-		super.initialize();
+		await super.initialize();
 		this.frontBuffer = new Buffer(this.canvas);
 		this.#buffer = new Buffer(this.frontBuffer.width/2, this.frontBuffer.height/2);
 
@@ -36,7 +36,7 @@ export default class Bump extends Demo {
 		];
 		this.#heightMaps = [];
 		let responses = [];
-		let dataSource = { list:[], value: 0 };
+		let imageList = [];
 		for (let url of urls) {
 			responses.push(load({url: url, base: document.scripts[0].src})
 				.then(
@@ -44,7 +44,7 @@ export default class Bump extends Demo {
 						if (resp.content instanceof Error) {
 							console.log(resp.content);
 						} else {
-							dataSource.list.push(resp.url.split('/').pop());
+							imageList.push(resp.url.split('/').pop());
 							const img = new Image();
 							img.src = URL.createObjectURL(resp.content);
 							await img.decode();
@@ -53,7 +53,9 @@ export default class Bump extends Demo {
 					}));
 		}
 		await Promise.all(responses);
-		this.settings.image.control.dataBind(dataSource);
+		this.settings.image.control.source = imageList;
+		console.log(imageList);
+		this.settings.image.control.format = '';
 		this.setImage(0);
 		this.resize();
 		this.update(0);
@@ -70,13 +72,12 @@ export default class Bump extends Demo {
 		// this.ratio[1] = this.#buffer.height/glui.canvas.clientHeight;
 	}
 
-	onChange(id, value) {
-		switch (id) {
+	onChange(ctrl) {
+		switch (ctrl.id) {
 			case 'image':
-				this.setImage(value);
+				this.setImage(ctrl.selectedIndex);
 				break;
 		}
-		return true;
 	}
 
 	update(frame, dt) {
@@ -136,13 +137,15 @@ export default class Bump extends Demo {
 	}
 
 	setImage(ix) {
-		this.#heightMap = this.#heightMaps[ix];
-		let hm = this.#heightMap;
-		if (this.#buffer.width != hm.buffer.width || this.#buffer.height != hm.buffer.height) {
-			this.#buffer.resize(hm.buffer.width, hm.buffer.height);
+		if (this.#heightMaps[ix]) {
+			this.#heightMap = this.#heightMaps[ix];
+			let hm = this.#heightMap;
+			if (this.#buffer.width != hm.buffer.width || this.#buffer.height != hm.buffer.height) {
+				this.#buffer.resize(hm.buffer.width, hm.buffer.height);
+			}
+			this.#heightMap = this.#heightMaps[ix];
+			this.resize();
 		}
-		this.#heightMap = this.#heightMaps[ix];
-		this.resize();
 	}
 
 	createHeightMap(img) {
