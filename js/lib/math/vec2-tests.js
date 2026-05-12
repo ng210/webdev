@@ -1,7 +1,7 @@
 import Vec2 from './vec2.js'
 import Test from '../test/test.js'
 
-const COUNT = 10;
+const COUNT = 1000000;
 
 class Vec2Test extends Test {
     customPool = null;

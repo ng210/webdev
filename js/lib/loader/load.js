@@ -1,4 +1,5 @@
 import { Url } from './url.js'
+import HttpError from './http-error.js';
 
 async function _load(args) {
     let content = null;
@@ -32,11 +33,11 @@ async function _load(args) {
             const dataType = load.contentType2dataType[contentType] || 'blob';
             content = await resp[dataType]();
         } else {
-            throw new Error(`${resp.status} ${resp.statusText}`);
+            throw new HttpError(resp);
         }
         result = { url, content };
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         result = err;
     }
     return result;
@@ -85,4 +86,4 @@ load.addType('vs', 'text/plain', 'text');
 load.addType('fs', 'text/plain', 'text');
 load.addType('dat', 'application/octet-stream', 'arrayBuffer');
 
-export { load }
+export { load, HttpError }

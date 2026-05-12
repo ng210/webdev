@@ -1,6 +1,7 @@
 import { getConsole, Colors } from '../console/console.js'
 import Test from './test.js'
 import { Url } from '../loader/url.js'
+import { load } from '../loader/load.js'
 
 let _cons = null;
 let _errors = 0;
@@ -36,10 +37,12 @@ async function main() {
 
     _cons.writeln(`*** Load tests from: ${url}`);
 
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = url.pathname.replace('.js', '.css');
-    document.head.appendChild(link);
+    const css = await load(url.pathname.replace('.js', '.css'));
+    if (!(css instanceof Error)) {
+        const style = document.createElement('style');
+        style.innerText = css;
+        document.head.appendChild(style);
+    }
 
     let test = null;
     try {
@@ -58,7 +61,7 @@ async function main() {
 
         if (_total > 0) {    
             _cons.writeln('\n*** Total results');
-            Test.report(_errors, _total, _cons);
+            test.report(_errors, _total, _cons);
         } else {
             _cons.writeln('No valid test class found!');
         }

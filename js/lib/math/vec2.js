@@ -163,6 +163,11 @@ export default class Vec2 {
         this.y *= scalar;
         return this;
     }
+    rscale(scalar) {
+        this.x /= scalar;
+        this.y /= scalar;
+        return this;
+    }
     // res = this / len(this)
     norm() {
         const len = this.len;

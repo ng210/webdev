@@ -45,7 +45,7 @@ class BrowserConsole extends ConsoleBase {
 
         this.#console.appendChild(this.#border);
         this.#content = document.createElement('div');
-        this.#content.className = 'content';
+        this.#content.className = 'console-content';
         this.#console.appendChild(this.#content);
 
         if (typeof parentId === 'string') {
@@ -109,6 +109,10 @@ class BrowserConsole extends ConsoleBase {
         span.innerHTML = HTML.encode(txt);
         this.#content.appendChild(span);
         //this.#content.innerHTML += `<span style="color:${this.color}">${HTML.encode(txt)}</span>`;
+    }
+
+    clear() {
+        this.#content.innerHTML = '';
     }
 
     setConsoleTop(y) {

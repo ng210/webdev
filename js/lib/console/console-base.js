@@ -4,7 +4,9 @@ class ConsoleBase {
         return this.#color;
     }
     set color(col) {
-        this.#color = Object.values(Colors).indexOf(col) != -1 ? col : DefaultColor;
+        if (Colors[col]) this.#color = Colors[col];
+        else if (Object.values(Colors).includes(col)) this.#color = col;
+        else this.#color = DefaultColor;
     }
 
     #lines = [];
@@ -18,16 +20,17 @@ class ConsoleBase {
         throw new Error('Not Implemented!');
     }
 
+    clear() {
+        throw new Error('Not Implemented!');
+    }
+
     write(txt, ink) {
-        let lines = txt.split('\n');
-        if (lines.length == 1) {
-            this.#lines[this.#lines.length - 1] += txt
-        } else {
-            let ix = 0;
-            for (; ix < lines.length - 1; ix++) {
-                this.#lines.push(lines[ix]);
-            }
-            if (lines[ix] != '') this.#lines.push(lines[ix]);
+        if (txt == undefined) txt = '';
+        else txt += ''
+        for (let line of txt.split('\n')) {
+            if (line.length > 0) {
+                this.#lines.push(line)
+            }            
         }
         
         if (ink != undefined) {
@@ -41,6 +44,7 @@ class ConsoleBase {
     }
 
     writeln(txt, ink) {
+        if (txt == undefined) txt = '';
         this.write(txt + '\n', ink);
     }
 

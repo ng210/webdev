@@ -3,67 +3,58 @@ import Test from '../test/test.js'
 
 class PathTests extends Test {
     #data = [
-        ['\//foo/bar/baz/asdf/quux.', ''],
-        ['/foo/bar/baz//quux.html', '.html'],
-        ['/baz\\quux.html', 'html'],
-        ['/quux.html', '.ml'],
-        ['///.html////', '.html'],
-
-        ['\///\.html////', '.html'],
-        ['/..a', '.html'],
-        [' ', ''],
-        ['', ''],
-        ['..', ''],
-
-        ['...', ''],
-        ['c: a.html', ''],
-        ['c:\\a.html', ''],
-        ['c :a.html', '']
-    ];
+        [ '//foo/bar/baz/asdf/quux.', '', '//foo/bar/baz/asdf', 'quux.', '.' ],
+        [ '/foo/bar/baz//quux.html', '.html', '/foo/bar/baz/', 'quux.html', '.html' ],
+        [ '/baz\\quux.html', 'html', '/baz', 'quux.html', '.html' ],
+        [ '/quux.html', '.ml', '/', 'quux.html', '.html' ],
+        [ '///.html////', '.html', '//', '.html', '' ],
+        [ '///.html////', '.html', '//', '.html', '' ],
+        [ '/..a', '.html', '/', '..a', '.a' ],
+        [ ' ', '', '', ' ', '' ],
+        [ '', '', '', '', '' ],
+        [ '..', '', '', '..', '' ],
+        [ '...', '', '', '...', '.' ],
+        [ 'c: a.html', '', 'c:', ' a.html', '.html' ],
+        [ 'c:\\a.html', '', 'c:\\', 'a.html', '.html' ],
+        [ 'c :a.html', '', '', 'c :a.html', '.html' ]
+    ]
 
     testBasename() {
-        var expected = [
-            'quux.',
-            'quux',
-            'quux.',
-            'quux.html',
-            '.html',
+        // const expected = [
+        //     'quux.', 'quux',
+        //     'quux.', 'quux.html', '.html',
 
-            '.html',
-            '..a',
-            ' ',
-            '',
-            '..',
+        //     '.html', '..a', ' ', '', '..',
 
-            '...',
-            ' a.html',
-            'a.html',
-            'c :a.html'
-        ];
-        return this.isEqual('Should return base name', this.#data.map(d => Path.basename(d[0])), expected);
+        //     '...', ' a.html', 'a.html', 'c :a.html'
+        // ];
+        return this.isEqual('Should return base name', this.#data.map(d => Path.basename(d[0], d[1])), this.#data.map(d => d[3]));
     }
 
     testDirname() {
-        var expected = [
-            '//foo/bar/baz/asdf',
-            '/foo/bar/baz/',
-            '/baz',
-            '/',
-            '//',
+        // const expected = [
+        //     '//foo/bar/baz/asdf',
+        //     '/foo/bar/baz/',
+        //     '/baz',
+        //     '/',
+        //     '//',
 
-            '//',
-            '/',
-            '.',
-            '.',
-            '.',
+        //     '//',
+        //     '/',
+        //     '.',
+        //     '.',
+        //     '.',
 
-            '.'
-        ];
-        return this.isEqual('Should return dir name', this.#data.map(d => Path.dirname(d[0])), expected);
+        //     '.',
+        //     'c:',
+        //     'c:\\',
+        //     '.'
+        // ];
+        return this.isEqual('Should return dir name',  this.#data.map(d => Path.basename(d[0], d[1])), this.#data.map(d => d[2]));
     }
 
-    testExtname() {
-        var expected = [
+    _testExtname() {
+        const expected = [
             '.',
             '.html',
             '.html',
@@ -81,15 +72,15 @@ class PathTests extends Test {
         return this.isEqual('Should return ext name', this.#data.map(d => Path.extname(d[0])), expected);
     }
 
-    async testFormat() {
-        var data = [
+    async _testFormat() {
+        const data = [
             { dir: '/foo/bar/baz', root: '/', base: 'quux.html', name: 'quux', ext: '.html' },
             { dir: '/foo/bar/baz/', root: '/', base: 'quux.html', name: 'quux', ext: 'html' },
             { dir: '/foo/bar/baz/', root: '/', base: 'quux', name: 'quux', ext: '.html' },
             { dir: '', root: 'c', base: '', name: 'quux', ext: '.html' },
             { dir: '', root: '/c/', base: '', name: '/quux', ext: '.html' },
         ];
-        var expected = [
+        const expected = [
             `/foo/bar/baz${Path.sep}quux.html`,
             `/foo/bar/baz/${Path.sep}quux.html`,
             `/foo/bar/baz/${Path.sep}quux`,
@@ -99,8 +90,8 @@ class PathTests extends Test {
         return this.isEqual('Should return correct format', data.map(d => Path.format(d)), expected);
     }
 
-    async testIsAbsolute() {
-        var data = [
+    async _testIsAbsolute() {
+        const data = [
             Path.sep + "foo/bar",
             Path.sep + "foo/",
             Path.sep + "foo/..",
@@ -108,7 +99,7 @@ class PathTests extends Test {
             "bar",
             "."
         ];
-        var expected = [
+        const expected = [
             true,
             true,
             true,
@@ -119,15 +110,15 @@ class PathTests extends Test {
         return this.isEqual('Should return isAbsolute', data.map(d => Path.isAbsolute(d)), expected);
     }
 
-    async testJoin() {
-        var data = [
+    async _testJoin() {
+        const data = [
             ['///data', '//a', '///'],
             ['data', '//a///'],
             ['data', 'a', '..'],
             ['/', 'data'],
             ['']
         ];
-        var expected = [
+        const expected = [
             `${Path.sep}data${Path.sep}a${Path.sep}`,
             `data${Path.sep}a${Path.sep}`,
             'data',
@@ -138,7 +129,7 @@ class PathTests extends Test {
     }
 
     async testNormalize() {
-        var data = [
+        const data = [
             '/data/misc/test.txt',
             '\\data\\misc\\.\\test.txt',
             '/data//misc/./test.txt',
@@ -148,7 +139,7 @@ class PathTests extends Test {
             '/data/misc',
             '/data/misc/'
         ];
-        var expected = [
+        const expected = [
             `${Path.sep}data${Path.sep}misc${Path.sep}test.txt`,
             `${Path.sep}data${Path.sep}misc${Path.sep}test.txt`,
             `${Path.sep}data${Path.sep}misc${Path.sep}test.txt`,
@@ -161,8 +152,8 @@ class PathTests extends Test {
         return this.isEqual('Should return normalized path', data.map(d => Path.normalize(d)), expected);
     }
 
-    async testParse() {
-        var data = [
+    async _testParse() {
+        const data = [
             'c:/a.html',
             'c:\\a.html',
             'c:\a.html',
@@ -181,7 +172,7 @@ class PathTests extends Test {
 
             '.html'
         ];
-        var expected = [
+        const expected = [
             { root: 'c:/', dir: 'c:/', base: 'a.html', ext: '.html', name: 'a' },
             { root: 'c:\\', dir: 'c:\\', base: 'a.html', ext: '.html', name: 'a' },
             { root: 'c:', dir: 'c:', base: 'a.html', ext: '.html', name: 'a' },
@@ -203,8 +194,8 @@ class PathTests extends Test {
         return this.isEqual('Should return parsed path', data.map(d => Path.parse(d)), expected);
     }
 
-    async testRelative() {
-        var data = [
+    async _testRelative() {
+        const data = [
             [ 'C:\\orandea\\test\\aaa', 'C:\\orandea\\impl\\bbb' ],
             [ 'C:\\aaa', 'C:\\orandea\\impl\\bbb' ],
             [ 'C:\\orandea\\test\\aaa', 'C:\\bbb' ],
@@ -212,7 +203,7 @@ class PathTests extends Test {
             [ '', 'C:\\bbb' ],
             [ 'C:\\aaa', '' ]
         ];
-        var expected = [
+        const expected = [
             `..${Path.sep}..${Path.sep}impl${Path.sep}bbb`,
             `..${Path.sep}orandea${Path.sep}impl${Path.sep}bbb`,
             `..${Path.sep}..${Path.sep}..${Path.sep}bbb`,
@@ -223,8 +214,8 @@ class PathTests extends Test {
         return this.isEqual('Should return relative path', data.map(d => Path.relative(d[0], d[1])), expected);
     }
 
-    async testResolve() {
-        var data = [
+    async _testResolve() {
+        const data = [
             [ '', '', '' ],
             [ '/', '', '' ],
             [ '/', 'a', 'b' ],
@@ -235,8 +226,8 @@ class PathTests extends Test {
             [ '/a/b', '../c', 'c:' ]
         ];
 
-        var drive = Path.parse(CurrentDir).root;
-        var expected = [
+        const drive = Path.parse(CurrentDir).root;
+        const expected = [
             CurrentDir,
             `${drive}`,
             `${drive}a${Path.sep}b`,

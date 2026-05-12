@@ -19,7 +19,7 @@ if (typeof self === 'undefined') {
             return ix1 > ix2 ? ix1 : ix2;
         }
 
-        static basename(path, suffix) {
+        static basename(path, suffix = '') {
             var base = Path.parse(path).base;
             return suffix && base.endsWith(suffix) && base.length > suffix.length ? base.slice(0, -suffix.length) : base;
         }

@@ -1,9 +1,9 @@
-import { load } from './load.js'
+import { load, HttpError } from './load.js'
 import Test from '../test/test.js'
 
 class LoadTest extends Test {
     async testLoadJsonSucceeds() {
-        var resp = await load({ url: './test-data/test.json', base:import.meta.url });
+        const resp = await load({ url: './test-data/test.json', base:import.meta.url });
         this.isEqual('Should load json data', resp.content, [
             {
                 "id": 1,
@@ -24,18 +24,18 @@ class LoadTest extends Test {
     }
 
     async testLoadTxtAsJsonFails() {
-        var resp = await load({
+        const err = await load({
             url: './test-data/test.txt', base:import.meta.url,
             contentType: 'application/json'
         });
-        this.isTrue('Should return error for wrong content type', resp.content instanceof Error);
+        this.isTrue('Should return error for wrong content type', err instanceof SyntaxError);
     }
 
     async testLoadFailsWith404() {
-        var resp = await load({
+        const err = await load({
             url: './test-data/baka.json', base:import.meta.url
         });
-        this.isTrue('Should return 404 error', resp.content instanceof Error && resp.content.message.indexOf('404') != -1);
+        this.isTrue('Should return 404 error', err instanceof HttpError && err.status == 404);
     }
 }
 
