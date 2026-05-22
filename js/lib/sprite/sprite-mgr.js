@@ -1,12 +1,11 @@
-import Sprite from './sprite.js'
 import DistanceResolver from './distance-resolver.js'
-import HtmlRenderer from './html-renderer.js'
+import HtmlSprite from './html-sprite.js'
 
 export default class SpriteMgr {
     #pool = null
     #collisionResolver = new DistanceResolver()
 
-    constructor(count = 100) {
+    constructor(count = 100, ctor = HtmlSprite, collisionResolver = new DistanceResolver()) {
         this.#pool = new Array(count)
     }
 
@@ -28,7 +27,11 @@ export default class SpriteMgr {
         // narrow phase
     }
 
-    render() {
+    update(dt) {
+
+    }
+
+    render(dt) {
 
     }
 }
