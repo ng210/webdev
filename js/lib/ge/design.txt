@@ -1,0 +1,27 @@
+IRenderObject
+- vec2 getPosition()
+- float getRotation()
+- vec2 getScale()
+
+IPlayerDevice
+- processCommand(cmd, args)
+
+Renderer
+- update(IRenderObject)
+  - translate (position)
+  - rotate (rotation)
+  - scale (scale)
+- render(Context)
+
+Actor : IRenderObject, IPlayerDevice
+- constraints
+  - range validation
+  - collision
+  - hierarchy
+- physics
+  - position
+  - rotation
+  - scale
+  - velocity
+  - forces
+- renderer : Renderer
