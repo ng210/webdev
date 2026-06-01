@@ -25,3 +25,5 @@ Actor : IRenderObject, IPlayerDevice
   - velocity
   - forces
 - renderer : Renderer
+
+interface <-> composition
