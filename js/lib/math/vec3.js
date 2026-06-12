@@ -67,8 +67,8 @@ export default class Vec3 {
         res.z = this.z / scalar;
         return res;
     }
-    // this *= scalar
-    unscale(scalar) {
+    // this /= scalar
+    descale(scalar) {
         this.x /= scalar;
         this.y /= scalar;
         this.z /= scalar;

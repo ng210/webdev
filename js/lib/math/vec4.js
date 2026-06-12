@@ -198,6 +198,22 @@ export default class Vec4 {
         this.w *= scalar;
         return this;
     }
+    // res = this / scalar
+    div(scalar, res) {
+        res.x = this.x / scalar;
+        res.y = this.y / scalar;
+        res.z = this.z / scalar;
+        res.w = this.w / scalar;
+        return res;
+    }
+    // this /= scalar
+    descale(scalar) {
+        this.x /= scalar;
+        this.y /= scalar;
+        this.z /= scalar;
+        this.w /= scalar;
+        return this;
+    }
     // res = this / len(this)
     norm() {
         const len = this.len;

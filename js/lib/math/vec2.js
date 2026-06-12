@@ -169,8 +169,8 @@ export default class Vec2 {
         res.y = this.y / scalar;
         return res;
     }
-    // this *= scalar
-    unscale(scalar) {
+    // this /= scalar
+    descale(scalar) {
         this.x /= scalar;
         this.y /= scalar;
         return this;

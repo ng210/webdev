@@ -1,6 +1,7 @@
 import Vec2 from '../../math/vec2.js'
+import IRenderObject from './IRenderObject.ts'
 
-export default class Actor {
+export default class Actor implements IRenderObject {
     #lifeSpan:number = 0
     #time:number = 0
 
