@@ -6,3 +6,4 @@ nodejs/recover/deleted_files.txt
 tmp/*
 !tmp/index.html
 !tmp/web-access.json
+dist

@@ -112,7 +112,7 @@ update()
 
 ---
 
-# Szín
+# Szín (jelenet)
 A szín tartalmazza az összes játék entitást.
 
 ```typescript
