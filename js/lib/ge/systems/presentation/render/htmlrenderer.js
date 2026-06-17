@@ -11,11 +11,31 @@ import RectVisual from '../visuals/presentation/rectvisual.js'
 
 export default class HtmlRenderer extends IRenderer {
     #root = null
-    #elements = new Map()
-    #renderMethods = new Map([
-        [ImageVisual, this.renderImage],
-        [TextVisual, this.renderText],
-        [RectVisual, this.renderRect]
+    #visualStates = new Map()
+    #visualDescriptors = new Map([
+        [
+            ImageVisual,
+            {
+                tagName: 'img',
+                renderMethod: this.renderImage
+            }
+        ],
+
+        [
+            TextVisual,
+            {
+                tagName: 'div',
+                renderMethod: this.renderText
+            }
+        ],
+
+        [
+            RectVisual,
+            {
+                tagName: 'div',
+                renderMethod: this.renderRect
+            }
+        ]
     ])
 
     constructor(rootElement) {
@@ -23,75 +43,76 @@ export default class HtmlRenderer extends IRenderer {
         this.#root = rootElement
     }
 
-    init() {
-    }
-
     shutdown() {
         this.#root.replaceChildren()
+        this.#visualStates.clear()
     }
 
-    beginFrame() {
-        throw new Error('Not implemented')
-    }
+    beginFrame() { }
 
     render(visuals) {
         for (const visual of visuals) {
-
-            if (!visual.isVisible) {
-                continue
-            }
-
-            const renderMethod = this.#renderMethods.get(visual.constructor)
-            if (!renderMethod) {
+            const descriptor = this.#visualDescriptors.get(visual.constructor)
+            if (!descriptor) {
                 console.warn(`HtmlRenderer: unsupported visual ${visual.constructor.name}`)
                 continue
             }
-
-            renderMethod.call(this, visual)
+            const state = this.#getOrCreateVisualState(visual, descriptor)
+            if (!visual.isVisible && !state.visible) {
+                continue
+            }
+            descriptor.renderMethod.call(this, visual, state)
         }
     }
 
-    endFrame() {
-        throw new Error('Not implemented')
-    }
+    endFrame() { }
 
-    #getOrCreateElement(id, tagName) {
-        let element = this.#elements.get(id)
-        if (!element) {
-            element = document.createElement(tagName)
-            this.#elements.set(id, element)
-            this.#root.appendChild(element)
+    #getOrCreateVisualState(visual, descriptor) {
+        let state = this.#visualStates.get(visual.id)
+        if (state) {
+            return state
         }
 
-        return element
+        const element = document.createElement(descriptor.tagName)
+        this.#root.appendChild(element)
+
+        state = {
+            element,
+            visible: !visual.isVisible
+        }
+        this.#visualStates.set(visual.id, state)
+        return state
     }
 
-    applyPosition(element, visual) {
-        element.style.position = 'absolute'
-        element.style.left = `${visual.x}px`
-        element.style.top = `${visual.y}px`
-        element.style.display = visual.isVisible ? '' : 'none'
+    #applyCommonProperties(visual, state) {
+        state.element.style.position = 'absolute'
+        state.element.style.left = `${visual.x}px`
+        state.element.style.top = `${visual.y}px`
+
+        if (visual.isVisible !== state.visible) {
+            state.element.style.display =
+                visual.isVisible ? '' : 'none'
+
+            state.visible = visual.isVisible
+        }
     }
 
-    renderImage(visual) {
-        const element = this.#getOrCreateElement(visual.id, 'img')
-        element.src = visual.image
-        this.applyPosition(element, visual)
-        element.width = visual.width
-        element.height = visual.height
+    renderImage(visual, state) {
+        this.#applyCommonProperties(visual, state)
+        state.element.src = visual.image
+        state.element.width = visual.width
+        state.element.height = visual.height
     }
 
-    renderText(visual) {
-        const element = this.#getOrCreateElement(visual.id, 'div')
-        element.textContent = visual.text
-        this.applyPosition(element, visual)
+    renderText(visual, state) {
+        this.#applyCommonProperties(visual, state)
+        state.element.textContent = visual.text
     }
 
-    renderRect(visual) {
-        const element = this.#getOrCreateElement(visual.id, 'div')
-        this.applyPosition(element, visual)
-        element.style.border = 'solid 1px black'    // color?
-        element.width = visual.width
-        element.height = visual.height
+    renderRect(visual, state) {
+        this.#applyCommonProperties(visual, state)
+        state.element.style.border = 'solid 1px black'    // color?
+        state.element.style.width = `${visual.width}px`
+        state.element.style.height = `${visual.height}px`
     }
 }

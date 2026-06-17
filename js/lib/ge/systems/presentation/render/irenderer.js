@@ -1,8 +1,4 @@
 export default class IRenderer {
-    init() {
-        throw new Error('Not implemented')
-    }
-
     shutdown() {
         throw new Error('Not implemented')
     }
