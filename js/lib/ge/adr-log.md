@@ -1,5 +1,3 @@
-# Browser-based Game Engine Design Book
-
 # 🧭 Phase 0 — Language choice
 
 Language selection
