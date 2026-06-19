@@ -1,4 +1,4 @@
-import FeatureData from '../featuredata.js'
+import FeatureData from '../../feature-data.js'
 
 export default class Visual extends FeatureData {
     id = null

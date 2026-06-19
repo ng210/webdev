@@ -1,19 +1,26 @@
 import Scene from './scene.js'
+import PresentationSystem from './systems/presentation/presentation-system.js'
 
 export default class GameEngine {
     #systems = []
+    #renderer = null
+    #presentationSystem = null
     #scene = null
 
     #running = false
     #lastTime = 0
 
-    constructor(scene = new Scene()) {
+    constructor(renderer, scene = new Scene()) {
         this.#scene = scene
+        this.#renderer = renderer
         this.loop = this.loop.bind(this)
     }
 
     addSystem(system) {
         this.#systems.push(system)
+        if (system instanceof PresentationSystem) {
+            this.#presentationSystem = system
+        }
     }
 
     start() {
@@ -21,6 +28,8 @@ export default class GameEngine {
 
         this.#running = true
         this.#lastTime = performance.now()
+
+        this.#renderer.init()
 
         for (const system of this.#systems) {
             system.init(this.#scene, this.#lastTime)
@@ -35,6 +44,8 @@ export default class GameEngine {
         for (const system of this.#systems) {
             system.shutdown(this.#scene)
         }
+
+        this.#renderer.init()
     }
 
     loop(time) {
@@ -43,10 +54,20 @@ export default class GameEngine {
         const dt = (time - this.#lastTime) / 1000
         this.#lastTime = time
 
+        this.update(dt)
+        this.render(dt)
+        requestAnimationFrame(this.loop)
+    }
+
+    update(dt) {
         for (const system of this.#systems) {
             system.update(this.#scene, dt)
         }
+    }
 
-        requestAnimationFrame(this.loop)
+    render() {
+        this.#renderer.beginFrame()
+        this.#renderer.render(this.#presentationSystem.visuals)
+        this.#renderer.endFrame()
     }
 }

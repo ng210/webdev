@@ -1,13 +1,13 @@
 import IRenderer from "./irenderer.js"
-import ImageVisual from '../visuals/presentation/imagevisual.js'
-import TextVisual from '../visuals/presentation/textvisual.js'
-import RectVisual from '../visuals/presentation/rectvisual.js'
-// import LineVisual from '../visuals/presentation/linevisual.js'
+import ImageVisual from '../systems/presentation/visuals/image-visual.js'
+import TextVisual from '../systems/presentation/visuals/text-visual.js'
+import RectVisual from '../systems/presentation/visuals/rect-visual.js'
+// import LineVisual from '../visuals/presentation/line-visual.js'
 
-// import ButtonVisual from '../visuals/presentation/buttonvisual.js'
-// import TextBoxVisual from '../visuals/presentation/textboxvisual.js'
-// import CheckBoxVisual from '../visuals/presentation/checkboxvisual.js'
-// import ProgressBarVisual from '../visuals/presentation/progressbarvisual.js'
+// import ButtonVisual from '../visuals/presentation/button-visual.js'
+// import TextBoxVisual from '../visuals/presentation/textbox-visual.js'
+// import CheckBoxVisual from '../visuals/presentation/checkbox-visual.js'
+// import ProgressBarVisual from '../visuals/presentation/progressbar-visual.js'
 
 export default class HtmlRenderer extends IRenderer {
     #root = null
