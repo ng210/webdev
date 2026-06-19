@@ -29,8 +29,6 @@ export default class GameEngine {
         this.#running = true
         this.#lastTime = performance.now()
 
-        this.#renderer.init()
-
         for (const system of this.#systems) {
             system.init(this.#scene, this.#lastTime)
         }

@@ -85,6 +85,57 @@ Replace static world model with dynamic Scene structure.
 
 ---
 
+## ADR-023 — Scene as dynamic registry hub
+
+**Status:** Accepted
+
+**Description:**
+Scene is not a world model but registry manager.
+
+**Decision:**
+Scene dynamically builds system registries.
+
+**Consequences:**
+
+* flexible architecture
+* supports runtime systems
+
+---
+
+## ADR-024 — Asset system belongs to Scene
+
+**Status:** Accepted
+
+**Description:**
+Where assets should be stored.
+
+**Decision:**
+Assets are Scene-scoped.
+
+**Consequences:**
+
+* supports multiple scenes
+* avoids global state
+
+---
+
+## ADR-025 — Scene-based scripting API
+
+**Status:** Proposed
+
+**Description:**
+External scripts control scenes.
+
+**Decision:**
+Expose Scene as scripting interface.
+
+**Consequences:**
+
+* engine decoupled from game logic
+* future modding support
+
+---
+
 ## ADR-003 — GameObject inheritance model
 
 **Status:** Rejected
@@ -471,7 +522,6 @@ Avoid unnecessary DOM updates.
 Track previous visibility state.
 
 **Consequences:**
-
 * reduced DOM writes
 * improved performance
 
@@ -500,62 +550,49 @@ Map(VisualClass → { tagName, renderMethod })
 
 ---
 
-# 🧠 Phase 7 — Scene, Assets, Scripting, Language
+# 🧠 Phase 7 — Fixes and changes
 
-Scene as dynamic registry hub
-External scripting via Scene API
-Portability constraints (C++ / C# mindset)
-Data-driven structure over framework coupling
+  Adding a VisualFactory
+  Ownership of Renderer
 
-➡️ Focus: “how do we store and organize game world data and logic?” 
-
----
-
-## ADR-023 — Scene as dynamic registry hub
+## ADR-028 — VisualFactory for Safe Initialization
 
 **Status:** Accepted
 
-**Description:**
-Scene is not a world model but registry manager.
+**Description:**  
+FeatureData assignment in the base constructor caused initialization-order problems in derived classes.
 
-**Decision:**
-Scene dynamically builds system registries.
+**Decision:**  
+Introduce a `VisualFactory` that creates and initializes visual instances after construction.
 
 **Consequences:**
-
-* flexible architecture
-* supports runtime systems
+* correct initialization order
+* no constructor boilerplate in Visual subclasses
+* centralized creation and validation
+* supports future pooling and serialization
+* portable to C++ and C#
 
 ---
 
-## ADR-024 — Asset system belongs to Scene
+## ADR-029 — Renderer Ownership and Placement
 
-**Status:** Accepted
+**Status:** Rejected
 
-**Description:**
-Where assets should be stored.
+**Description:**  
+The architecture considered placing the Renderer under the PresentationSystem because both participate in rendering.
 
-**Decision:**
-Assets are Scene-scoped.
-
-**Consequences:**
-
-* supports multiple scenes
-* avoids global state
-
----
-
-## ADR-025 — Scene-based scripting API
-
-**Status:** Proposed
-
-**Description:**
-External scripts control scenes.
-
-**Decision:**
-Expose Scene as scripting interface.
+**Decision:**  
+Keep the Renderer and PresentationSystem as separate components owned by the GameEngine.
 
 **Consequences:**
+* clear separation of responsibilities
+* PresentationSystem produces visuals only
+* Renderer performs rendering only
+* rendering backends remain interchangeable
+* GameEngine coordinates the rendering pipeline
 
-* engine decoupled from game logic
-* future modding support
+**Considered Alternative:**
+```txt
+GameEngine
+ └─ PresentationSystem
+      └─ Renderer

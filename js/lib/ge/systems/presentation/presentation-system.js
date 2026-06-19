@@ -6,14 +6,18 @@ class PresentationSystem extends ISystem {
         return this.#visuals
     }
 
+    init(scene, timestamp) {}
+
     update(scene, dt) {
         this.#visuals.length = 0
         const objList = scene.getRepository(PresentationSystem)
         for (const obj of objList) {
-            const presentation = object.getFeature(PresentationSystem)
+            const presentation = obj.getFeature(PresentationSystem)
             this.#visuals.push(...presentation.visuals)
         }
     }
+
+    shutdown(scene) {}
 }
 
 export default PresentationSystem;
