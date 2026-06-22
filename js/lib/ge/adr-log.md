@@ -557,3 +557,21 @@ Expose Scene as scripting interface.
 
 * engine decoupled from game logic
 * future modding support
+
+## ADR-030 — Scene Configuration Structure
+
+**Status:** Accepted
+
+**Description:**  
+A declarative scene format is needed to describe game content and engine configuration without JavaScript setup code.
+
+**Decision:**  
+Organize scene data into Assets, Systems, and Objects sections.
+
+**Consequences:**
+
+* maps directly to engine concepts
+* separates resources, configuration, and scene content
+* supports declarative scene loading
+* allows future extension without changing the top-level structure
+* provides a stable foundation for scripting and behavior configuration

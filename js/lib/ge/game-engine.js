@@ -43,7 +43,7 @@ export default class GameEngine {
             system.shutdown(this.#scene)
         }
 
-        this.#renderer.init()
+        this.#renderer.shutdown()
     }
 
     loop(time) {

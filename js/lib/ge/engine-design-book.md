@@ -548,8 +548,6 @@ Map(VisualClass → { tagName, renderMethod })
 
 ---
 
----
-
 # 🧠 Phase 7 — Fixes and changes
 
   Adding a VisualFactory
@@ -596,3 +594,265 @@ Keep the Renderer and PresentationSystem as separate components owned by the Gam
 GameEngine
  └─ PresentationSystem
       └─ Renderer
+```
+
+# 📜 Phase 8 — Scene loading
+
+ Configuration Architecture
+ Type registration
+ Asset Manager
+ Systems
+ Objects & Features
+ SceneLoader
+
+## ADR-030 — Scene Configuration Structure
+
+**Status:** Accepted
+
+**Description:**  
+A declarative scene format is needed to describe game content and engine configuration without JavaScript setup code.
+
+**Decision:**  
+Organize scene data into Engine, Assets, Systems, and Objects sections.
+
+**Consequences:**
+* maps directly to engine concepts
+* separates resources, configuration, and scene content
+* supports declarative scene loading
+* allows future extension without changing the top-level structure
+* provides a stable foundation for scripting and behavior configuration
+
+---
+
+## ADR-031 — Open Engine Extension Model
+
+**Status:** Accepted
+
+**Description:**  
+The engine must support extending its functionality without modifying the engine source code.
+
+**Decision:**  
+Allow user-defined Assets, Features, Systems, and GameObjects through external modules and type registration.
+
+**Consequences:**
+* supports plugins and project-specific extensions
+* custom behavior, features, systems, and objects can be implemented outside the engine
+* requires type registration and lookup mechanisms
+* scene loading cannot rely on hard-coded type switches
+* increases loader complexity
+* improves portability to C++ (shared libraries) and C# (assemblies)
+
+**Notes:**
+Built-in engine types and user-defined types are treated uniformly by the configuration system.
+
+Example:
+
+```yaml
+assets:
+  aiLib: scripts/ai.js
+
+systems:
+  enemyAi:
+    type: EnemyAiSystem
+    module: aiLib
+
+objects:
+  - id: enemy1
+    type: EnemyObject
+    module: aiLib
+```
+
+---
+
+## ADR-032 — Asset References and Resource Normalization
+
+**Status:** Accepted
+
+**Description:**  
+Resources may be referenced directly in configuration or declared explicitly as named assets.
+
+**Decision:**  
+Allow both direct resource references and explicit asset declarations; the loader normalizes both into assets managed by the AssetManager.
+
+**Consequences:**
+* concise configuration for one-off resources
+* reusable resources can be declared as named assets
+* unified runtime asset model
+* supports future caching, metadata, and hot reloading
+* loader performs resource normalization during scene loading
+
+**Examples:**
+Explicit asset:
+
+```yaml
+assets:
+  clickSound: sounds/click.wav
+systems:
+  sound:
+    effects:
+      click: clickSound
+      accept: sounds/accept.wav
+      
+systems:
+  sound:
+```
+
+---
+
+## ADR-033 — Scene File Format
+
+**Status:** Accepted
+
+**Description:**  
+A scene description format is required for declarative engine configuration and scene loading.
+
+**Decision:**  
+Use JSON as the implementation format. YAML-like notation may be used in design discussions and documentation.
+
+**Consequences:**
+* no external parser dependencies
+* native support in JavaScript environments
+* good portability to C++ and C#
+* scene files can be loaded directly into JavaScript objects
+* documentation examples may use a more concise YAML style for readability
+
+---
+
+## ADR-034 — Asset Reference Syntax
+
+**Status:** Accepted
+
+**Description:**
+Scene configuration must distinguish between literal values, direct resources, and references to registered assets.
+
+**Decision:**
+Use a `ref` property inside an object to represent asset references. Primitive values are interpreted as literals or direct resources.
+
+**Consequences:**
+* keeps configuration pure JSON
+* avoids special string syntax
+* references are explicit and self-describing
+* supports future extension of reference metadata
+* simplifies parsing and portability
+
+**Examples:**
+Literal:
+
+```json
+{
+  "sound": {
+    "initialVolume": 2
+    "effects": {
+      "click2": {
+          "ref": "sfx-click1",
+          "optional": true
+      }
+    }
+  }
+}
+```
+
+---
+
+## ADR-035 — Type Resolution by Alias
+
+**Status:** Accepted
+
+**Description:**  
+Scene configuration must reference engine and user-defined types in a stable and portable way.
+
+**Decision:**  
+Use registered aliases instead of implementation class names.
+
+**Consequences:**
+* configuration is independent of implementation details
+* classes may be renamed without affecting scene files
+* built-in and user-defined types are resolved uniformly
+* supports plugin and module-based extension
+* requires type registries for type lookup
+
+**Examples:**
+
+Registration:
+
+```js
+RendererRegistry.register('html', HtmlRenderer)
+
+FeatureRegistry.register(
+    'presentation',
+    PresentationFeature
+)
+```
+
+---
+
+## ADR-036 — Asset Model (Identity, Type, Ownership)
+
+**Status:** Accepted
+
+**Description:**  
+Defines the structural model of assets within the engine, including identity, typing, and ownership responsibilities.
+
+**Decision:**  
+Assets have string-based identities (explicit or generated), are strongly typed via a base `Asset` class with derived types, and are exclusively owned by the `AssetManager`.
+
+**Consequences:**
+- Assets have a unified identifier namespace (explicit or generated)
+- AssetManager is the single owner of all assets (full lifecycle responsibility)
+- Enables CRUD operations on assets through AssetManager
+- Supports a strongly typed asset hierarchy (e.g. ImageAsset, AudioAsset)
+- Improves portability to strongly typed OOP languages (C++, C#)
+
+**Examples:**
+Explicit and implicit identity:
+
+```json
+{
+  "clickSound": "sounds/click.wav"
+}
+```
+
+```javascript
+class Asset {
+    constructor(id) {
+        this.id = id
+    }
+}
+
+class ImageAsset extends Asset {}
+class AudioAsset extends Asset {}
+```
+
+---
+
+## ADR-037 — Asset Loading & Normalization Strategy
+
+**Status:** Accepted
+
+**Description:**  
+Defines how assets are loaded into the engine and how raw configuration values are transformed into managed assets.
+
+**Decision:**  
+Use eager loading for all assets and normalize all direct resource references and explicit asset declarations into AssetManager-managed assets.
+
+**Consequences:**
+- All assets are loaded at scene initialization (eager loading)
+- Direct resource references are automatically converted into assets
+- Explicit assets and implicit resources share a unified runtime representation
+- AssetManager acts as the normalization boundary
+- Simplifies SceneLoader by centralizing asset creation logic
+
+**Examples:**
+
+Explicit asset:
+
+```json
+{
+  "assets": {
+    "clickSound": "sounds/click.wav"
+  }
+}
+```
+
+---
+

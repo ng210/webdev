@@ -76,5 +76,4 @@ setInterval(() => {
 }, 16)
 
 // Visibility test
-setTimeout(() => { textVisual.isVisible = false }, 3000)
-setTimeout(() => { textVisual.isVisible = true }, 6000)
+setInterval(() => { textVisual.isVisible = !textVisual.isVisible }, 1000)
