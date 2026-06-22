@@ -276,7 +276,6 @@ Objects explicitly list participating systems.
 Replace participation list with features.
 
 **Consequences:**
-
 * single source of truth
 * reduced duplication
 
@@ -626,7 +625,7 @@ Organize scene data into Engine, Assets, Systems, and Objects sections.
 
 ## ADR-031 — Open Engine Extension Model
 
-**Status:** Accepted
+**Status:** Rejected → refined in ADR-041
 
 **Description:**  
 The engine must support extending its functionality without modifying the engine source code.
@@ -720,7 +719,7 @@ Use JSON as the implementation format. YAML-like notation may be used in design 
 
 ## ADR-034 — Asset Reference Syntax
 
-**Status:** Accepted
+**Status:** Superseded by ADR-038
 
 **Description:**
 Scene configuration must distinguish between literal values, direct resources, and references to registered assets.
@@ -850,6 +849,213 @@ Explicit asset:
 {
   "assets": {
     "clickSound": "sounds/click.wav"
+  }
+}
+```
+
+---
+
+## ADR-038 — Asset Declaration and Reference Syntax
+
+**Status:** Accepted
+
+**Description:**  
+Scene configuration must support both referencing existing assets and declaring assets inline at the point of use.
+
+**Decision:**  
+String values are interpreted as references to existing assets. Object values containing asset metadata are interpreted as asset declarations and result in the creation of a new asset.
+
+**Consequences:**
+* asset references use a compact syntax
+* inline asset declarations are supported
+* asset usage is consistent with the alias-based type system
+* SceneLoader is responsible for interpreting configuration values
+* AssetManager remains responsible only for asset storage and lifecycle management
+
+**Examples:**
+Reference an existing asset:
+```json
+{
+  "sound": {
+    "click": "clickSound"
+  }
+}
+```
+
+Declare an asset inline:
+```json
+{
+  "sound": {
+    "click": {
+      "id": "clickSound",
+      "type": "audio",
+      "source": "sounds/click.wav"
+    }
+  }
+}
+```
+
+Implicit identifier generation:
+```json
+{
+  "sound": {
+    "click": {
+      "type": "audio",
+      "source": "sounds/click.wav"
+    }
+  }
+}
+```
+
+---
+
+## ADR-039 — Forward Asset References
+
+**Status:** Accepted
+
+**Description:**  
+Asset references should be independent of declaration order within scene configuration.
+
+**Decision:**  
+Support forward asset references through a multi-phase loading process. Asset declarations are collected before asset references are resolved.
+
+**Consequences:**
+* configuration order does not affect meaning
+* assets may be referenced before their declaration
+* asset-to-asset references become possible
+* SceneLoader requires multiple loading phases
+* improves flexibility for scene authors
+
+**Example:**
+```json
+{
+  "systems": {
+    "sound": {
+      "click": "clickSound"
+    }
+  },
+
+  "assets": {
+    "clickSound": {
+      "type": "audio",
+      "source": "sounds/click.wav"
+    }
+  }
+}
+```
+
+---
+
+## ADR-040 — Asset Declaration Schema
+
+**Status:** Accepted
+
+**Description:**  
+Assets require a standardized configuration format that supports both built-in and custom asset types.
+
+**Decision:**  
+Assets are declared using an object containing a mandatory `type` property, an optional `id`, a mandatory resource location (`path` or `url`), and an optional `properties` object for type-specific settings.
+
+**Consequences:**
+* asset declarations have a uniform structure
+* asset identifiers may be generated automatically
+* asset types are referenced by aliases
+* local and remote resources are distinguished explicitly
+* asset types may define custom configuration through `properties`
+
+**Examples:**
+
+Local resource:
+```json
+{
+  "id": "playerImage",
+  "type": "image",
+  "path": "images/player.png"
+}
+```
+
+Remote resource:
+```json
+{
+  "id": "remoteConfig",
+  "type": "json",
+  "url": "https://example.com/config.json"
+}
+```
+
+Type-specific properties:
+```json
+{
+  "id": "backgroundMusic",
+  "type": "audio",
+  "path": "music.ogg",
+  "properties": {
+    "loop": true,
+    "volume": 0.5
+  }
+}
+```
+
+---
+
+## ADR-041 — True Engine Extension Points
+
+**Status:** Accepted, refines ADR-031
+
+**Description:**  
+The engine must support runtime extension without requiring modifications to its core implementation. Extension points should correspond only to concepts that introduce new behavior or new data processing capabilities.
+
+**Decision:**  
+The engine supports two extensible models: Asset Types and System-Feature Types. GameObjects remain generic containers and are not extensible through subclassing.
+
+**Consequences:**
+* asset types may be added through extensions
+* system-feature pairs may be added through extensions
+* GameObject remains a generic data container
+* object specialization is achieved through feature composition
+* extension loading must populate AssetRegistry and SystemRegistry
+* the engine core remains independent of concrete asset and system implementations
+
+**Examples:**
+
+Generic object:
+```json
+{
+  "objects": {
+    "player": {
+      "presentation": { },
+      "health": { },
+      "inventory": { }
+    }
+  }
+}
+```
+
+Custom asset type:
+```json
+{
+  "assets": {
+    "level1": {
+      "type": "tilemap",
+      "path": "maps/level1.json"
+    }
+  }
+}
+```
+
+Custom system-feature type:
+```json
+{
+  "systems": {
+    "inventory": { }
+  },
+
+  "objects": {
+    "player": {
+      "inventory": {
+        "capacity": 20
+      }
+    }
   }
 }
 ```

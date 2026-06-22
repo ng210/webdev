@@ -12,7 +12,7 @@ export default class AssetManager {
         const finalId = id ?? this.#generateId()
 
         if (this.#assets.has(finalId)) {
-            throw new Error(`Asset already exists: ${finalId}`)
+            console.error(`Asset already exists: ${finalId}`)
         }
 
         asset.id = finalId
@@ -50,6 +50,7 @@ export default class AssetManager {
      * Resolves a value into an Asset.
      *
      * Supported inputs:
+     * - object 
      * - string: asset id OR direct resource (heuristic: non-registered string becomes implicit asset)
      * - { ref: string }: asset reference
      * - literal value: wrapped into implicit asset
@@ -62,7 +63,7 @@ export default class AssetManager {
         if (this.#isRefObject(value)) {
             const asset = this.get(value.ref)
             if (!asset) {
-                throw new Error(`Asset not found: ${value.ref}`)
+                console.error(`Asset not found: ${value.ref}`)
             }
             return asset
         }
