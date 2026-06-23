@@ -597,12 +597,12 @@ GameEngine
 
 # 📜 Phase 8 — Scene loading
 
- Configuration Architecture
- Type registration
- Asset Manager
- Systems
- Objects & Features
- SceneLoader
+Engine
+Extensions
+Assets
+Systems
+Objects & Features
+SceneLoader
 
 ## ADR-030 — Scene Configuration Structure
 
@@ -1048,6 +1048,90 @@ Custom system-feature type:
 {
   "systems": {
     "inventory": { }
+  },
+
+  "objects": {
+    "player": {
+      "inventory": {
+        "capacity": 20
+      }
+    }
+  }
+}
+```
+
+---
+
+## ADR-042 — Scene Configuration and Loading Model
+
+**Status:** Accepted
+
+**Description:**  
+Scenes must support external extensions, declarative configuration of engine components, and order-independent references. A standardized configuration structure and loading process are required.
+
+**Decision:**  
+Scenes are described using the top-level sections `engine`, `extensions`, `assets`, `systems`, and `objects`. Scene loading is performed in multiple passes to allow forward references and extension discovery before object construction.
+
+**Consequences:**
+* scene structure is standardized
+* scenes explicitly declare required extensions
+* custom asset and system-feature types can be introduced through extensions
+* configuration order does not affect meaning
+* forward references are supported
+* SceneLoader operates as a multi-pass processor
+* registries are populated before assets, systems, and objects are created
+
+**Configuration Structure:**
+```json
+{
+  "engine": {},
+  "extensions": {},
+  "assets": {},
+  "systems": {},
+  "objects": {}
+}
+```
+
+**Loading Process:**
+```txt
+Pass 1
+    Load extensions
+    Populate registries
+
+Pass 2
+    Discover and create assets
+
+Pass 3
+    Create systems
+
+Pass 4
+    Create objects and features
+
+Pass 5
+    Resolve references and finalize initialization
+```
+
+**Example:**
+```json
+{
+  "engine": {
+    "renderer": "html"
+  },
+
+  "extensions": {
+    "inventory": "extensions/inventory.js",
+    "tilemap": "extensions/tilemap.js"
+  },
+
+  "assets": {
+    "level1": {
+      "type": "tilemap",
+      "path": "maps/level1.json"
+    }
+  },
+
+  "systems": {
+    "inventory": {}
   },
 
   "objects": {
