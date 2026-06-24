@@ -1146,3 +1146,88 @@ Pass 5
 
 ---
 
+## ADR-043 — Extension Definition and Registration Model
+
+**Status:** Accepted
+
+**Description:**  
+The engine supports runtime extensions for introducing new asset types and system-feature types. A standardized contract is required between the engine and extensions to support portability and type-safe registration.
+
+**Decision:**  
+Extensions implement the `IExtension` contract and expose their contributions as a collection of `TypeDefinition` objects. The engine processes these definitions and performs all registrations. Object creation is delegated to specialized factories implementing a common factory contract.
+
+**Consequences:**
+* extensions do not access engine internals directly
+* extensions provide metadata rather than executable registration logic
+* asset and system-feature types are registered uniformly
+* registration remains under engine control
+* type definitions form a common extensibility model
+* factories provide a standardized object creation mechanism
+* architecture maps naturally to JavaScript, C#, and C++
+
+**Type Definition Model:**
+```csharp
+abstract class TypeDefinition
+{
+    string Alias;
+}
+```
+
+```csharp
+class AssetTypeDefinition : TypeDefinition
+{
+    Type AssetType;
+}
+```
+
+```csharp
+class SystemTypeDefinition : TypeDefinition
+{
+    Type SystemType;
+    Type FeatureType;
+}
+```
+
+**Extension Contract:**
+
+```csharp
+interface IExtension
+{
+    List<TypeDefinition> GetDefinitions();
+}
+```
+
+**Factory Contract:**
+```csharp
+interface IFactory<TDefinition, TObject>
+{
+    TObject Create(TDefinition definition);
+}
+```
+
+**Example:**
+```csharp
+class AssetFactory
+    : IFactory<AssetTypeDefinition, Asset>
+{
+    public Asset Create(
+        AssetTypeDefinition definition)
+    {
+        ...
+    }
+}
+```
+
+**Loading Process:**
+```txt
+Load extension
+    ↓
+Read TypeDefinitions
+    ↓
+Register definitions
+    ↓
+Factories create runtime objects
+```
+
+---
+
