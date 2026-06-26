@@ -2,6 +2,7 @@ export default class AssetManager {
     #assets = new Map()
     #idCounter = 0
 
+    //#region asset management
     /**
      * Creates and registers an explicit asset.
      * @param {string|null} id
