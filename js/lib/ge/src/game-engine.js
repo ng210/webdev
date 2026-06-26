@@ -2,9 +2,7 @@ import Scene from './scene.js'
 import PresentationSystem from './systems/presentation/presentation-system.js'
 
 export default class GameEngine {
-    #systems = []
     #renderer = null
-    #presentationSystem = null
     #scene = null
 
     #running = false
@@ -14,13 +12,6 @@ export default class GameEngine {
         this.#scene = scene
         this.#renderer = renderer
         this.loop = this.loop.bind(this)
-    }
-
-    addSystem(system) {
-        this.#systems.push(system)
-        if (system instanceof PresentationSystem) {
-            this.#presentationSystem = system
-        }
     }
 
     start() {

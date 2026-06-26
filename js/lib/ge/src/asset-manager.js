@@ -8,7 +8,7 @@ export default class AssetManager {
      * @param {Asset} asset
      * @returns {Asset}
      */
-    create(id, asset) {
+    add(id, asset) {
         const finalId = id ?? this.#generateId()
 
         if (this.#assets.has(finalId)) {
