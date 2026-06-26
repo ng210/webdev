@@ -1,5 +1,6 @@
 export default class AssetManager {
     #assets = new Map()
+    #types = new Map()
     #idCounter = 0
 
     //#region asset management
@@ -47,6 +48,7 @@ export default class AssetManager {
         this.#assets.clear()
     }
 
+    // TO BE MOVED TO SceneLoader!!!
     /**
      * Resolves a value into an Asset.
      *
@@ -117,4 +119,49 @@ export default class AssetManager {
             typeof value.ref === 'string'
         )
     }
+    //#endregion
+
+    //#region type management
+
+    /**
+     * Registers an asset type definition.
+     * @param {AssetTypeDefinition} definition
+     * @returns {AssetTypeDefinition|null}
+     */
+    registerType(definition) {
+        if (!definition) {
+            console.error('Cannot register null asset type definition')
+            return null
+        }
+
+        if (this.#types.has(definition.alias)) {
+            console.error(
+                `Asset type already registered: ${definition.alias}`)
+            return null
+        }
+
+        this.#types.set(definition.alias, definition)
+
+        return definition
+    }
+
+    /**
+     * Gets an asset type definition by alias.
+     * @param {string} alias
+     * @returns {AssetTypeDefinition|null}
+     */
+    getType(alias) {
+        return this.#types.get(alias) ?? null
+    }
+
+    /**
+     * Checks whether an asset type definition is registered.
+     * @param {string} alias
+     * @returns {boolean}
+     */
+    hasType(alias) {
+        return this.#types.has(alias)
+    }
+
+    //#endregion
 }

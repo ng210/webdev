@@ -1231,3 +1231,313 @@ Factories create runtime objects
 
 ---
 
+## ADR-044 — Managers Own Runtime Instances and Type Registrations
+
+**Status:** Accepted
+
+**Description:**  
+The engine requires registration of asset types and system-feature types to support the extension model. Initially, separate registry components (`AssetRegistry`, `SystemRegistry`) were considered alongside managers responsible for runtime instances.
+
+Further analysis showed that registries and managers would share the same ownership domain while introducing additional classes and complexity without providing clear architectural benefits.
+
+**Decision:**  
+Type registrations shall be stored within the corresponding manager responsible for the runtime instances.
+
+```txt
+AssetManager
+    assets
+    asset type definitions
+
+SystemManager
+    systems
+    system type definitions
+```
+
+Managers shall provide type registration and lookup operations in addition to runtime object management.
+
+AssetManager:
+```txt
+add()
+get()
+has()
+remove()
+
+registerType()
+getType()
+hasType()
+```
+
+SystemManager:
+```txt
+add()
+get()
+has()
+remove()
+
+registerType()
+getType()
+hasType()
+```
+
+Separate `AssetRegistry` and `SystemRegistry` classes shall not be introduced.
+
+**Consequences:**
+* reduces the number of architectural components
+* keeps ownership of runtime objects and their type definitions in a single place
+* simplifies extension registration and scene loading
+* avoids unnecessary indirection through dedicated registry classes
+* maintains symmetry between asset and system management
+* allows future loaders to interact directly with managers
+
+**Rationale:**
+The manager of a runtime domain is also the natural owner of the type definitions used to create objects within that domain.
+
+```txt
+AssetManager
+    ├ AssetTypeDefinitions
+    └ Assets
+
+SystemManager
+    ├ SystemTypeDefinitions
+    └ Systems
+```
+
+---
+
+## ADR-045 — SceneLoader Architecture and Loading Process
+
+**Status:** Accepted
+
+**Description:**  
+The `SceneLoader` is the central component responsible for constructing a runtime `Scene` from a scene configuration. It coordinates the loading process, delegates object creation to factories and managers, and ensures that the scene is initialized according to the architectural decisions defined by previous ADRs.
+
+The `SceneLoader` is an orchestration component. It does not interpret or own engine subsystems, nor does it create runtime objects directly. Its responsibility is to coordinate the loading phases and invoke the appropriate managers and factories.
+
+---
+
+### Decision
+
+The `SceneLoader` shall implement the loading process as a sequence of well-defined phases.
+
+```txt
+Scene Configuration
+        │
+        ▼
+SceneLoader
+        │
+        ├── Load extensions
+        ├── Register asset types
+        ├── Register system-feature types
+        ├── Load asset definitions
+        ├── Resolve asset references
+        ├── Create systems
+        ├── Create objects
+        ├── Initialize systems
+        ▼
+      Scene
+```
+
+The loading process shall consist of two logical passes.
+
+#### Pass 1 — Registration
+
+The first pass discovers and registers every type required by the scene.
+
+This pass includes:
+
+- loading extensions
+- registering asset types
+- registering system and feature types
+
+No runtime scene objects shall be created during this phase.
+
+#### Pass 2 — Scene construction
+
+The second pass constructs the runtime scene.
+
+This pass includes:
+
+- creating assets
+- resolving asset references
+- creating systems
+- creating game objects
+- assigning features
+- initializing systems
+
+Forward references shall be supported by performing registration before runtime object creation.
+
+---
+
+### Responsibilities
+
+#### SceneLoader
+
+Responsible for:
+
+- coordinating the loading process
+- processing the configuration sections in the defined order
+- delegating runtime object creation
+- reporting loading errors
+
+The `SceneLoader` shall **not**:
+
+- instantiate runtime objects directly
+- own runtime objects
+- perform asset management
+- perform system management
+
+---
+
+#### AssetManager
+
+Responsible for:
+
+- asset ownership
+- asset lookup
+- asset type registration
+
+---
+
+#### SystemManager
+
+Responsible for:
+
+- system ownership
+- system lookup
+- system type registration
+
+---
+
+#### Factories
+
+Responsible for:
+
+- creating runtime objects from type definitions
+
+Examples include:
+
+- AssetFactory
+- SystemFactory
+- FeatureFactory
+
+---
+
+#### Extensions
+
+Responsible for:
+
+- exposing engine definitions
+
+Examples include:
+
+- asset type definitions
+- system type definitions
+- feature type definitions
+
+Extensions shall never directly modify engine state.
+
+---
+
+### Consequences
+
+- clearly separates orchestration from object creation
+- supports open extension-based engine architecture
+- supports forward references
+- simplifies error handling
+- allows managers and factories to evolve independently
+- keeps the SceneLoader independent from concrete runtime types
+
+---
+
+## Implementation Requirements
+
+This ADR integrates the implementation consequences of previous architectural decisions.
+
+### Loading sequence
+
+The SceneLoader shall implement the following high-level algorithm.
+
+```txt
+load(sceneConfiguration)
+
+    loadExtensions()
+
+    registerAssetTypes()
+
+    registerSystemTypes()
+
+    loadAssets()
+
+    resolveAssetReferences()
+
+    createSystems()
+
+    createObjects()
+
+    initializeSystems()
+
+    return Scene
+```
+
+Each phase should be implemented as an individual private method to keep the loading algorithm explicit and maintainable.
+
+---
+
+### Interaction between components
+
+```txt
+SceneLoader
+        │
+        ├── AssetManager
+        │       └── AssetFactory
+        │
+        ├── SystemManager
+        │       └── SystemFactory
+        │
+        └── Extensions
+```
+
+The SceneLoader coordinates the process but delegates all runtime object creation.
+
+---
+
+### Traceability to Previous ADRs
+
+| Loading Phase | Architectural Decisions |
+|----------------|-------------------------|
+| Load extensions | ADR-041, ADR-043 |
+| Register asset types | ADR-041, ADR-043, ADR-044 |
+| Register system-feature types | ADR-041, ADR-043, ADR-044 |
+| Load asset definitions | ADR-036, ADR-037, ADR-039 |
+| Resolve asset references | ADR-038, ADR-042 |
+| Create systems | ADR-031 (Revised), ADR-041, ADR-044 |
+| Create objects | ADR-031 (Revised) |
+| Initialize systems | ADR-031 (Revised) |
+
+---
+
+### Initial Implementation Scope
+
+The first implementation of the SceneLoader should establish the loading pipeline only.
+
+Each loading phase should initially exist as an individual method, even if its implementation is incomplete.
+
+Example:
+
+```javascript
+load(configuration) {
+    this.#loadExtensions(configuration)
+    this.#registerAssetTypes()
+    this.#registerSystemTypes()
+    this.#loadAssets(configuration)
+    this.#resolveAssetReferences()
+    this.#createSystems(configuration)
+    this.#createObjects(configuration)
+    this.#initializeSystems()
+
+    return this.#scene
+}
+```
+
+---
+

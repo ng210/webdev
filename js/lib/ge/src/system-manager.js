@@ -4,6 +4,7 @@ export default class SystemManager {
     #systems = []
     #types = new Map()
 
+    //#region system management
     /**
      * Registers a system instance.
      * @param {Object} system
@@ -21,7 +22,6 @@ export default class SystemManager {
         }
 
         this.#systems.push(system)
-
         return system
     }
 
@@ -59,7 +59,6 @@ export default class SystemManager {
         }
 
         this.#systems.splice(index, 1)
-
         return true
     }
 
@@ -77,7 +76,9 @@ export default class SystemManager {
     getAll() {
         return [...this.#systems]
     }
+    //#endregion
 
+    //#region System registry
     /**
      * Registers a system type definition.
      * @param {TypeDefinition} definition
@@ -85,21 +86,16 @@ export default class SystemManager {
      */
     registerType(definition) {
         if (!definition) {
-            console.error(
-                'Cannot register null type definition')
+            console.error('Cannot register null type definition')
             return null
         }
 
         if (this.#types.has(definition.alias)) {
-            console.error(
-                `Type already registered: ${definition.alias}`)
+            console.error(`Type already registered: ${definition.alias}`)
             return null
         }
 
-        this.#types.set(
-            definition.alias,
-            definition)
-
+        this.#types.set(definition.alias, definition)
         return definition
     }
 
@@ -120,4 +116,5 @@ export default class SystemManager {
     hasType(alias) {
         return this.#types.has(alias)
     }
+    //#endregion
 }
