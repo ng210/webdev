@@ -37,6 +37,8 @@ export default class Test {
         '!=': (a,b) => Test.compare(a, b) != 0,
         'true': a => a == true,
         'false': a => a == false,
+        '=null': a => a === null,
+        '!=null': a => a !== null,
     };
 
     cons = null;
@@ -191,7 +193,7 @@ export default class Test {
         return this;
     }
 
-    notEqual(lbl, received, expected) {
+    isNotEqual(lbl, received, expected) {
         this.currentResult = this.#check(lbl, received, expected, Test.#_operators['!=']);
         return this;
     }
@@ -204,6 +206,20 @@ export default class Test {
     isFalse(lbl, received) {
         this.currentResult = this.#check(lbl, received, Test.#_operators['false']);
         return this;
+    }
+
+    isNull(lbl, received) {
+        this.currentResult = this.#check(lbl, received, Test.#_operators['=null']);
+        return this
+    }
+    isNotNull(lbl, received) {
+        this.currentResult = this.#check(lbl, received, Test.#_operators['!=null']);
+        return this
+    }
+
+    isInstanceOf(lbl, received, expected) {
+        this.currentResult = this.#check(lbl, (received instanceof expected), Test.#_operators['true']);
+        return this
     }
 
 
