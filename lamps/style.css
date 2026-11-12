@@ -1,0 +1,79 @@
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 12pt
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 2rem;
+    background: radial-gradient(at center, #081023, #000);
+    width: 100vw;
+    height: 100vh;
+    align-items: center;
+}
+
+h1 {
+    font-size: 3rem;
+    letter-spacing: 0.4rem;
+    text-align: center;
+    color: #fff;
+    text-shadow: 1px 2px 2px #fffc, 0px 0px 15px #fcac;
+}
+
+div.cells {
+    margin: 1rem;
+    width:50%;
+    height: 50%;
+    border: 1px solid #fcac;
+    box-shadow: 0px 0px 4px #fea8;
+}
+
+div.cells>div>* {
+    opacity: 0.3;
+    width: 3rem;
+    font-size: 1.4rem;
+    color: #fec;
+    text-align: center;
+}
+
+div.cells>div>input {
+    background: transparent;
+    border: none;
+}
+
+div.cells>div {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    padding: 1rem;
+    font-size: 1.4rem;
+    text-shadow: 1px 2px 2px #fffc, 0px 0px 15px #fea8;
+}
+
+div.cells>div>*:hover {
+    opacity: 0.8;
+}
+
+div.on {
+    background: radial-gradient(at center, #fec8, #0004), radial-gradient(at center, #ffc, #0000 10%);
+    box-shadow: 1px 2px 3px #fffc, 0px 0px 15px #fea8;
+}
+
+div.off {
+    background: radial-gradient(at center, #08102380, #0008), radial-gradient(at center, #4328, #0000 10%);
+}
+
+button {
+    font-size: 1.6rem;
+    margin: 1rem;
+    padding: 1rem;
+    border-width: 4px;
+    border-color: #cef;
+    background-color: #cef;
+    box-shadow: 0px 0px 12px #cefc;
+}
